@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.13">
+  <DUT Name="PV_temp_sensor" Id="{72ce3b29-82bb-487e-bfba-5b64de25e208}">
+    <Declaration><![CDATA[TYPE PV_temp_sensor :
+STRUCT
+	
+	MesData      : ANA;
+	MesCP_Read	 : BOOL;	
+	
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

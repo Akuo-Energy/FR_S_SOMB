@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.9">
+  <DUT Name="CB_MeasureMVCB_Sch" Id="{3bb5ac1b-2b42-4e73-9d24-211d13591bad}">
+    <Declaration><![CDATA[///////////
+// Structure For Bousquet. Main Operating Data to be saved (ex: OPC).  
+//////////
+
+TYPE CB_MeasureMVCB_Sch :
+STRUCT
+	//DI
+	MesData					: CB ;      (* Object*)
+	MesFuseBurned		    : BOOL ; 	(* The Fuse is burned*)
+	MesEarth				: BOOL ; 	(* The Cell is grounded*)
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>
+
+
+
+
+
+
+
+
+

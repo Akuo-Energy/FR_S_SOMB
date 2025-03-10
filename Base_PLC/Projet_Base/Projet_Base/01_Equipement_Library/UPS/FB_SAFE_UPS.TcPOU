@@ -1,0 +1,282 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.2">
+  <POU Name="FB_SAFE_UPS" Id="{0cc5a586-0ba4-4a8d-a2fa-e17fc9b00483}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_SAFE_UPS
+//////////////////
+// UPS 
+//////////////////
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance/model specific) 
+	
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	
+END_VAR
+
+VAR_INPUT
+	// I/O Inputs
+		MesState 							: BOOL ; 			// IO UPS State . 
+		MesUbatLowIO							: BOOL ; // UPS battery is low
+		MesAlarmIO								: BOOL ; // UPS Alarm
+		
+END_VAR
+
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//
+		MesAlarmCode						: WORD ;  			//(NA) [P,H,B]  Alarm Word . 0:  , 1:  FreqHigh, 2:FreqLow , 3:VoltLow , 4:VoltHigh, 5:Alarme i0 >0, 6:Alarme i >0, 7:, 8:, 9:, 10:, 11:, 12:, 13:, 14:, 15:, 16:
+		MesWarningCode 						: WORD; 			//(NA) [P,H,B]  Warning Word . 0:  , 1: , 2: , 3: , 4:, 5:, 6:, 7:, 8:, 9:, 10:, 11:, 12:, 13:, 14:, 15:, 16:
+		MesEventCode						: WORD; 			//(NA) [P,H,B] Event Code. Acknowledgable. 
+	
+		MesComWarning						: BOOL ; 			// (NA) [P,H] True if bad modbus communication 
+		MesAlarmCom							: BOOL ; 			// (NA) True if complete loss of modbus communication with CTRLDg
+		CmdAlarmIntervention				: BOOL; 			//(NA) Command Alarm in case of intervention
+				
+	//M_READ//
+	MesDataExd						: UPS; 			// Electrical Data
+		
+	//M_EXECUTE //
+		
+	
+	// EMULATOR //
+	
+	Emul_MesState 		: BOOL ;
+	Emul_MesUbatLowIO   : BOOL ;
+	Emul_MesAlarmIO	    : BOOL ;
+	
+		
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{93642422-23d0-447b-8f7a-33332f77ea22}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Manages Sepam Alarms. Alarms opens HT CB until Sepam manual Reset . Warning Opens CB-L but does not maintain warning
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager 	: FB_AlarmCodeManager ; 
+
+ 
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// ALARM CODE //
+	FB_AlarmCodeManager(
+		bAlarm1				:= MesUbatLowIO , 				 	// 
+		bAlarm2				:= MesAlarmIO ,						// Alarm from UPS
+		bAlarm3				:= FALSE ,								// 
+		bAlarm4				:= FALSE,     							// 
+		bAlarm5				:= FALSE,         						// 
+		bAlarm6				:= FALSE, 								// 
+		bAlarm7				:= FALSE, 
+		bAlarm8				:= FALSE, 
+		bAlarm9				:= FALSE, 
+		bAlarm10			:= FALSE, 
+		bAlarm11			:= FALSE, 
+		bAlarm12			:= FALSE, 
+		bAlarm13			:= FALSE, 
+		bAlarm14			:= FALSE, 
+		bAlarm15			:= CmdAlarmIntervention , 	// Command Alarm in case of intervention
+		wAlarmCode			=> MesAlarmCode);
+
+// WARNING CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= MesState, 		// UPS State = Warning
+		bAlarm2			:= FALSE, 		// 
+		bAlarm3			:= FALSE, 				// 
+		bAlarm4			:= FALSE, 				// 
+		bAlarm5			:= FALSE, 
+		bAlarm6			:= FALSE, 
+		bAlarm7			:= FALSE, 
+		bAlarm8			:= FALSE, 
+		bAlarm9			:= FALSE, 
+		bAlarm10		:= FALSE, 
+		bAlarm11		:= FALSE, 
+		bAlarm12		:= FALSE, 
+		bAlarm13		:= FALSE, 
+		bAlarm14		:= FALSE, 
+		bAlarm15		:= FALSE, 
+		wAlarmCode		=> MesWarningCode);
+
+// EVENT CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:=FALSE, 		// 
+		bAlarm2			:=FALSE, 		// 
+		bAlarm3			:=FALSE, 		// 
+		bAlarm4			:=FALSE, 		// 
+		bAlarm5			:=FALSE, 
+		bAlarm6			:=FALSE, 
+		bAlarm7			:=FALSE, 
+		bAlarm8			:=FALSE, 
+		bAlarm9			:=FALSE, 
+		bAlarm10		:=FALSE, 
+		bAlarm11		:=FALSE, 
+		bAlarm12		:=FALSE, 
+		bAlarm13		:=FALSE, 
+		bAlarm14		:=FALSE, 
+		bAlarm15		:=FALSE, 
+		wAlarmCode		=> MesEventCode);
+		
+		
+MesDataExd.MesData.MesAlarmCode	:= MesAlarmCode ; 
+MesDataExd.MesData.MesWarningCode := MesWarningCode  ; 
+	]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{8de93057-2866-44a7-a7ad-8e6767020297}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// EMULATOR I/O //
+	IF CalEmulatorActivated_G THEN
+	MesState 	:= Emul_MesState ;
+	MesUbatLowIO:= Emul_MesUbatLowIO ;
+	MesAlarmIO	:= Emul_MesAlarmIO ;
+	
+	END_IF
+	
+
+// METHODS CALLS // 
+	//M_Read() ; 
+(*	IF CalEmulatorActivated_G THEN
+
+	
+	END_IF
+	*)
+	
+	
+	M_AlarmManagement() ; ]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Read" Id="{b282c34e-021e-4e1d-9e46-375cd535d19c}">
+      <Declaration><![CDATA[METHOD M_Read
+//////////////////
+//  Read Modbus Variable . 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="P_MesAlarmCode" Id="{6950169b-0b27-44c7-a349-bca7ebf77e37}">
+      <Declaration><![CDATA[PROPERTY P_MesAlarmCode : WORD]]></Declaration>
+      <Get Name="Get" Id="{33ba8ba1-69b6-4dc7-a299-375934cf0f1b}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[P_MesAlarmCode := MesAlarmCode ; 
+]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="P.MesDataExd.MesData. Id="{d2b92ffe-a31a-4675-99b0-0591f9cadf7c}">
+      <Declaration><![CDATA[PROPERTY P.MesDataExd.MesData.: UPS]]></Declaration>
+      <Get Name="Get" Id="{65c20f06-d878-469c-afb0-180da4dc2a4c}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[P.MesDataExd.MesData.:= MesDataExd.MesData.; ]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{8a3184c4-4774-44a3-b115-95b9878e0e46}">
+        <Declaration><![CDATA[
+VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[ MesDataExd.MesData.:= P.MesDataExd.MesData.; ]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
+    <Property Name="P_MesEventCode" Id="{336db46b-0abe-4bc3-bbb6-45ac91a1164f}">
+      <Declaration><![CDATA[PROPERTY P_MesEventCode : WORD]]></Declaration>
+      <Get Name="Get" Id="{d3504c62-6be5-49f1-9946-630142f30f62}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[P_MesEventCode := MesEventCode ; ]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="P_MesWarningCode" Id="{af7d62c1-5623-4af2-9d31-c3fe0f35b0aa}">
+      <Declaration><![CDATA[PROPERTY P_MesWarningCode : WORD]]></Declaration>
+      <Get Name="Get" Id="{f8057cea-b963-473a-8487-4aeb8bfc1dd2}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[P_MesWarningCode := MesWarningCode ; ]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <LineIds Name="FB_SAFE_UPS">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SAFE_UPS.M_AlarmManagement">
+      <LineId Id="5" Count="6" />
+      <LineId Id="100" Count="7" />
+      <LineId Id="99" Count="0" />
+      <LineId Id="13" Count="2" />
+      <LineId Id="17" Count="0" />
+      <LineId Id="61" Count="14" />
+      <LineId Id="19" Count="0" />
+      <LineId Id="21" Count="1" />
+      <LineId Id="34" Count="16" />
+      <LineId Id="2" Count="0" />
+      <LineId Id="118" Count="4" />
+    </LineIds>
+    <LineIds Name="FB_SAFE_UPS.M_Execute">
+      <LineId Id="3" Count="0" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="11" Count="0" />
+      <LineId Id="54" Count="1" />
+      <LineId Id="12" Count="0" />
+      <LineId Id="38" Count="0" />
+      <LineId Id="13" Count="1" />
+      <LineId Id="36" Count="1" />
+      <LineId Id="41" Count="3" />
+      <LineId Id="39" Count="1" />
+      <LineId Id="15" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SAFE_UPS.M_Read">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SAFE_UPS.P_MesAlarmCode.Get">
+      <LineId Id="3" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SAFE_UPS.P.MesDataExd.MesData.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SAFE_UPS.P.MesDataExd.MesData.Set">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SAFE_UPS.P_MesEventCode.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SAFE_UPS.P_MesWarningCode.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

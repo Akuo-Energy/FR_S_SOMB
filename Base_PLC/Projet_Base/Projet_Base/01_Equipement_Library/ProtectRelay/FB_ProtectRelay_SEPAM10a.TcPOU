@@ -1,0 +1,302 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_ProtectRelay_SEPAM10a" Id="{339f963c-340e-4345-81e2-516f92fff5e6}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_ProtectRelay_SEPAM10a EXTENDS FB_ProtectRelay_Base
+VAR_INPUT
+	InUnitID            : DINT;			// (NA)   SMA Modbus Unit ID. 
+		MesDataExd		      	AT %Q* 	: ProtectRelay_S48; 		
+END_VAR
+VAR_OUTPUT
+	OutFBCompleteted   : BOOL;
+	
+END_VAR
+VAR
+// M_ALARMMNGMT VARIABLES //
+		MesAlarmCode				: WORD ;  			// (NA) [P,H,B]   Alarm Word . 0: Synthesis , 1:SMA general alarm , 2:Communication Alarm , 3:, 4:, 5:, 6:, 7:, 8:, 9:, 10:, 11:, 12:, 13:, 14:, 15:, 16:
+		MesWarningCode				: WORD ;  			// (NA) [P,H,B]   Warning Word . 0: Synthesis , 1:SMA general warning  , 2: , 3: , 4:, 5:, 6:, 7:, 8:, 9:, 10:, 11:, 12:, 13:, 14:, 15:, 16:		
+  		MesEventCode				: WORD; 			// (NA) [P,H,B] Event Code. Acknowledgable.
+                                              		
+
+		MesComError					: BOOL ; 			// (NA) [P,H]  True if lost of communication
+		MesAlarmCom					: BOOL ; 			// (NA) All modbus trame fail 
+		
+	// M_READ VARIABLES//
+		FB_ModbusRead_I1          	: FB_ReadModbusRTU_V2; 				// (NA) FB for Modbus Reading
+
+		MesBlock1_Temp 				: ARRAY[0..7]  OF WORD; 			// (NA) Temporary Block with multiple modbus reading (Caution : Double Word variables)
+		AX_bRead 					: ARRAY[1..2]  OF BOOL;
+		ModbusReadAlarm             : BOOL;				// (NA) Modbus Read Alarm for communications
+		MesModbusAlarmCode			: UDINT;							// (NA) Modbus Read Alarm Code
+		CalAllCompleted				: BOOL;								// (NA) Returns the status of all modbus requests
+	
+		AllNotBusy					: BOOL:=TRUE;
+		TP_Read						: LTP; 								// (NA) Tempo to define Modbus Reading Frequency
+	//	ClockRead					: BOOL;								// (NA) Modbus reading Clock
+		RTrig						: R_TRIG;
+END_VAR
+
+VAR CONSTANT
+	    CstClockReadTime 		: LTIME := LTIME#1S;	  				// (Time) Read Modbus Frequency .	
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{bb26ae18-2130-4306-ba09-00f0c7cd44b9}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager : FB_AlarmCodeManager ; 
+
+	ComWarning: BOOL;
+	ComAlarm: BOOL;
+	KK: BYTE;
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Detection Variables
+ComWarning 	:= ComWarning OR ModbusReadAlarm ; // At least one modbus trame did not work
+ComAlarm	:= ComAlarm AND ModbusReadAlarm;  // All modbus trame did not work
+
+MesComError := ComWarning ;  
+MesAlarmCom := ComAlarm ;
+
+// ALARM CODE //
+	FB_AlarmCodeManager(
+		bAlarm1	 := FALSE,//
+		bAlarm2	 := FALSE,//
+		bAlarm3	 := FALSE, 
+		bAlarm4	 := FALSE,
+		bAlarm5	 := FALSE,
+		bAlarm6	 := FALSE,
+		bAlarm7	 := FALSE,
+		bAlarm8	 := FALSE,
+		bAlarm9	 := FALSE,
+		bAlarm10 := FALSE,
+		bAlarm11 := FALSE,
+		bAlarm12 := FALSE,
+		bAlarm13 := FALSE,
+		bAlarm14 := FALSE,														   
+		bAlarm15 := FALSE,									                      
+		wAlarmCode	=> MesAlarmCode);
+
+
+// WARNING CODE //
+	FB_AlarmCodeManager(
+ 		bAlarm1			:= FALSE,
+		bAlarm2			:= FALSE,
+        bAlarm3			:= FALSE,
+		bAlarm4			:= FALSE, 
+		bAlarm5			:= FALSE, 
+		bAlarm6			:= FALSE, 
+		bAlarm7			:= FALSE, 
+		bAlarm8			:= FALSE, 
+		bAlarm9			:= FALSE, 
+		bAlarm10		:= FALSE, 
+		bAlarm11		:= FALSE, 
+		bAlarm12		:= FALSE, 
+		bAlarm13		:= FALSE, 
+		bAlarm14		:= FALSE, 
+		bAlarm15		:= FALSE, 
+		wAlarmCode	=> MesWarningCode);	
+		
+		
+// EVENT CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= FALSE,
+		bAlarm2			:= FALSE,
+		bAlarm3			:= FALSE,
+		bAlarm4			:= FALSE, 		
+		bAlarm5			:= FALSE, 
+		bAlarm6			:= FALSE, 
+		bAlarm7			:= FALSE, 
+		bAlarm8			:= FALSE, 
+		bAlarm9			:= FALSE, 
+		bAlarm10		:= FALSE, 
+		bAlarm11		:= FALSE, 
+		bAlarm12		:= FALSE, 
+		bAlarm13		:= FALSE, 
+		bAlarm14		:= FALSE, 
+		bAlarm15		:= FALSE, 
+		wAlarmCode		=> MesEventCode);]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_CP" Id="{fec532ec-f708-43a2-b430-0797d631fc9d}">
+      <Declaration><![CDATA[METHOD M_CP 
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+SUPER^.M_CP() ; 
+
+
+
+
+Trig_Cmd_Read(CLK:=IN_CmdToggleRead);
+Trig_Cmd_Write(CLK:=IN_CmdToggleWrite);
+	
+IF Trig_Cmd_Read.Q THEN
+	IN_CmdToggleRead := FALSE;
+	MesDataExd.MesData.MesCP_Read := NOT MesDataExd.MesData.MesCP_Read;
+END_IF
+
+
+IF Trig_Cmd_Write.Q THEN
+	IN_CmdToggleWrite := FALSE;
+	MesDataExd.MesData.MesCP_Write := NOT MesDataExd.MesData.MesCP_Write;
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{a63a28bc-8391-4bad-8352-8a38adf5b6e9}">
+      <Declaration><![CDATA[METHOD M_Execute
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// INITIALIZE //
+	IF NOT(bInit) THEN
+		THIS^.M_Init();
+		bInit := TRUE;
+		
+	END_IF
+	IF bInit THEN
+		AllNotBusy:=TRUE;
+		AllNotBusy:=NOT(FB_ModbusRead_I1.OutBusy) AND AllNotBusy;
+		TP_Read(In := NOT(TP_Read.Q) AND AllNotBusy);
+		RTrig(CLK := TP_Read.Q);
+		ClockRead := RTrig.Q;	
+	// METHODS CALLS //
+		// Order is important 
+		THIS^.M_Read();
+		THIS^.M_Evaluate();
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{07ce3f06-7ce8-4e03-ad70-e9adf46f68bd}">
+      <Declaration><![CDATA[METHOD M_Init
+
+
+VAR
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[OutFBCompleteted := FALSE;
+TP_Read(PT := CstClockReadTime);
+
+FB_ModbusRead_I1(
+	InUnitID:= DINT_TO_BYTE(InUnitID), 
+	InTimeout:= T#5s, 
+	InFunctionRead:= 1 );]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Read" Id="{712ff4e7-d8a1-4b3f-bbe0-342325c9cc1d}">
+      <Declaration><![CDATA[METHOD M_Read
+
+VAR
+//local variables (reinitialized at each cycle) 
+	Busy1 : BOOL;
+	Error1: BOOL;
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// CP-Read / Write 
+
+
+IF MesDataExd.MesData.MesCP_Read  THEN	
+	OutFBCompleteted:=FALSE;
+	
+	// MODBUS REQUEST//
+		FB_ModbusRead_I1(InClockRead:= ClockRead,				
+			InStartAddr:= 16#113,
+			InAddrDest := ADR(MesBlock1_Temp),
+			OutBusy => Busy1,
+			OutErrorMbRead => Error1, 
+			OutErrorId => MesModbusAlarmCode
+		);
+						
+		IF FB_ModbusRead_I1.OutbCompleted THEN
+			ModbusReadAlarm := Error1;
+			AX_bRead[1] := TRUE;
+		ELSIF NOT busy1 AND Error1 THEN
+			ModbusReadAlarm := Error1;
+			
+		END_IF
+		
+		CalAllCompleted :=  AX_bRead[1];
+		OutFBCompleteted := CalAllCompleted;
+		
+	//CHECK IF ALL MODBUS REQUESTS ARE FINISHED
+		IF (CalAllCompleted) THEN
+			//RESETING CLOCK READ FOR EACH REQUEST
+			AX_bRead[1] := FALSE;
+			CalAllCompleted := FALSE;
+			
+		END_IF
+		
+		//Block 1
+		MesDataExd.MesData.MesI1  := (WORD_TO_INT(MesBlock1_Temp[1])/10);
+		MesDataExd.MesData.MesI2 := (WORD_TO_INT(MesBlock1_Temp[3])/10);
+		MesDataExd.MesData.MesI3 := (WORD_TO_INT(MesBlock1_Temp[5])/10);
+		//MW(InFirstWord := MesBlock1_Temp[6],InSecondWord := MesBlock1_Temp[7],OutCalReal =>MesDataExd.MesData.MesRes_Ins);*)
+
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_ProtectRelay_SEPAM10a">
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ProtectRelay_SEPAM10a.M_AlarmManagement">
+      <LineId Id="21" Count="2" />
+      <LineId Id="25" Count="1" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="29" Count="57" />
+      <LineId Id="28" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ProtectRelay_SEPAM10a.M_CP">
+      <LineId Id="42" Count="19" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ProtectRelay_SEPAM10a.M_Execute">
+      <LineId Id="9" Count="5" />
+      <LineId Id="20" Count="0" />
+      <LineId Id="22" Count="0" />
+      <LineId Id="21" Count="0" />
+      <LineId Id="24" Count="1" />
+      <LineId Id="23" Count="0" />
+      <LineId Id="15" Count="2" />
+      <LineId Id="27" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ProtectRelay_SEPAM10a.M_Init">
+      <LineId Id="9" Count="0" />
+      <LineId Id="17" Count="0" />
+      <LineId Id="14" Count="0" />
+      <LineId Id="25" Count="0" />
+      <LineId Id="29" Count="1" />
+      <LineId Id="32" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ProtectRelay_SEPAM10a.M_Read">
+      <LineId Id="153" Count="0" />
+      <LineId Id="155" Count="0" />
+      <LineId Id="158" Count="0" />
+      <LineId Id="142" Count="0" />
+      <LineId Id="15" Count="1" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="61" Count="0" />
+      <LineId Id="64" Count="0" />
+      <LineId Id="66" Count="1" />
+      <LineId Id="118" Count="0" />
+      <LineId Id="166" Count="0" />
+      <LineId Id="30" Count="3" />
+      <LineId Id="35" Count="4" />
+      <LineId Id="86" Count="2" />
+      <LineId Id="90" Count="3" />
+      <LineId Id="100" Count="1" />
+      <LineId Id="89" Count="0" />
+      <LineId Id="143" Count="0" />
+      <LineId Id="147" Count="5" />
+      <LineId Id="146" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

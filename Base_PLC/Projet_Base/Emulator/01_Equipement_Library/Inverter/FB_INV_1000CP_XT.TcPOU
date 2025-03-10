@@ -1,0 +1,138 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_INV_1000CP_XT" Id="{a8472cec-1852-4a3f-92d5-8fbb27dada7a}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_INV_1000CP_XT EXTENDS FB_INV_Base
+
+
+VAR_INPUT PERSISTENT
+	ParamTcpPort				: UINT	:= 502 ;	// Modbus TCP port
+	ParamQn					: REAL;				// (kVAr) Nominal Reactive Power
+	ParamIPAddress				: STRING; 			// (NA)Config: IP Adress of PV INverter	
+	ParamUnitID 				: BYTE; 			// (NA)   SMA Modbus Unit ID. 
+	ParamNumInv					: BYTE;             // Inverter Index  
+END_VAR
+
+VAR_INPUT 
+	// Parameters of the Object (instance specific) 
+	AcknowledgeOrder			: BOOL ;			// Acknowledge fault
+	ParamNbInv					: WORD ;			// (NA) Nb of inverters per inverter
+	                                                    		
+	ParamOptionActivated		: WORD ;			// (NA) Option available on the inverter
+	                                                    		
+	ParamPRamp					:  REAL:= 0 ;		// (s) duration of the ramp from setpoint to setpoint
+	ParamQRamp					:  REAL:= 0 ;		// (s) duration of the ramp from setpoint to setpoint
+	ParamPfRamp					:  REAL:= 0 ;		// (s) duration of the ramp from setpoint to setpoint
+
+	IN_MesAcCbOpen_IO				:  BOOL ; 			//Retour cablé Physique des contacteur AC des onduleurs	
+	Cmd_SwitchOff				:  BOOL ;		    // etat de DO cablé sur les onduleurs pour les eteindres
+END_VAR
+
+
+
+VAR
+	//M_Acknowledge
+		
+	// M_ALARMMNGMT VARIABLES //
+	
+	
+	// M_READ VARIABLES//
+	MesDataExd		AT %Q*	: INV_1000CP_XT;
+		//MesDataExd.MesData.C_Read				:  INV_CC;	
+		//MesDataExd.MesData.C_Cmd				:  INV_CC;
+		
+	
+		FB_ModbusRead	          	: ARRAY[1..8] OF FB_ModbusRead; 	            // (NA) FB for Modbus Reading
+		FB_ModbusWrite				: ARRAY[1..3] OF FB_ModbusWrite;
+		AX_ModbusReadAlarm			: ARRAY[1..9] OF BOOL;
+		AX_ModbusReadAlarmId		: ARRAY[1..9] OF UDINT;		
+		AX_ModbusWriteAlarm			: ARRAY[1..3] OF BOOL;
+		AX_ModbusWriteAlarmId		: ARRAY[1..3] OF UDINT;
+		
+		
+		BlockInit					: WORD;							// First Block : Number of inverters in the PCS
+		MesBlock1_Temp 				: ARRAY [1..70] OF WORD ; 		// (NA) Temporary Block with multiple modbus reading (Caution : Double Word variables)
+		MesBlock2_Temp 				: ARRAY [1..90] OF WORD ; 		// (NA) Temporary Block with multiple modbus reading (Caution : Double Word variables)
+		MesBlock3_Temp 				: ARRAY [1..74] OF WORD ; 		// (NA) Temporary Block with multiple modbus reading (Caution : Double Word variables)
+		MesBlock4_Temp 				: ARRAY [1..38] OF WORD ; 		// (NA) Temporary Block with multiple modbus reading (Caution : Double Word variables)
+		MesBlock5_Temp 				: ARRAY [1..28] OF WORD ; 		// (NA) Temporary Block with multiple modbus reading (Caution : Double Word variables)
+		MesBlock6_Temp				: ARRAY [1..13] OF WORD ;		// (NA) Temporary block with both start commands for each inverter
+		MesBlock7_Temp				: ARRAY [1..16] OF WORD ;	
+		MesBlock8_Temp				: ARRAY [1..4] OF WORD ;
+		
+		MesBlockWrite1_Temp 		: WORD ;				    	// (NA) Temporary Block with multiple modbus writing (Caution : Double Word variables)
+		MesBlockWrite2_Temp			: WORD ;						// (NA) Temporary Block with multiple modbus writing (Caution : Double Word variables)
+		MesBlockWrite3_Temp			: ARRAY [1..2] OF WORD ;
+	// M_CURTAIL VARIABLES //
+	
+		LastCurtailMode				: BOOL:=TRUE ;				// Init at true, to force the first write on inverter
+		MesCP_WriteCurtailMode		: BOOL ;
+		CurtailModeValue_P			: DWORD ; 					// 1077 := WctlMan : Inverter set setpoint, 1079 := WCtlCom Inverter take the setpoint set by com (plc),303 := OFF
+		CurtailModeValue_Q			: DWORD ;					// 303:=OFF,1075:= PFCtlCom,1074:= PFCtlMan,1072 VarCtlCom
+		
+		MesModbusWriteCode          : UDINT ; 					// (NA) Modbus Write Alarm Code 	
+		MesModbusCurtailAlarm		: BOOL ;				   	// (NA) Modbus Write Curtail Alarm 
+		
+		InvQModeValue				: UINT ;					// Mode of Q power control : 1: Q mod, 2: PF mode, 3: Q(P)
+		InvSetptQ					: REAL ;					// (kVAr) setpoint for the reactive power for each inverter
+		
+	
+		InvSetptP					: REAL ;					// (kW) Setpoint for the active power for each inverter
+		TEMP						: BOOL ;
+	// M_INIT //
+		Code_Ctrl_Com 				: UINT := 1079 ;
+		
+		MesModbusCurtailInitAlarm 	: BOOL ;
+		
+	// M_STARTSTOP//
+		StartStop_RTrig				: R_Trig ;
+		StartStop_RTrigIO			: R_Trig ;
+		
+	// M_CP
+		CalCP_Acknowledge			: BOOL ;
+		//CalCP_CMD_SetPt				: BOOL; 	  // Write command start;
+		CalCP_CMD_StartStop			: BOOL ; 		  // Write command start;
+		CalCP_CMD_StartStopIO		: BOOL ; 		  // Write command start;
+	// M_STATEMANAGER//
+	
+	//M_EXECUTE VARIABLES //
+		TP_READ						: LTP ;			  //Tempo de cadencement FB Modbus
+		RTrig						: R_Trig ; 		  //Front montant sur TP_READ.Q
+		ReadBusy					: BOOL ;		 //FB Modbus en busy
+		bInit						: BOOL ;
+	//EMULATOR VARIABLES //
+		
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+
+]]></ST>
+    </Implementation>
+    <Method Name="M_Execute" Id="{e8172705-9c30-4880-9765-b2389fa4547e}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+SUPER^.M_Execute() ; ]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_INV_1000CP_XT">
+      <LineId Id="3" Count="1" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_INV_1000CP_XT.M_Execute">
+      <LineId Id="13" Count="1" />
+      <LineId Id="12" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

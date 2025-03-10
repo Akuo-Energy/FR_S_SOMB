@@ -1,0 +1,218 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_CB_MeasureMVCB" Id="{246debc0-6901-4ba9-b874-f0fed7c75642}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_CB_MeasureMVCB EXTENDS FB_CB_Base
+//////////////////
+//  Motorized Circuit Breaker with telecommAND  Requires Open and Close impulsions.
+//////////////////
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance/model specific) 
+	ParamTP_Impulsion	   : TIME := T#2S;			(* (s) 	 Config : Tempo for the start or stop command impulsion*)
+	ParamFuseNC		       : BOOL;					(* (NA)	 False  : TRUE = Closed , True : TRUE = opened	*)
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	
+END_VAR
+
+VAR_INPUT
+	// I/O Inputs              
+	IN_MesFuse_IO			: BOOL;
+	IN_MesEarth_IO			: BOOL; 
+	
+	MesDataExd	: CB_MeasureMVCB_Sch ;
+	
+END_VAR
+
+VAR
+	//M_OPENCLOSE VARIABLES//	
+		RsFuse				: RS ;
+		
+	//M_ALARMMANAGEMENT VARIABLES//
+
+ 
+	//M_STATEMANAGER VARIABLES//
+	
+	// M_EXECUTE VARIABLES //
+	
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{6d67c792-141f-43ef-8616-afdd8a96f797}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Manages Contactor alarms and warnings
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager			: FB_AlarmCodeManager ; 
+
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Check if command and measures are matching after tempo
+
+TON_NotClosedAndNotOpened(IN:=  NOT MesClosed AND NOT MesOpened , PT := ParamTimeOut_Alarm) ; 
+TON_ClosedAndOpened(IN:=MesClosed AND MesOpened, PT := ParamTimeOut_Alarm) ; 
+
+RsFuse(Set:= MesDataExd.MesFuseBurned ,Reset1:=GVL_CFG.CmdClearFault_G OR IN_CmdReset);
+
+
+
+// ALARM CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= FALSE,										//
+		bAlarm2			:= TON_NotClosedAndNotOpened.Q,					// Incoherent State measure (Not Opened and not Closed 
+		bAlarm3 		:= TON_ClosedAndOpened.Q   , 					// Incoherent State measure (Opened and Closed )	
+		bAlarm4			:= RsFuse.Q1,									// Fuse burned
+		bAlarm5			:= FALSE, 										//  
+		bAlarm6			:= FALSE, 										//
+		bAlarm7			:= FALSE,                                       //
+		bAlarm8			:= FALSE,                                       //
+		bAlarm9			:= FALSE,                                       //
+		bAlarm10		:= FALSE,                                       //
+		bAlarm11		:= FALSE,                                       //
+		bAlarm12		:= FALSE,                                       //
+		bAlarm13		:= FALSE, 										//
+		bAlarm14		:= FALSE, 										//
+		bAlarm15		:= FALSE , 										// 
+		wAlarmCode		=>MesDataExd.MesData.MesAlarmCode);
+
+//WARNING CODE//
+		FB_AlarmCodeManager(
+		bAlarm1			:= FALSE , 										// 
+		bAlarm2			:= FALSE  , 									// 
+		bAlarm3 		:= FALSE,										// 
+		bAlarm4			:= FALSE, 										// 
+		bAlarm5			:= FALSE, 										//
+		bAlarm6			:= MesDataExd.MesEarth, 						// The cell is connected to earth (earthing)
+		bAlarm7			:= FALSE, 										//
+		bAlarm8			:= FALSE,                                       //
+		bAlarm9			:= FALSE,                                       //
+		bAlarm10		:= FALSE,                                       //
+		bAlarm11		:= FALSE,                                       //
+		bAlarm12		:= FALSE,                                       //
+		bAlarm13		:= FALSE,                                       //
+		bAlarm14		:= FALSE,                                       //
+		bAlarm15		:= FALSE, 										//
+		wAlarmCode 		=>MesDataExd.MesData.MesWarningCode);
+
+// EVENT CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= FALSE, 										// 
+		bAlarm2			:= FALSE, 										// 
+		bAlarm3			:= MesOpened, 									// Opened Position
+		bAlarm4			:= MesClosed, 									// Closed Position
+		bAlarm5			:= IN_CmdReset, 								// Reset Command
+		bAlarm6			:= FALSE, 										//
+		bAlarm7			:= FALSE,                                       //
+		bAlarm8			:= FALSE,                                       //
+		bAlarm9			:= FALSE,                                       //
+		bAlarm10		:= FALSE,                                       //
+		bAlarm11		:= FALSE,                                       //
+		bAlarm12		:= FALSE,                                       //
+		bAlarm13		:= FALSE,                                       //
+		bAlarm14		:= FALSE, 										//
+		bAlarm15		:= FALSE, 										//
+		wAlarmCode		=>MesDataExd.MesData.MesEventCode);
+		
+	// UPDATE STRUCTURE
+
+
+		
+	IF NOT ParamFuseNC THEN 
+	MesDataExd.MesFuseBurned := NOT IN_MesFuse_IO;
+	ELSE
+	MesDataExd.MesFuseBurned := IN_MesFuse_IO;
+	END_IF
+	
+MesDataExd.MesEarth	:= IN_MesEarth_IO ;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{1a41ed81-5a36-4e0e-8860-56f911e65d74}">
+      <Declaration><![CDATA[METHOD M_Execute
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+// PERMANENT CONDITIONS //	
+MesDataExd.MesData.MesCP_Open					:= IN_CmdOpen AND NOT IN_CmdReset;
+MesDataExd.MesData.MesCP_Close				:= NOT MesDataExd.MesData.MesClosed AND IN_CmdClose AND NOT MesDataExd.MesData.MesAlarmCode.0 AND NOT MesDataExd.MesData.MesCP_Open AND NOT IN_CmdReset ;
+
+
+SUPER^.M_Execute();]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_OpenClose" Id="{1852e9ce-c632-4095-a9c6-71e12a6bdbd4}">
+      <Declaration><![CDATA[METHOD M_OpenClose
+//////////////////
+// Manages Opening and Closing of the contactor
+//////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_StateManager" Id="{353395cf-2bb9-4807-b1ff-bbda58a98ea2}">
+      <Declaration><![CDATA[METHOD M_StateManager
+//////////////////
+// Manages Contactor State
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[MesState := 0 ; 
+IF MesOpened THEN		// If the cell seems opens and closed in the same time, we will consider it as opened. 
+	
+	MesState.0 := 1 ; 
+MesDataExd.MesData.MesClosed := FALSE ; 
+MesDataExd.MesData.MesOpened := TRUE ; 
+ELSIF MesClosed THEN
+	
+	MesState.1 := 1 ; 
+MesDataExd.MesData.MesClosed := TRUE ; 
+MesDataExd.MesData.MesOpened := FALSE ; 
+ELSE 
+	MesState.0 := 1 ;		// if the cell seems neither opened and neither closed , we will consider it as opened. 
+MesDataExd.MesData.MesClosed := FALSE ; 	
+MesDataExd.MesData.MesOpened := TRUE ; 
+END_IF
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_CB_MeasureMVCB">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_CB_MeasureMVCB.M_AlarmManagement">
+      <LineId Id="237" Count="74" />
+      <LineId Id="322" Count="0" />
+      <LineId Id="221" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_CB_MeasureMVCB.M_Execute">
+      <LineId Id="69" Count="0" />
+      <LineId Id="79" Count="4" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_CB_MeasureMVCB.M_OpenClose">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_CB_MeasureMVCB.M_StateManager">
+      <LineId Id="87" Count="16" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

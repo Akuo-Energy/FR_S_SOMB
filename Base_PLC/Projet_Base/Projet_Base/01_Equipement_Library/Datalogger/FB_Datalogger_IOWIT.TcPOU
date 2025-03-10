@@ -1,0 +1,373 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_Datalogger_IOWIT" Id="{df565bbc-7268-48fc-be44-05ba7c190190}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Datalogger_IOWIT EXTENDS FB_Datalogger_Base
+
+VAR_INPUT PERSISTENT
+	{attribute 'OPC.UA.DA' := '1'} 
+	ParamTcpPort			: UINT   := 502;					(* Modbus TCP port															*)
+	{attribute 'OPC.UA.DA' := '1'}                          	
+	ParamIPAddress			: STRING;				 			(* (NA)Config: IP Adress of WIT                                             *)
+	{attribute 'OPC.UA.DA' := '1'} 	                        	
+	ParamUnitID 			: BYTE:=1; 							(* (NA)   SMA Modbus Unit ID.                                               *)
+	                                                        	
+	ParamTempoComAlarm		: TIME 		:= T#30S ; 				(* (s) Config : Tempo to detect LOC Alarm                                   *)
+	ParamTimeOutCurtail     : TIME 		:= T#45S ;				(* (s) Config : Tempo to curtail power at set value before Timeout warning  *)
+	ParamClockReadTime 		: TIME 		:= TIME#2S;	  			(* (Time) Read Modbus Frequency .                                           *)
+	ParamClockWriteTime 	: TIME 		:= TIME#2S; 	  		(* (Time) Write Modbus Frequency .                                          *)
+ 	ParamTimeout			: TIME  	:= T#5S ;		  		(* (Time) Timeout for modbus reading                                        *)
+		                                                    
+	ParamID					: UINT :=1; 						(* ID of the datalogger . Corresponding to PTR ID .                         *)
+	
+END_VAR
+
+VAR_INPUT 
+	// Parameters of the Object (instance specific) 
+	IN_CmdToggleRead			: BOOL ;
+		
+	IN_CmdReset_L				: BOOL ;						// (NA) External Reset Command
+	                                                    		
+	MbAddrDI	: WORD; 										// Adresse IP Requête Digital Inputs
+	MbAddrAI	: ARRAY[1.. 8] OF WORD; 						// Adresses IP Requête Analogic Inputs 
+	
+	MesDataExd AT %Q*			      	: Datalogger_IOWIT ; 	// (NA) [P,H,B] INV  Data Structure 
+
+	
+	
+	
+END_VAR
+
+VAR
+		
+	// M_READ VARIABLES//
+	
+	
+	FB_ModbusReadDI	        : FB_ModbusReadCoils;   	 		// FB for Modbus Reading Digital Values
+	FB_ModbusReadAI			: FB_ModbusRead;			 		// FB for Modbus Reading Analogic Values (Adresses on 1010X-1019X range)
+	
+	DI_List : ARRAY[1..27] OF BOOL;
+	AI_List : ARRAY[1..18] OF WORD;
+	TempAIList : ARRAY[1..2] OF WORD;
+		
+		
+	// M_ALARMMNGMT VARIABLES //
+	TON_ComAlarm				: TON ; 						// Tempo before deteting loss of communication. 
+	TON_ComWarning				: TON ; 						// Tempo before detecting loss of communication.                                                	
+                                 		    	        		
+	MesComWarning				: BOOL ; 						// (NA) [P,H]  True if bad communication
+                                                        		
+	                                                    		
+	//M_EXECUTE VARIABLES //                            		
+	TP1							: TP ; 	 						// (NA) Tempo to define Modbus Reading Frequency 
+	Trig_Cmd_Read: R_TRIG;	                            	
+	                                                    	
+	ClockRead		AT %Q*		: BOOL	;						// (NA) Modbus reading Clock
+    
+    
+	bInit						: BOOL;
+	
+	
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+
+]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{05f8f6a0-a591-48d3-b09c-319c15c9652b}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Manages IntelliGen Alarms
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager : FB_AlarmCodeManager ; 
+	KK				: BYTE;		// For Loop 
+	bComError		: BOOL := TRUE;
+	bComWarning 	: BOOL;
+	AC_CB_OPEN		: BOOL;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+// ALARM CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= MesDataExd.MesData.Transfo.MesDataExd.MesData.MesAlarmTemp , 		// A1_Transfo : Temperature alarm
+		bAlarm2			:= MesDataExd.MesData.FSS.MesAlarmFire , 					// FSS : Security Fire Detection                                         
+		bAlarm3			:= MesDataExd.MesData.Transfo.MesDataExd.MesData.MesAlarmGas ,			// A1_Transfo : Transfo Gaz Discharge                                      
+		bAlarm4			:= MesDataExd.MesData.Transfo.MesDataExd.MesData.MesAlarmOilLevel ,	// A1_Transfo : Transfo Pressure 	                                           
+		bAlarm5			:= MesDataExd.MesData.MS.MesAlarmState , 					// A1_MS : Security Motion Sensor                                         
+		bAlarm6			:= MesDataExd.MesData.DS.MesAlarmState ,					// A1_DS : Security Door Contact                                           
+		bAlarm7			:= MesDataExd.MesData.WS.MesSVS_Signal1,					// A1_WS : Security Video Signal 1                                          
+		bAlarm8			:= MesDataExd.MesData.WS.MesSVS_Signal2,					// A1_WS : Security Video Signal 2            
+		bAlarm9			:= MesDataExd.MesData.WS.MesSVS_Signal3,					// A1_WS : Security Video Signal 3            
+		bAlarm10		:= MesDataExd.MesData.CB_Transfo.MesAlarmState, 			// CB_Transfo : Alarm State                                         
+		bAlarm11		:= MesDataExd.MesData.CB_INV[1].MesAlarmState, 				// CB_INV_1 : Alarm State                                         
+		bAlarm12		:= MesDataExd.MesData.CB_INV[2].MesAlarmState, 				// CB_INV_2 : Alarm State                                         
+		bAlarm13		:=FALSE, //                                          
+		bAlarm14		:=FALSE, //                                          
+		bAlarm15		:=FALSE , 			// 			                                 
+		wAlarmCode		=>MesDataExd.MesData.MesAlarmCode);                            
+
+// WARNING CODE //
+	FB_AlarmCodeManager(
+ 		bAlarm1			:= MesDataExd.MesData.Transfo.MesDataExd.MesData.MesWarningTemp,		//	A1_Transfo : Transfo Temp Warning 		
+		bAlarm2			:=FALSE, //
+		bAlarm3			:=FALSE, //
+		bAlarm4			:=FALSE, //                                 
+		bAlarm5			:=FALSE, //                          	
+		bAlarm6			:=FALSE, //                                   
+		bAlarm7			:=FALSE, //                                   
+		bAlarm8			:=FALSE, //                                   
+		bAlarm9			:=FALSE, //                                   
+		bAlarm10		:=FALSE, //                                   
+		bAlarm11		:=FALSE, //                                   
+		bAlarm12		:=FALSE, //                                   
+		bAlarm13		:=FALSE, //                                   
+		bAlarm14		:=FALSE, //                                   
+		bAlarm15		:=FALSE, //                                   
+		wAlarmCode		=>MesDataExd.MesData.MesWarningCode);
+
+// EVENT CODE //
+	FB_AlarmCodeManager(
+ 		bAlarm1			:= MesDataExd.MesData.MesInvReturnContact1, // Inverter Return Contact 1		
+		bAlarm2			:= MesDataExd.MesData.MesInvReturnContact2, // Inverter Return Contact 2
+		bAlarm3			:=FALSE, //
+		bAlarm4			:=FALSE, //                                 
+		bAlarm5			:=FALSE, //                          	
+		bAlarm6			:=FALSE, //                                   
+		bAlarm7			:=FALSE, //                                   
+		bAlarm8			:=FALSE, //                                   
+		bAlarm9			:=FALSE, //                                   
+		bAlarm10		:=FALSE, //                                   
+		bAlarm11		:=FALSE, //                                   
+		bAlarm12		:=FALSE, //                                   
+		bAlarm13		:=FALSE, //                                   
+		bAlarm14		:=FALSE, //                                   
+		bAlarm15		:=FALSE, //                                   
+		wAlarmCode		=>MesDataExd.MesData.MesWarningCode);		 		                 ]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_CP" Id="{3e880728-d1e5-4ab3-83ac-6ede20ce41b0}">
+      <Declaration><![CDATA[METHOD M_CP
+//////////////////
+//  Emulator
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+SUPER^.M_CP() ; 
+
+
+
+
+Trig_Cmd_Read(CLK:=IN_CmdToggleRead);
+Trig_Cmd_Write(CLK:=IN_CmdToggleWrite);
+	
+IF Trig_Cmd_Read.Q THEN
+	IN_CmdToggleRead := FALSE;
+	MesDataExd.MesData.MesCP_Read := NOT MesDataExd.MesData.MesCP_Read;
+END_IF
+
+
+IF Trig_Cmd_Write.Q THEN
+	IN_CmdToggleWrite := FALSE;
+	MesDataExd.MesData.MesCP_Write := NOT MesDataExd.MesData.MesCP_Write;
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{0b9398da-dde3-45bb-b828-77b8208a799b}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[M_CP() ; 
+M_Read() ; 
+M_AlarmManagement() ; 
+
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Read" Id="{97902efc-e871-4e4d-b6c4-009ee8271eaa}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'M_Read'}
+METHOD M_Read
+//////////
+// Read Method for SMA : Modbus reading
+//////////
+VAR
+	// Method local variables (reinitialized at each cycle) 
+	//MW					: FB_MergeWordsToFloat;
+	//MW_1				: FB_WordsToDint64BE;
+	
+
+	MW					: FB_MergeWordsToDint;
+	i 					: INT;
+	
+	MesInv2SSM6SwitchGear: INT;
+	KK: INT;
+END_VAR
+
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+// CP-Read / Write 
+
+
+IF MesDataExd.MesData.MesCP_Read  THEN		 
+	
+	// Digital Inputs Modbus Requests 
+	
+	FB_ModbusReadDI(pDestAddr := ADR(DI_List),
+					sIPAddr := ParamIPAddress,
+					tTimeout := ParamTimeout,
+					nTcpPort := 502,
+					nQuantity := 28,
+					nMBAddr := MbAddrDI,
+					cbLength := SIZEOF(DI_List),
+					nUnitID := 1,
+					ClockRead := MesDataExd.MesData.MesCP_Read AND ClockRead,
+					Reset := CmdClearFault_G OR IN_CmdReset_L);
+					
+	FOR i := 1 TO 8 DO
+		FB_ModbusReadAI(pDestAddr := ADR(TempAIList),
+					sIPAddr := ParamIPAddress,
+					tTimeout := ParamTimeout,
+					nTcpPort := 502,
+					nQuantity := 2,
+					nMBAddr := MbAddrAI[i],
+					cbLength := SIZEOF(TempAIList),
+					nUnitID := 1,
+					ClockRead := MesDataExd.MesData.MesCP_Read AND ClockRead,
+					Reset := CmdClearFault_G OR IN_CmdReset_L);
+					
+		AI_List[2*i-1] := TempAIList[1];
+		AI_List[2*i] := TempAIList[2];
+	END_FOR	
+	
+	//  MesDataExd.MesData.Filling Digital Input			
+	
+	MesDataExd.MesData.MesInvReturnContact1	:=	DI_List[1]; 	
+	MesDataExd.MesData.MesInvReturnContact2	:=	DI_List[2]; 
+		
+	MesDataExd.MesData.Transfo.MesDataExd.MesData.MesAlarmGas 			:= DI_List[3];
+	MesDataExd.MesData.Transfo.MesDataExd.MesData.MesAlarmOilLevel 		:= DI_List[4];
+	MesDataExd.MesData.Transfo.MesDataExd.MesData.MesWarningTemp 		:= DI_List[5];
+	MesDataExd.MesData.Transfo.MesDataExd.MesData.MesAlarmTemp        	:= DI_List[6];
+	
+	MesDataExd.MesData.CB_Transfo.MesAlarmState	:=	DI_List[7];	// NO ? 
+	MesDataExd.MesData.FSS.MesAlarmFire      		:=  DI_List[8];
+	 
+	MesDataExd.MesData.CB_INV[1].MesAlarmState 	:=	DI_List[9]; 
+	MesDataExd.MesData.CB_INV[2].MesAlarmState  	:= 	DI_List[10];
+	 
+	MesDataExd.MesData.MS.MesAlarmState 	:=	DI_List[11];
+	MesDataExd.MesData.DS.MesAlarmState 	:=  DI_List[12];			// MesSecurityDoorContact
+	MesDataExd.MesData.WS.MesSVS_Signal1 	:=  DI_List[13];
+		
+	 FOR KK:= 1 TO CstNbSTR_G DO 
+	 	AX_PTR[ParamID].AX_INV[1].MesDataExd.MesData.Fuse_DC[KK].MesAlarmState 	:=	DI_List[14+(KK-1)];		// MesInv1SSM1SwitchGear
+	 END_FOR
+	  FOR KK:= 1 TO CstNbSTR_G DO 
+	 	AX_PTR[ParamID].AX_INV[2].MesDataExd.MesData.Fuse_DC[KK].MesAlarmState 	:=	DI_List[20+(KK-1)];		// MesInv1SSM1SwitchGear
+	 END_FOR
+	 
+	
+	MesDataExd.MesData.WS.MesSVS_Signal2	:=	DI_List[26];
+	MesDataExd.MesData.WS.MesSVS_Signal3 :=  DI_List[27];
+	 
+	 
+	 
+	 (*
+	MesDataExd.MesData.MesInvReturnContact1	:=	DI_List[1]; 	
+	MesDataExd.MesData.MesInvReturnContact2	:=	DI_List[2]; 
+		
+	MesDataExd.MesData.MesTransfoGazDischarge		:= DI_List[3];
+	MesDataExd.MesData.MesTransfoPressure		   	:= DI_List[4];
+	MesDataExd.MesData.MesTransfoTempWarning		:= DI_List[5];
+	MesDataExd.MesData.MesTransfoTempTrig        	:= DI_List[6];
+	
+	MesDataExd.MesData.MesHVAuxSwitchGearTransfo	:=	DI_List[7];
+	MesDataExd.MesData.MesSecurityFireDetect     	:=  DI_List[8];
+	 
+	MesDataExd.MesData.MesHVAuxSwitchGearInv1	:=	DI_List[9]; 
+	MesDataExd.MesData.MesHVAuxSwitchGearInv2  := 	DI_List[10];
+	 
+	MesDataExd.MesData.MesSecurityMotionSensor	:=	DI_List[11];
+	MesDataExd.MesData.MesSecurityDoorContact	:=  DI_List[12];
+	MesDataExd.MesData.A1_WS.MesSVS_Signal1 :=  DI_List[13];
+		
+	MesDataExd.MesData.MesInv1SSM1SwitchGear	:=	DI_List[14];
+	MesDataExd.MesData.MesInv1SSM2SwitchGear	:=	DI_List[15];
+	MesDataExd.MesData.MesInv1SSM3SwitchGear   :=  DI_List[16];
+	MesDataExd.MesData.MesInv1SSM4SwitchGear	:=  DI_List[17];
+	MesDataExd.MesData.MesInv1SSM5SwitchGear   :=  DI_List[18];
+	MesDataExd.MesData.MesInv1SSM6SwitchGear	:=  DI_List[19];
+	MesDataExd.MesData.MesInv2SSM1SwitchGear   :=  DI_List[20];
+	MesDataExd.MesData.MesInv2SSM2SwitchGear   :=  DI_List[21];
+	MesDataExd.MesData.MesInv2SSM3SwitchGear   :=  DI_List[22];
+	MesDataExd.MesData.MesInv2SSM4SwitchGear   :=  DI_List[23];
+	MesDataExd.MesData.MesInv2SSM5SwitchGear   :=  DI_List[24];
+	MesDataExd.MesData.MesInv2SSM6SwitchGear   :=  DI_List[25];
+	*)
+	
+	
+	//  MesDataExd.MesData.Filling Analogic Input
+	
+	
+	MW(WORD_STRONG :=  AI_List[1],	WORD_WEAK := AI_List[2], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.MesTransfoLocalTemp);
+	MW(WORD_STRONG :=  AI_List[3],	WORD_WEAK := AI_List[4], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.WS.MesTempMod1);
+	MW(WORD_STRONG :=  AI_List[5],	WORD_WEAK := AI_List[6], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.WS.MesTempMod2);
+	MW(WORD_STRONG :=  AI_List[7],	WORD_WEAK := AI_List[8], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.WS.MesTempExt);
+	MW(WORD_STRONG :=  AI_List[9],	WORD_WEAK := AI_List[10], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.WS.MesWindSpd);		
+	MW(WORD_STRONG :=  AI_List[11],	WORD_WEAK := AI_List[12], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.WS.MesGHI_Left);	  
+	MW(WORD_STRONG :=  AI_List[13],	WORD_WEAK := AI_List[14], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.WS.MesGHI_Middle);	
+	MW(WORD_STRONG :=  AI_List[15],	WORD_WEAK := AI_List[16], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.WS.MesGHI_Right);	 
+	
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_Datalogger_IOWIT">
+      <LineId Id="3" Count="1" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Datalogger_IOWIT.M_AlarmManagement">
+      <LineId Id="507" Count="55" />
+      <LineId Id="476" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Datalogger_IOWIT.M_CP">
+      <LineId Id="197" Count="19" />
+      <LineId Id="49" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Datalogger_IOWIT.M_Execute">
+      <LineId Id="13" Count="0" />
+      <LineId Id="47" Count="0" />
+      <LineId Id="45" Count="1" />
+      <LineId Id="14" Count="0" />
+      <LineId Id="12" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Datalogger_IOWIT.M_Read">
+      <LineId Id="3655" Count="0" />
+      <LineId Id="3659" Count="0" />
+      <LineId Id="3662" Count="0" />
+      <LineId Id="3658" Count="0" />
+      <LineId Id="3526" Count="109" />
+      <LineId Id="1627" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

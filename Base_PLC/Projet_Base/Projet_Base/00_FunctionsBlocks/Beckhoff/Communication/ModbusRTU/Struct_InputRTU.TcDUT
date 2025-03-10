@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="Struct_InputRTU" Id="{69953d1d-79f5-4abe-a8e4-861aefae956a}">
+    <Declaration><![CDATA[TYPE Struct_InputRTU :
+STRUCT
+	InStartAddr			: WORD;
+	InQuantity			: WORD;
+	InUnitID			: BYTE;
+	InBuffer			: POINTER TO BYTE;
+	InFunction			: UINT;
+	OutBusy				: POINTER TO BOOL;
+	OutError			: POINTER TO BOOL;
+	OutCompleted 		: POINTER TO BOOL;
+	OutErrorId			: POINTER TO INT ; 
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

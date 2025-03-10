@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="St_DataHisto" Id="{7993be8e-3ded-418c-9d48-d221dee8d8bc}">
+    <Declaration><![CDATA[TYPE St_DataHisto :
+STRUCT
+	Timestamp		: TIMESTRUCT;
+	ParentId		: DINT;
+	Value			: LREAL;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,146 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_UPS_Eneris" Id="{4e9533a1-bc08-4a26-b2ae-b66e6af54477}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_UPS_ENERIS EXTENDS FB_UPS_Base
+//////////////////
+// UPS 
+//////////////////
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance/model specific) 
+	ParamNC_Discharging					: BOOL := FALSE; 	(* (NA)False: TRUE = Closed, True : TRUE = opened*)
+	ParamNC_Alarm_Ulow					: BOOL := FALSE; 	(* (NA)False: TRUE = Closed, True : TRUE = opened*)
+	ParamNC_AlarmState					: BOOL := FALSE; 	(* (NA)False: TRUE = Closed, True : TRUE = opened*)
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	
+END_VAR
+
+VAR_INPUT
+	// I/O Inputs
+		IN_MesCbUPS_IO					: BOOL ; // 1 = opened. 
+		
+			MesDataExd				: UPS_ENERIS ; 
+	
+		
+END_VAR
+
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//
+		
+	//M_READ//
+
+
+		
+	//M_EXECUTE //
+		
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{7a8c25c1-e446-4986-a0f9-685f6be25a5b}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Manages Sepam Alarms. Alarms opens HT CB until Sepam manual Reset . Warning Opens CB-L but does not maintain warning
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager 	: FB_AlarmCodeManager ; 
+
+ 
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF ParamNC_Discharging THEN 
+	MesDataExd.MesData.MesDischarging  	:=  NOT IN_MesDischarging_IO;
+ELSE
+	MesDataExd.MesData.MesDischarging  	:=  IN_MesDischarging_IO;
+END_IF
+
+IF ParamNC_Alarm_Ulow THEN 
+	MesDataExd.MesData.MesAlarm_Ulow 	 	:=  NOT IN_MesBatLow_IO;
+ELSE
+	MesDataExd.MesData.MesAlarm_Ulow 	 	:=  IN_MesBatLow_IO;
+END_IF
+
+IF ParamNC_AlarmState THEN 
+	MesDataExd.MesData.MesAlarmState 		:=  NOT IN_MesFault_IO;
+ELSE
+	MesDataExd.MesData.MesAlarmState 		:=  IN_MesFault_IO;
+END_IF
+
+// ALARM CODE //
+	FB_AlarmCodeManager(
+		bAlarm1				:= FALSE , 				 						// 
+		bAlarm2				:= MesDataExd.MesData.MesAlarm_Ulow ,						// Battery SoC is low 
+		bAlarm3				:= MesDataExd.MesData.MesAlarmState ,						// UPS Fault synthesis		
+		bAlarm4				:= FALSE,     									// 
+		bAlarm5				:= FALSE,         								//  
+		bAlarm6				:= FALSE, 										// 
+		bAlarm7				:= FALSE,                                       //
+		bAlarm8				:= FALSE,                                       //
+		bAlarm9				:= FALSE,                                       //
+		bAlarm10			:= FALSE,                                       //
+		bAlarm11			:= FALSE,                                       //
+		bAlarm12			:= FALSE,                                       //
+		bAlarm13			:= FALSE,                                       //
+		bAlarm14			:= FALSE,                                       //
+		bAlarm15			:= FALSE ,	 									//
+		wAlarmCode			=>MesDataExd.MesData.MesAlarmCode);
+
+// WARNING CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= MesDataExd.MesData.MesDischarging , 				 		// UPS is discharging  		
+		bAlarm2			:= FALSE, 											// 
+		bAlarm3			:= FALSE, 											// 
+		bAlarm4			:= FALSE, 											// 
+		bAlarm5			:= FALSE, 											//
+		bAlarm6			:= FALSE,                                           //
+		bAlarm7			:= FALSE,                                           //
+		bAlarm8			:= FALSE,                                           //
+		bAlarm9			:= FALSE,                                           //
+		bAlarm10		:= FALSE,                                           //
+		bAlarm11		:= FALSE,                                           //
+		bAlarm12		:= FALSE,                                           //
+		bAlarm13		:= FALSE,                                           //
+		bAlarm14		:= FALSE,                                           //
+		bAlarm15		:= FALSE,                                           //
+		wAlarmCode		=>MesDataExd.MesData.MesWarningCode);
+
+// EVENT CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:=FALSE, 											// 
+		bAlarm2			:=FALSE, 											// 
+		bAlarm3			:=FALSE, 											// 
+		bAlarm4			:=FALSE, 											// 
+		bAlarm5			:=FALSE, 											//
+		bAlarm6			:=FALSE, 											//
+		bAlarm7			:=FALSE, 											//
+		bAlarm8			:=FALSE, 											//
+		bAlarm9			:=FALSE, 											//
+		bAlarm10		:=FALSE, 											//
+		bAlarm11		:=FALSE, 											//
+		bAlarm12		:=FALSE, 											//
+		bAlarm13		:=FALSE, 											//
+		bAlarm14		:=FALSE, 											//
+		bAlarm15		:=FALSE, 											//
+		wAlarmCode		=>MesDataExd.MesData.MesEventCode);
+		
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_UPS_Eneris">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_UPS_Eneris.M_AlarmManagement">
+      <LineId Id="442" Count="15" />
+      <LineId Id="360" Count="0" />
+      <LineId Id="458" Count="0" />
+      <LineId Id="361" Count="56" />
+      <LineId Id="176" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

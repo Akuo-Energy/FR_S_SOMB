@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.9">
+  <DUT Name="UPS_Eneris" Id="{c1b6e9a3-80de-4efe-a3bd-383a5ef3de18}">
+    <Declaration><![CDATA[///////////
+// Structure For I35. Main Operating Data to be saved (ex: OPC).  
+//////////
+TYPE UPS_Eneris :
+STRUCT
+	// I35 Data measures
+		MesData                     : UPS;  (* MesData *)
+		
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

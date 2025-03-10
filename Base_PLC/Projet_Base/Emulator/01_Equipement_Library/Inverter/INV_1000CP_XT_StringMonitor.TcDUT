@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.9">
+  <DUT Name="INV_1000CP_XT_StringMonitor" Id="{9147314d-f6c5-4966-af94-a565191d0722}">
+    <Declaration><![CDATA[TYPE INV_1000CP_XT_StringMonitor:
+STRUCT
+	STR : ARRAY [1..9] OF STR;
+	MesAlarmContact_1			: BOOL; (*303 = Off, 308 = On*)
+	MesAlarmContact_2			: BOOL; (*303 = Off, 308 = On*)
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

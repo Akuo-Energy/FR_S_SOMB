@@ -1,0 +1,130 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="PowerCol_Jema_Alarms" Id="{b80ec18e-4f7c-4461-adf0-9e30bc4d0460}">
+    <Declaration><![CDATA[TYPE PowerCol_Jema_Alarms :
+STRUCT
+
+// ALARM0 bAlarm1
+		MesI1_Alm			: BOOL; //I1_Alm
+		MesI2_Alm			: BOOL; //I2_Alm
+		MesI3_Alm			: BOOL; //I3_Alm
+		MesVdc_High_Alm		: BOOL; //Vdc_High_Alm
+		MesVdc_Low_Alm		: BOOL; //Vdc_Low_Alm
+		                            // 
+		MesU12_High_Alm		: BOOL; //U12_High_Alm
+		MesU12_Low_Alm		: BOOL; //U12_Low_Alm
+		MesU23_High_Alm		: BOOL; //U23_High_Alm
+		MesU23_Low_Alm		: BOOL; //U23_Low_Alm
+		MesU31_High_Alm		: BOOL; //U31_High_Alm
+		MesU31_Low_Alm		: BOOL; //U31_Low_Alm
+		MesVd_High_Alm		: BOOL; //Vd_High_Alm
+		MesVd_Low_Alm		: BOOL; //Vd_Low_Alm
+		MesVdc_Neg			: BOOL; //Vdc_Neg
+		                            //
+									//wAlarmCode
+		
+// ALARM1 bAlarm1
+		MesU1223_Unbalance	: BOOL;//U1223_Unbalance
+		MesU2331_Unbalance	: BOOL;//U2331_Unbalance
+		MesU3112_Unbalance	: BOOL;//U3112_Unbalance
+		MesInvertedPhase	: BOOL;//InvertedPhase
+		MesI12_Unbalance	: BOOL;//I12_Unbalance
+		MesI23_Unbalance	: BOOL;//I23_Unbalance
+		MesI31_Unbalance	: BOOL;//I31_Unbalance
+		MesCouplingTimeout	: BOOL;//CouplingTimeout
+		MesF_High			: BOOL;//F_High
+		MesF_Low			: BOOL;//F_Low
+		//MesGrndFault		: BOOL;//GrndFault
+		MesVaristor			: BOOL;//SPD Failure
+		MesPcbOverTemp		: BOOL;//PcbOverTemp
+		MesHeatsinkOverTemp	: BOOL;//HeatsinkOverTemp
+		                           // :
+		MesOvertempHyst		: BOOL;//OvertempHyst
+		//wAlarmCode
+// ALARM2 bAlarm1
+								   // :
+                                   // :
+                                   // :
+                                   // :
+		MesGridCbOpened		: BOOL;//GridCbOpened
+		MesGridCbTrip		: BOOL;//GridCbTrip
+//		MesPanelContactFail	: BOOL;//PanelContactFail 
+		                           // :
+		MesGridContactFail	: BOOL;//GridContactFail 
+		MesDoorOpened		: BOOL;//DoorOpened 
+		                           // :
+		                           // :
+		MesVdcPrechargewrong: BOOL;//VdcPrechargewrong 
+		                           // :
+		MesOverVoltHyst		: BOOL;//OverVoltHyst 
+		MesIdcMax			: BOOL;//IdcMax 
+		//wAlarmCode
+		
+//ALARM3   bAlarm1                         
+		MesSKIIP1			: BOOL; //SKIIP1
+		MesSKIIP2			: BOOL; //SKIIP2
+		MesSKIIP3			: BOOL; //SKIIP3
+		MesSKIIP_OT			: BOOL; //SIIP_OT
+		MesIMax				: BOOL; //IMax
+		MesEmergencyStop	: BOOL; //EmergencyStop
+		MesFPGA_WdogTrip	: BOOL; //FPGA_WdogTrip
+		MesStopEverything	: BOOL; //StopEverything
+		MesImdWarning		: BOOL; //ImdWarning
+		MesImdFault			: BOOL; //ImdFault
+		                            // :
+		MesCoilOverTemp		: BOOL; //CoilOverTemp
+		                            // :
+		MesAlrmGrp1_Curr	: BOOL; //AlrmGrp1_Curr
+		MesAlrmGrp2_Curr	: BOOL; //AlrmGrp2_Curr
+		MesShortCircuit_DC	: BOOL; //ShortCircuit_DC
+		//wAlarmCode
+// ALARM4 bAlarm1
+		//MesBatError			: BOOL;//BatError
+		//MesBatCtlStop		: BOOL;//BatCtlStop
+		//MesBatComErrors		: BOOL;//BatComErrors
+		MesPowerUnbalance	: BOOL;//PowerUnbalance
+		MesOverpower		: BOOL;//Overpower
+		MesIOutRMS			: BOOL ; // IOutRMS
+		//wAlarmCode
+		
+END_STRUCT
+END_TYPE
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

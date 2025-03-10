@@ -1,0 +1,98 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="SQLite_DeleteConfDb" Id="{ee6c8f79-eb3b-46b9-8736-3a01109c2ee2}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM SQLite_DeleteConfDb
+VAR_INPUT
+	IN_DbType				: UINT:= 1; // 1:T_DBConfig_SQLite, 2:T_DBConfig_SQLCe
+	IN_hDBID         		: UDINT;
+	IN_Start				: BOOL;
+	
+END_VAR
+VAR_OUTPUT
+	OUT_Error				: BOOL;
+	OUT_Busy				: BOOL;
+END_VAR
+VAR
+	Etape					: UINT;
+	
+	TrigStart				: R_TRIG;
+	RsStart					: RS;
+	bDeleteTable			: BOOL;
+	TrigDeleteFile			: R_TRIG;
+	RsDeleteTable			: RS;
+	fbConfigTcDBSrv   		: FB_ConfigTcDBSrvEvt (sNetID := '', tTimeout := T#5S);
+	DbFullDirName			: T_MAXSTRING;	
+	sExtension				: STRING:= '.db';
+	tcMessage    	 		: I_TcMessage;
+	
+	
+
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[OUT_Busy := TRUE;
+
+TrigStart(CLK := IN_Start);
+RsStart(SET := TrigStart.Q);
+IF RsStart.Q1 THEN
+	IF fbConfigTcDBSrv.Delete(eTcDBSrvConfigType := E_TcDBSrvConfigType.Database, hConfigID := IN_hDBID) THEN
+		IF fbConfigTcDBSrv.bError THEN
+			tcMessage := fbConfigTcDBSrv.ipTcResult;
+			OUT_Error := TRUE;
+			OUT_Busy := FALSE;
+			Etape := 255;
+		ELSE 
+			OUT_Busy := FALSE;
+			OUT_Error := FALSE;
+			Etape := 0;
+		END_IF
+		TrigStart(CLK := FALSE);
+		RsStart(RESET1 := TRUE);
+		RsStart(RESET1 := FALSE);
+	END_IF
+END_IF
+
+IF Etape = 255 THEN
+	Etape := 0;
+	bDeleteTable := FALSE;
+	IN_Start := FALSE;
+	OUT_Busy := FALSE;	
+	RsDeleteTable(RESET1 := TRUE);
+	RsDeleteTable(RESET1 := FALSE);
+	
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="SQLite_DeleteConfDb">
+      <LineId Id="185" Count="0" />
+      <LineId Id="44" Count="0" />
+      <LineId Id="52" Count="0" />
+      <LineId Id="28" Count="0" />
+      <LineId Id="53" Count="0" />
+      <LineId Id="27" Count="0" />
+      <LineId Id="30" Count="0" />
+      <LineId Id="233" Count="0" />
+      <LineId Id="60" Count="0" />
+      <LineId Id="268" Count="0" />
+      <LineId Id="234" Count="0" />
+      <LineId Id="261" Count="0" />
+      <LineId Id="265" Count="1" />
+      <LineId Id="269" Count="0" />
+      <LineId Id="32" Count="0" />
+      <LineId Id="271" Count="0" />
+      <LineId Id="55" Count="0" />
+      <LineId Id="58" Count="0" />
+      <LineId Id="31" Count="0" />
+      <LineId Id="50" Count="0" />
+      <LineId Id="69" Count="0" />
+      <LineId Id="137" Count="0" />
+      <LineId Id="143" Count="0" />
+      <LineId Id="150" Count="0" />
+      <LineId Id="146" Count="0" />
+      <LineId Id="189" Count="0" />
+      <LineId Id="264" Count="0" />
+      <LineId Id="263" Count="0" />
+      <LineId Id="186" Count="0" />
+      <LineId Id="140" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

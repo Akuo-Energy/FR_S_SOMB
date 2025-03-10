@@ -1,0 +1,67 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_CreateDir_V2" Id="{ef548377-08fe-4f14-a00a-7e7b6e8c9873}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_CreateDir_V2
+VAR_INPUT
+	InPath 				: T_Maxstring;
+	InExe				: BOOL;
+END_VAR
+VAR_OUTPUT
+	OutExiste			: BOOL;
+	OutCompleted		: BOOL;
+	OutError			: BOOL;
+	OutErrorId			: UDINT;
+	OutBusy				: BOOL;
+END_VAR
+VAR
+	CreateDir			: FB_CreateDir;	
+	
+	Trig_Start			: RS;
+	Trig				: R_TRIG;
+	
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[Trig(CLK := InExe);
+//OutCompleted := NOT Trig.Q AND NOT CreateDir.bBusy AND NOT CreateDir.bError;
+Trig_Start(SET := Trig.Q);
+
+CreateDir(
+	sNetId := '', 
+	sPathName := InPath,
+	bExecute := Trig.Q
+	);
+	
+IF Trig_Start.Q1 AND NOT CreateDir.bBusy AND (CreateDir.nErrId = 16#723 OR CreateDir.nErrId = 16#70C ) THEN
+	createDir(bExecute := FALSE);
+	OutExiste := TRUE;
+	OutCompleted := TRUE;
+	Trig(CLK := FALSE);
+	Trig_Start( RESET1 := OutCompleted OR OutError);
+	Trig_Start( RESET1 := FALSE);
+ELSIF NOT Trig.Q AND Trig_Start.Q1 AND NOT CreateDir.bBusy AND NOT CreateDir.bError THEN
+	OutCompleted := TRUE;
+	CreateDir(bExecute := FALSE);
+	Trig(CLK := FALSE);
+	Trig_Start( RESET1 := OutCompleted OR OutError);
+	Trig_Start( RESET1 := FALSE);
+ELSIF CreateDir.bError THEN
+	OutError := TRUE;
+	OutErrorId := CreateDir.nErrid;
+	CreateDir(bExecute := FALSE);
+	Trig(CLK := FALSE);
+	Trig_Start( RESET1 := OutCompleted OR OutError);
+	Trig_Start( RESET1 := FALSE);
+
+END_IF
+
+OutBusy := Trig_Start.Q1;
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_CreateDir_V2">
+      <LineId Id="159" Count="33" />
+      <LineId Id="47" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

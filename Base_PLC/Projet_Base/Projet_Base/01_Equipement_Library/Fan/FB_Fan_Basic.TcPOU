@@ -1,0 +1,262 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_Fan_Basic" Id="{7354e630-8527-4a18-8b36-983ea52ac71f}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Fan_Basic
+// Function Block to ensure fan control 
+
+VAR_INPUT PERSISTENT
+	ParamNbSensors			: INT;				(* Number of temperature sensors*)
+	{attribute 'OPC.UA.DA' := '1'} 
+	ParamTemphigh 			: REAL := 35;		(*  (C)High temperature to trigger the fan*)
+	{attribute 'OPC.UA.DA' := '1'} 
+	ParamTemplow 			: REAL := 30;		(*  (C)Low temperature to trigger the fan*)
+END_VAR
+	
+VAR_INPUT           	
+	IN_LocalHour 	    	: TIMESTRUCT;	// 
+	IN_ForceRun				: BOOL;			//
+	IN_ForceStop			: BOOL; 		//
+	IN_Tmp1_IO 				: REAL; 	    //  Temperature sensor 1
+	IN_Tmp2_IO				: REAL;	    	//  Temperature sensor 2
+
+	// Commands and setpoints 
+	IN_CmdReset_L			: BOOL;			// (NA) External Reset Command
+	
+	MesDataExd				: Fan_Standard;	
+END_VAR             	
+VAR_OUTPUT          	
+	OUT_Run_IO				: BOOL;
+END_VAR             	
+VAR                 	
+	bInit					: BOOL := TRUE;		 // Booleen d'initialisation
+	bTmp1_OK				: BOOL;				 // Booléen de test si les valeurs remontées par les capteurs de températures remontent une donnée correcte
+	bTmp2_OK				: BOOL;
+	bTmp_OK 				: BOOL;
+	fTmp_PT					: REAL;
+
+	// State Mananger //
+	MesState				: BYTE;  // Cal 
+	
+END_VAR
+
+VAR PERSISTENT
+	MesStartTime 			: WORD := 9;
+	MesStopTime				: WORD := 19;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{b5baa3e6-6671-476c-bff3-3303a374d0c2}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Generates object alarms and manages resets. 
+//////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager		: FB_AlarmCodeManager ;  
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+	IF ParamNbSensors = 1 THEN
+		IN_Tmp2_IO := IN_Tmp2_IO;
+	END_IF
+	bTmp1_OK 	:= IN_Tmp1_IO < 70 AND IN_Tmp1_IO > -10;
+	bTmp2_OK 	:= IN_Tmp2_IO < 70 AND IN_Tmp2_IO > -10;
+	bTmp_OK 	:=  bTmp1_OK OR bTmp2_OK;
+	IF bTmp1_OK AND bTmp2_OK THEN
+		fTmp_PT 	:= (IN_Tmp1_IO +  IN_Tmp2_IO )/2;
+	ELSE
+		fTmp_PT 	:= (IN_Tmp1_IO * BOOL_TO_BYTE(bTmp1_OK) + IN_Tmp2_IO * BOOL_TO_BYTE(bTmp2_OK));
+	END_IF
+	// Déclenchement du ventilateur
+	// Boucle de sécurité sur les heures de fonctionnement
+	IF IN_LocalHour.wHour > MesStartTime AND IN_LocalHour.wHour <MesStopTime AND bTmp_OK  THEN
+		IF fTmp_PT > ParamTemphigh  THEN
+			OUT_Run_IO := TRUE;
+		END_IF
+		
+		IF fTmp_PT < ParamTemplow THEN
+			OUT_Run_IO := FALSE;
+		END_IF
+		
+	END_IF
+	OUT_Run_IO := (OUT_Run_IO OR IN_ForceRun) AND NOT IN_ForceStop;
+	
+// ALARM CODE //
+	FB_AlarmCodeManager(
+		bAlarm1				:= IN_ForceStop,		//		Fans are forced to Stop
+		bAlarm2				:= FALSE,//
+		bAlarm3				:= FALSE,//
+		bAlarm4				:= FALSE,//
+		bAlarm5				:= FALSE,//
+		bAlarm6				:= FALSE,//
+		bAlarm7				:= FALSE,//
+		bAlarm8				:= FALSE,//
+		bAlarm9				:= FALSE,//
+		bAlarm10			:= FALSE,//
+		bAlarm11			:= FALSE,//
+		bAlarm12			:= FALSE,//		
+		bAlarm13			:= FALSE,//				
+		bAlarm14			:= FALSE,//			
+		bAlarm15			:= FALSE,//
+		wAlarmCode			=>MesDataExd.MesData.MesAlarmCode);
+			
+// WARNING CODE //
+	FB_AlarmCodeManager(
+		bAlarm1				:= NOT bTmp_OK, // Temperature sensors are not working
+		bAlarm2				:= FALSE,//
+		bAlarm3				:= FALSE,//
+		bAlarm4				:= FALSE,//
+		bAlarm5				:= FALSE,//
+		bAlarm6				:= FALSE,//
+		bAlarm7				:= FALSE,//
+		bAlarm8				:= FALSE,//
+		bAlarm9				:= FALSE,//
+		bAlarm10			:= FALSE,//
+		bAlarm11			:= FALSE,//
+		bAlarm12			:= FALSE,//
+		bAlarm13			:= FALSE,//
+		bAlarm14			:= FALSE,//
+		bAlarm15			:= FALSE,//
+		wAlarmCode			=>MesDataExd.MesData.MesWarningCode);
+		
+// EVENT CODE //
+
+	FB_AlarmCodeManager(
+		bAlarm1			:= OUT_Run_IO,  // Fans are requested to run
+		bAlarm2			:= IN_ForceRun, // Fans are forced to run
+		bAlarm3			:= FALSE,//
+		bAlarm4			:= FALSE,//
+		bAlarm5			:= FALSE,//
+		bAlarm6			:= FALSE,//
+		bAlarm7			:= FALSE,//
+		bAlarm8			:= FALSE,//
+		bAlarm9			:= FALSE,//
+		bAlarm10		:= FALSE,//
+		bAlarm11		:= FALSE,//
+		bAlarm12		:= FALSE,//
+		bAlarm13		:= FALSE,//
+		bAlarm14		:= FALSE,//
+		bAlarm15		:= FALSE,//
+		wAlarmCode		=>MesDataExd.MesData.MesEventCode);]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Evaluate" Id="{01fe34b7-5be1-4a99-b73e-372d510f5fa5}">
+      <Declaration><![CDATA[METHOD M_Evaluate
+//////////////////
+// Evaluate available Powers and AMG characteristics . 
+/////////////////
+
+VAR 
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[MesDataExd.MesData.MesModeRun		:=	OUT_Run_IO;
+MesDataExd.MesData.MesTemp 			:= 	fTmp_PT ; 
+MesDataExd.Mesdata.MesStartTime 	:=	MesStartTime ;
+MesDataExd.Mesdata.MesStopTime 		:=	MesStopTime ;
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{426066df-1025-4f74-bc43-1c4c3567aa72}">
+      <Declaration><![CDATA[METHOD M_Execute : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF NOT bInit THEN
+	M_Init();
+
+ELSIF CmdInit_G  OR IN_CmdReset_L THEN
+	bInit := TRUE;
+END_IF
+
+
+M_StateManager();
+M_Evaluate();]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{da7390f9-b1b7-4bba-820a-b41afbd8d85a}">
+      <Declaration><![CDATA[METHOD M_Init : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+
+// Boucle d'initalisation des variables de température pour séléctionner une valeur de température
+	OUT_Run_IO := FALSE;
+
+	
+	bInit := FALSE;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_StateManager" Id="{954a2edf-749e-4e88-b1a4-a40cd1b54364}">
+      <Declaration><![CDATA[METHOD M_StateManager
+//////////////////
+// Detect which is the state of the inverter. IF loss of communication MesState =0 , the last inverter state is kept .  
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+	
+END_VAR
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// OPERATIONNAL INDEX //
+IF OUT_Run_IO THEN 
+	MesState.2 := 1;
+ELSE
+	MesState.0 := 1;
+END_IF
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_Fan_Basic">
+      <LineId Id="151" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Fan_Basic.M_AlarmManagement">
+      <LineId Id="2032" Count="0" />
+      <LineId Id="2035" Count="23" />
+      <LineId Id="1940" Count="13" />
+      <LineId Id="2021" Count="2" />
+      <LineId Id="1954" Count="20" />
+      <LineId Id="1993" Count="19" />
+    </LineIds>
+    <LineIds Name="FB_Fan_Basic.M_Evaluate">
+      <LineId Id="609" Count="3" />
+      <LineId Id="600" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Fan_Basic.M_Execute">
+      <LineId Id="6" Count="2" />
+      <LineId Id="47" Count="1" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="30" Count="0" />
+      <LineId Id="33" Count="0" />
+      <LineId Id="32" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Fan_Basic.M_Init">
+      <LineId Id="6" Count="0" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="8" Count="0" />
+      <LineId Id="12" Count="1" />
+      <LineId Id="37" Count="2" />
+    </LineIds>
+    <LineIds Name="FB_Fan_Basic.M_StateManager">
+      <LineId Id="95" Count="0" />
+      <LineId Id="113" Count="0" />
+      <LineId Id="115" Count="0" />
+      <LineId Id="117" Count="1" />
+      <LineId Id="116" Count="0" />
+      <LineId Id="114" Count="0" />
+      <LineId Id="12" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

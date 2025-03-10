@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <Task Name="AnnexFunction" Id="{27a4d29f-f4d6-41e9-aaf0-78625c6998d5}">
+    <!--CycleTime in micro seconds.-->
+    <CycleTime>100000</CycleTime>
+    <Priority>10</Priority>
+    <PouCall>
+      <Name>PRG_AnnexesFunctions</Name>
+    </PouCall>
+    <TaskFBGuid>{29000b66-53fb-4a0f-b849-0035ba9d8a5a}</TaskFBGuid>
+    <Fb_init>{44a78829-9ca0-44e4-9ab0-051a2d89fda1}</Fb_init>
+    <Fb_exit>{ec9b0734-5ba7-47bd-a4c0-77aea16e7fdb}</Fb_exit>
+    <CycleUpdate>{fb69f0b6-e77d-4d59-93a4-6db5a4e5fece}</CycleUpdate>
+    <PostCycleUpdate>{4cd2176c-365f-4341-9eba-0fea41035f8b}</PostCycleUpdate>
+  </Task>
+</TcPlcObject>

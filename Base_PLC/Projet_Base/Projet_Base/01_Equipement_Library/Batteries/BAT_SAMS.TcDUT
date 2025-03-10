@@ -1,0 +1,104 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <DUT Name="BAT_SAMS" Id="{e632c373-b291-439d-91c6-a2cd50f04bef}">
+    <Declaration><![CDATA[///////////
+// Structure For Battery Controller. Main Operating Data to be saved ( ex: OPC ) .  
+//////////
+
+TYPE BAT_SAMS :
+STRUCT
+	
+	MesData						: BAT ;   			(* MESA Data model *)
+
+	AX_Rack						: ARRAY[1..CstNbRack_BAT_G] OF Rack_SAMS;	(* Object *)
+	
+	MesHeartBeat				: UINT;			(* (NA) Goes from 0 to 999 every s *)
+	MesNbRackConnected			: UINT;			(* (NA) Nb of Racks in service ( strings ) *)
+	MesNbRackTot				: UINT;			(* (NA) Total Nb of Racks (strings )*)
+	MesIdcConnected				: REAL;			(* (A) Summation of all racks		*)
+	MesUdcConnected				: REAL;			(* (V) Voltage connected ( average )*)
+	MesUdcConnectedMedian		: REAL;			(* (V) Voltage connected ( median )*)
+	MesUdcConnectedMax			: REAL;			(* (V) Voltage connected ( max )*)
+	MesUdcConnectedMin			: REAL;			(* (V) Voltage connected ( min )	*)
+	MesSoCConnected				: REAL; 		(* (%) SoC average ( priority : 1 if one is 0 all are 0, 2 : one is 100 all are 100, 3 : average )*)
+	MesSoCConnectedMedian		: REAL; 		(* (%) SoC median value 	*)
+	MesSoCConnectedMax			: REAL; 		(* (%) SoC Max value*)
+	MesSoCConnectedMin			: REAL; 		(* (%) SoC Min value*)
+
+	MesUdcMedian				: REAL;			(* (V) Voltage of the rack, median*)
+	MesUdcMax					: REAL;			(* (V) Voltage of the rack, max*)
+	MesUdcMin					: REAL;			(* (V) Voltage of the rack, min*)
+
+	MesSoCMedian				: REAL; 		(* (%) SoC Median*)
+	MesSoCMax					: REAL; 		(* (%) SoC Max*)
+	MesSoCMin					: REAL; 		(* (%) SoC Min*)
+
+	MesSoHMedian				: REAL; 		(* (%) SoH Median*)
+	MesSoHMax					: REAL; 		(* (%) SoH Max*)
+	MesSoHMin					: REAL; 		(* (%) SoH Min*)
+	MesUdc_Cell					: REAL; 		(* (V)  Cell voltage among all strings in system. Average*)
+	MesUdcMedian_Cell			: REAL; 		(* (V)  Cell voltage among all strings in system. Median*)
+	MesUdcMax_Cell				: REAL; 		(* (V)Cell voltage among all strings in system. Max	*)
+	MesUdcMax_Cell_RackID		: UINT:=1 ; 	(* (V)Rack ID where Cell voltage among all strings in system reaches Max value. *)
+	MesUdcMin_Cell				: REAL; 		(* (V) Cell voltage among all strings in system. Min*)
+	MesUdcMin_Cell_RackID		: UINT :=1 ; 	(* (V)Rack ID where Cell voltage among all strings in system reaches Min value. *)
+	MesUdcDiffMax_Cell			: REAL; 		(* (V) Max Cell voltage difference among all strings in system. Min*)
+	MesUdcDiffMax_Cell_RackID	: UINT:=1 ; 	(* (V)Rack ID where Cell voltage among all strings in system reaches Min value.*)
+	MesTmp_Cell					: REAL; 		(* (°C)  Cell Temperature among all strings in system. Average*)
+	MesTmpMedian_Cell			: REAL; 		(* (°C)  Cell Temperature among all strings in system. Median*)
+	MesTmpMax_Cell				: REAL; 		(* (°C)Cell Temperature among all strings in system. Max*)
+	MesTmpMax_Cell_RackID		: UINT:=1 ; 	(* (°C)Rack ID where Cell Temperature among all strings in system reaches Max value. *)
+	MesTmpMin_Cell				: REAL; 		(* (°C) Cell Temperature among all strings in system. Min*)
+	MesTmpMin_Cell_RackID		: UINT:=1 ; 	(* (°C)Rack ID where Cell Temperature among all strings in system reaches Min value. *)
+	MesTmpDiffMax_Cell			: REAL; 		(* (°C) Max Cell Temperature difference among all strings in system. *)
+	MesTmpDiffMax_Cell_RackID	: UINT:=1 ; 	(* (°C)Rack ID where Cell Temperature among all strings in system reaches Max diff value*)
+
+
+	MesWatchdog					: WORD;			(* (NA) Inverses the WatchdogQuery	*)
+	MesUdc_PartialOp			: REAL ; 		(* (V) Voltage of the Rack with the highest number of strings which are under Partial Op due to limit of voltage difference alarm*)
+	MesUdc_PartialOp_RackID		: UINT:=1 ; 	(* (V) Rack ID where Voltage of the Rack with the highest number of strings which are under Partial Op due to limit of voltage difference alarm*)
+	MesUdc_PartialOp_StringID	: UINT:=1 ; 	(* (V) Rack ID where Voltage of the Rack with the highest number of strings which are under Partial Op due to limit of voltage difference alarm*)
+	MesSystemCommandStatus		: WORD ; 		(* Command status *)
+	MesSystemMode				: WORD;			(* (NA) SystemMode read from the Battery*)
+	MesSystemMode2				: WORD;			(* (NA) SystemMode2 read from the Battery*)
+	
+	MesDiStatus					: WORD;			(* (NA) DI Status*)
+	MesDoStatus					: WORD;			(* (NA) DI Status*)
+	MesSystemConfig1			: WORD ; 		(* Samsung State word Config 1*)
+	MesSystemConfig2			: WORD ;    	(* Samsung State word Config 2*)
+	MesRackStringState			: WORD ;    	(* Samsung State word Rack state*)
+
+	ParamStringNbMin			: UINT ; 		(* Minimal number of strings Operable in order to works set at BBMS *)
+	ParamUdiff					: REAL ;		(* Maximum voltage difference between  string for connexion set in BBMS . *)
+	
+// Evaluate	
+	MesUdcMin_RackID			: UINT:=1 ;		(* (NA) Id of the Rack with the minimum Udc*)
+	MesUdcMax_RackID			: UINT:=1 ;		(* (NA) Id of the Rack with the maximum Udc*)
+	MesEconnected 				: REAL; 		(* Energy available for charge / discharge in the system BBMS. *)
+	MesNbRackNormal				: UINT; 		(* Number of racks without alarms. *)
+
+	                        	                
+	MesAlarm1					: WORD;			(* (NA) Alarm1 read from the Battery System BMS*)
+	MesAlarm2					: WORD;			(* (NA) Alarm2 read from the Battery System BMS*)
+	MesRackAlarm1				: WORD;			(* (NA) Rack Alarm1 read from the Battery*)
+	MesRackAlarm2				: WORD;			(* (NA) Rack Alarm2 read from the Battery*)
+	MesRackProtection1			: WORD;			(* (NA) Rack Protection1 read from the Battery*)
+	MesRackProtection2			: WORD;			(* (NA) Rack Protection2 read from the Battery*)
+	MesRackStringAlarm1			: WORD;			(* (NA) Rack Alarm1 read from the Battery*)
+	MesRackStringAlarm2			: WORD;			(* (NA) Rack Alarm2 read from the Battery*)
+	MesRackStringAlarm3			: WORD;			(* (NA) Rack Alarm3 read from the Battery*)
+	MesRackStringAlarm4			: WORD;			(* (NA) Rack Alarm4 read from the Battery*)		
+	MesRackStringProtection1	: WORD;			(* (NA) Rack Protection1 read from the Battery*) 
+	MesRackStringProtection2	: WORD;			(* (NA) Rack Protection2 read from the Battery*) 
+	MesRackStringProtection3	: WORD;			(* (NA) Rack Protection3 read from the Battery*) 
+	MesRackStringProtection4	: WORD;			(* (NA) Rack Protection4 read from the Battery*)	
+
+
+	
+	
+END_STRUCT
+END_TYPE
+
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

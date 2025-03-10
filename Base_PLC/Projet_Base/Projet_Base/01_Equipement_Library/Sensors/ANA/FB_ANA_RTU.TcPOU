@@ -1,0 +1,141 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.2">
+  <POU Name="FB_ANA_RTU" Id="{e0f3eb65-7309-4d2d-ae51-0c0024331229}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_ANA_RTU EXTENDS FB_ANA_Base
+//////////////////
+// PT100 sensors
+//////////////////
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance/model specific) 
+	ParamUnitID		: BYTE := 1 ; 
+		ParamTempoComAlarm			: TIME 			:= T#5S ; 						// (s) Config : Tempo to detect LOC Alarm
+	ParamClockReadTime 			: TIME 			:= TIME#200MS;	  				// (Time) Read Modbus Frequency.  
+	ParamTimeout				: TIME  		:= T#1S ;			  			// (Time) Timeout for modbus reading
+	
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	
+END_VAR
+
+VAR_INPUT
+	// I/O Inputs 
+	
+END_VAR
+
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//
+	
+	//M_READ //
+	MesSnowHeight			: REAL ; 
+	MesTempAmb				: REAL ; 
+	
+	
+	InputStructRead  : Struct_InputRTU ; 
+		
+	MesBlock_Temp		: ARRAY[1..125] OF WORD ; 
+	RTrigI						: R_TRIG;
+	ClockRead					: BOOL ; 												// Clock Read
+	TP1							: TP ; 												// (NA) Tempo to define Modbus Reading Frequency  
+	OutErrorMbRead			: BOOL ; // Error Modbus . 
+	Busy					: BOOL ; 
+	//EMULATOR //
+	MesCP_Read			: BOOL ; 
+	
+		
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_Execute" Id="{686fb068-1c83-4e0a-bd75-b6b841c92209}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// EMULATOR I/O //
+MesCP_Read := TRUE ; 
+
+SUPER^.M_Execute() ; ]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Read" Id="{f2e12842-fe9d-4856-8414-a336ab096e9a}">
+      <Declaration><![CDATA[METHOD M_Read
+//////////////////
+// Format GHI Data 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+		MW 					: FB_MergeWordsToDint; 
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// READING AND WRITING CLOCK //
+	TP1(IN:=NOT TP1.Q , PT:= ParamClockReadTime);
+	ClockRead 		:= TP1.Q AND MesDataExd.MesData.MesCP_Read;
+
+
+
+RTrigI(CLK:= ClockRead );
+//Metrology
+
+	InputStructRead.InBuffer := ADR(MesBlock_Temp);
+	InputStructRead.InFunction := 4;
+	InputStructRead.InQuantity := 5;
+	InputStructRead.InStartAddr := 0;
+	InputStructRead.InUnitID := ParamUnitID;
+	               
+	InputStructRead.OutBusy := ADR(Busy);
+	InputStructRead.OutError := ADR(OutErrorMbRead);
+	//InputStructRead[KK].OutCompleted := ADR(bReadCompleted);
+	
+	IF RTrigI.Q THEN 
+		A1_PDL.FB_ModbusRead.M_AddAction_FIFO(InStruct:= InputStructRead , InPriority:=1 ) ; 
+	END_IF
+	
+// PROPERTIES UPDATE // 
+	// Block 1
+//MW( WORD_STRONG:= MesBlock_Temp[1][1], 	WORD_WEAK := MesBlock_Temp[1][2],	SIGNED:=TRUE, FIX:=0 , SIZE:=2, VAR_OUT := MesDataExd.MesData.MesI2);
+	
+(*
+MW( WORD_STRONG_F:= MesBlock_Temp[1], 	WORD_WEAK_F := MesBlock_Temp[2], NUMBER_F= MesDataExd.MesData.MesI1);
+MW( WORD_STRONG_F:= MesBlock_Temp[3], 	WORD_WEAK_F := MesBlock_Temp[4], NUMBER_F= MesDataExd.MesData.MesI2);
+MW( WORD_STRONG_F:= MesBlock_Temp[5], 	WORD_WEAK_F := MesBlock_Temp[6], NUMBER_F= MesDataExd.MesData.MesI3);
+MW( WORD_STRONG_F:= MesBlock_Temp[7], 	WORD_WEAK_F := MesBlock_Temp[8], NUMBER_F= MesDataExd.MesData.MesIN);
+MW( WORD_STRONG_F:= MesBlock_Temp[11], 	WORD_WEAK_F := MesBlock_Temp[12], NUMBER_F= MesDataExd.MesData.MesI);
+*)
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_ANA_RTU">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ANA_RTU.M_Execute">
+      <LineId Id="3" Count="0" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="30" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ANA_RTU.M_Read">
+      <LineId Id="66" Count="2" />
+      <LineId Id="64" Count="1" />
+      <LineId Id="24" Count="0" />
+      <LineId Id="35" Count="16" />
+      <LineId Id="53" Count="3" />
+      <LineId Id="70" Count="0" />
+      <LineId Id="57" Count="5" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

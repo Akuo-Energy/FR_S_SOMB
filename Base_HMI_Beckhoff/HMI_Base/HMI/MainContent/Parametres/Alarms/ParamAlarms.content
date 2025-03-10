@@ -1,0 +1,512 @@
+﻿<div id="Alarms_3" data-tchmi-type="TcHmi.Controls.System.TcHmiContent" data-tchmi-top="0" data-tchmi-left="0" data-tchmi-width="800" data-tchmi-height="640" data-tchmi-right="0" data-tchmi-bottom="0" data-tchmi-width-mode="Parent" data-tchmi-height-mode="Parent" data-tchmi-left-unit="px" data-tchmi-top-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-width-unit="px" data-tchmi-height-unit="px" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px">
+
+<div id="Alarms_Background_2" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiRectangle" data-tchmi-height="1033" data-tchmi-height-unit="px" data-tchmi-left="-9" data-tchmi-left-unit="px" data-tchmi-top="44" data-tchmi-top-unit="px" data-tchmi-width="1033" data-tchmi-width-unit="px" data-tchmi-right="389" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px">
+
+
+        <script data-tchmi-target-attribute="data-tchmi-fill-color" type="application/json">
+{
+  "color": "rgba(234, 234, 215, 1)"
+}
+</script>
+
+        <script data-tchmi-target-attribute="data-tchmi-stroke-color" type="application/json">
+            {
+            "color": "None"
+            }
+        </script>
+    </div>
+<div id="Title_Background_1" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiRectangle" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-top="44" data-tchmi-top-unit="px" data-tchmi-width="1025" data-tchmi-width-unit="px" data-tchmi-height="50" data-tchmi-zindex="0" data-tchmi-right-unit="px" data-tchmi-height-unit="px" data-tchmi-bottom-unit="px" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px">
+
+
+        <script data-tchmi-target-attribute="data-tchmi-fill-color" type="application/json">
+            {
+            "color": "rgba(153, 204, 51, 1)"
+            }
+        </script>
+
+        <script data-tchmi-target-attribute="data-tchmi-stroke-color" type="application/json">
+            {
+            "color": "None"
+            }
+        </script>
+    </div>
+<div id="TcHmiDatagrid_56" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiDatagrid" data-tchmi-height="478" data-tchmi-height-unit="px" data-tchmi-left="57" data-tchmi-left-unit="px" data-tchmi-top="114" data-tchmi-top-unit="px" data-tchmi-width="798" data-tchmi-width-unit="px" data-tchmi-src-data="%s%PLC1.ParamAlarms.AX_AlarmsDisplayed%/s%" data-tchmi-show-row-numbers="False" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-header-height-unit="px" data-tchmi-header-font-size-unit="px" data-tchmi-header-font-size="15" data-tchmi-header-font-style="Normal" data-tchmi-header-font-weight="Bold">
+
+
+<script data-tchmi-target-attribute="data-tchmi-cell-content-padding" type="application/json">
+{
+  "left": 3,
+  "leftUnit": "px",
+  "right": 3,
+  "rightUnit": "px",
+  "top": 0,
+  "topUnit": "px",
+  "bottom": 0,
+  "bottomUnit": "px"
+}
+</script>
+
+
+<script data-tchmi-target-attribute="data-tchmi-src-column" type="application/json">
+[
+  {
+    "name": "ID",
+    "label": "ID",
+    "control": "TextBlock",
+    "width": 6,
+    "widthUnit": "%",
+    "resize": false,
+    "sortable": false,
+    "minWidth": 10,
+    "minWidthUnit": "px",
+    "cellBackground": null,
+    "textColor": null,
+    "editable": false,
+    "horizontalAlignment": "Center",
+    "verticalAlignment": "Center",
+    "format": null
+  },
+  {
+    "name": "Message",
+    "label": "Message",
+    "control": "TextBox",
+    "width": 30,
+    "widthUnit": "%",
+    "resize": false,
+    "sortable": false,
+    "minWidth": 160,
+    "minWidthUnit": "px",
+    "cellBackground": null,
+    "textColor": null,
+    "editable": true,
+    "horizontalAlignment": "Left",
+    "verticalAlignment": "Center",
+    "format": null
+  },
+  {
+    "name": "Value",
+    "label": "Value",
+    "control": "TextBox",
+    "width": 6,
+    "widthUnit": "%",
+    "resize": false,
+    "sortable": false,
+    "minWidth": 10,
+    "minWidthUnit": "px",
+    "cellBackground": null,
+    "textColor": null,
+    "editable": true,
+    "horizontalAlignment": "Left",
+    "verticalAlignment": "Center",
+    "format": null
+  },
+  {
+    "name": "Ack",
+    "label": "Ack",
+    "control": "TextBox",
+    "width": 6,
+    "widthUnit": "%",
+    "resize": false,
+    "sortable": false,
+    "minWidth": 10,
+    "minWidthUnit": "px",
+    "cellBackground": null,
+    "textColor": null,
+    "editable": true,
+    "horizontalAlignment": "Left",
+    "verticalAlignment": "Center",
+    "format": null
+  },
+  {
+    "name": "TimeStamp_Act",
+    "label": "Time Start",
+    "control": "TextBlock",
+    "width": 20,
+    "widthUnit": "%",
+    "resize": false,
+    "sortable": false,
+    "minWidth": 100,
+    "minWidthUnit": "px",
+    "cellBackground": null,
+    "textColor": null,
+    "editable": false,
+    "horizontalAlignment": "Left",
+    "verticalAlignment": "Center",
+    "format": null
+  },
+  {
+    "name": "TimeStamp_Act",
+    "label": "Time Ack",
+    "control": "TextBlock",
+    "width": 20,
+    "widthUnit": "%",
+    "resize": false,
+    "sortable": false,
+    "minWidth": 100,
+    "minWidthUnit": "px",
+    "cellBackground": null,
+    "textColor": null,
+    "editable": false,
+    "horizontalAlignment": "Left",
+    "verticalAlignment": "Center",
+    "format": null
+  },
+  {
+    "name": "Groupe",
+    "label": "Groupe",
+    "control": "TextBox",
+    "width": 6,
+    "widthUnit": "%",
+    "resize": false,
+    "sortable": false,
+    "minWidth": 10,
+    "minWidthUnit": "px",
+    "cellBackground": null,
+    "textColor": null,
+    "editable": true,
+    "horizontalAlignment": "Left",
+    "verticalAlignment": "Center",
+    "format": null
+  },
+  {
+    "name": "Alarms_LVL",
+    "label": "Niveau",
+    "control": "TextBox",
+    "width": 6,
+    "widthUnit": "%",
+    "resize": false,
+    "sortable": false,
+    "minWidth": 10,
+    "minWidthUnit": "px",
+    "cellBackground": null,
+    "textColor": null,
+    "editable": true,
+    "horizontalAlignment": "Left",
+    "verticalAlignment": "Center",
+    "format": null
+  }
+]
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">[
+  {
+    "event": "TcHmiDatagrid_56.onDataChanged",
+    "actions": [
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%s%PLC1.ParamAlarms.AX_AlarmsModif%/s%",
+        "valueType": "tchmi:server#/definitions/PLC1.ARRAY (1..16) OF ST_ValuesAlarms",
+        "value": {
+          "objectType": "Symbol",
+          "symbolExpression": "%ctrl%TcHmiDatagrid_56::SrcData%/ctrl%"
+        },
+        "asyncWait": true
+      }
+    ]
+  }
+]</script>
+
+<script data-tchmi-target-attribute="data-tchmi-header-text-color" type="application/json">
+{
+  "color": "rgba(0, 0, 0, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-header-background-color" type="application/json">
+{
+  "color": "rgba(153, 204, 51, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-row-numbers-text-color" type="application/json">
+{
+  "color": "rgba(0, 0, 0, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-row-numbers-background-color" type="application/json">
+{
+  "color": "rgba(150, 201, 47, 1)"
+}
+</script>
+</div>
+
+<div id="TcHmiCombobox_23" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiCombobox" data-tchmi-combobox-text="Select" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="240" data-tchmi-left-unit="px" data-tchmi-top="57" data-tchmi-top-unit="px" data-tchmi-width="264" data-tchmi-width-unit="px" data-tchmi-src-data="%s%PLC1.ParamAlarms.AX_AlarmWordsAvailable%/s%" data-tchmi-selected-index="%s%PLC1.ParamAlarms.iNumAlarmWordDisplayed%/s%" data-tchmi-text-font-size-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px">
+<script data-tchmi-target-attribute="data-tchmi-content-padding" type="application/json">
+{
+  "top": 3,
+  "right": 3,
+  "bottom": 3,
+  "left": 3
+}
+</script>
+
+
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">[
+  {
+    "event": "TcHmiCombobox_23.onTextChanged",
+    "actions": [
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%s%PLC1.ParamAlarms.iNumAlarmWordDisplayed%/s%",
+        "valueType": "tchmi:general#/definitions/UINT",
+        "value": {
+          "objectType": "Symbol",
+          "symbolExpression": "%ctrl%TcHmiCombobox_23::SelectedIndex%/ctrl%"
+        },
+        "asyncWait": true
+      }
+    ]
+  }
+]</script>
+
+<script data-tchmi-target-attribute="data-tchmi-drop-down-toggle-button-background-color" type="application/json">
+{
+  "color": "rgba(125, 121, 121, 1)"
+}
+</script>
+</div>
+
+<div id="TcHmiTextblock_14008" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="25" data-tchmi-left-unit="px" data-tchmi-text="Choice of the AlarmWord :" data-tchmi-top="57" data-tchmi-top-unit="px" data-tchmi-width="205" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-horizontal-alignment="Center" data-tchmi-text-font-size="18" data-tchmi-text-font-size-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-font-weight="Bold">
+
+</div>
+
+<div class="pointer" id="PCS_ConfirmSetpP_419" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="506" data-tchmi-left-unit="px" data-tchmi-top="57" data-tchmi-top-unit="px" data-tchmi-width="26" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-icon="Imports/Images/confirm_inactive.svg" data-tchmi-icon-width-unit="%" data-tchmi-icon-height-unit="%" data-tchmi-icon-width="100" data-tchmi-icon-height="100" data-tchmi-zindex="2" data-tchmi-right-unit="px" data-tchmi-text-font-size-unit="px">
+
+        <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">[
+  {
+    "event": "PCS_ConfirmSetpP_419.onStatePressed",
+    "actions": [
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%s%PLC1.ParamAlarms.bDisplayAlarmWord%/s%",
+        "valueType": "tchmi:general#/definitions/BOOL",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:general#/definitions/BOOL",
+          "value": true
+        },
+        "asyncWait": true
+      }
+    ]
+  }
+]</script>
+    </div>
+
+<div id="Update_Button" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="33" data-tchmi-height-unit="px" data-tchmi-left="652" data-tchmi-left-unit="px" data-tchmi-text="Update" data-tchmi-top="50" data-tchmi-top-unit="px" data-tchmi-width="60" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-font-size="16" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px">
+
+
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">[
+  {
+    "event": "Update_Button.onMouseClick",
+    "actions": [
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%s%PLC1.ParamAlarms.bChangeAlarmsWord%/s%",
+        "valueType": "tchmi:general#/definitions/BOOL",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:general#/definitions/BOOL",
+          "value": true
+        },
+        "asyncWait": true
+      }
+    ]
+  }
+]</script>
+
+<script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
+{
+  "color": "rgba(232, 226, 226, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-text-color" type="application/json">
+{
+  "color": "rgba(0, 0, 0, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-style" type="application/json">
+{
+  "left": "Solid",
+  "right": "Solid",
+  "top": "Solid",
+  "bottom": "Solid"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-width" type="application/json">
+{
+  "left": 1,
+  "right": 1,
+  "top": 1,
+  "bottom": 1,
+  "leftUnit": "px",
+  "rightUnit": "px",
+  "topUnit": "px",
+  "bottomUnit": "px"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-radius" type="application/json">
+{
+  "topLeft": 1.0,
+  "topRight": 1.0,
+  "bottomLeft": 1.0,
+  "bottomRight": 1.0,
+  "topLeftUnit": "px",
+  "topRightUnit": "px",
+  "bottomLeftUnit": "px",
+  "bottomRightUnit": "px"
+}
+</script>
+</div>
+
+<div id="FactoryReset_Button" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="33" data-tchmi-height-unit="px" data-tchmi-left="732" data-tchmi-left-unit="px" data-tchmi-text="Factory Reset" data-tchmi-top="50" data-tchmi-top-unit="px" data-tchmi-width="123" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-font-size="16" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px">
+
+
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
+[
+  {
+    "event": "FactoryReset_Button.onMouseClick",
+    "actions": [
+      {
+        "objectType": "WriteToSymbol",
+        "active": false,
+        "symbolExpression": "%s%PLC1.FUN_Alarms.bFactoryReset%/s%",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:general#/definitions/BOOL",
+          "value": true
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%s%PLC1.HPP_HMI.bConfirmAction_HMI%/s%",
+        "value": {
+          "objectType": "FunctionExpression",
+          "functionExpression": "Confirm(\"Confirm\",\"Are you sure ?\" ,\"Yes\" ,\"No\" ,\"NoIdea\" )"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "Condition",
+        "active": true,
+        "parts": [
+          {
+            "if": [
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "symbolExpression": "%s%PLC1.HPP_HMI.bConfirmAction_HMI%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": true
+                },
+                "compareOperator": "==",
+                "logic": null
+              }
+            ],
+            "then": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%s%PLC1.FUN_Alarms.bFactoryReset%/s%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": true
+                },
+                "asyncWait": true
+              },
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%s%PLC1.ParamAlarms.bDisplayAlarmWord%/s%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": true
+                },
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "else": []
+          }
+        ],
+        "asyncWait": true
+      }
+    ]
+  }
+]
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
+{
+  "color": "rgba(232, 226, 226, 1)"
+}
+</script>
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-border-width" type="application/json">
+{
+  "left": 1,
+  "right": 1,
+  "top": 1,
+  "bottom": 1,
+  "leftUnit": "px",
+  "rightUnit": "px",
+  "topUnit": "px",
+  "bottomUnit": "px"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-color" type="application/json">
+{
+  "color": "rgba(2, 2, 2, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-text-color" type="application/json">
+{
+  "color": "rgba(0, 0, 0, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-radius" type="application/json">
+{
+  "topLeft": 1.0,
+  "topRight": 1.0,
+  "bottomLeft": 1.0,
+  "bottomRight": 1.0,
+  "topLeftUnit": "px",
+  "topRightUnit": "px",
+  "bottomLeftUnit": "px",
+  "bottomRightUnit": "px"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-style" type="application/json">
+{
+  "left": "Solid",
+  "right": "Solid",
+  "top": "Solid",
+  "bottom": "Solid"
+}
+</script>
+</div>
+
+</div>

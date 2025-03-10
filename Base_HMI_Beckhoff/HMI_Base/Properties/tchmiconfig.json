@@ -1,0 +1,620 @@
+﻿{
+  "$schema": "../../Packages/Beckhoff.TwinCAT.HMI.Framework.12.742.5/runtimes/native1.12-tchmi/Schema/TchmiConfig.Schema.json",
+  "basePath": "./framework",
+  "scaleMode": "ScaleToFit",
+  "startupView": "HMI/Desktop.view",
+  "loginPage": "/HMI/LoginPage1.html",
+  "tcHmiServer": {
+    "websocketIntervalTime": 500,
+    "websocketTimeout": 10000,
+    "websocketSystemTimeout": 60000,
+    "websocketSubscriptionMode": "Change"
+  },
+  "activeTheme": "Base",
+  "themes": {
+    "Base": {
+      "resources": [
+        {
+          "name": "Themes/Base/Base.theme",
+          "description": "",
+          "type": "ThemedValues"
+        },
+        {
+          "name": "Themes/Base/Style.css",
+          "description": "",
+          "type": "Stylesheet"
+        },
+        {
+          "name": "Themes/Base/BaseStyle.css",
+          "description": "Theme Stylesheet",
+          "type": "Stylesheet"
+        }
+      ],
+      "replacesThemeForControls": []
+    }
+  },
+  "dependencyFiles": [
+    {
+      "name": "Fonts/Fonts.css",
+      "description": "",
+      "type": "Stylesheet"
+    },
+    {
+      "name": "HMI/login.css",
+      "description": "",
+      "type": "Stylesheet"
+    },
+    {
+      "name": "HMI/UserControls/JavaScript/Confirm.js",
+      "description": "",
+      "type": "JavaScript"
+    },
+    {
+      "name": "HMI/UserControls/JavaScript/DateTimePicker.js",
+      "description": "",
+      "type": "JavaScript"
+    },
+    {
+      "name": "HMI/UserControls/JavaScript/DownloadFile.js",
+      "description": "",
+      "type": "JavaScript"
+    },
+    {
+      "name": "HMI/UserControls/JavaScript/Format.js",
+      "description": "",
+      "type": "JavaScript"
+    },
+    {
+      "name": "HMI/UserControls/JavaScript/GetBitMask.js",
+      "description": "",
+      "type": "JavaScript"
+    },
+    {
+      "name": "HMI/UserControls/JavaScript/SetCursor.js",
+      "description": "",
+      "type": "JavaScript"
+    }
+  ],
+  "userControls": [
+    {
+      "url": "HMI/UserControls/BESS_2Units.usercontrol"
+    },
+    {
+      "url": "HMI/UserControls/BESS_Unit.usercontrol"
+    },
+    {
+      "url": "HMI/UserControls/Button_.usercontrol"
+    },
+    {
+      "url": "HMI/UserControls/CaseOnduleur.usercontrol"
+    },
+    {
+      "url": "HMI/UserControls/CaseTechnoPays.usercontrol"
+    },
+    {
+      "url": "HMI/UserControls/Disjoncteur.usercontrol"
+    },
+    {
+      "url": "HMI/UserControls/DisjoncteurMotorisé.usercontrol"
+    },
+    {
+      "url": "HMI/UserControls/Disjoncteur_V2.usercontrol"
+    },
+    {
+      "url": "HMI/UserControls/Fusible.usercontrol"
+    },
+    {
+      "url": "HMI/UserControls/HVAC.usercontrol"
+    },
+    {
+      "url": "HMI/UserControls/Inverter.usercontrol"
+    },
+    {
+      "url": "HMI/UserControls/LED2Colors.usercontrol"
+    },
+    {
+      "url": "HMI/UserControls/Sectionneur.usercontrol"
+    },
+    {
+      "url": "HMI/UserControls/Table_Params_2Columns.usercontrol"
+    },
+    {
+      "url": "HMI/UserControls/Table_Validation.usercontrol"
+    },
+    {
+      "url": "HMI/UserControls/Table_Values.usercontrol"
+    },
+    {
+      "url": "HMI/UserControls/Table_Values_2Columns_3Labels.usercontrol"
+    },
+    {
+      "url": "HMI/UserControls/Table_Values_2_Column.usercontrol"
+    },
+    {
+      "url": "HMI/UserControls/Transformer2.usercontrol"
+    },
+    {
+      "url": "HMI/UserControls/Transformer3.usercontrol"
+    }
+  ],
+  "content": [
+    {
+      "url": "HMI/MainContent/Alarms/Alarms.content",
+      "preload": false,
+      "keepAlive": false
+    },
+    {
+      "url": "HMI/MainContent/Infos/COM/InfosCOM.content",
+      "preload": false,
+      "keepAlive": false
+    },
+    {
+      "url": "HMI/MainContent/Infos/Data/InfosData.content",
+      "preload": false,
+      "keepAlive": false
+    },
+    {
+      "url": "HMI/MainContent/Infos/IO/InfosIO.content",
+      "preload": false,
+      "keepAlive": false
+    },
+    {
+      "url": "HMI/MainContent/Infos/IO/InfosIO_Digital.content",
+      "preload": false,
+      "keepAlive": false
+    },
+    {
+      "url": "HMI/MainContent/Infos/IO/InfosIO_EL1809-1.content",
+      "preload": false,
+      "keepAlive": false
+    },
+    {
+      "url": "HMI/MainContent/Infos/IO/InfosIO_EL1809-2.content",
+      "preload": false,
+      "keepAlive": false
+    },
+    {
+      "url": "HMI/MainContent/Infos/IO/InfosIO_EL1809-3.content",
+      "preload": false,
+      "keepAlive": false
+    },
+    {
+      "url": "HMI/MainContent/Infos/IO/InfosIO_EL2809-3.content",
+      "preload": false,
+      "keepAlive": false
+    },
+    {
+      "url": "HMI/MainContent/Infos/IO/InfosIO_EL3024-5.content",
+      "preload": false,
+      "keepAlive": false
+    },
+    {
+      "url": "HMI/MainContent/Infos/Messaging/InfosMessaging.content",
+      "preload": false,
+      "keepAlive": false
+    },
+    {
+      "url": "HMI/MainContent/Parametres/Alarms/ParamAlarms.content",
+      "preload": false,
+      "keepAlive": false
+    },
+    {
+      "url": "HMI/MainContent/Parametres/COM/ParamCOM.content",
+      "preload": false,
+      "keepAlive": false
+    },
+    {
+      "url": "HMI/MainContent/Parametres/COM/ParamCOM2.content",
+      "preload": false,
+      "keepAlive": false
+    },
+    {
+      "url": "HMI/MainContent/Parametres/ESS/ParamESS.content",
+      "preload": false,
+      "keepAlive": false
+    },
+    {
+      "url": "HMI/MainContent/Parametres/ESS/ParamFreqAndUreg.content",
+      "preload": false,
+      "keepAlive": false
+    },
+    {
+      "url": "HMI/MainContent/Parametres/HPP/ParamHPP.content",
+      "preload": false,
+      "keepAlive": false
+    },
+    {
+      "url": "HMI/MainContent/Parametres/Parametres.content",
+      "preload": false,
+      "keepAlive": false
+    },
+    {
+      "url": "HMI/MainContent/Parametres/PDL/ParamPDL.content",
+      "preload": false,
+      "keepAlive": false
+    },
+    {
+      "url": "HMI/MainContent/TechnoPays/I_TO.content",
+      "preload": false,
+      "keepAlive": false
+    },
+    {
+      "url": "HMI/MainContent/TechnoPays/I_TO/Command/I_TO_Command_Alarms.content",
+      "preload": false,
+      "keepAlive": false
+    },
+    {
+      "url": "HMI/MainContent/TechnoPays/I_TO/Command/I_TO_Command_Off.content",
+      "preload": false,
+      "keepAlive": false
+    },
+    {
+      "url": "HMI/MainContent/TechnoPays/I_TO/Command/I_TO_Command_OnGrid.content",
+      "preload": false,
+      "keepAlive": false
+    },
+    {
+      "url": "HMI/MainContent/TechnoPays/I_TO/I_TO_Command.content",
+      "preload": false,
+      "keepAlive": false
+    },
+    {
+      "url": "HMI/MainContent/TechnoPays/I_TO/I_TO_SLD.content",
+      "preload": false,
+      "keepAlive": false
+    },
+    {
+      "url": "HMI/MainContent/Zone/ESS/PCS_Alarms.content",
+      "preload": false,
+      "keepAlive": false
+    },
+    {
+      "url": "HMI/MainContent/Zone/ESS/PCS_CC.content",
+      "preload": false,
+      "keepAlive": false
+    },
+    {
+      "url": "HMI/MainContent/Zone/PDL/PDL.content",
+      "preload": false,
+      "keepAlive": false
+    },
+    {
+      "url": "HMI/NavLeft.content",
+      "preload": false,
+      "keepAlive": false
+    },
+    {
+      "url": "HMI/NavTop.content",
+      "preload": false,
+      "keepAlive": false
+    }
+  ],
+  "views": [
+    {
+      "url": "HMI/Desktop.view",
+      "preload": false,
+      "keepAlive": false
+    }
+  ],
+  "userFunctions": [
+    {
+      "url": "HMI/UserControls/JavaScript/SetCursor.js"
+    },
+    {
+      "url": "HMI/UserControls/JavaScript/GetBitMask.js"
+    },
+    {
+      "url": "HMI/UserControls/JavaScript/Format.js"
+    },
+    {
+      "url": "HMI/UserControls/JavaScript/DownloadFile.js"
+    },
+    {
+      "url": "HMI/UserControls/JavaScript/DateTimePicker.js"
+    },
+    {
+      "url": "HMI/UserControls/JavaScript/Confirm.js"
+    }
+  ],
+  "symbols": {
+    "internal": {
+      "NumInv": {
+        "value": "1",
+        "type": "tchmi:general#/definitions/String",
+        "persist": false,
+        "readonly": false
+      },
+      "Old_TargetContent": {
+        "value": "",
+        "type": "tchmi:general#/definitions/String",
+        "persist": false,
+        "readonly": false
+      },
+      "ESS1_Alarms_Visu": {
+        "value": "Collapsed",
+        "type": "tchmi:general#/definitions/String",
+        "persist": false,
+        "readonly": false
+      },
+      "ESS2_Alarms_Visu": {
+        "value": "Collapsed",
+        "type": "tchmi:general#/definitions/String",
+        "persist": false,
+        "readonly": false
+      },
+      "ESS3_Alarms_Visu": {
+        "value": "Collapsed",
+        "type": "tchmi:general#/definitions/String",
+        "persist": false,
+        "readonly": false
+      },
+      "ESS4_Alarms_Visu": {
+        "value": "Collapsed",
+        "type": "tchmi:general#/definitions/String",
+        "persist": false,
+        "readonly": false
+      },
+      "ESS5_Alarms_Visu": {
+        "value": "Collapsed",
+        "type": "tchmi:general#/definitions/String",
+        "persist": false,
+        "readonly": false
+      },
+      "ESS6_Alarms_Visu": {
+        "value": "Collapsed",
+        "type": "tchmi:general#/definitions/String",
+        "persist": false,
+        "readonly": false
+      },
+      "PDL_Alarms_Visu": {
+        "value": "Collapsed",
+        "type": "tchmi:general#/definitions/String",
+        "persist": false,
+        "readonly": false
+      },
+      "HPP_Alarms_Visu": {
+        "value": "Collapsed",
+        "type": "tchmi:general#/definitions/String",
+        "persist": false,
+        "readonly": false
+      },
+      "PCS1_Alarms_Visu": {
+        "value": "Collapsed",
+        "type": "tchmi:general#/definitions/String",
+        "persist": false,
+        "readonly": false
+      },
+      "PCS2_Alarms_Visu": {
+        "value": "Collapsed",
+        "type": "tchmi:general#/definitions/String",
+        "persist": false,
+        "readonly": false
+      },
+      "HVAC1_Alarms_Visu": {
+        "value": "Collapsed",
+        "type": "tchmi:general#/definitions/String",
+        "persist": false,
+        "readonly": false
+      },
+      "HVAC2_Alarms_Visu": {
+        "value": "Collapsed",
+        "type": "tchmi:general#/definitions/String",
+        "persist": false,
+        "readonly": false
+      },
+      "Selected_BESS_Display_Values": {
+        "value": 1,
+        "type": "tchmi:general#/definitions/INT16",
+        "persist": false,
+        "readonly": false
+      },
+      "Select_BESS_Combobox": {
+        "value": 1.0,
+        "type": "tchmi:framework#/definitions/PositiveNumber",
+        "persist": false,
+        "readonly": false
+      },
+      "Counter_": {
+        "value": 0,
+        "type": "tchmi:general#/definitions/INT16",
+        "persist": false,
+        "readonly": false
+      }
+    }
+  },
+  "trigger": [],
+  "actionTemplates": [
+    {
+      "displayname": "VisuAlarmsRemove",
+      "name": "VisuAlarmsRemove",
+      "category": "Action Templates",
+      "actions": [
+        {
+          "objectType": "WriteToSymbol",
+          "active": true,
+          "symbolExpression": "%ctrl%TcHmiRegion_8::TargetContent%/ctrl%",
+          "value": {
+            "objectType": "Symbol",
+            "valueType": "tchmi:general#/definitions/String",
+            "symbolExpression": "%i%Old_TargetContent%/i%"
+          },
+          "asyncWait": true
+        },
+        {
+          "objectType": "WriteToSymbol",
+          "active": true,
+          "symbolExpression": "%tp%InternalVisuSymbol%/tp%",
+          "value": {
+            "objectType": "StaticValue",
+            "valueType": "tchmi:general#/definitions/String",
+            "value": "Collapsed"
+          },
+          "asyncWait": true
+        }
+      ],
+      "parameters": [
+        {
+          "name": "InternalVisuSymbol",
+          "type": "tchmi:general#/definitions/String",
+          "description": "Internal Visu Symbol"
+        }
+      ]
+    },
+    {
+      "displayname": "VisuAlarms(1)",
+      "name": "VisuAlarms(1)",
+      "category": "Action Templates",
+      "actions": [
+        {
+          "objectType": "WriteToSymbol",
+          "active": true,
+          "symbolExpression": "%ctrl%TcHmiRegion_13::Visibility%/ctrl%",
+          "value": {
+            "objectType": "StaticValue",
+            "valueType": "tchmi:framework#/definitions/Visibility",
+            "value": "Visible"
+          },
+          "asyncWait": true
+        },
+        {
+          "objectType": "WriteToSymbol",
+          "active": true,
+          "symbolExpression": "%tp%InternalVisuSymbol%/tp%",
+          "value": {
+            "objectType": "StaticValue",
+            "valueType": "tchmi:general#/definitions/String",
+            "value": "Visible"
+          },
+          "asyncWait": true
+        }
+      ],
+      "parameters": [
+        {
+          "name": "InternalVisuSymbol",
+          "type": "tchmi:general#/definitions/String",
+          "description": "Internal Visu Symbol"
+        }
+      ]
+    },
+    {
+      "displayname": "VisuAlarmsRemove(1)",
+      "name": "VisuAlarmsRemove(1)",
+      "category": "Action Templates",
+      "actions": [
+        {
+          "objectType": "WriteToSymbol",
+          "active": true,
+          "symbolExpression": "%ctrl%TcHmiRegion_13::Visibility%/ctrl%",
+          "value": {
+            "objectType": "StaticValue",
+            "valueType": "tchmi:framework#/definitions/Visibility",
+            "value": "Collapsed"
+          },
+          "asyncWait": true
+        },
+        {
+          "objectType": "WriteToSymbol",
+          "active": true,
+          "symbolExpression": "%tp%InternalVisuSymbol%/tp%",
+          "value": {
+            "objectType": "StaticValue",
+            "valueType": "tchmi:general#/definitions/String",
+            "value": "Collapsed"
+          },
+          "asyncWait": true
+        }
+      ],
+      "parameters": [
+        {
+          "name": "InternalVisuSymbol",
+          "type": "tchmi:general#/definitions/String",
+          "description": "Internal Visu Symbol"
+        }
+      ]
+    },
+    {
+      "displayname": "VisuAlarms",
+      "name": "VisuAlarms",
+      "category": "Action Templates",
+      "actions": [
+        {
+          "objectType": "WriteToSymbol",
+          "active": true,
+          "symbolExpression": "%i%Old_TargetContent%/i%",
+          "value": {
+            "objectType": "Symbol",
+            "valueType": "tchmi:general#/definitions/String",
+            "symbolExpression": "%ctrl%TcHmiRegion_8::TargetContent%/ctrl%"
+          },
+          "asyncWait": true
+        },
+        {
+          "objectType": "WriteToSymbol",
+          "active": true,
+          "symbolExpression": "%ctrl%TcHmiRegion_8::TargetContent%/ctrl%",
+          "value": {
+            "objectType": "StaticValue",
+            "valueType": "tchmi:framework#/definitions/ContentPath",
+            "value": "HMI/MainContent/TechnoPays/I_TO/Command/I_TO_Command_Alarms.content"
+          },
+          "asyncWait": true
+        },
+        {
+          "objectType": "WriteToSymbol",
+          "active": true,
+          "symbolExpression": "%tp%InternalVisuSymbol%/tp%",
+          "value": {
+            "objectType": "StaticValue",
+            "valueType": "tchmi:general#/definitions/String",
+            "value": "Visible"
+          },
+          "asyncWait": true
+        }
+      ],
+      "parameters": [
+        {
+          "name": "InternalVisuSymbol",
+          "type": "tchmi:general#/definitions/String",
+          "description": "Internal Visu Symbol"
+        }
+      ]
+    }
+  ],
+  "languages": {
+    "de-DE": "Localization\\de-DE.localization",
+    "en-US": "Localization\\en-US.localization"
+  },
+  "languageFallback": "",
+  "disableLoadingOptimization": false,
+  "creatorSettings": {
+    "viewport": {
+      "defaultWidth": 1024,
+      "defaultHeight": 768
+    }
+  },
+  "binding": {
+    "symbolError": "Ignore"
+  },
+  "packages": [
+    {
+      "name": "Beckhoff.TwinCAT.HMI.Controls",
+      "basePath": "/Beckhoff.TwinCAT.HMI.Controls"
+    },
+    {
+      "name": "Beckhoff.TwinCAT.HMI.Framework",
+      "basePath": "/framework"
+    },
+    {
+      "name": "Beckhoff.TwinCAT.HMI.Functions",
+      "basePath": "/Beckhoff.TwinCAT.HMI.Functions"
+    }
+  ],
+  "keyboardLayouts": [
+    {
+      "url": "KeyboardLayouts/German - compact.keyboard.json"
+    },
+    {
+      "url": "KeyboardLayouts/US - compact.keyboard.json"
+    }
+  ]
+}

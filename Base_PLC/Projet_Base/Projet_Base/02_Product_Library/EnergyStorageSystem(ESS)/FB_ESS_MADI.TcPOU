@@ -1,0 +1,1645 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1">
+  <POU Name="FB_ESS_MADI" Id="{86bb6d91-f3d8-4c6a-bbf9-dd7775131e84}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_ESS_MADI EXTENDS FB_ESS_Base
+//////////////////
+// AMSv1 standard product  
+//////////////////
+VAR CONSTANT
+	// Characteristics of the object (Same for all instances)
+	
+END_VAR
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance specific) 
+	ParamTimeBetweenPcsConnect		: TIME := T#2S;		// (s) Tempo between sending order to second Pcs
+	
+	ParamPSoCEqualize				: REAL := 50;		// (kW) Additionnal power to equilibrate SoC internally of ESS . 
+
+	ParamDeviationWarning			: REAL := 30.0;		// (%) Pourcentage of deviation between Battery temperature sensor before a warning is raised
+
+	ParamTransfoWarningProdLimit	: REAL := 0.4 ; 	// (p.u) Limit production if Transfo warning. 
+	ParamDelayOpenDCBbms			: TIME := T#3S;		// (s) Delay after inverters opened their DC contactor, to open the battery DC contactor
+	
+	{attribute 'OPC.UA.DA' := '1'} 
+	ParamPmax						: REAL := 2500   ; 	// (kW) MAximum Power value for the whole ESS ( limited by transformer and protection ) 
+
+
+	
+	// HVAC //
+	//ParamHygroStartHvac2			: REAL := 50.0;
+	//ParamTempStartHvac2			: REAL := 24.0;
+	//ParamTempStopHvac2			: REAL := 23.0;
+	//ParamHygroStopHvac2			: REAL := 30.0;
+	//ParamPriorityHvac				: ARRAY[1..CstNbHvac_ESS] OF UINT :=[1,2];
+	//ParamTimeHvacChangePriority	: TIME := T#100H;	
+	ParamTemperatureSetpoint		: REAL := 22.0;	// HVAC initial setpoint temperature . 
+	ParamUPSDischargeMaxTime		: TIME := T#30M ; // Disconnect BESS if UPS is being discharged for too long. 	
+
+	//ParamTimeBatDoorOpened		: TIME := T#15S;
+	//ParamTimePcsDoorOpened		: TIME := T#15S;
+	//ParamMaxTimeBuzzer			: TIME := T#5M;
+	//ParamTimeUpsAlarm				: TIME := T#5M;
+	
+END_VAR
+
+
+VAR_INPUT
+	//Child objects
+	AX_PCS 							: ARRAY[1..CstNbPcs_ESS_G] OF FB_PCS_Jema_IBX3;
+	AX_Bat							: ARRAY[1..CstNbBAT_ESS_G] OF FB_BAT_Sams;
+	AX_HVAC							: ARRAY[1..CstNbHvac_ESS_G] OF FB_HVAC_MADI;
+	AX_TempSensor					: ARRAY[1..CstNbTempSensor_ESS_G] OF FB_ANA_IO;
+	AX_HygroSensor					: ARRAY[1..4] OF FB_ANA_IO;
+	A1_Spd							: FB_TOR_Spd;
+	A1_DS_Bat						: FB_TOR_DS;
+	A1_Ds_Pcs						: FB_TOR_DS;
+	A1_ToS							: FB_TOR_TOS;
+	A1_EM							: FB_EM_Pulse;
+	A1_Cb_Q31						: FB_TOR_CB;
+	A1_ES							: FB_TOR_Es;
+	A1_SD_Pcs						: FB_TOR_Sd;
+	A1_Transfo						: FB_Transfo_MV;
+	A1_UPS							: FB_UPS_ENERIS ; 
+	A1_FSS							: FB_FSS ; 
+	AX_CB_ChainDcSwitchBank			: ARRAY[1..CstNbBAT_ESS_G] OF  FB_TOR_Standard ; 
+	AX_CB_ChainFanBank				: ARRAY[1..CstNbBAT_ESS_G] OF  FB_TOR_Standard ; 	
+	A1_CB_RackCtrl24V				: FB_TOR_Standard; 	// Etat des alimentations 24 V pour les controleur de racks ( secourus )
+	A1_CB_PLC24V					: FB_TOR_Standard ; // etat de l'alimentation 24 V pour les équipements PLC + relais sécruité secourus .
+
+	IN_MesCouplerState_IO			: UINT ; 				// Coupler State IO
+	
+	IN_CmdStandby					: BOOL;
+
+	MesDataExd						: ESS_MADI ; 
+END_VAR
+
+VAR_OUTPUT
+		OUT_CmdStopPcs1_IO		(*AT %Q**)	: BOOL;
+		OUT_CmdStopPcs2_IO		(*AT %Q**)	: BOOL;
+		OUT_CmdStartPcs1_IO		(*AT %Q**)	: BOOL;
+		OUT_CmdStartPcs2_IO		(*AT %Q**)	: BOOL;
+		                    	
+		OUT_CmdEmergencyStop	(*AT %Q**)  : BOOL ; 
+		OUT_CmdBuzzer_IO		(*AT %Q**)	: BOOL;
+END_VAR
+
+
+VAR
+	// M_AlarmManagement
+		R_TRIG_Event					: ARRAY[1..15] OF R_TRIG ;  
+		MesComErrorEthercat	 			: BOOL;						//(NA) Communication Error with Ethercat coupler 
+		TOF_Ethercat					: TOF ;
+		AX_TapVariable 					: ARRAY[1..10] OF  FB_TapVariable ; // Reset management 
+	
+		BMS1_bReducePower				: BOOL;
+		BMS1_bStopOperation				: BOOL;
+		BMS2_bReducePower				: BOOL;
+		BMS2_bCheckRackWhenAvailable	: BOOL;
+		BMS2_bStopOperation				: BOOL;	
+		BMS1_bPreventStart				: BOOL;
+		BMS2_bPreventStart				: BOOL;
+		
+		TON_TempAlarm					: TON;
+		TON_HygroAlarm					: TON;		
+		TON_UPS							: TON ; 
+		
+		
+		AX_AlarmWords					: ARRAY[1..60] OF ST_ValuesAlarms;
+		AX_AlarmWords_Null				: ARRAY[1..60] OF ST_ValuesAlarms;
+		NumAlarmsActive					: UINT;
+		
+		
+		
+	// M_EVALUATE VARIABLES//        
+    	
+
+		DataSystemBMS					: ARRAY[1..CstNbBAT_ESS_G] OF BAT_SAMS;
+	
+		DataPcs							: ARRAY[1..CstNbPcs_ESS_G] OF PCS_Jema_IBX3;
+		
+		TON_CalConnected_PCS1				: TON;		// Tempo 5s to delay integration of PCS in PID regulation
+		TON_CalConnected_PCS2			: TON;		// Tempo to delay integration of PCS in PID regulation
+        MesSbat_ChargeConnected_PCS2	: REAL;
+		MesSBATDischargeConnected_PCS1	: REAL;
+		MesSbat_ChargeConnected_PCS1		: REAL;
+		MesSBATDischargeConnected_PCS2	: REAL;              	
+	// M_WRITESETPOINTS VARIABLES//  	
+	    bEquilibrationOnGoing			: BOOL;      
+		FB_Ramp_ExitFreq_PCS1			: FB_RAMP ;
+		FB_Ramp_ExitFreq_PCS2			: FB_RAMP ;
+		MesPRampTarget_PCS1				: REAL;	// Value to be reached at the end of the ramp . 	
+		MesPRampTarget_PCS2				: REAL;	// Value to be reached at the end of the ramp .
+	//	RS_ApllyFreqExit_PCS1 : RS ;  	
+	//	RS_ApllyFreqExit_PCS2 : RS ;  
+	//GET/SET PROPERTY MANAGEMENT// 	
+	                           	
+	// M_INIT VARIABLES // 	        	
+	
+	// M_STARTSTOP //
+		BMS1_TP_TimeToSoftStopBeforeOpenAC	: TP; 
+		BMS2_TP_TimeToSoftStopBeforeOpenAC	: TP; 
+		TP_TimeBetweenPcsConnect			: TP; 
+		TP_BuzzerMaxTime					: TP;
+		TP_Reset							: TP;
+		
+		F_Tap_SoftStopBMS1					: FB_TapVariable ; 
+		F_Tap_SoftStopBMS2					: FB_TapVariable ; 		
+		F_Tap_StopBMS1						: FB_TapVariable ; 
+		F_Tap_StopBMS2						: FB_TapVariable ; 	
+		F_Tap_StartBMS1						: FB_TapVariable ; 
+		F_Tap_StartBMS2						: FB_TapVariable ; 			
+		
+		BMS1_Trig_SoftStop					: R_TRIG;		// Trig to soft stop 
+		BMS2_Trig_SoftStop					: R_TRIG;		// Trig to soft stop 
+		BMS1_Trig_StopOperation				: R_TRIG;		// Trig to stop operation on BAT fault
+		BMS2_Trig_StopOperation				: R_TRIG;		// Trig to stop operation on BAT fault
+		BMS1_Trig_Stop						: R_TRIG;		// Trig to stop 
+		BMS2_Trig_Stop						: R_TRIG;		// Trig to stop 
+		BMS1_Trig_Start						: R_TRIG;		// Trig to stop 
+		BMS2_Trig_Start						: R_TRIG;		// Trig to stop 
+		
+		BMS1_FTrig_SoftStop					: F_TRIG;		// Falling Trig to soft stop 
+		BMS2_FTrig_SoftStop					: F_TRIG;		// Falling Trig to soft stop 
+		BMS1_FTrig_StopOperation			: F_TRIG;		// Falling Trig to stop operation on BAT fault
+		BMS2_FTrig_StopOperation			: F_TRIG;		// Falling Trig to stop operation on BAT fault
+		BMS1_FTrig_Stop						: F_TRIG;		// Falling Trig to stop 
+		BMS2_FTrig_Stop						: F_TRIG;		// Falling Trig to stop 
+		BMS1_FTrig_Start					: R_TRIG;		// Trig to stop 
+		BMS2_FTrig_Start					: R_TRIG;		// Trig to stop 
+	
+	                     
+		TRIG_CmdToOpenDc_Sbms1				: R_TRIG;
+		TRIG_CmdToOpenDc_Sbms2				: R_TRIG;
+		TON_DC_PCS1							: TON;
+		TON_DC_PCS2							: TON;
+		TRIG_DC_PCS1						: R_TRIG;
+		TRIG_DC_PCS2						: R_TRIG;
+		
+		TON_BeforeOpenDC_Sbms1				: TON;
+		TON_BeforeOpenDC_Sbms2				: TON;
+		TRIG_TP_Sbms1						: R_TRIG;
+		TRIG_TP_Sbms2						: R_TRIG;
+
+		
+		TRIG_CmdStandby						: R_TRIG;
+		TP_CmdStandby						: TP;			// Pour laisser le temps au pcs de recevoir une commande de zero avant de se deconnecter 
+		TP_CmdStandby2						: TP;			// Pour laisser le temps au pcs de recevoir une commande de zero avant de se deconnecter 
+
+
+		TRIG_CmdConnect						: R_TRIG;
+		TRIG_CmdStart			            : R_TRIG;
+		TRIG_CmdStop	              	  	: R_TRIG;
+		TRIG_CmdReset			            : R_TRIG;
+
+		TRIG_LOCBESS1						: R_TRIG;
+		TRIG_LOCBESS2						: R_TRIG;
+
+
+		
+		FTrigTpBtwnPcs						: F_TRIG;
+
+		//HVAC 
+		R_TRIGChangePriority				: R_TRIG;
+
+
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{89c7587a-801d-42d5-bb5c-7adaabca4c06}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Generates object alarms and manages resets. 
+//////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager			: FB_AlarmCodeManager ;
+
+
+	System1StopOperation			: WORD;
+	System2StopOperation			: WORD;
+	System1CheckrackWhenAvailable	: WORD;
+	System2CheckrackWhenAvailable	: WORD;	
+	System1PreventStart				: WORD;
+	System2PreventStart				: WORD;		
+	
+	bDeviationTempAlarm				: BOOL;
+	bDeviationHygroAlarm			: BOOL;
+	TempMax							: REAL;
+	TempMin							: REAL;
+	HygroMax						: REAL;
+	HygroMin						: REAL;
+
+	MesAlarmTempBat					: UINT;
+	KK								: UINT;
+	MesAlarmHygroBat				: UINT ;
+                            		
+	MesAlarmSynthesis				: BOOL;
+	MesWarningSynthesis				: BOOL;
+	CalSoCHigh: BOOL;
+	CalSoCLow: BOOL;
+	
+	
+	GG: INT ; 
+	LL: INT;
+	ID_Journal: INT;
+	WordTest: WORD;
+	
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+	// Gestion des Buzzers
+	// Je lance le buzzer si Porte Bat ouverte depuis plus de ParamTimeBatDoorOpened
+	
+	//TP_BuzzerMaxTime(IN :=  A1_DS_Bat.MesDataExd.MesData.MesWarningCode.1 , PT := ParamMaxTimeBuzzer);	// Je mets une limite au buzzer.
+	OUT_CmdBuzzer_IO := A1_DS_Bat.MesDataExd.MesData.MesWarningCode.1 ;	// on ne mets pas de limite
+
+//Gestion des températures 
+	TempMax := MAX(MesDataExd.AX_TempSensor[2].MesData.Value, MesDataExd.AX_TempSensor[3].MesData.Value, MesDataExd.AX_TempSensor[4].MesData.Value);
+	TempMin := MIN(MesDataExd.AX_TempSensor[2].MesData.Value, MesDataExd.AX_TempSensor[3].MesData.Value, MesDataExd.AX_TempSensor[4].MesData.Value);
+	IF 	TempMax + TempMin <> 0 THEN
+		bDeviationTempAlarm := 2*(TempMax - TempMin)/(TempMax + TempMin)*100.0 > ParamDeviationWarning;
+	ELSE
+		bDeviationTempAlarm := TRUE;
+	END_IF
+	
+	HygroMax := MAX(MesDataExd.AX_HygroSensor[2].MesData.Value, MesDataExd.AX_HygroSensor[3].MesData.Value, MesDataExd.AX_HygroSensor[4].MesData.Value);
+	HygroMin := MIN(MesDataExd.AX_HygroSensor[2].MesData.Value, MesDataExd.AX_HygroSensor[3].MesData.Value, MesDataExd.AX_HygroSensor[4].MesData.Value);
+	IF 	HygroMax + HygroMin <> 0 THEN
+		bDeviationHygroAlarm := 2*(HygroMax - HygroMin)/(HygroMax + HygroMin)*100.0 > ParamDeviationWarning;
+	ELSE
+		bDeviationHygroAlarm := TRUE;
+	END_IF	
+	
+	MesAlarmTempBat		:= 0 ; 
+	MesAlarmHygroBat	:= 0 ; 
+	FOR KK := 2 TO 4 DO 
+		MesAlarmTempBat		:= MesAlarmTempBat + SEL(((AX_TempSensor[KK].MesDataExd.MesData.MesWarningCode.1 OR AX_TempSensor[KK].MesDataExd.MesData.MesWarningCode.3) AND NOT AX_TempSensor[KK].MesDataExd.MesData.MesAlarmCode >0),0,1) ; 		// Low or high alarm and NOT sensor alarm  
+		MesAlarmHygroBat	:= MesAlarmHygroBat + SEL(((AX_HygroSensor[KK].MesDataExd.MesData.MesWarningCode.1 OR AX_HygroSensor[KK].MesDataExd.MesData.MesWarningCode.3) AND NOT AX_HygroSensor[KK].MesDataExd.MesData.MesAlarmCode >0),0,1) ; 		// Low or high alarm and NOT sensor alarm ; 
+	END_FOR 
+	
+	TON_TempAlarm(IN:= MesAlarmTempBat > 1 , PT := T#15S ) ; // Create alarm if two or more sensors detect an alarm
+	TON_HygroAlarm(IN:= MesAlarmHygroBat >1 ,PT := T#15S ) ;	// Create alarm if two or more sensors detect an alarm
+	
+	
+	
+	
+			//COMMUNCATION //	
+	TOF_Ethercat(IN:= NOT (SHR(SHL(UINT_TO_BYTE(IN_MesCouplerState_IO),4),4)=8),PT:=ParamTempoComAlarm)  ; 	
+	MesComErrorEthercat 			:= TOF_Ethercat.Q  ; 							// Not OP State . 
+	
+
+	TON_UPS(IN:=A1_UPS.MesDataExd.MesData.MesDischarging , PT:= ParamUPSDischargeMaxTime ) ; 
+	
+
+// CALCUL DES ALARMCODES //
+CalSoCHigh := AX_Bat[1].MesDataExd.MesSoCConnected>=ParamSoCVeryVeryHigh OR AX_Bat[2].MesDataExd.MesSoCConnected>=ParamSoCVeryVeryHigh ; 
+CalSoCLow  := AX_Bat[1].MesDataExd.MesSoCConnected<= ParamSoCVeryVeryLow AND AX_Bat[1].MesState.1  OR AX_Bat[2].MesDataExd.MesSoCConnected<= ParamSoCVeryVeryLow AND  AX_Bat[2].MesState.1 ;
+
+
+FB_AlarmCodeManager
+(
+	bAlarm1 := FALSE, 									 					 
+	bAlarm2 := FALSE, 																
+	bAlarm3 := MesComErrorEthercat, 	// No control on BESS possible											
+	bAlarm4 := CalSoCHigh,																					// SoC Very High Reached
+	bAlarm5 := CalSoCLow,																					// SoC Very Low Reached
+	bAlarm6 := FALSE,															
+	bAlarm7 := FALSE,																			
+	bAlarm8  := BMS1_bStopOperation,																		// BBMS 1 Stop Operation Alarm
+	bAlarm9  := BMS2_bStopOperation,																		// BBMS 2 Stop Operation Alarm
+	bAlarm10 := BMS1_bPreventStart,																			// BBMS 1 Prevent start alarm
+	bAlarm11 := BMS2_bPreventStart,																			// BBMS 2 Prevent Start Alarm
+	bAlarm12 := FALSE,											  
+	wAlarmCode =>MesDataExd.MesData.mesAlarmCode
+);
+	
+FB_AlarmCodeManager
+(
+	bAlarm1 := FALSE,
+	bAlarm2 := FALSE,
+	bAlarm3 := FALSE,
+	bAlarm4 := bDeviationTempAlarm OR bDeviationHygroAlarm,        						// Temperature or Hygrometry sensor deviation. 
+	bAlarm5 := MesComErrorEthercat , 													// Ethercat communication error #COM
+	bAlarm6 := FALSE,
+	bAlarm7 := BMS1_bReducePower OR BMS2_bReducePower,									// BBMS1 or BBMS 2 has to reduce its power . 
+	bAlarm8 := CalCompareWarningStart,													// Start Command failed
+	bAlarm9 := CalCompareWarningStop,	 												// Stop Command Failed 
+	bAlarm10 :=	FALSE,
+	bAlarm11 :=	FALSE,
+	bAlarm12 :=	FALSE,
+	bAlarm13 :=	FALSE,
+	bAlarm14 := FALSE,													
+	bAlarm15 := FALSE,						
+	wAlarmCode =>MesDataExd.MesData.MesWarningCode
+);	
+
+FB_AlarmCodeManager
+(
+	bAlarm1 := R_TRIG_Event[1].Q,		// Shutdown command
+	bAlarm2 := R_TRIG_Event[2].Q,		// 
+	bAlarm3 := R_TRIG_Event[3].Q,        // Reset command
+	bAlarm4 := R_TRIG_Event[4].Q,        // Buzzer command
+	bAlarm5 := R_TRIG_Event[5].Q,		// 
+	bAlarm6 := R_TRIG_Event[6].Q,        // Standby command
+	bAlarm7 := R_TRIG_Event[7].Q,        // Stop PCS 1 command 
+	bAlarm8 := R_TRIG_Event[8].Q,        // Stop PCS 2 command 
+	bAlarm9 := R_TRIG_Event[9].Q,        //
+	bAlarm10 :=R_TRIG_Event[10].Q,        //
+	bAlarm11 :=R_TRIG_Event[11].Q,        //
+	bAlarm12 :=R_TRIG_Event[12].Q,        //
+	bAlarm13 :=R_TRIG_Event[13].Q,        //
+	bAlarm14 :=R_TRIG_Event[14].Q,        //
+	bAlarm15 :=R_TRIG_Event[15].Q,        //
+	wAlarmCode =>MesDataExd.MesData.MesEventCode
+);
+
+R_TRIG_Event[1](CLK:=IN_CmdStop,			       ) ;	
+R_TRIG_Event[2](CLK:=FALSE,               	) ;	
+R_TRIG_Event[3](CLK:=IN_CmdReset_IO,       ) ;  
+R_TRIG_Event[4](CLK:=OUT_CmdBuzzer_IO,     ) ;  
+R_TRIG_Event[5](CLK:=FALSE,            	   ) ;  
+R_TRIG_Event[6](CLK:=IN_CmdStandby,        ) ;  
+R_TRIG_Event[7](CLK:=OUT_CmdStopPcs1_IO,   ) ;  
+R_TRIG_Event[8](CLK:=OUT_CmdStopPcs2_IO,   ) ;  
+R_TRIG_Event[9](CLK:=FALSE                ) ;  
+R_TRIG_Event[10](CLK:= FALSE,              ) ; 
+R_TRIG_Event[11](CLK:= FALSE,              	) ; 
+R_TRIG_Event[12](CLK:= FALSE,                  ) ; 
+R_TRIG_Event[13](CLK:= FALSE,              	) ;	
+R_TRIG_Event[14](CLK:= FALSE,              	) ;	
+R_TRIG_Event[15](CLK:= FALSE,              ) ;	
+           
+
+// CALCUL DES ALARMCODES //
+
+NumAlarmsActive := 0;
+AX_AlarmWords := AX_AlarmWords_Null;
+FOR GG := 1 TO 15 DO	// Loop over alarm , warning and event , system stop operation . ..  
+	FOR LL := 1 TO 15 DO
+		ID_Journal := 8 + (ParamEssNum-1) + (GG- 1)*6;
+		
+		WordTest := ROR(FUN_Alarms.AX_RecupWord[ID_Journal],LL);
+		IF WordTest.0 AND NumAlarmsActive<60 THEN
+			NumAlarmsActive := NumAlarmsActive + 1;
+			AX_AlarmWords[NumAlarmsActive].Message := FUN_Alarms.AX_Journal[ID_Journal][LL].Message;
+		//ELSE
+		//	AX_AlarmWords[NumAlarmsActive+1].Message := '';
+		END_IF
+	END_FOR
+END_FOR]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_EquipmentCalls" Id="{5cef5b4d-6b93-4f8b-92f6-837e6cf89991}">
+      <Declaration><![CDATA[METHOD M_EquipmentCalls
+//////////////////
+// Evaluate AMS characteristics
+//////////////////
+
+VAR
+	// Method local variables (reinitialized at each cycle) 
+
+
+	KK: UINT;
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[FOR KK := 1 TO CstNbHvac_ESS_G DO
+	AX_HVAC[KK].M_Execute();
+END_FOR
+
+FOR KK := 1 TO CstNbBAT_ESS_G DO 
+	AX_Bat[KK].M_Execute();
+END_FOR
+
+
+FOR KK := 1 TO CstNbPcs_ESS_G DO 
+	AX_PCS[KK].M_Execute();
+END_FOR	
+
+
+A1_DS_Bat.M_Execute();					
+A1_Ds_Pcs.M_Execute();		
+			
+A1_ToS.M_Execute();				
+	
+
+A1_EM.M_Execute();	
+
+A1_Spd.M_Execute();				
+
+A1_Cb_Q31.M_Execute();	
+				
+			
+A1_SD_Pcs.M_Execute();	
+
+A1_ES.M_Execute();		
+				
+A1_Transfo.M_Execute();		
+
+FOR KK := 1 TO 4 DO 
+	AX_TempSensor[KK].M_Execute();
+	AX_HygroSensor[KK].M_Execute();
+END_FOR
+		
+A1_UPS.M_Execute() ; 			
+
+A1_FSS.M_Execute();
+
+FOR KK:= 1 TO ParamNbPcs DO 
+	AX_CB_ChainDcSwitchBank[KK].M_Execute();		
+	AX_CB_ChainFanBank[KK].M_Execute() ; 
+END_FOR 
+			
+A1_CB_RackCtrl24V.M_Execute(); 			
+A1_CB_PLC24V.M_Execute() ; 				]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Evaluate" Id="{bcf8a4fa-6815-4625-b3f9-a0215802a210}">
+      <Declaration><![CDATA[METHOD M_Evaluate
+//////////////////
+// Evaluate ESSS characteristics : First retrieve the SystemBMS values then update the PCS parameters
+//////////////////
+
+VAR
+	// Method local variables (reinitialized at each cycle) 
+
+
+
+	KK: INT;
+	CalConnected_PCS2: BYTE;
+	CalConnected_PCS1: BYTE;
+	
+
+	
+
+	CBChoose: BOOL;
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+DataPcs[1]		 := AX_PCS[1].MesDataExd ;
+DataPcs[2] 		 := AX_PCS[2].MesDataExd ;
+DataSystemBMS[1] := AX_Bat[1].MesDataExd;
+DataSystemBMS[2] := AX_Bat[2].MesDataExd;
+
+// MANAGE LOSS OF MODBUS COMMUNICATION 
+
+
+// AVAILABLE POWER AND ENERGY 
+(*
+CASE ParamEssNum OF 
+	1:
+			CBChoose := A1_SUBMV.A1_CB_ImBess1.MesDataExd.MesData.MesClosed AND NOT A1_SUBMV.A1_CB_ImBess1.MesDataExd.MesData.MesOpened_Sect; 	// IMBess is closed and its sectionnor
+	2:
+			CBChoose := A1_SUBMV.A1_CB_ImBess2.MesDataExd.MesData.MesClosed AND NOT A1_SUBMV.A1_CB_ImBess2.MesDataExd.MesData.MesOpened_Sect; 	// IMBess is closed and its sectionnor 
+	3:                                                                                     
+			CBChoose := A1_SUBMV.A1_CB_ImBess3.MesDataExd.MesData.MesClosed AND NOT A1_SUBMV.A1_CB_ImBess3.MesDataExd.MesData.MesOpened_Sect; 	// IMBess is closed and its sectionnor 
+	4:                                                                                     
+			CBChoose := A1_SUBMV.A1_CB_ImBess4.MesDataExd.MesData.MesClosed AND NOT A1_SUBMV.A1_CB_ImBess4.MesDataExd.MesData.MesOpened_Sect; 	// IMBess is closed and its sectionnor 
+	5:                                                                                     
+			CBChoose := A1_SUBMV.A1_CB_ImBess5.MesDataExd.MesData.MesClosed AND NOT A1_SUBMV.A1_CB_ImBess5.MesDataExd.MesData.MesOpened_Sect; 	// IMBess is closed and its sectionnor 
+	6:                                                                                     
+			CBChoose := A1_SUBMV.A1_CB_ImBess6.MesDataExd.MesData.MesClosed AND NOT A1_SUBMV.A1_CB_ImBess6.MesDataExd.MesData.MesOpened_Sect; 	// IMBess is closed and its sectionnor 
+
+END_CASE
+*)
+
+// On temporise au démarrage des PCS , pour être sur qu'ils soient prêt à appliquer la consigne pour la régulation PID
+
+TON_CalConnected_PCS1(IN:=NOT AX_PCS[1].MesDataExd.MesData.MesState.0 AND CBChoose AND NOT AX_PCS[1].IN_CmdPcsInLocalMode , PT:=T#5S ) ; 
+TON_CalConnected_PCS2(IN:=NOT AX_PCS[2].MesDataExd.MesData.MesState.0 AND CBChoose AND NOT AX_PCS[2].IN_CmdPcsInLocalMode , PT:=T#5S ) ; 
+
+CalConnected_PCS1 :=  SEL( TON_CalConnected_PCS1.Q, 0,1);
+CalConnected_PCS2 :=  SEL( TON_CalConnected_PCS2.Q,  0,1);// PCS Connected on AC and DC side . 
+
+
+
+MesDataExd.MesData.MesP_DischargeMax			:= MIN( ParamPmax ,  AX_PCS[1].MesDataExd.MesData.OUT_SetptPmax * 	CalConnected_PCS1		+ AX_PCS[2].MesDataExd.MesData.OUT_SetptPmax * CalConnected_PCS2);//
+MesDataExd.MesData.MesP_ChargeMin				:= MAX( -ParamPmax ,  AX_PCS[1].MesDataExd.MesData.OUT_SetptPmin * 	CalConnected_PCS1		+ AX_PCS[2].MesDataExd.MesData.OUT_SetptPmin * CalConnected_PCS2);
+MesDataExd.MesData.MesQ_DischargeConnected		:= MIN( ParamPmax ,  AX_PCS[1].MesDataExd.MesData.OUT_SetptQmax * 	CalConnected_PCS1		+ AX_PCS[2].MesDataExd.MesData.OUT_SetptQmax * CalConnected_PCS2);
+MesDataExd.MesData.MesQ_ChargeConnected		:= MAX( -ParamPmax ,  AX_PCS[1].MesDataExd.MesData.OUT_SetptQmin * 	CalConnected_PCS1		+ AX_PCS[2].MesDataExd.MesData.OUT_SetptQmin * CalConnected_PCS2);
+
+MesSBATDischargeConnected_PCS1		:= AX_PCS[1].MesDataExd.MesData.MesSmax_DischargeFromBat 	* CalConnected_PCS1	; 
+MesSbat_ChargeConnected_PCS1			:= AX_PCS[1].MesDataExd.MesData.MesSmax_ChargeFromBat 		*CalConnected_PCS1	 ; 
+MesSBATDischargeConnected_PCS2		:= AX_PCS[2].MesDataExd.MesData.MesSmax_DischargeFromBat 	* CalConnected_PCS2	; 
+MesSbat_ChargeConnected_PCS2			:= AX_PCS[2].MesDataExd.MesData.MesSmax_ChargeFromBat 		*CalConnected_PCS2	 ;	
+	
+MesDataExd.MesData.MesSbat_DischargeMax	:=  MesSBATDischargeConnected_PCS1	+ MesSBATDischargeConnected_PCS2 ; 
+MesDataExd.MesData.MesSbat_ChargeConnected		:= MesSbat_ChargeConnected_PCS1	+ MesSbat_ChargeConnected_PCS2    ; 
+
+// Max Min for frequency regulation 
+
+
+MesDataExd.MesPDischargeMax_FreqReg	:= MIN( ParamPmax ,  AX_PCS[1].MesDataExd.MesData.OUT_SetptPmax * 	CalConnected_PCS1 * SEL(AX_PCS[1].MesDataExd.MesNbPowerCol_FreqReg>0 ,0 ,1 )		+ AX_PCS[2].MesDataExd.MesData. OUT_SetptPmax * 	CalConnected_PCS2 *  SEL(AX_PCS[2].MesDataExd.MesNbPowerCol_FreqReg>0 ,0 ,1 ));//
+MesDataExd.MesPChargeMin_FreqReg		:= MAX( -ParamPmax ,  AX_PCS[1].MesDataExd.MesData.OUT_SetptPmin * 	CalConnected_PCS1	* SEL(AX_PCS[1].MesDataExd.MesNbPowerCol_FreqReg>0 ,0 ,1 )	+ AX_PCS[2].MesDataExd.MesData.OUT_SetptPmin *  	CalConnected_PCS2 * SEL(AX_PCS[2].MesDataExd.MesNbPowerCol_FreqReg>0 ,0 ,1 ));
+
+
+MesDataExd.MesData.MesEconnected	:= AX_Bat[1].MesDataExd.MesData.MesEconnected *CalConnected_PCS1  + AX_Bat[2].MesDataExd.MesData.MesEconnected *CalConnected_PCS2 ;
+MesDataExd.MesData.MesEnomconnected := ( AX_Bat[1].MesDataExd.MesNbRackConnected * AX_Bat[1].ParamEnomRack * AX_Bat[1].MesDataExd.MesData.MesSoH/100*CalConnected_PCS1 +  AX_Bat[2].MesDataExd.MesNbRackConnected * AX_Bat[2].ParamEnomRack* AX_Bat[2].MesDataExd.MesData.MesSoH/100*CalConnected_PCS2);
+
+
+MesDataExd.MesData.MesSoC 			:= SEL(MesDataExd.MesData.MesEnomconnected = 0 , MesDataExd.MesData.MesEconnected /  MesDataExd.MesData.MesEnomconnected ,0 )*100 ; // Add GGY .
+
+
+// Setpoint . Do not consider local setpoint in the calculation
+MesDataExd.MesData.OUT_SetptP		:= AX_PCS[1].MesDataExd.MesData.OUT_SetptP * SEL(NOT AX_PCS[1].IN_CmdPcsInLocalMode,0,1)	+ AX_PCS[2].MesDataExd.MesData.OUT_SetptP*SEL(NOT AX_PCS[2].IN_CmdPcsInLocalMode,0,1);
+MesDataExd.MesData.OUT_SetptQ		:= AX_PCS[1].MesDataExd.MesData.OUT_SetptQ * SEL(NOT AX_PCS[1].IN_CmdPcsInLocalMode,0,1)	+ AX_PCS[2].MesDataExd.MesData.OUT_SetptQ*SEL(NOT AX_PCS[2].IN_CmdPcsInLocalMode,0,1);
+
+MesDataExd.MesData.MesTemp_Bat		:= SEL(MesComErrorEthercat , (MesDataExd.AX_TempSensor[3].MesData.Value + MesDataExd.AX_TempSensor[2].MesData.Value + MesDataExd.AX_TempSensor[4].MesData.Value)/3 , (AX_HVAC[1].MesDataExd.MesTemp_Room + AX_HVAC[2].MesDataExd.MesTemp_Room)/2); 
+MesDataExd.MesData.MesHygro_Bat		:= SEL(MesComErrorEthercat , (MesDataExd.AX_HygroSensor[3].MesData.Value + MesDataExd.AX_HygroSensor[2].MesData.Value + MesDataExd.AX_HygroSensor[4].MesData.Value)/3 ,(AX_HVAC[1].MesDataExd.MesHygro_Amb+ AX_HVAC[2].MesDataExd.MesHygro_Amb)/2  ) ; 
+MesDataExd.MesData.MesTemp_Inv		:= SEL(MesComErrorEthercat, MesDataExd.AX_TempSensor[1].MesData.Value, (AX_PCS[1].MesDataExd.MesData.MesTemp  + AX_PCS[2].MesDataExd.MesData.MesTemp )/2 );
+//MesDataExd.MesData.MesHygro_Inv		:= SEL(MesComErrorEthercat, MesDataExd.AX_HygroSensor[1].MesData.Value, (AX_PCS[1].MesDataExd.MesHygro + AX_PCS[2].MesDataExd.MesHygro )/2 );
+
+
+MesDataExd.Mesdata.ParamPn			:= ParamNbPcs * AX_PCS[1].MesDataExd.MesData.MesSnom  ;
+MesDataExd.Mesdata.ParamEn			:= ( AX_Bat[1].ParamNbRacks * AX_Bat[1].ParamEnomRack +  AX_Bat[2].ParamNbRacks * AX_Bat[2].ParamEnomRack);
+MesDataExd.MesData.MesP			:= DataPcs[1].MesData.MesP * SEL(NOT AX_PCS[1].IN_CmdPcsInLocalMode,0,1) + DataPcs[2].MesData.MesP*  SEL(NOT AX_PCS[2].IN_CmdPcsInLocalMode,0,1);
+MesDataExd.MesData.MesQ			:= DataPcs[1].MesData.MesQ * SEL(NOT AX_PCS[1].IN_CmdPcsInLocalMode,0,1) + DataPcs[2].MesData.MesQ*  SEL(NOT AX_PCS[2].IN_CmdPcsInLocalMode,0,1);
+MesDataExd.MesData.MesEActCons		:= A1_EM.MesDataExd.MesData.MesEactCons;
+MesDataExd.MesData.MesState		:= MesState;
+
+
+// SubEquipement properties assignment 
+FOR KK := 1 TO 4 DO 
+	MesDataExd.AX_HygroSensor[KK] 	:= AX_HygroSensor[KK].MesDataExd;
+	MesDataExd.AX_TempSensor[KK]		:=  AX_TempSensor[KK].MesDataExd;
+END_FOR
+
+FOR KK:= 1 TO CstNbPcs_ESS_G DO 
+MesDataExd.AX_PCS[KK] := AX_PCS[KK].MesDataExd ;
+
+END_FOR
+
+FOR KK:= 1 TO CstNbBAT_ESS_G DO 
+MesDataExd.AX_Bat[KK] := 	AX_Bat[KK].MesDataExd ;
+
+END_FOR
+
+FOR KK := 1 TO CstNbHvac_ESS_G DO
+MesDataExd.AX_HVAC[KK]		:=  AX_HVAC[KK].MesDataExd; 
+END_FOR
+
+MesDataExd.Spd		:=  A1_Spd.MesDataExd; 
+MesDataExd.DS_Bat	:=  A1_DS_Bat.MesDataExd; 
+MesDataExd.Ds_Pcs	:=  A1_Ds_Pcs.MesDataExd ; 
+MesDataExd.ToS		:=  A1_ToS.MesDataExd; 
+MesDataExd.EM		:=  A1_EM.MesDataExd; 
+MesDataExd.Cb_Q31	:=  A1_Cb_Q31.MesDataExd; 
+MesDataExd.SD_Pcs	:=  A1_SD_Pcs.MesDataExd; 
+MesDataExd.ES		:=  A1_ES.MesDataExd; 
+MesDataExd.Transfo		:=  A1_Transfo.MesDataExd; 
+MesDataExd.UPS_24V		:=  A1_UPS.MesDataExd	 ;
+
+MesDataExd.FSS		:= A1_FSS.MesDataExd; 
+
+FOR KK:= 1 TO 2 DO 
+	MesDataExd.AX_CB_ChainDcSwitchBank[KK]		:= AX_CB_ChainDcSwitchBank[KK].MesDataExd; 
+	MesDataExd.AX_CB_ChainFanBank[KK]			:= 	AX_CB_ChainFanBank[KK].MesDataExd; 
+
+END_FOR 
+	
+MesDataExd.CB_RackCtrl24V				:= 	A1_CB_RackCtrl24V.MesDataExd;
+MesDataExd.CB_PLC24V					:= 	A1_CB_PLC24V.MesDataExd; 
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{f91cd242-248f-44b7-9567-f62d30b4d5ed}">
+      <Declaration><![CDATA[METHOD M_Init
+
+VAR
+	MesIPAdressCTRLPcs: STRING;
+	MesIPAdressCTRLBat: STRING;
+	KK: UINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[FOR KK := 1 TO CstNbHvac_ESS_G DO
+	AX_HVAC[KK].IN_SetptTemp := ParamTemperatureSetpoint;		
+	AX_HVAC[KK].ParamTempoComAlarm	:= T#10S ; 
+	AX_HVAC[KK].ParamIpAddress		:= CONCAT(STR1:= '192.168.1.' , STR2 := INT_TO_STRING(150+2*(ParamEssNum-1)+(KK-1) ))  ; //CONCAT(STR1:= '192.168.1.' , STR2 := INT_TO_STRING(10*(ParamEssNum-1)+140+KK-1) )  ; 	
+	AX_HVAC[KK].ParamUnitID			:= 1 ; 	
+	AX_HVAC[KK].ParamTcpPort		:= 502 ; 
+	AX_HVAC[KK].ParamClockWriteTime	:= T#2S ; 
+	AX_HVAC[KK].ParamClockReadTime	:= T#1S ; 
+	AX_HVAC[KK].ParamTimeOut		:= T#3S ;
+	AX_HVAC[KK].ParamPriority 		:= KK;
+	
+END_FOR
+
+
+FOR KK := 1 TO CstNbBAT_ESS_G DO 
+	AX_Bat[KK].ParamSystemBmsNum 	:= UINT_TO_BYTE(KK) ; 
+	AX_Bat[KK].ParamClockReadTime 	:= T#1S ; 
+	AX_Bat[KK].ParamClockWriteTime := T#1S ;
+	AX_Bat[KK].ParamEnomRack		:= 97.2; 	// kWh .  
+	AX_Bat[KK].ParamEssNum 		:= ParamEssNum ; 
+	AX_Bat[KK].ParamIpAddress 		:=CONCAT(STR1:= '192.168.1.' , STR2 := INT_TO_STRING(130+2*(ParamEssNum-1)+(KK-1) ))  ; 	  
+	AX_Bat[KK].ParamNbRacks 		:= UINT_TO_BYTE(ParamNbRacks)  ; 
+	AX_Bat[KK].ParamReadAlarmTime 	:= T#90S ; 
+	AX_Bat[KK].ParamReadWarningTime := T#30S  ; 
+	AX_Bat[KK].ParamTcpPort	 	:= SEL(GVL_CFG.CstPLCBackup ,602 ,  502) ; 
+	AX_Bat[KK].ParamTempoComAlarm 	:= T#10S ; 
+	AX_Bat[KK].ParamTimeout 		:= T#5S ; 
+	AX_Bat[KK].ParamTimeOutStart 	:= T#60S ; 
+	AX_Bat[KK].ParamTimeOutStop 	:= T#5S ; 
+	AX_Bat[KK].ParamTimeWatchdog 	:= T#30S ; 
+	AX_Bat[KK].ParamUnitID 		:= 1 ;
+	AX_Bat[KK].ParamNbRackString	:= 1 ; 
+	AX_Bat[KK].ParamNbReadAtOnce	:= 10 ; 
+	
+
+END_FOR
+
+
+FOR KK := 1 TO CstNbPcs_ESS_G DO 
+	AX_PCS[KK].ParamClockReadTime 					:= T#200MS ; 
+	AX_PCS[KK].ParamClockWriteTime 					:= T#500MS ; 
+	AX_PCS[KK].ParamIPAddress 						:= CONCAT(STR1:= '192.168.1.' , STR2 := INT_TO_STRING(64+10*(ParamEssNum-1)+5*(KK-1)) )  ; 	
+	AX_PCS[KK].ParamIPAddress_DSP[1]					:= CONCAT(STR1:= '192.168.1.' , STR2 := INT_TO_STRING(61+10*(ParamEssNum-1)+5*(KK-1)) )  ;
+	AX_PCS[KK].ParamIPAddress_DSP[2]					:= CONCAT(STR1:= '192.168.1.' , STR2 := INT_TO_STRING(62+10*(ParamEssNum-1)+5*(KK-1)) )  ;
+	AX_PCS[KK].ParamIPAddress_DSP[3]					:= CONCAT(STR1:= '192.168.1.' , STR2 := INT_TO_STRING(63+10*(ParamEssNum-1)+5*(KK-1)) )  ;
+		
+//	AX_PCS[KK].ParamFreqRegSoCmin					:= 3;
+//	AX_PCS[KK].ParamFreqRegSoCmax					:= 98;
+//	AX_PCS[KK].ParamTimeEnterStblPriorRmp			:=  T#5S;
+//	AX_PCS[KK].ParamTimeFreqRegStbDuration			:= T#5S;
+//	AX_PCS[KK].ParamTimeSoCRangeReachedRmp			:= T#5S;
+	AX_PCS[KK].ParamTimeout							:= T#4S;
+	AX_PCS[KK].ParamPoverQ							:= TRUE;
+	AX_PCS[KK].ParamPcsNum 							:= KK;
+	AX_PCS[KK].ParamAntiIslanding_Enabled 			:= TRUE ; 
+	AX_PCS[KK].ParamEssNum 							:= ParamEssNum ; 
+	AX_PCS[KK].IN_CmdPcsInLocalMode 					:= FALSE  ; 
+	AX_PCS[KK].ParamPn							:= SEL(ParamEssNum = 6 , 1250 ,1040 ) ; // deja donné par les PCS en modbus 
+//	AX_PCS[KK].ParamPrange							:= SEL(ParamEssNum = 6 , 1559 ,1040 ) ; //  	
+	AX_PCS[KK].ParamQn							:= SEL(ParamEssNum = 6 , 1250 ,1040 ) ; // deja donné par les PCS en modbus 	
+	AX_PCS[KK].ParamNbPowerCol							:= SEL(ParamEssNum = 6 , 3 ,2 ) ;
+	AX_PCS[KK].ParamTcpPort 						:= 502; 
+	AX_PCS[KK].ParamTempoComAlarm 					:= T#10S ; 
+	AX_PCS[KK].ParamTempoComWarning 				:= T#5S ; 
+	AX_PCS[KK].ParamTimeout 						:= T#5S ; 
+	AX_PCS[KK].ParamUnitID 							:= 1 ;
+	AX_PCS[KK].IN_CmdP_On 							:= TRUE;
+	AX_PCS[KK].ParamDeactivateWatchdog				:= FALSE ; 
+	
+
+	
+END_FOR	
+
+
+A1_DS_Bat.ParamNbSensors 			:= 1;
+A1_DS_Bat.ParamAtleastOne			:= TRUE ; 
+A1_DS_Bat.ParamCableCutSecurity 	:= FALSE  ; 
+A1_DS_Bat.ParamTempoDoorAlarm 		:= T#15S ; 
+
+A1_Ds_Pcs.ParamNbSensors 			:= 1;
+A1_Ds_Pcs.ParamAtleastOne			:= TRUE ; 
+A1_Ds_Pcs.ParamCableCutSecurity 	:= FALSE  ; 
+A1_Ds_Pcs.ParamTempoDoorAlarm 		:= T#15S ; 
+			
+A1_ToS.ParamNbSensors 				:= 1;
+A1_ToS.ParamAtleastOne				:= TRUE ; 
+A1_ToS.ParamCableCutSecurity 		:= TRUE ; 
+A1_ToS.ParamTempoToSAlarm 			:= T#3H ; 
+A1_ToS.ParamTempoToSWarning			:= T#2H ; 		
+	
+
+A1_EM.ParamStepEactCons 		:= 10 	;
+A1_EM.ParamStepEactProd 		:= 10 ; 
+A1_EM.ParamStepEreactCons 	:= 10 ; 
+A1_EM.ParamStepEreactProd 	:= 10 ;
+A1_EM.ParamEssNum				:= ParamEssNum ; 
+
+A1_Spd.ParamNbSensors 				:= 1;
+A1_Spd.ParamAtleastOne 				:= TRUE ; 
+A1_Spd.ParamCableCutSecurity 		:= FALSE ; 
+A1_Spd.ParamTempoEs					:= T#5S ; 		
+
+A1_Cb_Q31.ParamCableCutSecurity 	:= TRUE;
+A1_Cb_Q31.ParamNbSensors	 			:= 1;
+
+
+A1_SD_Pcs.ParamNbSensors 			:= 2;
+A1_SD_Pcs.ParamAtleastOne 			:= FALSE ; 
+A1_SD_Pcs.ParamCableCutSecurity 	:= FALSE ; 
+A1_SD_Pcs.ParamTempoFire 			:= T#2S ; 
+
+
+A1_SD_Pcs.ParamNbSensors 			:= 2;
+A1_SD_Pcs.ParamAtleastOne 			:= FALSE ; 
+A1_SD_Pcs.ParamCableCutSecurity 	:= FALSE ; 
+A1_SD_Pcs.ParamTempoFire 			:= T#2S ; 
+
+
+A1_ES.ParamNbSensors 				:= 1;
+A1_ES.ParamCableCutSecurity 		:= FALSE;
+A1_ES.ParamAtleastOne 				:= TRUE ; 
+A1_ES.ParamTempoEs 					:= T#2S;
+
+				
+FOR KK := 1 TO 4 DO 
+	AX_TempSensor[KK].ParamRangeMax 	:= 50.0;
+	AX_TempSensor[KK].ParamRangeMin 	:= 0.0;
+	AX_TempSensor[KK].ParamDiffMax 		:= 2 ; 
+	AX_TempSensor[KK].ParamFix 			:= 0 ;
+	AX_TempSensor[KK].ParamForced_4_20 	:= FALSE  ; 
+	AX_TempSensor[KK].ParamNbSensors 	:=  1 ; 
+	AX_TempSensor[KK].ParamPT100 		:= FALSE ; 
+	AX_TempSensor[KK].ParamVarMaxAlarm 	:= 32 ; 
+	AX_TempSensor[KK].ParamVarMaxWarning:= 28 ;
+	AX_TempSensor[KK].ParamVarMinAlarm 	:= 17 ; 
+	AX_TempSensor[KK].ParamVarMinWarning:= 21 ;  
+	
+	AX_HygroSensor[KK].ParamRangeMax 		:= 100.0;
+	AX_HygroSensor[KK].ParamRangeMin 		:= 0.0;
+	AX_HygroSensor[KK].ParamDiffMax 		:= 2 ; 
+	AX_HygroSensor[KK].ParamFix 			:= 0 ;
+	AX_HygroSensor[KK].ParamForced_4_20 	:= FALSE  ; 
+	AX_HygroSensor[KK].ParamNbSensors 		:=  1 ; 
+	AX_HygroSensor[KK].ParamPT100 			:= FALSE ; 
+	AX_HygroSensor[KK].ParamVarMaxAlarm 	:= 102 ; 
+	AX_HygroSensor[KK].ParamVarMaxWarning 	:= 95 ;
+	AX_HygroSensor[KK].ParamVarMinAlarm 	:= -10 ; 
+	AX_HygroSensor[KK].ParamVarMinWarning 	:= -10 ; 
+	
+	
+END_FOR
+
+
+	AX_TempSensor[1].ParamName :=  'PCS Temp Sensor ' ; 
+	AX_TempSensor[2].ParamName :=  'BAT 1 Temp Sensor ' ; 
+	AX_TempSensor[3].ParamName :=  'BAT 2 Temp Sensor ' ; 
+	AX_TempSensor[4].ParamName :=  'BAT 3 Temp Sensor ' ; 	
+	
+	AX_TempSensor[1].ParamVarMaxAlarm 		:= 50 ; 
+	AX_TempSensor[1].ParamVarMaxWarning 	:= 45 ;
+	AX_TempSensor[1].ParamVarMinAlarm 		:= 5 ; 
+	AX_TempSensor[1].ParamVarMinWarning 	:= 10 ;  
+
+
+A1_UPS.ParamClockReadTime 	:= T#1S ; 
+A1_UPS.ParamNC 				:= FALSE ; 
+A1_UPS.ParamTempoComAlarm 	:= T#2S ;
+A1_UPS.ParamTempoComWarning := T#1S ; 
+A1_UPS.ParamTimeOut 		:= T#2S  ; 			
+
+A1_FSS.ParamCableCutSecurity 	:= FALSE ; 
+A1_FSS.ParamTempoFire 			:= T#5S ; 
+A1_FSS.ParamWatchdogEnable 		:= FALSE ; 
+
+FOR KK:= 1 TO ParamNbPcs DO 
+	AX_CB_ChainDcSwitchBank[KK].ParamAtleastOne 		:= TRUE ; 
+	AX_CB_ChainDcSwitchBank[KK].ParamCableCutSecurity 	:= FALSE  ; 	
+	AX_CB_ChainDcSwitchBank[KK].ParamNbSensors 			:= 1  ;
+
+	AX_CB_ChainFanBank[KK].ParamAtleastOne 			:= TRUE ; 
+	AX_CB_ChainFanBank[KK].ParamCableCutSecurity 	:= TRUE  ; 	
+	AX_CB_ChainFanBank[KK].ParamNbSensors 			:= 1  ;
+
+END_FOR 
+			
+A1_CB_RackCtrl24V.ParamAtleastOne	 		:= TRUE ; 
+A1_CB_RackCtrl24V.ParamCableCutSecurity 	:= TRUE  ; 	
+A1_CB_RackCtrl24V.ParamNbSensors 			:= 1  ;
+
+A1_CB_PLC24V.ParamAtleastOne 				:= TRUE ; 
+A1_CB_PLC24V.ParamCableCutSecurity 			:= TRUE  ; 	
+A1_CB_PLC24V.ParamNbSensors 				:= 1  ;
+
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_StartStop" Id="{cf6725a8-5d34-42ca-a405-471ff7e68c8e}">
+      <Declaration><![CDATA[METHOD M_StartStop
+//////////////////
+// Start and Stop Management of the AMS (battery and PCS) .
+//////////////////
+VAR
+	// Method local variables (reinitialized at each cycle) 
+	KK	: INT;
+
+	TimeHvacPrio1			: TIME;
+	TimeHvacPrio2			: TIME;
+	NumPrio1 				: INT;
+	NumPrio2				: INT;
+	
+
+
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Emergency stop 
+
+OUT_CmdEmergencyStop := A1_Transfo.MesDataExd.MesData.MesAlarmCode.0 (*OR DataPcs[1].OUT_CmdStop OR DataPcs[2].OUT_CmdStop*);  // DMCR OR AU 
+
+(*
+// HVAC Priority 
+//HVAC //
+R_TRIGChangePriority(CLK:=ABS(AX_HVAC[1].WorkingHr - AX_HVAC[2].WorkingHr)> ParamTimeHvacChangePriority ) ; 
+
+IF  AX_HVAC[1].MesDataExd.MesData.MesAlarmsSynthesis AND AX_HVAC[2].ParamPriority=2 AND NOT AX_HVAC[2].MesDataExd.MesData.MesAlarmsSynthesis THEN  // If there is an alarm on HVAC and the other HVAC is on priority =2  then , change priority 
+	AX_HVAC[1].ParamPriority := 2 ; 
+	AX_HVAC[2].ParamPriority := 1 ; 
+ELSIF AX_HVAC[2].MesDataExd.MesData.MesAlarmsSynthesis AND AX_HVAC[1].ParamPriority=2 AND NOT AX_HVAC[1].MesDataExd.MesData.MesAlarmsSynthesis THEN
+	AX_HVAC[1].ParamPriority := 1 ; 
+	AX_HVAC[2].ParamPriority := 2 ; 	
+	
+ELSIF R_TRIGChangePriority.Q AND (AX_HVAC[1].ParamPriority=2 OR AX_HVAC[2].ParamPriority=2 )  THEN
+	AX_HVAC[1].ParamPriority := SEL(AX_HVAC[1].ParamPriority=1  , 1 ,2);
+	AX_HVAC[2].ParamPriority := SEL(AX_HVAC[2].ParamPriority=1  , 1 ,2);
+	
+END_IF
+*)
+
+
+
+TRIG_CmdStandby 	(CLK :=IN_CmdStandby 	); // Go to standby if LOC BBMS AND PCS 
+TRIG_CmdStart 		(CLK :=IN_CmdStart	AND NOT (BMS1_bStopOperation OR BMS2_bStopOperation)	);
+TRIG_CmdStop		(CLK :=IN_CmdStop	);
+TRIG_CmdReset		(CLK :=IN_CmdReset_IO		);
+
+// Trigs to open and close the DC
+// si le DC breaker est ouvert ou qu'il y a une alarm UPS
+
+TON_DC_PCS1(IN := DataPcs[1].MesData.MesOpened_Dc, PT := ParamDelayOpenDCBbms );
+TON_DC_PCS2(IN := DataPcs[2].MesData.MesOpened_Dc, PT := ParamDelayOpenDCBbms );
+
+
+
+TRIG_DC_PCS1(CLK := TON_DC_PCS1.Q);	
+TRIG_DC_PCS2(CLK := TON_DC_PCS2.Q);
+
+TRIG_TP_Sbms1(CLK := TRIG_DC_PCS1.Q ); //   OR A1_UPS.MesDataExd.MesData.MesAlarmCode >0); UPS deja dans le stop operation . 
+TRIG_TP_Sbms2(CLK := TRIG_DC_PCS2.Q ); //  OR A1_UPS.MesDataExd.MesData.MesAlarmCode >0);
+
+
+TRIG_LOCBESS1(CLK := AX_Bat[1].MesDataExd.MesData.MesAlarmCom (*AND AX_PCS[1].MesDataExd.MesData.MesAlarmCom*) );	// Alarm PCS + BBMS . 
+TRIG_LOCBESS2(CLK := AX_Bat[2].MesDataExd.MesData.MesAlarmCom (*AND AX_PCS[2].MesDataExd.MesData.MesAlarmCom*) ); 
+
+
+IF TRIG_CmdStart.Q THEN
+	IN_CmdStart := FALSE;
+END_IF
+IF TRIG_CmdStop.Q THEN
+	IN_CmdStop := FALSE;
+END_IF
+IF TRIG_CmdReset.Q THEN
+	IN_CmdReset_IO := FALSE;
+	AX_PCS[1].IN_CmdReset := TRUE;
+	AX_PCS[2].IN_CmdReset := TRUE;
+	AX_Bat[1].IN_CmdReset := TRUE;
+	AX_Bat[2].IN_CmdReset := TRUE;
+END_IF
+
+
+
+
+IF TRIG_TP_Sbms1.Q THEN
+	AX_Bat[1].IN_CmdOpenDC := TRUE;
+END_IF
+IF TRIG_TP_Sbms2.Q THEN
+	AX_Bat[2].IN_CmdOpenDC := TRUE;
+END_IF
+
+// STOP OPERATING
+	// STOP OPERATING TRIGGER :
+		BMS1_Trig_StopOperation(CLK := BMS1_bStopOperation);
+		BMS2_Trig_StopOperation(CLK := BMS2_bStopOperation);
+	
+// SOFT STOP
+	// SOFT STOP TRIGGER : IF STOP OPERATION ALARM (FOR 5s to avoid opening DC switch on load OR Standby order   
+		// First send 0 setpoint to the PCS then send standby order. 
+//	TP_CmdStandby(IN:= TRIG_CmdStandby.Q OR TRIG_LOCBESS1.Q , PT:= PAramTempoStandby ) ; 
+//	TP_CmdStandby2(IN:= TRIG_CmdStandby.Q OR TRIG_LOCBESS2.Q, PT:= PAramTempoStandby ) ; 
+	
+	IF TRIG_CmdStandby.Q THEN
+		IN_CmdStandby := FALSE;
+	END_IF
+	
+		BMS1_Trig_SoftStop(CLK := TRIG_CmdStandby.Q OR TRIG_LOCBESS1.Q);//TP_CmdStandby.Q);
+		BMS2_Trig_SoftStop(CLK := TRIG_CmdStandby.Q OR TRIG_LOCBESS2.Q ) ; //TP_CmdStandby2.Q);
+	
+
+	// CMD SOFT STOP
+	F_Tap_SoftStopBMS1(TapTrigger := BMS1_Trig_SoftStop.Q , TapOut:= AX_PCS[1].IN_CmdStandby) ; 
+	F_Tap_SoftStopBMS2(TapTrigger := BMS2_Trig_SoftStop.Q , TapOut:= AX_PCS[2].IN_CmdStandby) ; 	
+	
+	(*IF BMS1_Trig_SoftStop.Q THEN
+		AX_PCS[1].IN_CmdStandby := BMS1_Trig_SoftStop.Q;
+	END_IF
+	IF BMS1_Trig_SoftStop.Q THEN
+		AX_PCS[2].IN_CmdStandby := BMS2_Trig_SoftStop.Q;
+	END_IF
+*)
+	
+	// CMD STOP 
+		//                     
+		BMS1_Trig_Stop(CLK :=  TRIG_CmdStop.Q OR BMS1_Trig_StopOperation.Q);
+		BMS2_Trig_Stop(CLK :=  TRIG_CmdStop.Q OR BMS2_Trig_StopOperation.Q);
+
+	F_Tap_StopBMS1(TapTrigger := BMS1_Trig_Stop.Q , TapOut:= AX_PCS[1].IN_CmdStop) ; 
+	F_Tap_StopBMS2(TapTrigger := BMS2_Trig_Stop.Q , TapOut:= AX_PCS[2].IN_CmdStop) ; 	
+			
+		
+		(*
+		IF BMS1_Trig_Stop.Q THEN
+			AX_PCS[1].IN_CmdStop := BMS1_Trig_Stop.Q;
+		END_IF
+		IF BMS2_Trig_Stop.Q THEN
+			AX_PCS[2].IN_CmdStop := BMS2_Trig_Stop.Q;
+		END_IF
+		*)
+		
+		OUT_CmdStopPcs1_IO := AX_PCS[1].MesDataExd.MesData.OUT_CmdStop OR AX_PCS[1].MesDataExd.MesData.OUT_CmdStandby;		// ENVOYER LE STANDBY AUSSI EN DO ? EST CE QUE CA FAIT UN STANDBY OU UN STOP ? 
+		OUT_CmdStopPcs2_IO := AX_PCS[2].MesDataExd.MesData.OUT_CmdStop OR AX_PCS[2].MesDataExd.MesData.OUT_CmdStandby;
+		
+		
+		
+		
+
+// START
+	TP_TimeBetweenPcsConnect(IN := TRIG_CmdStart.Q, PT := ParamTimeBetweenPcsConnect);
+	
+	FTrigTpBtwnPcs(CLK := TP_TimeBetweenPcsConnect.Q);
+	
+	AX_PCS[1].IN_CmdStart := TRIG_CmdStart.Q AND NOT BMS1_bPreventStart AND NOT AX_PCS[1].IN_CmdPcsInLocalMode ;
+	AX_PCS[2].IN_CmdStart := FTrigTpBtwnPcs.Q AND NOT BMS2_bPreventStart AND NOT AX_PCS[2].IN_CmdPcsInLocalMode;
+	
+	
+	//OUT_CmdStartPcs1_IO := DataPcs[1].OUT_CmdStart;
+	//OUT_CmdStartPcs2_IO := DataPcs[2].OUT_CmdStart;
+	
+// SHUTDOWN
+//HVAC//
+			
+FOR KK := 1 TO 2 DO 
+	(*
+	IF AX_HVAC[KK].ParamPriority = 2 THEN
+		AX_HVAC[KK].IN_CmdStart := MesDataExd.MesData.CalTempBat > ParamTempStartHvac2 OR MesDataExd.MesData.CalHygroBat > ParamHygroStartHvac2;	
+		AX_HVAC[KK].IN_CmdStop := MesDataExd.MesData.CalTempBat < ParamTempStopHvac2 AND MesDataExd.MesData.CalHygroBat < ParamHygroStopHvac2 ;	
+	ELSE
+		AX_HVAC[KK].IN_CmdStop := FALSE  ;	
+		AX_HVAC[KK].IN_CmdStart := TRUE ; //TRIG_StartHVAC1.Q ;	
+	END_IF
+	*)
+	AX_HVAC[KK].IN_CmdStart := TRUE ; 
+END_FOR	
+	
+SUPER^.M_StartStop() ; ]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_StateManager" Id="{db19cc2f-95a0-4391-a8a5-0a9a36811cac}">
+      <Declaration><![CDATA[METHOD M_StateManager
+//////////////////
+// Manages AMS state . 
+//////////////////
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+	CTRLBatState1: BYTE;
+	CTRLBatState2: BYTE;
+	CTRLPcsState1: BYTE;
+	CTRLPcsState2: BYTE;
+
+	bCalAllAcContactorsOpen_System1		: BOOL;
+	bCalAllAcContactorsClose_System1	: BOOL;
+	
+	bDcBreakerOpen_System1				: BOOL;	
+	bDcBreakerOpen_System2				: BOOL;	
+	
+	bAcBreakerOpen_System1				: BOOL;
+	bAcBreakerOpen_System2				: BOOL;
+	
+	bCalNoRackConnected_System1			: BOOL;
+	bCalNoRackConnected_System2			: BOOL;
+
+	
+	bCalAllAcContactorsOpen_System2		: BOOL;
+	bCalAllAContactorsOpen_System2		: BOOL;	
+	
+	bCalAtLeastOnPcsConnected_System1: BOOL;
+	bCalAtLeastOnPcsConnected_System2: BOOL;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[bDcBreakerOpen_System1 := DataPcs[1].MesData.MesOpened_Dc;
+bDcBreakerOpen_System2 := DataPcs[2].MesData.MesOpened_Dc;
+
+bAcBreakerOpen_System1 := DataPcs[1].MesData.MesOpened_Ac;
+bAcBreakerOpen_System2 := DataPcs[2].MesData.MesOpened_Ac;
+
+bCalAllAcContactorsOpen_System1 := NOT DataPcs[1].MesData.MesALOPowerCol_Connected ;
+bCalAllAcContactorsOpen_System2 := NOT DataPcs[2].MesData.MesALOPowerCol_Connected ;
+
+bCalAtLeastOnPcsConnected_System1	:= DataPcs[1].MesData.MesALOPowerCol_Connected ;
+bCalAtLeastOnPcsConnected_System2	:= DataPcs[2].MesData.MesALOPowerCol_Connected ;
+
+
+bCalNoRackConnected_System1 := DataSystemBMS[1].MesNbRackConnected = 0;
+bCalNoRackConnected_System2 := DataSystemBMS[2].MesNbRackConnected =0;
+
+
+// OFF : Il y a, pour les deux systèmes : soit le ac breaker ouvert, soit le dc breaker ouvert, soit les racks sont tous ouverts) 				
+MesState.0 := (bAcBreakerOpen_System1 OR bDcBreakerOpen_System1 OR bCalNoRackConnected_System1) AND (bAcBreakerOpen_System2 OR bDcBreakerOpen_System2 OR bCalNoRackConnected_System2);
+
+// AVAILABLE : AC et DC sont fermés sur un système, mais tous les ac contacteurs sont ouverts
+MesState.1 := ((NOT bAcBreakerOpen_System1 AND NOT bDcBreakerOpen_System1) OR ( NOT bAcBreakerOpen_System2 AND NOT bDcBreakerOpen_System2)) AND ( bCalAllAcContactorsOpen_System1 AND bCalAllAcContactorsOpen_System2 );
+
+// CONNECTED : tous les contacteurs DC sont fermés et tous les AC CB sont fermés sur au moins un systeme et les contacteurs sont fermés sur au moins un système
+MesState.2 := (NOT bAcBreakerOpen_System1 AND NOT bDcBreakerOpen_System1 AND bCalAtLeastOnPcsConnected_System1) OR (NOT bAcBreakerOpen_System2 AND NOT bDcBreakerOpen_System2 AND bCalAtLeastOnPcsConnected_System2);
+
+
+SUPER^.M_StateManager() ; ]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_WriteSetpoints" Id="{876cf967-92a5-4fe3-b8d5-1c1b2e6ecb4a}">
+      <Declaration><![CDATA[METHOD M_WriteSetpoints
+//////////////////
+// Write P and Q setpoints to PCS controller when AMS in (P,Q) Mode . 
+//////////////////
+VAR
+	// Method local variables (reinitialized at each cycle) 
+	DataSUB_MV					:  SUBMV;
+
+	SetptP_Temp				: REAL;					// Temporary Active Power setpoint
+	
+	CTRLPcsState			: BYTE;					// CtrlPcs State 
+	
+
+	MesProdLimit			: REAL;
+	MesProdLimitPCS1: REAL;
+	MesProdLimitPCS2: REAL;
+	Corr_1: REAL;
+	
+	Corr_2: REAL;
+
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Limit production if Transfo Warning or BBMS 
+MesProdLimit := SEL(A1_Transfo.MesDataExd.MesData.MesWarningTemp  , 1 , ParamTransfoWarningProdLimit ) ; 
+
+
+
+
+MesProdLimitPCS1:= MIN(MesProdLimit  ,  SEL(MesDataExd.AX_Bat[1].MesNbRackConnected = 0 OR TRUE(*NOT BMS1_bReducePower*),   WORD_TO_REAL(MesDataExd.AX_Bat[1].MesData.MesNbRackNormal) / WORD_TO_REAL(MesDataExd.AX_Bat[1].MesNbRackConnected) , 1 )); 
+MesProdLimitPCS2:= MIN(MesProdLimit , SEL(MesDataExd.AX_Bat[2].MesNbRackConnected = 0   OR TRUE(*NOT BMS2_bReducePower*),   WORD_TO_REAL(MesDataExd.AX_Bat[2].MesData.MesNbRackNormal) / WORD_TO_REAL(MesDataExd.AX_Bat[2].MesNbRackConnected) , 1 )); 
+
+(*
+// Correctif equilibrium SoC. We do not do it if one of the PCS is in local or if one exceed PP limits
+IF AX_PCS[1].IN_CmdPcsInLocalMode OR  AX_PCS[2].IN_CmdPcsInLocalMode OR AX_Bat[1].MesDataExd.MesData.MesSoCConnected>A1_PP.ParamSoCMax OR  AX_Bat[2].MesDataExd.MesData.MesSoCConnected<A1_PP.ParamSoCMin OR AX_Bat[1].MesDataExd.MesData.MesSoCConnected<A1_PP.ParamSoCMin OR  AX_Bat[2].MesDataExd.MesData.MesSoCConnected>A1_PP.ParamSoCMax THEN 
+	Corr_1 :=  0; 
+	Corr_2:=  0 ; 
+	bEquilibrationOnGoing	:= FALSE ; 	
+	
+ELSE
+	IF AX_Bat[1].MesDataExd.MesData.MesSoCConnected > AX_Bat[2].MesDataExd.MesData.MesSoCConnected + 2   THEN // Hysteresis Activation . Discharge 1 , Charge 2  If diff between SoC above 2 %
+		Corr_1 := ParamPSoCEqualize ; 
+		Corr_2:= - ParamPSoCEqualize ; 
+		bEquilibrationOnGoing	:= TRUE ; 
+	ELSIF AX_Bat[1].MesDataExd.MesData.MesSoCConnected < AX_Bat[2].MesDataExd.MesData.MesSoCConnected - 2 AND  AX_Bat[1].MesDataExd.MesData.MesSoCConnected>A1_PP.ParamSoCMin  THEN // Hysteresis Activation . Discharge 2 , Charge 1  If diff between SoC above 2 %
+		Corr_1 := - ParamPSoCEqualize ; 
+		Corr_2:=  ParamPSoCEqualize ; 
+		bEquilibrationOnGoing	:= TRUE ; 
+		
+	ELSIF (AX_Bat[1].MesDataExd.MesData.MesSoCConnected < AX_Bat[2].MesDataExd.MesData.MesSoCConnected) AND (Corr_1 = ParamPSoCEqualize) THEN // Hysteresis desactivation Case 1 
+			Corr_1 :=  0; 
+			Corr_2:=  0 ; 
+			bEquilibrationOnGoing	:= FALSE ; 
+	ELSIF AX_Bat[2].MesDataExd.MesData.MesSoCConnected < AX_Bat[1].MesDataExd.MesData.MesSoCConnected AND (Corr_2 = ParamPSoCEqualize) THEN // Hysteresis desactivation Case 1 
+			Corr_1 :=  0; 
+			Corr_2:=  0 ; 
+			bEquilibrationOnGoing	:= FALSE ; 		
+	END_IF
+	
+
+END_IF
+
+
+
+
+// GESTION DU SETPOINT // 
+	//RAMP TARGET // 
+		// Ramp to last received setpoint if T> C , otherwise , ramp to zero. 
+		IF A1_PP.OUT_CalFreqRegTimeMaxTrigger THEN 
+			IF IN_SetptP > 0 THEN 
+				MesPRampTarget_PCS1 := Corr_1 + SEL(ABS.MesDataExd.MesData.MesSbat_DischargeMax)<0.01 	, IN_SetptP * MesSBATDischargeConnected_PCS1 /(MesSBATDischargeConnected_PCS1		+ MesSBATDischargeConnected_PCS2)* MesProdLimitPCS1 , 0) ; 		; // repartition en fonction de la Pmax batterie disponible 
+				MesPRampTarget_PCS2 := Corr_2 + SEL(ABS.MesDataExd.MesData.MesSbat_DischargeMax)<0.01 	, IN_SetptP * MesSBATDischargeConnected_PCS2 /(MesSBATDischargeConnected_PCS1		+ MesSBATDischargeConnected_PCS2)* MesProdLimitPCS2 , 0); 		; // repartition en fonction de la Pmax batterie disponible 
+		
+			ELSE  			
+				MesPRampTarget_PCS1 := Corr_1 + SEL(ABS.MesDataExd.MesData.MesSbat_ChargeConnected)<0.01 ,	 IN_SetptP * MesSbat_ChargeConnected_PCS1/(MesSbat_ChargeConnected_PCS1		+ MesSbat_ChargeConnected_PCS2) * MesProdLimitPCS1 , 0 ); 		; // repartition en fonction de la Pmax batterie disponible 
+				MesPRampTarget_PCS2 := Corr_2 + SEL(ABS.MesDataExd.MesData.MesSbat_ChargeConnected)<0.01 ,	 IN_SetptP * MesSbat_ChargeConnected_PCS2 /(MesSbat_ChargeConnected_PCS1		+ MesSbat_ChargeConnected_PCS2)* MesProdLimitPCS2 ,0 ) ; 		; // repartition en fonction de la Pmax batterie disponible 
+			
+			END_IF			
+	
+		ELSIF  A1_PP.OUT_CalFreqRegActiveTrigger THEN 
+			MesPRampTarget_PCS1 :=  0  ; 
+			MesPRampTarget_PCS2 := 0 ;
+		END_IF
+		
+		
+		// Write value only if the frequency regulation started initially . 
+	//	RS_ApllyFreqExit_PCS1(SET:= AX_PCS[1].MesDataExd.MesData.MesFreqReg_Active , RESET1 := A1_PP.MesDataExd.MesData.CalManualMode ) ; 
+	//	RS_ApllyFreqExit_PCS2(SET:= AX_PCS[2].MesDataExd.MesData.MesFreqReg_Active , RESET1 := A1_PP.MesDataExd.MesData.CalManualMode ) ;
+
+// RAMP MABNAGEMENT 
+	// Ramp continuity 
+	IF AX_PCS[1].MesDataExd.MesData.MesFreqReg_Active AND (  (AX_PCS[1].CalNbFreqActivePcs =3) OR  (CalLocalTimeStruct.wSecond = 10) ) THEN // We apply a ramp if PCS is active 
+		FB_Ramp_ExitFreq_PCS1(RESET := TRUE , IN_RESET_VALUE :=  AX_PCS[1].MesDataExd.MesData.MesP , DESCEND := AX_PCS[1].MesDataExd.MesData.MesP, ASCEND :=  AX_PCS[1].MesDataExd.MesData.MesP ) ; 
+	END_IF	                                                                                                              
+	IF AX_PCS[2].MesDataExd.MesData.MesFreqReg_Active AND (  (AX_PCS[2].CalNbFreqActivePcs =3) OR  (CalLocalTimeStruct.wSecond = 10)) THEN // We apply a ramp if PCS is active 
+		FB_Ramp_ExitFreq_PCS2(RESET := TRUE , IN_RESET_VALUE :=  AX_PCS[2].MesDataExd.MesData.MesP, DESCEND := AX_PCS[2].MesDataExd.MesData.MesP  , ASCEND :=  AX_PCS[1].MesDataExd.MesData.MesP ) ; 
+	END_IF					
+		
+	
+	// Ramp RESET to zero 
+	IF (*A1_PP.MesDataExd.MesData.MesFreq > A1_PP.ParamPfF_FhystLow OR*) A1_PP.MesDataExd.MesData.CalManualMode THEN // Force it to zero if frequency gets too high or manual mode is activated or PCS is off
+		FB_Ramp_ExitFreq_PCS1(RESET := TRUE , IN_RESET_VALUE :=  0) ; 
+		FB_Ramp_ExitFreq_PCS2(RESET := TRUE , IN_RESET_VALUE :=  0) ; 
+	END_IF	
+	
+	IF AX_PCS[1].MesDataExd.MesData.MesState.0 THEN 
+		FB_Ramp_ExitFreq_PCS1(RESET := TRUE , IN_RESET_VALUE :=  0) ; 
+	END_IF
+	IF AX_PCS[2].MesDataExd.MesData.MesState.0 THEN 
+		FB_Ramp_ExitFreq_PCS2(RESET := TRUE , IN_RESET_VALUE :=  0) ; 
+	END_IF	
+
+// PCS1 Setpoint 
+IF (AX_PCS[1].MesDataExd.MesData.MesFreqReg_Active OR NOT FB_Ramp_ExitFreq_PCS1.Out_Completed ) AND NOT A1_PP.TOF_ManualMode.Q THEN  // Regulation de frequence + rampe . 
+	AX_PCS[1].IN_SetptP :=  SEL( MesSBATDischargeConnected_PCS1 =0 , FB_Ramp_ExitFreq_PCS1.OUT , 0 ) ; 
+	
+ELSIF IN_SetptP > 0 THEN 
+	AX_PCS[1].IN_SetptP := Corr_1 + SEL(ABS.MesDataExd.MesData.MesSbat_DischargeMax)<0.01 	, IN_SetptP * MesSBATDischargeConnected_PCS1 /(MesSBATDischargeConnected_PCS1		+ MesSBATDischargeConnected_PCS2)* MesProdLimitPCS1 , 0) ; 		; // repartition en fonction de la Pmax batterie disponible 
+ELSE
+	AX_PCS[1].IN_SetptP :=  AX_PCS[1].IN_SetptP := Corr_1 + SEL(ABS.MesDataExd.MesData.MesSbat_ChargeConnected)<0.01 ,	 IN_SetptP * MesSbat_ChargeConnected_PCS1/(MesSbat_ChargeConnected_PCS1		+ MesSbat_ChargeConnected_PCS2) * MesProdLimitPCS1 , 0 ); 		; // repartition en fonction de la Pmax batterie disponible 
+END_IF
+
+
+//PCS2 Setpoint 
+IF (AX_PCS[2].MesDataExd.MesData.MesFreqReg_Active OR NOT FB_Ramp_ExitFreq_PCS2.Out_Completed) AND NOT A1_PP.TOF_ManualMode.Q THEN 
+	AX_PCS[2].IN_SetptP :=  SEL( MesSBATDischargeConnected_PCS2 =0 , FB_Ramp_ExitFreq_PCS2.OUT , 0 ) ; 
+ELSIF IN_SetptP > 0 THEN 
+	AX_PCS[2].IN_SetptP := Corr_2 + SEL(ABS.MesDataExd.MesData.MesSbat_DischargeMax)<0.01 	, IN_SetptP * MesSBATDischargeConnected_PCS2 /(MesSBATDischargeConnected_PCS1		+ MesSBATDischargeConnected_PCS2)* MesProdLimitPCS2 , 0) ; 		; // repartition en fonction de la Pmax batterie disponible 
+ELSE
+	AX_PCS[2].IN_SetptP := Corr_2 + SEL(ABS.MesDataExd.MesData.MesSbat_ChargeConnected)<0.01 ,	 IN_SetptP * MesSbat_ChargeConnected_PCS2 /(MesSbat_ChargeConnected_PCS1		+ MesSbat_ChargeConnected_PCS2)* MesProdLimitPCS2 ,0 ) ; 		; // repartition en fonction de la Pmax batterie disponible 
+END_IF
+
+
+
+//RAMP APPLICATION// 
+	FB_Ramp_ExitFreq_PCS1(IN:= MesPRampTarget_PCS1    ,TIMEBASE :=   A1_PP.ParamPfFRampDuration , RESET:= FALSE ) ; 
+	FB_Ramp_ExitFreq_PCS2(IN:= MesPRampTarget_PCS1   ,TIMEBASE :=   A1_PP.ParamPfFRampDuration , RESET:= FALSE ) ; 
+
+
+*)
+// Q SPLITTING 
+
+IF IN_SetptQ > 0 THEN 
+	AX_PCS[1].IN_SetptQ := SEL(ABS(MesDataExd.MesData.MesSbat_DischargeMax)<0.01 	,  IN_SetptQ * MesSBATDischargeConnected_PCS1 /(MesSBATDischargeConnected_PCS1		+ MesSBATDischargeConnected_PCS2) * MesProdLimitPCS1 , 0 )  ; 		; // repartition en fonction de la Pmax batterie disponible 
+	AX_PCS[2].IN_SetptQ := SEL(ABS(MesDataExd.MesData.MesSbat_DischargeMax)<0.01 	,  IN_SetptQ * MesSBATDischargeConnected_PCS2 /(MesSBATDischargeConnected_PCS1		+ MesSBATDischargeConnected_PCS2) * MesProdLimitPCS2 , 0 ); 		; // repartition en fonction de la Pmax batterie disponible 
+ELSE                              
+	AX_PCS[1].IN_SetptQ := SEL(ABS(MesDataExd.MesData.MesSbat_ChargeConnected)<0.01 	,IN_SetptQ * MesSbat_ChargeConnected_PCS1 /(MesSbat_ChargeConnected_PCS1		+ MesSbat_ChargeConnected_PCS2) * MesProdLimitPCS1 , 0 ); 		; // repartition en fonction de la Pmax batterie disponible 
+	AX_PCS[2].IN_SetptQ := SEL(ABS(MesDataExd.MesData.MesSbat_ChargeConnected)<0.01 	,IN_SetptQ * MesSbat_ChargeConnected_PCS2 /(MesSbat_ChargeConnected_PCS1		+ MesSbat_ChargeConnected_PCS2) * MesProdLimitPCS2 , 0 ); 		; // repartition en fonction de la Pmax batterie disponible 
+
+END_IF	
+	
+//END_IF
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_ESS_MADI">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ESS_MADI.M_AlarmManagement">
+      <LineId Id="3532" Count="0" />
+      <LineId Id="3529" Count="0" />
+      <LineId Id="2394" Count="0" />
+      <LineId Id="2396" Count="0" />
+      <LineId Id="3686" Count="0" />
+      <LineId Id="2400" Count="0" />
+      <LineId Id="2406" Count="0" />
+      <LineId Id="2409" Count="1" />
+      <LineId Id="3417" Count="5" />
+      <LineId Id="2418" Count="8" />
+      <LineId Id="3423" Count="0" />
+      <LineId Id="3433" Count="1" />
+      <LineId Id="3424" Count="1" />
+      <LineId Id="3428" Count="0" />
+      <LineId Id="3426" Count="0" />
+      <LineId Id="3435" Count="1" />
+      <LineId Id="3427" Count="0" />
+      <LineId Id="2427" Count="0" />
+      <LineId Id="4296" Count="2" />
+      <LineId Id="2428" Count="3" />
+      <LineId Id="4227" Count="0" />
+      <LineId Id="3356" Count="0" />
+      <LineId Id="4228" Count="0" />
+      <LineId Id="3357" Count="0" />
+      <LineId Id="3155" Count="0" />
+      <LineId Id="3493" Count="0" />
+      <LineId Id="4194" Count="0" />
+      <LineId Id="3495" Count="0" />
+      <LineId Id="3490" Count="0" />
+      <LineId Id="3168" Count="2" />
+      <LineId Id="4396" Count="0" />
+      <LineId Id="4395" Count="0" />
+      <LineId Id="3173" Count="7" />
+      <LineId Id="4400" Count="2" />
+      <LineId Id="4397" Count="2" />
+      <LineId Id="3191" Count="35" />
+      <LineId Id="504" Count="0" />
+      <LineId Id="3653" Count="0" />
+      <LineId Id="4098" Count="5" />
+      <LineId Id="4088" Count="8" />
+      <LineId Id="3573" Count="0" />
+      <LineId Id="4335" Count="1" />
+      <LineId Id="4338" Count="14" />
+      <LineId Id="4331" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ESS_MADI.M_EquipmentCalls">
+      <LineId Id="241" Count="0" />
+      <LineId Id="338" Count="1" />
+      <LineId Id="249" Count="0" />
+      <LineId Id="251" Count="1" />
+      <LineId Id="244" Count="0" />
+      <LineId Id="264" Count="3" />
+      <LineId Id="245" Count="0" />
+      <LineId Id="387" Count="1" />
+      <LineId Id="218" Count="1" />
+      <LineId Id="238" Count="0" />
+      <LineId Id="220" Count="0" />
+      <LineId Id="237" Count="0" />
+      <LineId Id="236" Count="0" />
+      <LineId Id="225" Count="0" />
+      <LineId Id="354" Count="0" />
+      <LineId Id="235" Count="0" />
+      <LineId Id="355" Count="0" />
+      <LineId Id="226" Count="0" />
+      <LineId Id="240" Count="0" />
+      <LineId Id="227" Count="0" />
+      <LineId Id="233" Count="1" />
+      <LineId Id="228" Count="0" />
+      <LineId Id="232" Count="0" />
+      <LineId Id="230" Count="0" />
+      <LineId Id="319" Count="1" />
+      <LineId Id="322" Count="0" />
+      <LineId Id="325" Count="0" />
+      <LineId Id="323" Count="0" />
+      <LineId Id="389" Count="1" />
+      <LineId Id="281" Count="0" />
+      <LineId Id="304" Count="0" />
+      <LineId Id="409" Count="0" />
+      <LineId Id="404" Count="2" />
+      <LineId Id="410" Count="0" />
+      <LineId Id="408" Count="0" />
+      <LineId Id="403" Count="0" />
+      <LineId Id="407" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ESS_MADI.M_Evaluate">
+      <LineId Id="1137" Count="0" />
+      <LineId Id="1139" Count="8" />
+      <LineId Id="1339" Count="0" />
+      <LineId Id="1148" Count="24" />
+      <LineId Id="1178" Count="13" />
+      <LineId Id="1311" Count="1" />
+      <LineId Id="1361" Count="0" />
+      <LineId Id="1360" Count="0" />
+      <LineId Id="1318" Count="0" />
+      <LineId Id="1314" Count="0" />
+      <LineId Id="1362" Count="0" />
+      <LineId Id="1193" Count="5" />
+      <LineId Id="1200" Count="9" />
+      <LineId Id="1284" Count="0" />
+      <LineId Id="1210" Count="36" />
+      <LineId Id="1248" Count="7" />
+      <LineId Id="1363" Count="0" />
+      <LineId Id="1256" Count="3" />
+      <LineId Id="782" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ESS_MADI.M_Init">
+      <LineId Id="213" Count="0" />
+      <LineId Id="251" Count="0" />
+      <LineId Id="459" Count="0" />
+      <LineId Id="255" Count="4" />
+      <LineId Id="253" Count="0" />
+      <LineId Id="268" Count="1" />
+      <LineId Id="215" Count="0" />
+      <LineId Id="260" Count="0" />
+      <LineId Id="216" Count="2" />
+      <LineId Id="270" Count="1" />
+      <LineId Id="273" Count="0" />
+      <LineId Id="281" Count="0" />
+      <LineId Id="431" Count="10" />
+      <LineId Id="274" Count="0" />
+      <LineId Id="494" Count="0" />
+      <LineId Id="502" Count="1" />
+      <LineId Id="219" Count="4" />
+      <LineId Id="379" Count="0" />
+      <LineId Id="381" Count="0" />
+      <LineId Id="536" Count="0" />
+      <LineId Id="540" Count="0" />
+      <LineId Id="537" Count="1" />
+      <LineId Id="386" Count="5" />
+      <LineId Id="383" Count="0" />
+      <LineId Id="377" Count="0" />
+      <LineId Id="394" Count="0" />
+      <LineId Id="396" Count="0" />
+      <LineId Id="399" Count="0" />
+      <LineId Id="411" Count="0" />
+      <LineId Id="548" Count="0" />
+      <LineId Id="528" Count="0" />
+      <LineId Id="512" Count="0" />
+      <LineId Id="420" Count="2" />
+      <LineId Id="424" Count="1" />
+      <LineId Id="378" Count="0" />
+      <LineId Id="520" Count="0" />
+      <LineId Id="511" Count="0" />
+      <LineId Id="375" Count="1" />
+      <LineId Id="224" Count="2" />
+      <LineId Id="286" Count="3" />
+      <LineId Id="291" Count="3" />
+      <LineId Id="228" Count="1" />
+      <LineId Id="282" Count="3" />
+      <LineId Id="230" Count="3" />
+      <LineId Id="426" Count="3" />
+      <LineId Id="234" Count="1" />
+      <LineId Id="295" Count="4" />
+      <LineId Id="236" Count="0" />
+      <LineId Id="304" Count="0" />
+      <LineId Id="307" Count="0" />
+      <LineId Id="240" Count="0" />
+      <LineId Id="312" Count="1" />
+      <LineId Id="311" Count="0" />
+      <LineId Id="556" Count="1" />
+      <LineId Id="560" Count="2" />
+      <LineId Id="558" Count="1" />
+      <LineId Id="316" Count="1" />
+      <LineId Id="241" Count="1" />
+      <LineId Id="320" Count="0" />
+      <LineId Id="318" Count="0" />
+      <LineId Id="243" Count="0" />
+      <LineId Id="246" Count="0" />
+      <LineId Id="321" Count="1" />
+      <LineId Id="324" Count="0" />
+      <LineId Id="327" Count="2" />
+      <LineId Id="325" Count="0" />
+      <LineId Id="333" Count="3" />
+      <LineId Id="326" Count="0" />
+      <LineId Id="323" Count="0" />
+      <LineId Id="248" Count="0" />
+      <LineId Id="360" Count="7" />
+      <LineId Id="358" Count="0" />
+      <LineId Id="350" Count="0" />
+      <LineId Id="357" Count="0" />
+      <LineId Id="249" Count="0" />
+      <LineId Id="369" Count="0" />
+      <LineId Id="368" Count="0" />
+      <LineId Id="331" Count="1" />
+      <LineId Id="330" Count="0" />
+      <LineId Id="250" Count="0" />
+      <LineId Id="347" Count="0" />
+      <LineId Id="344" Count="2" />
+      <LineId Id="338" Count="1" />
+      <LineId Id="337" Count="0" />
+      <LineId Id="205" Count="0" />
+      <LineId Id="370" Count="3" />
+      <LineId Id="166" Count="0" />
+      <LineId Id="72" Count="0" />
+      <LineId Id="449" Count="0" />
+      <LineId Id="451" Count="0" />
+      <LineId Id="469" Count="0" />
+      <LineId Id="464" Count="1" />
+      <LineId Id="477" Count="0" />
+      <LineId Id="472" Count="1" />
+      <LineId Id="478" Count="1" />
+      <LineId Id="474" Count="0" />
+      <LineId Id="471" Count="0" />
+      <LineId Id="468" Count="0" />
+      <LineId Id="483" Count="0" />
+      <LineId Id="481" Count="1" />
+      <LineId Id="480" Count="0" />
+      <LineId Id="484" Count="2" />
+      <LineId Id="470" Count="0" />
+      <LineId Id="461" Count="1" />
+      <LineId Id="460" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ESS_MADI.M_StartStop">
+      <LineId Id="749" Count="1" />
+      <LineId Id="752" Count="0" />
+      <LineId Id="843" Count="0" />
+      <LineId Id="706" Count="1" />
+      <LineId Id="717" Count="0" />
+      <LineId Id="777" Count="0" />
+      <LineId Id="781" Count="1" />
+      <LineId Id="784" Count="0" />
+      <LineId Id="783" Count="0" />
+      <LineId Id="786" Count="0" />
+      <LineId Id="788" Count="0" />
+      <LineId Id="787" Count="0" />
+      <LineId Id="785" Count="0" />
+      <LineId Id="772" Count="1" />
+      <LineId Id="775" Count="1" />
+      <LineId Id="774" Count="0" />
+      <LineId Id="779" Count="1" />
+      <LineId Id="768" Count="0" />
+      <LineId Id="712" Count="0" />
+      <LineId Id="456" Count="0" />
+      <LineId Id="458" Count="2" />
+      <LineId Id="625" Count="0" />
+      <LineId Id="619" Count="0" />
+      <LineId Id="626" Count="0" />
+      <LineId Id="621" Count="0" />
+      <LineId Id="649" Count="0" />
+      <LineId Id="667" Count="0" />
+      <LineId Id="966" Count="0" />
+      <LineId Id="666" Count="0" />
+      <LineId Id="670" Count="1" />
+      <LineId Id="668" Count="0" />
+      <LineId Id="672" Count="0" />
+      <LineId Id="647" Count="0" />
+      <LineId Id="651" Count="0" />
+      <LineId Id="465" Count="1" />
+      <LineId Id="447" Count="1" />
+      <LineId Id="599" Count="0" />
+      <LineId Id="453" Count="1" />
+      <LineId Id="575" Count="1" />
+      <LineId Id="455" Count="0" />
+      <LineId Id="577" Count="1" />
+      <LineId Id="580" Count="1" />
+      <LineId Id="600" Count="0" />
+      <LineId Id="602" Count="2" />
+      <LineId Id="582" Count="0" />
+      <LineId Id="881" Count="0" />
+      <LineId Id="605" Count="0" />
+      <LineId Id="585" Count="0" />
+      <LineId Id="628" Count="0" />
+      <LineId Id="627" Count="0" />
+      <LineId Id="629" Count="3" />
+      <LineId Id="579" Count="0" />
+      <LineId Id="633" Count="0" />
+      <LineId Id="366" Count="0" />
+      <LineId Id="337" Count="0" />
+      <LineId Id="342" Count="1" />
+      <LineId Id="351" Count="0" />
+      <LineId Id="339" Count="0" />
+      <LineId Id="280" Count="0" />
+      <LineId Id="879" Count="0" />
+      <LineId Id="882" Count="0" />
+      <LineId Id="903" Count="0" />
+      <LineId Id="886" Count="0" />
+      <LineId Id="883" Count="1" />
+      <LineId Id="880" Count="0" />
+      <LineId Id="885" Count="0" />
+      <LineId Id="340" Count="0" />
+      <LineId Id="299" Count="0" />
+      <LineId Id="369" Count="0" />
+      <LineId Id="524" Count="0" />
+      <LineId Id="348" Count="0" />
+      <LineId Id="941" Count="2" />
+      <LineId Id="520" Count="0" />
+      <LineId Id="921" Count="1" />
+      <LineId Id="347" Count="0" />
+      <LineId Id="350" Count="0" />
+      <LineId Id="354" Count="0" />
+      <LineId Id="533" Count="0" />
+      <LineId Id="371" Count="0" />
+      <LineId Id="360" Count="0" />
+      <LineId Id="374" Count="0" />
+      <LineId Id="355" Count="0" />
+      <LineId Id="362" Count="0" />
+      <LineId Id="946" Count="2" />
+      <LineId Id="540" Count="0" />
+      <LineId Id="944" Count="1" />
+      <LineId Id="536" Count="0" />
+      <LineId Id="372" Count="0" />
+      <LineId Id="537" Count="1" />
+      <LineId Id="373" Count="0" />
+      <LineId Id="429" Count="0" />
+      <LineId Id="561" Count="0" />
+      <LineId Id="546" Count="0" />
+      <LineId Id="430" Count="0" />
+      <LineId Id="432" Count="0" />
+      <LineId Id="860" Count="2" />
+      <LineId Id="686" Count="0" />
+      <LineId Id="387" Count="0" />
+      <LineId Id="112" Count="0" />
+      <LineId Id="390" Count="0" />
+      <LineId Id="414" Count="0" />
+      <LineId Id="392" Count="3" />
+      <LineId Id="689" Count="3" />
+      <LineId Id="396" Count="0" />
+      <LineId Id="391" Count="0" />
+      <LineId Id="446" Count="0" />
+      <LineId Id="506" Count="0" />
+      <LineId Id="485" Count="0" />
+      <LineId Id="807" Count="0" />
+      <LineId Id="488" Count="0" />
+      <LineId Id="484" Count="0" />
+      <LineId Id="486" Count="0" />
+      <LineId Id="489" Count="0" />
+      <LineId Id="810" Count="0" />
+      <LineId Id="490" Count="1" />
+      <LineId Id="808" Count="1" />
+      <LineId Id="388" Count="0" />
+      <LineId Id="487" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ESS_MADI.M_StateManager">
+      <LineId Id="124" Count="0" />
+      <LineId Id="233" Count="0" />
+      <LineId Id="254" Count="0" />
+      <LineId Id="252" Count="1" />
+      <LineId Id="234" Count="0" />
+      <LineId Id="158" Count="0" />
+      <LineId Id="236" Count="0" />
+      <LineId Id="262" Count="1" />
+      <LineId Id="266" Count="0" />
+      <LineId Id="264" Count="0" />
+      <LineId Id="259" Count="0" />
+      <LineId Id="249" Count="0" />
+      <LineId Id="261" Count="0" />
+      <LineId Id="260" Count="0" />
+      <LineId Id="235" Count="0" />
+      <LineId Id="153" Count="1" />
+      <LineId Id="159" Count="0" />
+      <LineId Id="157" Count="0" />
+      <LineId Id="125" Count="0" />
+      <LineId Id="160" Count="0" />
+      <LineId Id="156" Count="0" />
+      <LineId Id="268" Count="0" />
+      <LineId Id="210" Count="0" />
+      <LineId Id="183" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ESS_MADI.M_WriteSetpoints">
+      <LineId Id="990" Count="10" />
+      <LineId Id="1064" Count="0" />
+      <LineId Id="1067" Count="1" />
+      <LineId Id="1065" Count="0" />
+      <LineId Id="1361" Count="0" />
+      <LineId Id="1066" Count="0" />
+      <LineId Id="1001" Count="7" />
+      <LineId Id="1362" Count="1" />
+      <LineId Id="1365" Count="1" />
+      <LineId Id="1364" Count="0" />
+      <LineId Id="1368" Count="2" />
+      <LineId Id="1367" Count="0" />
+      <LineId Id="1359" Count="1" />
+      <LineId Id="1012" Count="1" />
+      <LineId Id="1100" Count="0" />
+      <LineId Id="1121" Count="3" />
+      <LineId Id="1132" Count="2" />
+      <LineId Id="1158" Count="0" />
+      <LineId Id="1160" Count="2" />
+      <LineId Id="1164" Count="0" />
+      <LineId Id="1166" Count="2" />
+      <LineId Id="1155" Count="0" />
+      <LineId Id="1152" Count="0" />
+      <LineId Id="1136" Count="1" />
+      <LineId Id="1151" Count="0" />
+      <LineId Id="1127" Count="0" />
+      <LineId Id="1176" Count="3" />
+      <LineId Id="1131" Count="0" />
+      <LineId Id="1287" Count="0" />
+      <LineId Id="1286" Count="0" />
+      <LineId Id="1333" Count="0" />
+      <LineId Id="1269" Count="6" />
+      <LineId Id="1331" Count="1" />
+      <LineId Id="1276" Count="3" />
+      <LineId Id="1324" Count="3" />
+      <LineId Id="1329" Count="1" />
+      <LineId Id="1328" Count="0" />
+      <LineId Id="1291" Count="1" />
+      <LineId Id="1294" Count="0" />
+      <LineId Id="1297" Count="0" />
+      <LineId Id="1323" Count="0" />
+      <LineId Id="1299" Count="0" />
+      <LineId Id="1301" Count="0" />
+      <LineId Id="1319" Count="1" />
+      <LineId Id="1298" Count="0" />
+      <LineId Id="1295" Count="1" />
+      <LineId Id="1293" Count="0" />
+      <LineId Id="1305" Count="3" />
+      <LineId Id="1317" Count="1" />
+      <LineId Id="1303" Count="1" />
+      <LineId Id="1310" Count="1" />
+      <LineId Id="1313" Count="3" />
+      <LineId Id="1144" Count="1" />
+      <LineId Id="1138" Count="0" />
+      <LineId Id="1026" Count="11" />
+      <LineId Id="484" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,361 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_SKID_PE_HEMG3" Id="{4ee116e9-1bdd-4635-9b7d-e7a7c6150cb8}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_SKID_PE_HEMG3
+
+VAR_INPUT PERSISTENT
+		ParamTcpPort				: UINT	:= 502;					  (* (NA) TCP port *)
+		ParamIPAddress				: STRING; 						  (* (NA) Config: IP Adress of PV Inverter *)
+		ParamID_SKID				: UINT;
+		// Parameters of the Object (instance/model specific) 
+		ParamTempoComAlarm				: TIME := T#30S ; 			  (* (s) Config : Tempo to detect LOC Alarm*)
+		{attribute 'OPC.UA.DA' := '1'}
+		ParamClockReadTime 				: TIME := T#2S;	  		  (* (Time) Read Modbus Frequency  *)
+		{attribute 'OPC.UA.DA' := '1'}
+ 		ParamTimeout					: TIME := T#5S;			      (* (Time) Timeout for modbus reading *)
+END_VAR
+
+VAR_INPUT 
+		
+		IN_CmdToggleRead			: BOOL ;            		
+		IN_CmdToggleWrite			: BOOL ; 
+		IN_CmdReset_L				: BOOL ;
+		
+		MesDataExd					: SKID_PE_HEMG3; 					   // (NA) Inverter Object 
+END_VAR
+
+VAR	
+	// M_READ VARIABLES//
+		Trig_Cmd_Read				: R_TRIG; 
+		Trig_Cmd_Write				: R_TRIG; 
+                           
+		
+		ModbusRead	          		: FB_ModbusReadInputRegs; // (NA) FB for Modbus Reading
+		AX_ModbusReadAlarm			: BOOL;
+		AX_ModbusReadAlarmId		: UDINT;		
+		AX_ModbusWriteAlarm			: BOOL;
+		AX_ModbusWriteAlarmId		: UDINT;	
+	
+		MesBlock_Temp_1 			: ARRAY[1..5] OF WORD; 			// (NA) Temporary Block with multiple modbus reading 
+		
+	
+	// M_ALARMMNGMT VARIABLES //
+		TON_ComAlarm				: TON ; 						// Tempo before deteting loss of communication 
+	    TON_ComWarning				: TON ;		 					// Tempo before detecting loss of communication                                                	
+            
+		MesWarningCom				: BOOL; 						// (NA) [P,H]  True if bad communication
+		
+		
+	//M_EXECUTE VARIABLES //        	                        	
+		TP1							: TP; 							// (NA) Tempo to define Modbus Reading Frequency 
+		TP2 						: TP;	 						// (NA) Tempo to define Modbus Writing Frequency
+		                            	                    		
+		ClockRead					: BOOL;							// (NA) Modbus reading Clock
+		ClockWrite 					: BOOL;							// (NA) Modbus writing Clock 		
+		
+		MesCP_Read			: BOOL := FALSE;	(* (NA) Cal : Permanent Condition for Read			  *)
+		MesCP_Write			: BOOL := FALSE;	(* (NA) Cal : Permanenent Condition for Write		  *)
+		
+		
+		
+		
+		bInit						: BOOL := TRUE;					// (NA) FB initialisation
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{de96c9ad-3729-4212-a58a-f2b80f800cb2}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Manages IntelliGen Alarms
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager : FB_AlarmCodeManager ; 
+	KK				: BYTE;		// For Loop 
+	bComError		: BOOL := TRUE;
+	bComWarning 	: BOOL;
+
+	AX_BJHS			: ARRAY[1..10] OF BOOL;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[FOR KK := 1 TO 1 DO
+	bComError := bCOmError AND AX_ModbusReadAlarm;
+	bComWarning := bComWarning OR AX_ModbusReadAlarm;
+END_FOR
+
+TON_ComAlarm(IN := bComError, 		PT := T#30S, Q=> MesDataExd.MesAlarmCom);
+TON_ComWarning(IN := bComWarning, 	PT := T#30S, Q=> MesWarningCom);
+
+// ALARM CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= MesDataExd.MesAlarmCom, 								// No communication frames for the past 30 seconds 					 			#COM
+		bAlarm2			:= FALSE,												// 	
+		bAlarm3			:= FALSE,												//  
+		bAlarm4			:= FALSE,												// 	
+		bAlarm5			:= FALSE,												// 
+		bAlarm6			:= FALSE,												// 
+		bAlarm7			:= FALSE,												//	
+		bAlarm8			:= FALSE,												// 
+		bAlarm9			:= FALSE,												// 
+		bAlarm10		:= FALSE,												//  
+		bAlarm11		:= FALSE,												// 		
+		bAlarm12		:= FALSE,												//  
+		bAlarm13		:= FALSE,												// 
+		bAlarm14		:= FALSE,												// 
+		bAlarm15		:= FALSE,												//
+		wAlarmCode		=> MesDataExd.MesAlarmCode);					
+
+// WARNING CODE //
+	FB_AlarmCodeManager(
+ 		bAlarm1			:= MesWarningCom, 										// A frame failed for the last 30s 												#COM
+		bAlarm2			:= FALSE,												//
+		bAlarm3			:= NOT MesDataExd.MesCP_Read, 	  						// No permission to read from SCADA
+		bAlarm4			:= FALSE,												//
+		bAlarm5			:= NOT MesDataExd.MesCP_Write,							// No permission to write from SCADA							
+		bAlarm6			:= FALSE,												//
+		bAlarm7			:= FALSE,												// 
+		bAlarm8			:= FALSE,												//
+		bAlarm9			:= FALSE,												// 
+		bAlarm10		:= FALSE,       										// 
+		bAlarm11		:= FALSE,						 						// 
+		bAlarm12		:= FALSE, 												//
+		bAlarm13		:= FALSE,												// 
+		bAlarm14		:= FALSE,												// 
+		bAlarm15		:= FALSE, 												//
+		wAlarmCode		=> MesDataExd.MesWarningCode);	
+
+// EVENT CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= FALSE,                            					//
+		bAlarm2			:= FALSE,                                               //
+		bAlarm3			:= FALSE,                                               //
+		bAlarm4			:= FALSE,                                               //
+		bAlarm5			:= FALSE,                                               //
+		bAlarm6			:= FALSE,                                               //
+		bAlarm7			:= FALSE,                                               //
+		bAlarm8			:= FALSE,                                               //
+		bAlarm9			:= FALSE,                                               //
+		bAlarm10		:= FALSE,                                               //
+		bAlarm11		:= FALSE, 												// 
+		bAlarm12		:= FALSE,  												// 
+		bAlarm13		:= FALSE, 												// 
+		bAlarm14		:= FALSE, 												// 
+		bAlarm15		:= FALSE,												// 		
+		wAlarmCode		=>  MesDataExd.MesEventCode);
+	]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_CP" Id="{cb76af62-2b92-4d72-8c17-374dfdb97c90}">
+      <Declaration><![CDATA[METHOD M_CP
+//////////////////
+//  Emulator
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+SUPER^.M_CP() ; 
+
+
+
+
+Trig_Cmd_Read(CLK:=IN_CmdToggleRead);
+Trig_Cmd_Write(CLK:=IN_CmdToggleWrite);
+	
+IF Trig_Cmd_Read.Q THEN
+	IN_CmdToggleRead := FALSE;
+	MesDataExd.MesCP_Read := NOT MesDataExd.MesCP_Read;
+END_IF
+
+
+IF Trig_Cmd_Write.Q THEN
+	IN_CmdToggleWrite := FALSE;
+	MesDataExd.MesCP_Write := NOT MesDataExd.MesCP_Write;
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{88bb6955-d9e4-440e-b633-1c1bc7fce57f}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF  bInit THEN
+	M_Init();
+	bInit:= FALSE ; 
+ELSIF CmdInit_G THEN 
+	bInit:= TRUE ;
+END_IF
+
+// READING AND WRITING CLOCK //
+	TP1(IN:=NOT TP1.Q , PT:= ParamClockReadTime);
+	ClockRead 				:= TP1.Q;
+	
+
+// PERMANENT CONDITIONS //	
+	M_CP() ; 
+	
+// METHODS CALLS//
+	M_Read();
+	
+//M_Evaluate();
+	M_AlarmManagement(); 
+	]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{e7c85852-4333-455f-b206-fae11b8cd40b}">
+      <Declaration><![CDATA[METHOD M_Init
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Read" Id="{bde64f13-a612-4cba-83eb-4a9861cb7806}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'M_Read'}
+METHOD M_Read
+//////////
+// Read Method for PE SKID HEMK : Modbus reading
+//////////
+VAR
+	// Method local variables (reinitialized at each cycle) 
+	
+	AX_QTY_MB			: ARRAY[1..1] OF WORD := [5];
+	AX_ADR_MB			: ARRAY[1..1] OF WORD := [0]; 	
+	
+	EacInj_Interm1		: ULINT;
+	EacCon_Interm1		: ULINT;
+	EreacCapa_Interm1	: ULINT;
+	EreacInd_Interm1	: ULINT;
+	EacInj_Day_Interm1	: ULINT;
+	
+	EacInj_Interm2		: ULINT;
+	EacCon_Interm2		: ULINT;
+	EreacCapa_Interm2	: ULINT;
+	EreacInd_Interm2	: ULINT;
+	EacInj_Day_Interm2	: ULINT;
+	
+	Temp_Cells_Transfo	: WORD;
+	Temp_Cells_Transfo_2: WORD;
+	Temp_Cells_Transfo_3: WORD;
+	Temp_Cells_Transfo_4: WORD;
+	
+	KK					: BYTE;						 // Index to loop over modbus blocks 	
+	JJ					: BYTE;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// CP-Read / Write 
+
+IF  MesDataExd.MesCP_Read THEN		
+
+// MODBUS REQUEST//
+	//String Measurements
+	ModbusRead
+	(
+		nTCPPort		:= ParamTcpPort,
+		ClockRead		:= MesDataExd.MesCP_Read AND ClockRead, 
+		Reset			:= CmdClearFault_G OR IN_CmdReset_L,
+		sIPAddr			:= ParamIPAddress , 
+		nUnitID			:= 1, 
+		tTimeout		:= ParamClockReadTime,
+		nQuantity		:= 5, 
+		nMBAddr			:= 0, 
+		cbLength		:= SIZEOF(MesBlock_Temp_1), 
+		pDestAddr		:= ADR(MesBlock_Temp_1), 
+		ErrorId			=> AX_ModbusReadAlarmId,
+		ModbusReadAlarm => AX_ModbusReadAlarm
+	);	
+	// Cells and transformers 
+	
+		MesDataExd.MesDisparoTemp_Transformador1				:= MesBlock_Temp_1[1].0;                            	
+		MesDataExd.MesAlarmTemp_Transformador1					:= MesBlock_Temp_1[1].1;                            	
+		MesDataExd.MesDisparoPresion_Transformador1				:= MesBlock_Temp_1[1].2;                            	
+		MesDataExd.MesDisparoOil_Transformador1					:= MesBlock_Temp_1[1].3;                            	
+		MesDataExd.MesSeccionador1_Abierto						:= MesBlock_Temp_1[1].4;                            	
+		MesDataExd.MesEarth1_Abierto							:= MesBlock_Temp_1[1].6;                            	
+		MesDataExd.MesMonitorGas								:= MesBlock_Temp_1[1].7;                            	
+		MesDataExd.MesSeccionador2_Abierto						:= MesBlock_Temp_1[1].8;                            	
+		MesDataExd.MesEarth2_Abierto							:= MesBlock_Temp_1[1].10;                               	
+		MesDataExd.MesSeccionadorMain1_Abierto					:= MesBlock_Temp_1[1].11;                            	
+		MesDataExd.MesEarthMain1_Abierto						:= MesBlock_Temp_1[1].13;                          	
+		MesDataExd.MesCb1_Abierto								:= MesBlock_Temp_1[1].14;   
+		MesDataExd.MesProtectRelay1_fallo						:= MesBlock_Temp_1[2].0;
+		MesDataExd.MesProtectRelay1_overvoltage					:= MesBlock_Temp_1[2].1;
+		MesDataExd.MesProtectRelay1_springloaded				:= MesBlock_Temp_1[2].2;
+		MesDataExd.MesMonitorGas2								:= MesBlock_Temp_1[2].3;
+    
+		MesDataExd.MesDisparoTemp_Transformador2				:= MesBlock_Temp_1[2].13;
+		MesDataExd.MesAlarmTemp_Transformador2					:= MesBlock_Temp_1[2].14;
+		MesDataExd.MesDisparoPresion_Transformador2				:= MesBlock_Temp_1[2].15;
+		MesDataExd.MesDisparoOil_Transformador2					:= MesBlock_Temp_1[3].0;                             	
+		MesDataExd.MesSeccionadorMain2_Abierto					:= MesBlock_Temp_1[3].1;   
+		MesDataExd.MesEarth2_Abierto							:= MesBlock_Temp_1[3].3;  
+		MesDataExd.MesCb2_Abierto								:= MesBlock_Temp_1[3].4;  
+		MesDataExd.MesProtectRelay2_fallo						:= MesBlock_Temp_1[3].6;
+		MesDataExd.MesProtectRelay2_overvoltage					:= MesBlock_Temp_1[3].6;
+		MesDataExd.MesProtectRelay2_springloaded				:= MesBlock_Temp_1[3].8;
+		IF ParamID_SKID = 2 OR ParamID_SKID = 3 THEN
+			MesDataExd.MesTemp1									:= WORD_TO_REAL(MesBlock_Temp_1[3])/10;
+		ELSE
+			MesDataExd.MesTemp1									:= WORD_TO_REAL(MesBlock_Temp_1[4])/10;	
+			MesDataExd.MesTemp2									:= WORD_TO_REAL(MesBlock_Temp_1[5])/10;
+		END_IF
+
+END_IF
+	]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_SKID_PE_HEMG3">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SKID_PE_HEMG3.M_AlarmManagement">
+      <LineId Id="912" Count="3" />
+      <LineId Id="918" Count="17" />
+      <LineId Id="938" Count="41" />
+      <LineId Id="367" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SKID_PE_HEMG3.M_CP">
+      <LineId Id="265" Count="19" />
+      <LineId Id="51" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SKID_PE_HEMG3.M_Execute">
+      <LineId Id="113" Count="10" />
+      <LineId Id="126" Count="2" />
+      <LineId Id="130" Count="2" />
+      <LineId Id="134" Count="1" />
+      <LineId Id="67" Count="0" />
+      <LineId Id="145" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SKID_PE_HEMG3.M_Init">
+      <LineId Id="138" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SKID_PE_HEMG3.M_Read">
+      <LineId Id="14190" Count="0" />
+      <LineId Id="14193" Count="3" />
+      <LineId Id="14285" Count="12" />
+      <LineId Id="14628" Count="1" />
+      <LineId Id="14300" Count="0" />
+      <LineId Id="14341" Count="0" />
+      <LineId Id="14630" Count="33" />
+      <LineId Id="14498" Count="0" />
+      <LineId Id="14458" Count="0" />
+      <LineId Id="7521" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

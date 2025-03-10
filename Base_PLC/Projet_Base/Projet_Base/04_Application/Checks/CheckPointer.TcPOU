@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.2">
+  <POU Name="CheckPointer" Id="{e78cd24d-61a2-4009-b250-b58c13cce84b}" SpecialFunc="CheckPointer">
+    <Declaration><![CDATA[// Code généré automatiquement : NE PAS MODIFIER
+FUNCTION CheckPointer : POINTER TO BYTE
+VAR_INPUT 
+	ptToTest : POINTER TO BYTE; // Adresse de destination du pointeur
+	iSize : DINT;		        // Taille du type indiqué par le pointeur.  (par exemple : 20 pour POINTER TO ARRAY [0..9] OF INT)
+	iGran : DINT;		        // Granularité de l’accès au pointeur. Il s’agit de la taille du plus grand type de données non structuré dans le type indiqué par le pointeur.  (par exemple : 2 pour POINTER TO ARRAY [0..9] OF INT)
+	bWrite: BOOL;		        // Indique l’accès en lecture ou en écriture. TRUE = accès en écriture.
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// Pas d’implémentation standard. Veuillez insérer votre code ici.
+CheckPointer := ptToTest;
+{flow}]]></ST>
+    </Implementation>
+    <LineIds Name="CheckPointer">
+      <LineId Id="11" Count="1" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

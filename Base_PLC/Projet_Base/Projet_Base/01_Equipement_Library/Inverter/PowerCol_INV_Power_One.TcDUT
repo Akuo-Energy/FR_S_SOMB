@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="PowerCol_INV_Power_One" Id="{3066b175-979c-46b0-8e60-8a34dc081943}">
+    <Declaration><![CDATA[TYPE PowerCol_INV_Power_One :
+
+
+STRUCT
+	
+
+			MesData			: PowerCol_INV ; 
+			
+		//INV Caracteristiques
+			MesSN				: UINT;      (*  		Serial Number*)
+			MesID_Type			: UINT; 		(*          0=Master MPPT 1=slave MPTT*)
+			MesID_StateGlobal	: UINT;      (*			Global state, Note 2.1*)
+			MesIDState			: UINT;      (*			Inverter State, Note 2.2  *)
+			MesAlarmID			: UINT;      (*          Alarm state, Note2.4*)
+		// INV Measures
+			MesEDay				: REAL;     (* (kWh)	Daily Energy*)
+			MesETot				: REAL;		(* (kWh)    Total Energy*)
+			MesEPartial			: REAL;		(* (kWh)	??? To check*)
+			MesEWeek			: REAL;		(* (kWh)	Week Energy*)
+			MesEMonth			: REAL;		(* (kWh)	Monthly Energy*)
+			MesEYear			: REAL;     (* (kWh)	Yearly Energy*)
+			
+			MesV				: REAL;		(* (V)		Average 3 phases Grid Volatage For Slave*)
+			MesI		 		: REAL;  	(* (A) 		Average 3 phases Grid Current For Slave*)
+		 
+			MesTemp_Inv			: REAL;		(* (°C)		Supervisor Temperature*)
+			MesTemp_Supply			: REAL;		(* (°C)		Power Supply Temperature*)
+			MesTemp_Headsink			: REAL;		(* (°C)		Headsink*)
+			MesTemp_T2					: REAL;		(* (°C)		T2*)
+			MesTemp_T3					: REAL; 	(* (°C)		T3*)
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

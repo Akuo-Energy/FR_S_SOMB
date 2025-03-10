@@ -1,0 +1,788 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_GRID_PLAN" Id="{c78783ca-882a-4b41-a8c4-255b23bffa5f}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_GRID_PLAN
+//////////////////
+// Grid Operator interface . Base FB
+//////////////////
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance specific) 
+		ParamRseAvailable						: BOOL:=TRUE		; // GRID with RSE option
+		ParamTaAvailable						: BOOL:=TRUE		; // GRID with Teleaction option
+		ParamP0Available						: BOOL:=TRUE		; // GRID with P regulation option
+		ParamQ0Available						: BOOL:=TRUE		; // GRID with Q regulation option
+		ParamTONFiltering						: TIME:=T#200MS		; // Minimum tempo filter before command validation (Noise filtering)
+		ParamPmaxPark							: REAL;					//(kW) Contractual maximal power plant active power
+		ParamQMax								: REAL;					// (Kvar)   Contractual maximal power plant reactive power
+		ParamQMin								: REAL; 				// (Kvar)  Contractual maximal power plant reactive power
+		ParamPMin								: REAL;					// (kW) Contractual minimal power plant active power
+		
+		
+		MesDataExd							AT%Q* 		: GRID_PLAN;	
+		
+END_VAR
+
+
+VAR_INPUT
+	// I/O Inputs 
+		//FROM ENEDIS
+		IN_CmdAutCpl_IO								: BOOL; //Autorisation de couplage
+		IN_CmdDisconnect_End_IO						: BOOL; //Fin de demande de decouplage
+		IN_CmdDisconnect_IO							: BOOL;	//Demande de decouplage
+		IN_CmdRSEOn_IO								: BOOL;	//Mise en RSE
+		IN_CmdRSEOff_IO								: BOOL;	//Mise Hors RSE
+		IN_CmdTAOn_IO								: BOOL; //Teleaction en service
+		IN_CmdTAOff_IO								: BOOL; //Teleaction Hors service
+		IN_CmdStopPReg_IO							: BOOL;	//Fin de passage a P0
+		IN_CmdStartPReg_IO							: BOOL;	//Passage a P0
+		IN_CmdStopQReg_IO							: BOOL;	//Fin de passage a Q0
+		IN_CmdStartQreg_IO							: BOOL;	//Passage a Q0
+		IN_CmdEndDisconnectOrder_IO					: BOOL;	//Fin demande d'effacement d'urgence		
+		IN_CmdEmergencyDisconnect_IO				: BOOL;	//Demande d'effacement d'urgence
+		IN_CmdDisconnectFromTac_IO					: BOOL; //Decouplage par tac
+		IN_CmdTacInFault_IO							: BOOL; //Défaut Tac
+		(* 4..20mA *)
+		IN_MesP0Reg_IO								: INT; //Kw
+		IN_MesQ0Reg_IO								: INT; //Kvar
+		
+		
+		//FROM AKSES
+		IN_CmdAutCpl_other							: BOOL;
+		IN_CmdEmergencyDisconnect_other				: BOOL;
+		IN_CmdEmergencyDisconnect_End_other			: BOOL;
+		IN_CmdDisconnect_other						: BOOL;
+		IN_CmdDisconnect_end_other					: BOOL;
+		IN_CmdStartPReg_other						: BOOL;
+		IN_CmdStartQReg_other						: BOOL;
+		IN_CmdStopPReg_other						: BOOL;
+		IN_CmdStopQReg_other						: BOOL;
+		
+		IN_SetptP_other								: REAL;
+		IN_SetptQ_other								: REAL;
+		IN_SetptPF_other							: REAL;
+		IN_SetptU_other								: REAL;
+		
+		(*TC Relais Protection*)
+		IN_ConnectAuthorizationLost				: BOOL; (*Tous les cas pour un Reset aut Couplage recu*)
+		IN_Unavailable							: BOOL; (*Disjoncteur général en Local, ou tous les départs en Local ou Bouton d'arret d'urgence *)
+		IN_PP_Connected							: BOOL; (*Centrale Couplée si DG = Fermé et au moins 1 départ antenne en production et au moins un onduleur en Prod*)
+	    IN_CmdToggleRead						: BOOL;	
+
+END_VAR 
+
+
+VAR_OUTPUT
+		OUT_MesPPUnavailable_IO					: BOOL; (*TS centrale indisponible*)
+		OUT_MesPPConnected_IO					: BOOL; (*Centrale couplée(1)/Centrale Découplée(0)*)
+		OUT_MesAutCpl_IO 						: BOOL; (*Autorisation de couplage reçue(1)/Attente d'autorisation de couplage(0)*)
+		OUT_MesAutCpl_end_IO 						: BOOL; (*Autorisation de couplage attente*)
+		OUT_MesDisconnect_IO 					: BOOL; (*Demande de découplage reçue(1)/Fin de demande de découplage(0)*)
+		OUT_MesDisconnect_End_IO 					: BOOL; (*Demande de découplage attente*)		
+		OUT_MesEmergencyDisconnect_IO 			: BOOL; (*Demande d effacement d'urgence reçue*)
+		OUT_MesEmergencyDisconnect_End_IO 			: BOOL; (*Demande d effacement d'urgence attente*)		
+END_VAR
+
+
+
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//                                                    								
+
+
+	//M_EVALUATE VARIABLES//
+		//
+
+		//TON
+		TONConnectAuthorization					: TON;
+		TONEmergencyDisconnect	               	: TON;
+	    TONEmergencyDisconnect_end	            : TON;
+	    TONDisconnect	                		: TON;
+	    TONDisconnect_end                		: TON;
+	    TONPRegOn				                : TON;
+	    TONPRegOff				                : TON;
+	    TONQregOn				                : TON;
+	    TONQRegOff				                : TON;
+	    TONRSEOn				                : TON;
+	    TONRSEOff				                : TON;
+	    TONTAOn					                : TON;
+	    TONTAOff				                : TON;
+		
+	//M_Evaluate
+	// IEC 104
+		MesDataIEC						: IEC104_PLAN;
+		AODB 							: ARRAY[0..GVL_Cst.CstNbAOEntries] OF ST_IEC870_5_101AODBEntry ;
+		memory 			AT%MB0			: ARRAY[0..200] OF BYTE;
+		FB_IEC							: FB_IEC104ServerAkuo;(* Controlled station function block instance *)
+
+	
+	//M_INIT VARIABLES //
+		bInit					: BOOL:= TRUE;	
+		initError				: UDINT;
+		bBoot					: BOOL := TRUE ;		// Boolean that indicates a restart of the PLC .
+	// M_EXECUTE VARIABLES //
+        Trig_Cmd_Read			: R_TRIG;                                                                                        
+		
+		   		                    		
+        SetptP_IEC_Old 			: REAL;
+		SetptQ_IEC_Old 			: REAL;
+		SetptU_IEC_Old 			: REAL;
+		SetptCosPhi_IEC_Old 	: REAL;
+		
+		bChange_SetptP_IEC 		: BOOL;
+		bChange_SetptQ_IEC 		: BOOL;
+		bChange_SetptU_IEC 		: BOOL;
+		bChange_SetptCosPhi_IEC	: BOOL;
+
+		   		                    		
+        SetptP_Manu_Old 		: REAL;
+		SetptQ_Manu_Old 		: REAL;
+		SetptU_Manu_Old 		: REAL;
+		SetptCosPhi_Manu_Old	: REAL;
+				     
+		bChange_SetptP_Manu		: BOOL;
+		bChange_SetptQ_Manu		: BOOL;
+		bChange_SetptU_Manu		: BOOL;
+		bChange_SetptCosPhi_Manu: BOOL;
+		
+		
+        CmdQ_Old				: REAL;             
+		bChange_CmdQ_Old		: BOOL;
+				
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{86eb4c2e-ccef-468e-ab28-14fff619b952}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// alarm and warning management
+/////////////////
+
+VAR 
+	FB_AlarmCodeManager			: FB_AlarmCodeManager ; 
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// ALARM CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:=MesDataExd.mesData.OUT_MesPPUnavailable, // Power plant is unavailable
+		bAlarm2			:=FALSE , //
+		bAlarm3			:=FALSE, //
+		bAlarm4			:=FALSE, //
+		bAlarm5			:=FALSE, //
+		bAlarm6			:=FALSE, //
+		bAlarm7			:=FALSE, //
+		bAlarm8			:=FALSE, //
+		bAlarm9			:=FALSE, //
+		bAlarm10		:=FALSE, //
+		bAlarm11		:=FALSE, //
+		bAlarm12		:=FALSE, //
+		bAlarm13		:=FALSE, //
+		bAlarm14		:=FALSE, //
+		bAlarm15		:=FALSE, //						 
+		wAlarmCode		=> MesDataExd.MesData.MesAlarmCode);
+
+// WARNING CODE //
+	FB_AlarmCodeManager(		
+		bAlarm1			:=IN_ConnectAuthorizationLost, 							//Loss of coupliong authorization
+		bAlarm2			:=FALSE,													//			
+		bAlarm3			:=MesDataExd.MesData.OUT_SetptP > ParamPmaxPark OR MesDataExd.MesData.OUT_SetptP <= 0 ,		// P Setpoint from grid outside of permitted range
+		bAlarm4			:=MesDataExd.MesData.OUT_SetptQ > ParamQMax OR MesDataExd.MesData.OUT_SetptQ <= ParamQMin, 	// Q Setpoint from grid outside of permitted range
+		bAlarm5			:=MesDataExd.MesData.OUT_MesPPConnected						, 	//Powerplant is connected  
+		bAlarm6			:=NOT MesDataExd.MesData.OUT_MesPPConnected					, 	//Powerplant is disconnected
+		bAlarm7			:=FB_IEC.eComState = INIT,  // IEC server is Initializing
+		bAlarm8			:=FB_IEC.eComState = IDLE,  // ieC server is Idle
+		bAlarm9			:=FALSE,  //
+		bAlarm10		:=FALSE,  //
+		bAlarm11		:=FALSE,  //
+		bAlarm12		:=FALSE,  //
+		bAlarm13		:=FALSE,  //
+		bAlarm14		:=FALSE,  //
+		bAlarm15		:=FALSE  , // 
+		wAlarmCode		=> MesDataExd.MesData.MesWarningCode);		
+
+// EVENT CODE 1//
+	FB_AlarmCodeManager(
+		bAlarm1			:=FALSE , // 
+		bAlarm2			:=FALSE , // A1_PP.IN_CmdQ=0,
+		bAlarm3			:=bChange_SetptU_Manu,								// Change on U control mode
+		bAlarm4			:=bChange_CmdQ_Old, 								// Change on Q control mode	
+		bAlarm5			:=bChange_SetptCosPhi_IEC, 							// Change of PF setpoint from IEC
+		bAlarm6			:=bChange_SetptCosPhi_Manu, 						// Change of PF setpoint from HMI
+		bAlarm7			:=MesDataExd.MEsData.OUT_CmdDisconnect, 			// Disconnect order
+		bAlarm8			:=bChange_SetptP_Manu,								// Change of P setpoint from HMI
+		bAlarm9			:=bChange_SetptQ_IEC,								// Change of Q setpoint from IEC
+		bAlarm10		:=FALSE , // A1_PP.IN_CmdQ=1,									// Control mode is in QvU mode
+		bAlarm11		:=FALSE , // A1_PP.IN_CmdQ=2,									// Control mode is in PF mode
+		bAlarm12		:=FALSE , // A1_PP.IN_CmdQ=3,									// Control mode is in Q mode 
+		bAlarm13		:=FALSE , // A1_PP.IN_CmdQ=4,									// Control mode is in U mode
+		bAlarm14		:=bChange_SetptQ_Manu,								// Change of Q setpoint from HMI
+		bAlarm15		:=bChange_SetptU_IEC,								// Change of U setpoint from IEC
+		wAlarmCode		=> MesDataExd.MesData.MesEventCode);   
+                          	
+// EVENT CODE 2 //		                                              	
+	FB_AlarmCodeManager(                                              	
+		bAlarm1			:=FALSE , //
+		bAlarm2			:=FALSE , //
+		bAlarm3			:=FALSE, 	//
+		bAlarm4			:=FALSE	, 	//
+		bAlarm5			:=FALSE, 	//
+		bAlarm6			:=FALSE, 	//
+		bAlarm7			:=FALSE, 	//
+		bAlarm8			:=FALSE	, 	// 
+		bAlarm9			:=FALSE, 	//
+		bAlarm10		:=FALSE, 	//
+		bAlarm11		:=FALSE	, 	//
+		bAlarm12		:=FALSE, 	//
+		bAlarm13		:=FALSE, 	//       
+		bAlarm14		:=FALSE, 	//
+		bAlarm15		:=FALSE	,//
+		wAlarmCode		=> MesDataExd.MesData.MesEventCode2);
+		
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_CP" Id="{ebee46ac-24d2-4ad4-afa6-b8a1ae8876be}">
+      <Declaration><![CDATA[METHOD M_CP
+//////////////////
+//  Emulator
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+SUPER^.M_CP() ; 
+
+
+
+
+Trig_Cmd_Read(CLK:=IN_CmdToggleRead);
+	
+IF Trig_Cmd_Read.Q THEN
+	IN_CmdToggleRead := FALSE;
+	MesDataExd.MesData.MesCP_Read := NOT MesDataExd.MesData.MesCP_Read;
+END_IF
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Evaluate" Id="{efd42c4d-a62b-4b55-b53f-f8bda3adbbfe}">
+      <Declaration><![CDATA[METHOD M_Evaluate
+//////////////////
+//  Read Modbus Variable for PCS . 
+/////////////////
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	WatchDog	: BOOL;
+END_VAR
+
+
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[WatchDog		:= TRUE;
+
+
+
+//Filtering Input
+	TONConnectAuthorization		(IN:=IN_CmdAutCpl_IO,PT:=ParamTONFiltering);
+	TONEmergencyDisconnect		(IN:=IN_CmdEmergencyDisconnect_IO,PT:=ParamTONFiltering);	
+	TONEmergencyDisconnect_end	(IN:=IN_CmdEndDisconnectOrder_IO,PT:=ParamTONFiltering);	
+	TONDisconnect				(IN:=IN_CmdDisconnect_IO,PT:=ParamTONFiltering);	
+	TONDisconnect_end			(IN:=IN_CmdDisconnect_End_IO,PT:=ParamTONFiltering);
+	TONPRegOn					(IN:=IN_CmdStartPReg_IO,PT:=ParamTONFiltering);			
+	TONPRegOff					(IN:=IN_CmdStopPReg_IO,PT:=ParamTONFiltering);				
+	TONQregOn					(IN:=IN_CmdStartQreg_IO,PT:=ParamTONFiltering);				
+	TONQRegOff					(IN:=IN_CmdStopQReg_IO,PT:=ParamTONFiltering);				
+	TONRSEOn					(IN:=IN_CmdRSEOn_IO,PT:=ParamTONFiltering);				
+	TONRSEOff					(IN:=IN_CmdRSEOff_IO,PT:=ParamTONFiltering);				
+	TONTAOn						(IN:=IN_CmdTAOn_IO,PT:=ParamTONFiltering);					
+	TONTAOff					(IN:=IN_CmdTAOff_IO,PT:=ParamTONFiltering);		
+
+////Converting P0 & Q0
+//	IF ParamP0Available THEN
+//		//MesData.OUT_P0 :=  (MesP0RegIO/ 32767.0) * REAL_TO_INT(ParamPmaxPark);
+//		MesDataExd.MesData.OUT_SetptP :=  (IN_MesP0Reg_IO/ 32767.0) * ABS(ParamPMin - ParamPmaxPark) + (ParamPMin);
+//	END_IF
+//	IF ParamQ0Available THEN
+//		MesDataExd.MesData.OUT_SetptQ := ( IN_MesQ0Reg_IO / 32767.0) * ABS(ParamQMin - ParamQMax) + (ParamQMin);
+//	END_IF	
+//Logical Equation
+	(*PLCUnavailable Si Watchdog n'est pas mis a jour a chaque temps de cycle Ou que la centrale est en Local *)
+		MesDataExd.MesData.OUT_MesPPUnavailable := NOT WatchDog OR IN_Unavailable;
+	
+	(*Centrale Couplée *)
+		//MesDataExd.MesData.OUT_MesPPConnected := IN_PP_Connected;
+	
+	(*Autorisation de couplage*)
+		IF TONConnectAuthorization.Q OR IN_CmdAutCpl_other THEN
+			MesDataExd.MEsData.OUT_CmdAutCpl := 1 ;
+		END_IF
+		
+	(*Défaut GTE > 50s : Reset Aut Couplage recus*)
+	(*Défaut C13_100 : Reset Aut Couplage recus*)
+		IF IN_ConnectAuthorizationLost THEN  //IN_Long_GTE_Fault OR IN_C13_100_Fault OR IN_UnknownFault OR IN_3GTE_Fault THEN
+			MesDataExd.MEsData.OUT_CmdAutCpl  := FALSE ;
+		END_IF
+	
+	(* RESEAU 6 ET 7 - DEMANDE DE DECOUPLAGE*)
+		IF TONDisconnect.Q OR IN_CmdDisconnect_other THEN
+			 MesDataExd.MEsData.OUT_CmdDisconnect := 1 ;
+		END_IF
+	
+		IF TONDisconnect_end.Q OR IN_CmdDisconnect_end_other THEN
+			MesDataExd.MEsData.OUT_CmdDisconnect := 0 ;
+		END_IF
+
+	(* RESEAU 8 ET 9 - DEMANDE D’EFFACEMENT D’URGENCE*)
+		IF TONEmergencyDisconnect.Q OR  IN_CmdEmergencyDisconnect_other THEN
+			MesDataExd.MEsData.OUT_CmdEmergencyDisconnect := 1 ;
+		END_IF
+	
+		IF TONEmergencyDisconnect_end.Q OR IN_CmdEmergencyDisconnect_End_other THEN
+			MesDataExd.MEsData.OUT_CmdEmergencyDisconnect := 0 ;
+		END_IF
+	(* RESEAU 10 ET 11 - PASSAGE A P0*)
+		IF TONPRegOn.Q OR IN_CmdStartPReg_other THEN
+			MesDataExd.OUT_CmdPReg := 1 ;
+		END_IF
+		
+		IF TONPRegOff.Q OR IN_CmdStopPReg_other THEN
+			MesDataExd.OUT_CmdPReg := 0 ;
+		END_IF
+		
+	(* RESEAU 12 ET 13 - PASSAGE A Q0*)
+		IF TONQregOn.Q OR IN_CmdStartQReg_other THEN
+			MesDataExd.OUT_CmdQReg := 1 ;
+		END_IF
+		
+		IF TONQregOff.Q OR IN_CmdStopQReg_other THEN
+			MesDataExd.OUT_CmdQReg := 0 ;
+		END_IF
+
+				
+	(* RSE*)
+		IF TONRSEOn.Q  THEN
+			MesDataExd.OUT_Rse := 1 ;
+		ELSIF TONRSEOff.Q THEN
+			MesDataExd.OUT_Rse := 0 ;
+		END_IF
+		
+	(* TA*)
+		IF TONTAOn.Q  THEN
+			MesDataExd.OUT_TA := 1 ;
+		ELSIF TONTAOff.Q THEN
+			MesDataExd.OUT_TA := 0 ;
+		END_IF
+		
+
+// Update Outputs IO to GRID 
+OUT_MesPPUnavailable_IO				:= MEsDataExd.MesData.OUT_MesPPUnavailable ; 			
+OUT_MesPPConnected_IO				:= MEsDataExd.MesData.OUT_MesPPConnected ; 				 
+OUT_MesAutCpl_IO 					:= MEsDataExd.MesData.OUT_CmdAutCpl ; 			
+OUT_MesAutCpl_end_IO 				:= NOT MEsDataExd.MesData.OUT_CmdAutCpl ; 		
+OUT_MesDisconnect_IO 				:= MEsDataExd.MesData.OUT_CmdDisconnect ; 		
+OUT_MesDisconnect_End_IO 			:= NOT MEsDataExd.MesData.OUT_CmdDisconnect ; 		
+OUT_MesEmergencyDisconnect_IO 		:= MEsDataExd.MesData.OUT_CmdEmergencyDisconnect ; 		
+OUT_MesEmergencyDisconnect_End_IO 	:= NOT MEsDataExd.MesData.OUT_CmdEmergencyDisconnect ; 		
+
+// Values of IEC
+	MesDataIEC.OUT_MesAvailability := A1_PP.MesData.MesPsol_Connected / (38*6);
+	MesDataIEC.OUT_MesGHI := A1_WS.MesDataExd.Pyran_GHI.MesData.Value ;
+	MesDataIEC.OUT_MesGTI := (A1_WS.MesDataExd.Pyran_GTI_PTR1_1.MesData.Value + A1_WS.MesDataExd.Pyran_GTI_PTR1_2.MesData.Value)/2;
+	MesDataIEC.OUT_MesI_33kV_1	:= A1_SUBMV.A1_PM.MesDataExd.MesData.MesI1;
+	MesDataIEC.OUT_MesI2_110kV	:= A1_SUBHV.A1_PM.MesDataExd.MesData.MesI2;
+	MesDataIEC.OUT_MesI2_33kV	:= A1_SUBMV.A1_PM.MesDataExd.MesData.MesI2;
+	MesDataIEC.OUT_MesP_110kV	:= A1_SUBHV.A1_PM.MesDataExd.MesData.MesP/1000;
+	MesDataIEC.OUT_MesP_33kV	:= A1_SUBMV.A1_PM.MesDataExd.MesData.MesP/1000;
+	MesDataIEC.OUT_MesP_33kV_1	:= A1_SUBMV.A1_PM.MesDataExd.MesData.MesP/1000;
+	MesDataIEC.OUT_MesPMax		:= A1_PP.ParamPmax/1000;
+	MesDataIEC.OUT_MesQ_110kV	:= A1_SUBHV.A1_PM.MesDataExd.MesData.MesQ/1000;
+	MesDataIEC.OUT_MesQ_33kV	:= A1_SUBMV.A1_PM.MesDataExd.MesData.MesQ/1000;
+	MesDataIEC.OUT_MesQ_33kV_1	:= A1_SUBMV.A1_PM.MesDataExd.MesData.MesQ/1000;
+//	MesDataIEC.OUT_MesTempAmb	:= (A1_WS.MesDataExd.AX_Datalogger[1].TempSensor_Ext.Value + A1_WS.MesDataExd.AX_Datalogger[2].TempSensor_Ext.Value)/2;
+	MesDataIEC.OUT_MesTempPan	:= (A1_WS.MesDataExd.TempSensor_Panel_PTR1.MesData.Value) ;
+	MesDataIEC.OUT_MesU_33kV_1	:= A1_SUBMV.A1_PM.MesDataExd.MesData.MesU12/1000;
+	MesDataIEC.OUT_MesU12_110kV	:= A1_SUBHV.A1_PM.MesDataExd.MesData.MesU12/1000;
+	MesDataIEC.OUT_MesU12_33kV	:= A1_SUBMV.A1_PM.MesDataExd.MesData.MesU12/1000;
+
+
+	
+MesDataIEC.OUT_MesDouble.0 := MesDataIEC.OUT_MesPosCB_SubMV;
+MesDataIEC.OUT_MesDouble.1 := NOT MesDataIEC.OUT_MesPosCB_SubMV;
+
+MesDataIEC.OUT_MesDouble.2 := MesDataIEC.OUT_MesPosSec_SubMV;
+MesDataIEC.OUT_MesDouble.3 := NOT MesDataIEC.OUT_MesPosSec_SubMV;
+
+MesDataIEC.OUT_MesDouble.4 := MesDataIEC.OUT_MesPosEarth_SubMV;
+MesDataIEC.OUT_MesDouble.5 := NOT MesDataIEC.OUT_MesPosEarth_SubMV;
+
+MesDataIEC.OUT_MesDouble.6 := MesDataIEC.OUT_CmdPvF_On;
+MesDataIEC.OUT_MesDouble.7 := NOT MesDataIEC.OUT_CmdPvF_On;
+
+IF MesDataIEC.OUT_CmdP = 0 THEN
+	MesDataIEC.OUT_MesDouble2.2 := TRUE; 
+    MesDataIEC.OUT_MesDouble2.3 := FALSE;
+
+ELSIF mesDataIEC.OUT_CmdP = 1 THEN
+	MesDataIEC.OUT_MesDouble2.2 := FALSE;
+    MesDataIEC.OUT_MesDouble2.3 := TRUE;
+END_IF
+
+
+IF MesDataIEC.OUT_CmdQ = 3 THEN
+	MesDataIEC.OUT_MesDouble4.2 := FALSE;
+	MesDataIEC.OUT_MesDouble4.3 := FALSE;
+ELSIF mesDataIEC.OUT_CmdQ = 1 THEN
+	MesDataIEC.OUT_MesDouble4.2 := TRUE; 
+	MesDataIEC.OUT_MesDouble4.3 := FALSE;
+ELSIF mesDataIEC.OUT_CmdQ = 2 THEN
+	MesDataIEC.OUT_MesDouble4.2 := FALSE; 
+	MesDataIEC.OUT_MesDouble4.3 := TRUE;
+ELSIF mesDataIEC.OUT_CmdQ = 0 THEN
+	MesDataIEC.OUT_MesDouble4.2 := TRUE; 
+	MesDataIEC.OUT_MesDouble4.3 := TRUE;
+END_IF
+
+
+
+
+MesDataIEC.OUT_MesDouble2.4 := MesDataIEC.OUT_CmdQ_On;
+MesDataIEC.OUT_MesDouble2.5 := NOT MesDataIEC.OUT_CmdQ_On;
+
+MesDataIEC.OUT_MesDouble2.6 := MesDataIEC.OUT_MesPosInter_33kV;
+MesDataIEC.OUT_MesDouble2.7 := NOT MesDataIEC.OUT_MesPosInter_33kV;
+
+MesDataIEC.OUT_MesDouble3.0 := MesDataIEC.OUT_MesPosSecLinea_33kV;
+MesDataIEC.OUT_MesDouble3.1 := NOT MesDataIEC.OUT_MesPosSecLinea_33kV;
+
+MesDataIEC.OUT_MesDouble3.2 := MesDataIEC.OUT_MesPosSec_33kV;
+MesDataIEC.OUT_MesDouble3.3 := NOT MesDataIEC.OUT_MesPosSec_33kV;
+
+MesDataIEC.OUT_MesDouble3.4 := MesDataIEC.OUT_MesPosEarth_33kV;
+MesDataIEC.OUT_MesDouble3.5 := NOT MesDataIEC.OUT_MesPosEarth_33kV;
+
+MesDataIEC.OUT_MesDouble3.6 := MesDataIEC.OUT_MesPosInter_110kV;
+MesDataIEC.OUT_MesDouble3.7 := NOT MesDataIEC.OUT_MesPosInter_110kV;
+
+MesDataIEC.OUT_MesDouble4.0 := MesDataIEC.OUT_MesPosSecLinea_110kV;
+MesDataIEC.OUT_MesDouble4.1 := NOT MesDataIEC.OUT_MesPosSecLinea_110kV;
+
+
+
+
+// Writing commands
+	// Grid command
+		//IF SetptP_IEC_Old <> MesDataIEC.IN_SetptP THEN
+		//	SetptP_IEC_Old := MesDataIEC.IN_SetptP;
+		//	MesDataExd.MesData.OUT_SetptP := MesDataIEC.IN_SetptP;
+		//END_IF
+
+	// Grid command
+		IF MesDataIEC.OUT_CmdQ_On AND SetptQ_IEC_Old <> MesDataIEC.IN_SetptQ THEN
+			SetptQ_IEC_Old 							:= MesDataIEC.IN_SetptQ;
+			MesDataExd.MesData.OUT_SetptQ 			:=MesDataIEC.IN_SetptQ*1000;
+			A1_PP.IN_SetptQ							:= MesDataIEC.IN_SetptQ*1000;
+			bChange_SetptQ_IEC						:= TRUE;
+		ELSE
+			bChange_SetptQ_IEC						:= FALSE;
+		END_IF
+	
+		IF MesDataIEC.OUT_CmdQ_On AND SetptU_IEC_Old <> MesDataIEC.IN_SetptU THEN
+			SetptU_IEC_Old 							:= MesDataIEC.IN_SetptU;
+			MesDataExd.MesData.OUT_SetptU 			:= MesDataIEC.IN_SetptU*1000;
+			A1_PP.IN_SetptU							:= MesDataIEC.IN_SetptU*1000;
+			bChange_SetptU_IEC						:= TRUE;
+		ELSE
+			bChange_SetptU_IEC						:= FALSE;
+		END_IF
+		
+		IF MesDataIEC.OUT_CmdQ_On AND SetptCosPhi_IEC_Old <> MesDataIEC.IN_SetptPF THEN
+			SetptCosPhi_IEC_Old 					:= MesDataIEC.IN_SetptPF ;
+			MesDataExd.MesData.OUT_SetptCosPhi 		:= MesDataIEC.IN_SetptPF;
+			A1_PP.IN_SetptCosPhi					:= MesDataIEC.IN_SetptPF;
+			bChange_SetptCosPhi_IEC					:= TRUE;
+		ELSE
+			bChange_SetptCosPhi_IEC					:= FALSE;
+		END_IF
+				
+
+	// Manual command from OPCUA
+		IF SetptP_Manu_Old <> IN_SetptP_other THEN
+			SetptP_Manu_Old 						:= IN_SetptP_other ;
+			MesDataExd.MesData.OUT_SetptP 			:= IN_SetptP_other;
+			A1_PP.IN_SetptP 						:= IN_SetptP_other;
+			bChange_SetptP_Manu						:= TRUE;
+		ELSE
+			bChange_SetptP_Manu						:= FALSE;
+		END_IF
+		
+		IF SetptCosPhi_Manu_Old <> IN_SetptPF_other THEN
+			SetptCosPhi_Manu_Old					:= IN_SetptPF_other ;
+			MesDataExd.MesData.OUT_SetptCosPhi		:= IN_SetptPF_other;
+			A1_PP.IN_SetptCosPhi					:= IN_SetptPF_other;
+			bChange_SetptCosPhi_Manu				:= TRUE;
+		ELSE
+			bChange_SetptCosPhi_Manu				:= FALSE;
+		END_IF
+		
+		IF SetptU_Manu_Old <> IN_SetptU_other THEN
+			SetptU_Manu_Old 						:= IN_SetptU_other ;
+			MesDataExd.MesData.OUT_SetptU 			:= IN_SetptU_other;
+			A1_PP.IN_SetptU							:= IN_SetptU_other;
+			bChange_SetptU_Manu						:= TRUE;
+		ELSE
+			bChange_SetptU_Manu						:= FALSE;
+		END_IF
+
+		IF SetptQ_Manu_Old <> IN_SetptQ_other THEN
+			SetptQ_Manu_Old 						:= IN_SetptQ_other ;
+			MesDataExd.MesData.OUT_SetptQ 			:= IN_SetptQ_other;
+			A1_PP.IN_SetptQ							:= IN_SetptQ_other;
+			bChange_SetptQ_Manu						:= TRUE;
+		ELSE
+			bChange_SetptQ_Manu						:= FALSE;
+		END_IF
+	
+		
+// Changing Q control mode 
+	IF MesDataIEC.OUT_CmdQ_On AND  MesDataIEC.IN_CmdQ <> CmdQ_Old THEN
+		IF MesDataIEC.IN_CmdQ = 0 THEN
+			A1_PP.IN_CmdQ := 0;
+		ELSIF MesDataIEC.IN_CmdQ < 2.802597E-45 THEN
+			A1_PP.IN_CmdQ := 1;
+		ELSIF MesDataIEC.IN_CmdQ < 3.9E-45 THEN
+			A1_PP.IN_CmdQ := 2;
+		ELSE
+			A1_PP.IN_CmdQ := 3;
+		END_IF
+ 
+		CmdQ_Old 									:= MesDataIec.IN_CmdQ;
+		bChange_CmdQ_Old							:= TRUE;
+	ELSE                                    	
+		bChange_CmdQ_Old							:= FALSE;
+	END_IF
+	
+//	MesDataIEC.OUT_CmdQ 	:= A1_PP.IN_CmdQ;
+	MesDataIEC.OUT_SetptPF	:= MesDataExd.OUT_SetptCosPhi;
+	MesDataIEC.OUT_SetptU	:= MesDataExd.OUT_SetptU/1000;
+	MesDataIEC.OUT_SetptQ	:= MesDataExd.MesData.OUT_SetptQ/1000;
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{f6a4b209-8e39-49fc-b007-2c647b23e8c8}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	// EMULATOR
+
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// READING AND WRITING CLOCK //
+
+// PERMANENT CONDITIONS //
+	M_CP() ; 
+	
+// METHODS CALLS //
+	IF bInit THEN
+		M_Init() ; 
+		bInit:= FALSE ; 
+	ELSIF CmdInit_G THEN 
+		bInit:= TRUE ;
+	END_IF
+
+	M_IEC104(); 
+	M_Evaluate() ; 
+	
+	////////////////////
+	M_AlarmManagement(); 
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_IEC104" Id="{38e81106-a0aa-43ba-ba7d-881a467a5a4a}">
+      <Declaration><![CDATA[METHOD M_IEC104
+//////////////////
+//  Read Modbus Variable for PCS . 
+/////////////////
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+	bTest: BOOL;
+	KK: BYTE;
+END_VAR
+
+
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[	
+FB_IEC(
+	IN_bEnable := TRUE , //Mesdata.MesCP_Read , 
+	AODB := AODB , 
+	memory := ADR(memory) , 
+	IN_Local := MesDataIEC.OUT_MesLocal ) ;
+
+	
+
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{bb7ee95c-5b5e-43fc-ac14-21630f1237c2}">
+      <Declaration><![CDATA[METHOD M_Init
+VAR 
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+// Initialize autorization couplage to false
+IF bBoot AND NOT A1_SUBMV.MesDataExd.MesData.MesState.1 THEN 
+	MesDataExd.MesData.OUT_CmdAutCpl := FALSE ;  // A VOIR SI ON VEUT MEMORISER CET ETAT OU PAS AU DEMARRAGE. Le MesData est persistent.
+	bBoot := FALSE ;
+END_IF
+
+
+///// INITIALIZE ////CstIPIEC104
+// SERVER 1
+	(* Configure protocol parameter *)
+	FB_IEC.protPara.iK 				:= 12;(* default = 12 *)
+	FB_IEC.protPara.iW 				:= 8;(* default = 8 *)
+	FB_IEC.protPara.bThrottleMode 	:= TRUE;
+
+	(* Configure system parameter *)
+	FB_IEC.sysPara.asduAddr 		:= 1;
+	FB_IEC.sysPara.bUsePCTime 		:= TRUE;
+	FB_IEC.sysPara.bSyncTime 		:= TRUE;
+	FB_IEC.sysPara.bSyncPCTime 		:= FALSE;
+	FB_IEC.sysPara.bEndOfInit 		:= TRUE;
+	FB_IEC.sysPara.bPerCyclic		:= TRUE;
+	FB_IEC.sysPara.tPerCyclicBase	:= T#3S;
+	FB_IEC.sysPara.bBackScan		:= TRUE;
+	FB_IEC.sysPara.tBackScanCycle	:= T#3S;
+	FB_IEC.sysPara.bPerFRZ			:= TRUE;
+	FB_IEC.sysPara.tPerFRZCycle		:= T#15S;
+	FB_IEC.sysPara.dbgMode 			:= (*IEC870_DEBUGMODE_ASDU OR*) IEC870_DEBUGMODE_DISABLED;
+
+	(* Configure akuo iec104 parameter *)
+	FB_IEC.akuoPara.iAOnb			:= 33 ; 
+	FB_IEC.akuoPara.sLocalHost		:= CstIPIEC104 ; 
+	
+
+	(* Set point,  short floating point values *)
+	initError := F_iecInitAOEntry( C_SE_NC_1, 1, 0, 0, MAP_AREA_MEMORY, 154, 0, AODB[32] );		//IN_SetptU 			AT%MB154  
+	initError := F_iecInitAOEntry( C_SE_NC_1, 2, 0, 0, MAP_AREA_MEMORY, 158, 0, AODB[1] );		//IN_SetptP 			AT%MB158
+	initError := F_iecInitAOEntry( C_SE_NC_1, 3, 0, 0, MAP_AREA_MEMORY, 162, 0, AODB[2] );		//IN_SetptQ 			AT%MB162
+	initError := F_iecInitAOEntry( C_SE_NA_1, 4, 0, 0, MAP_AREA_MEMORY, 166, 0, AODB[3] );		//IN_CmdQ 				AT%MB166  
+	initError := F_iecInitAOEntry( C_SE_NC_1, 5, 0, 0, MAP_AREA_MEMORY, 150, 0, AODB[0] );		//IN_CmdP1 				AT%MB150
+	
+	
+		(* DP *)																												
+//	initError := F_iecInitAOEntry( M_DP_TB_1, 100, IEC870_GRP_INROGEN, 0, MAP_AREA_MEMORY, 13, 0, AODB[] );			// 	OUT_MesPosCB_SubMV						      	
+//	initError := F_iecInitAOEntry( M_DP_TB_1, 101, IEC870_GRP_INROGEN, 0, MAP_AREA_MEMORY, 13, 2, AODB[] );  		// 	OUT_MesPosSec_SubMV		       
+//	initError := F_iecInitAOEntry( M_DP_TB_1, 102, IEC870_GRP_INROGEN, 0, MAP_AREA_MEMORY, 13, 4, AODB[] );  		//  OUT_MesPosEarth_SubMV	  
+
+	initError := F_iecInitAOEntry( M_DP_TB_1, 103, IEC870_GRP_INROGEN OR IEC870_GRP_Background, 1 , MAP_AREA_MEMORY, 13, 6, AODB[ 4] );			// 	OUT_CmdPvF_On			  
+
+	initError := F_iecInitAOEntry( M_DP_TB_1, 104, IEC870_GRP_INROGEN OR IEC870_GRP_background, 1 , MAP_AREA_MEMORY, 16, 2,  AODB[ 5] );	// 	OUT_CmdQvU	
+	initError := F_iecInitAOEntry( M_DP_TB_1, 105, IEC870_GRP_INROGEN OR IEC870_GRP_Background, 1 , MAP_AREA_MEMORY, 14, 2,  AODB[ 6] );			// 	OUT_CmdPvF				  
+	initError := F_iecInitAOEntry( M_DP_TB_1, 106, IEC870_GRP_INROGEN OR IEC870_GRP_Background, 1 , MAP_AREA_MEMORY, 14, 4,  AODB[ 7] );		// 	OUT_CmdQvU_On			  
+	initError := F_iecInitAOEntry( M_DP_TB_1, 107, IEC870_GRP_INROGEN OR IEC870_GRP_Background, 1 , MAP_AREA_MEMORY, 14, 6,  AODB[ 8] );		// 	OUT_MesPosInter_33kV	  
+	initError := F_iecInitAOEntry( M_DP_TB_1, 108, IEC870_GRP_INROGEN OR IEC870_GRP_Background, 1 , MAP_AREA_MEMORY, 15, 0,  AODB[ 9] );		// 	OUT_MesPosSecLinea_33kV	  
+	initError := F_iecInitAOEntry( M_DP_TB_1, 109, IEC870_GRP_INROGEN OR IEC870_GRP_Background, 1 , MAP_AREA_MEMORY, 15, 2,  AODB[10] );		// 	OUT_MesPosSec_33kV		  
+	initError := F_iecInitAOEntry( M_DP_TB_1, 110, IEC870_GRP_INROGEN OR IEC870_GRP_Background, 1 , MAP_AREA_MEMORY, 15, 4,  AODB[11] );		// 	OUT_MesPosGround_33kV	  
+	initError := F_iecInitAOEntry( M_DP_TB_1, 111, IEC870_GRP_INROGEN OR IEC870_GRP_Background, 1 , MAP_AREA_MEMORY, 15, 6,  AODB[12] );		// 	OUT_MesPosInter_110kV	  
+	initError := F_iecInitAOEntry( M_DP_TB_1, 112, IEC870_GRP_INROGEN OR IEC870_GRP_Background, 1 , MAP_AREA_MEMORY, 16, 0,  AODB[13] );		// 	OUT_MesPosSecLinea_110kV
+                                               
+
+(* Measured value , short floating point value *)	
+	initError := F_iecInitAOEntry( M_ME_NC_1, 1000, IEC870_GRP_INROGEN OR IEC870_GRP_BACKGROUND, 1, MAP_AREA_MEMORY, 22	 , 0, AODB[14] );	//	OUT_MesP_33kV		 	AT%MB22	    
+	initError := F_iecInitAOEntry( M_ME_NC_1, 1001, IEC870_GRP_INROGEN OR IEC870_GRP_Background, 1, MAP_AREA_MEMORY, 26	 , 0, AODB[15] );  //	OUT_MesQ_33kV			AT%MB26	     
+	initError := F_iecInitAOEntry( M_ME_NC_1, 1002, IEC870_GRP_INROGEN OR IEC870_GRP_Background, 1, MAP_AREA_MEMORY, 30	 , 0, AODB[16] );  //	OUT_MesU12_33kV			AT%MB30	    
+	initError := F_iecInitAOEntry( M_ME_NC_1, 1003, IEC870_GRP_INROGEN OR IEC870_GRP_Background, 1, MAP_AREA_MEMORY, 34	 , 0, AODB[17] );  //	OUT_MesI2_33kV 			AT%MB34	    
+	initError := F_iecInitAOEntry( M_ME_NC_1, 1004, IEC870_GRP_INROGEN OR IEC870_GRP_Background, 1, MAP_AREA_MEMORY, 38	 , 0, AODB[18] );  //	OUT_MesP_110kV		 	AT%MB38	   
+	initError := F_iecInitAOEntry( M_ME_NC_1, 1005, IEC870_GRP_INROGEN OR IEC870_GRP_Background, 1, MAP_AREA_MEMORY, 42	 , 0, AODB[19] );	//	OUT_MesQ_110kV			AT%MB42	    
+	initError := F_iecInitAOEntry( M_ME_NC_1, 1006, IEC870_GRP_INROGEN OR IEC870_GRP_Background, 1, MAP_AREA_MEMORY, 46	 , 0, AODB[20] );  //	OUT_MesU12_110kV		AT%MB46	   
+	initError := F_iecInitAOEntry( M_ME_NC_1, 1007, IEC870_GRP_INROGEN OR IEC870_GRP_Background, 1, MAP_AREA_MEMORY, 50	 , 0, AODB[21] );  //	OUT_MesI2_110kV 		AT%MB50	   
+	initError := F_iecInitAOEntry( M_ME_NC_1, 1008, IEC870_GRP_INROGEN OR IEC870_GRP_Background, 1, MAP_AREA_MEMORY, 54	 , 0, AODB[22] );  //	OUT_SetptU				AT%MB54	       
+	initError := F_iecInitAOEntry( M_ME_NC_1, 1009, IEC870_GRP_INROGEN OR IEC870_GRP_Background, 1, MAP_AREA_MEMORY, 58	 , 0, AODB[23] );	//	OUT_SetptPF				AT%MB58	      
+	initError := F_iecInitAOEntry( M_ME_NC_1, 1010, IEC870_GRP_INROGEN OR IEC870_GRP_background, 1, MAP_AREA_MEMORY, 62	 , 0, AODB[24] );  //	OUT_SetptQ				AT%MB62	       
+	initError := F_iecInitAOEntry( M_ME_NC_1, 1011, IEC870_GRP_INROGEN OR IEC870_GRP_background, 1, MAP_AREA_MEMORY, 66	 , 0, AODB[25] );  //	OUT_MesAvailability		AT%MB66	
+	initError := F_iecInitAOEntry( M_ME_NC_1, 1012, IEC870_GRP_INROGEN OR IEC870_GRP_background, 1, MAP_AREA_MEMORY, 70	 , 0, AODB[26] );  //	OUT_MesPMax				AT%MB70	      
+	initError := F_iecInitAOEntry( M_ME_NC_1, 1013, IEC870_GRP_INROGEN OR IEC870_GRP_background, 1, MAP_AREA_MEMORY, 74	 , 0, AODB[27] );  //	OUT_MesGTI				AT%MB74	       
+	initError := F_iecInitAOEntry( M_ME_NC_1, 1014, IEC870_GRP_INROGEN OR IEC870_GRP_background, 1, MAP_AREA_MEMORY, 82	 , 0, AODB[28] );  //	OUT_MesTempPan			AT%MB82	    
+	initError := F_iecInitAOEntry( M_ME_NC_1, 1015, IEC870_GRP_INROGEN OR IEC870_GRP_background, 1, MAP_AREA_MEMORY, 86	 , 0, AODB[29] );	//	OUT_MesGHI				AT%MB86	       
+	initError := F_iecInitAOEntry( M_ME_NC_1, 1016, IEC870_GRP_INROGEN OR IEC870_GRP_background, 1, MAP_AREA_MEMORY, 90	 , 0, AODB[30] );  //	OUT_MesTempAmb			AT%MB90	    
+//	initError := F_iecInitAOEntry( M_ME_NC_1, 1017, IEC870_GRP_background, 1, MAP_AREA_MEMORY, 94	 , 0, AODB[31] );  //	OUT_MesP_33kV_1			AT%MB94	   
+//	initError := F_iecInitAOEntry( M_ME_NC_1, 1018, IEC870_GRP_background, 1, MAP_AREA_MEMORY, 98	 , 0, AODB[32] );  //	OUT_MesQ_33kV_1			AT%MB98	   
+//	initError := F_iecInitAOEntry( M_ME_NC_1, 1019, IEC870_GRP_background, 1, MAP_AREA_MEMORY, 102    , 0, AODB[33] );	//	OUT_MesU_33kV_1			AT%MB102   
+//	initError := F_iecInitAOEntry( M_ME_NC_1, 1020, IEC870_GRP_INROGEN OR IEC870_GRP_background, 1, MAP_AREA_MEMORY, 106    , 0, AODB[34] );  //	OUT_MesI_33kV_1			AT%MB106   
+	initError := F_iecInitAOEntry( M_ME_NC_1, 1021, IEC870_GRP_INROGEN OR IEC870_GRP_background, 1, MAP_AREA_MEMORY, 110    , 0, AODB[31] );  //	OUT_MesTapPos			AT%MB110  
+			  ]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_GRID_PLAN">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_GRID_PLAN.M_AlarmManagement">
+      <LineId Id="638" Count="55" />
+      <LineId Id="721" Count="0" />
+      <LineId Id="694" Count="18" />
+      <LineId Id="194" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_GRID_PLAN.M_CP">
+      <LineId Id="28" Count="13" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_GRID_PLAN.M_Evaluate">
+      <LineId Id="2675" Count="286" />
+      <LineId Id="1988" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_GRID_PLAN.M_Execute">
+      <LineId Id="724" Count="17" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_GRID_PLAN.M_IEC104">
+      <LineId Id="949" Count="0" />
+      <LineId Id="1003" Count="0" />
+      <LineId Id="1231" Count="3" />
+      <LineId Id="1009" Count="0" />
+      <LineId Id="1012" Count="1" />
+      <LineId Id="1004" Count="0" />
+      <LineId Id="96" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_GRID_PLAN.M_Init">
+      <LineId Id="8" Count="32" />
+      <LineId Id="86" Count="1" />
+      <LineId Id="156" Count="0" />
+      <LineId Id="89" Count="0" />
+      <LineId Id="53" Count="0" />
+      <LineId Id="103" Count="0" />
+      <LineId Id="157" Count="0" />
+      <LineId Id="90" Count="1" />
+      <LineId Id="54" Count="3" />
+      <LineId Id="144" Count="0" />
+      <LineId Id="58" Count="0" />
+      <LineId Id="161" Count="1" />
+      <LineId Id="105" Count="7" />
+      <LineId Id="63" Count="1" />
+      <LineId Id="131" Count="0" />
+      <LineId Id="146" Count="6" />
+      <LineId Id="92" Count="3" />
+      <LineId Id="71" Count="0" />
+      <LineId Id="77" Count="0" />
+      <LineId Id="2" Count="0" />
+      <LineId Id="96" Count="2" />
+      <LineId Id="133" Count="4" />
+      <LineId Id="142" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

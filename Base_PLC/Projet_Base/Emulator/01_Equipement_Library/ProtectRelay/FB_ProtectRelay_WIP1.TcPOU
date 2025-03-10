@@ -1,0 +1,49 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_ProtectRelay_WIP1" Id="{4760cdfe-8439-4d6a-b69e-cc968374b761}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_ProtectRelay_WIP1 EXTENDS FB_ProtectRelay_Base
+VAR_INPUT
+						
+	
+	
+
+END_VAR
+
+VAR_INPUT
+	// I/O Inputs 		                                     				
+		IN_MesAlarmImax_IO		: BOOL ; // IO max I  fault
+		IN_MesAlarmUmin_IO		: BOOL ;  // IO Min U  Fault 
+		
+END_VAR
+
+
+VAR
+// M_ALARMMNGMT VARIABLES //
+                            		
+	CmdResetHVCell				: BOOL ; 
+	// M_READ VARIABLES//
+	
+MesDataExd 		    AT %Q*  	: ProtectRelay_WIP1; 	
+		
+
+
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_Execute" Id="{a741c423-9032-47eb-9598-a4dcd1713ad3}">
+      <Declaration><![CDATA[METHOD M_Execute
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SUPER^.M_Execute();]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_ProtectRelay_WIP1">
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ProtectRelay_WIP1.M_Execute">
+      <LineId Id="66" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

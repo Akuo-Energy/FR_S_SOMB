@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.9">
+  <DUT Name="CB_MainHVCB_Sch" Id="{36211564-157d-48f1-b640-faa69be72be5}">
+    <Declaration><![CDATA[///////////
+// Structure For Bousquet . Main Operating Data to be saved (ex: OPC).  
+//////////
+
+TYPE CB_MainHVCB_Sch :
+STRUCT
+	//DI
+	MesData					: CB   ;    (* Object*)
+	MesComutLocal		    : BOOL ; 	(* The cell selector is in local position*)
+	MesAlarmPwr		        : BOOL ; 	(* The cell motorization has a power supply fault*)
+	MesEarth				: BOOL ; 	(* The cell is grounded (earthing)*)
+	MesTripped	    	    : BOOL ; 	(* The cell is tripped (opened and locked due to alarm)*)
+
+	MesAlarm_SF6      			: BOOL ; (* Not enough SF6 gaz *)
+	MesAlarm_Disarmed      		: BOOL ; (* HVCB Command is disarmed*)
+	MesAlarm_ArmingMotor   		: BOOL ; (* Arming motorization is on fault*)
+	MesAlarm_230V  		 		: BOOL ; (* 230V Aux is on fault*)
+	MesOpened_Sect				: BOOL ; (* The associated switchgear is opened*)
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="Substring" Id="{ffb86e16-78b1-43e3-b809-e01803bae6f7}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM Substring
+// Gives nth occurence of the string encased by delimiter where n = In_Position
+//Donne la position de la IN_Position-ième répétition du caractère recherché et renvoie la chaine de caractères suivante
+VAR_INPUT
+	IN_Delimiter 		: STRING;
+	IN_TextToSearch		: T_MaxString;
+	IN_Position			: UINT;
+END_VAR
+
+VAR
+	n					: UINT;	
+	Position_Int		: UINT;
+	TextToSearch_Int	: T_MaxString;
+END_VAR
+
+VAR_OUTPUT
+	OUT_NextString			: T_Maxstring;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[n:= 0;
+TextToSearch_Int := IN_TextToSearch;
+Position_Int := INT_TO_UINT( Find(STR1 := TextToSearch_Int, STR2 := IN_Delimiter));
+
+
+WHILE Position_Int > 0 AND n < IN_Position DO
+	OUT_NextString := LEFT(STR := TextToSearch_Int, SIZE := UINT_TO_INT(Position_Int));
+	TextToSearch_Int := RIGHT(STR := TextToSearch_Int, SIZE := LEN(STR:= TextToSearch_Int)- LEN(STR := OUT_NextString));
+	Position_Int := INT_TO_UINT(FIND(STR1 := TextToSearch_Int, STR2 := IN_Delimiter));
+	n := n + 1;
+END_WHILE
+
+IF n <> IN_Position THEN
+	OUT_NextString := '';
+ELSE
+	OUT_NextString := left(STR:= OUT_NextString, SIZE := LEN(STR := OUT_NextString) -1);
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="Substring">
+      <LineId Id="94" Count="15" />
+      <LineId Id="57" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,76 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FUN_CreateDir_CSV" Id="{b4631f0c-be52-456c-8744-14187cd649be}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM FUN_CreateDir_CSV
+VAR_INPUT
+	InDirectory 		: T_MaxString;
+	Reset2				: BOOL;
+END_VAR
+
+VAR
+	FB_Time 			: FB_LocalSystemTime;
+	MesYear 			: WORD;
+	MesMonth			: WORD;
+	MesDay				: WORD;
+	MesDate				: STRING;
+	bTimeOK				: BOOL;
+	
+	//Dir names 
+	CreateDir1			: FB_CreateDir_V2;
+	CreateDir2			: FB_CreateDir_V2;
+	bFirstDirOk			: BOOL;
+	bSecondDirOk		: BOOL;
+	bFileOK				: BOOL;
+	bDirChange			: BOOL;
+
+END_VAR
+
+VAR_OUTPUT
+	
+	bInitWrite 			: BOOL;
+	AX_DirNames			: ARRAY[1..3] OF t_MaxString; // Folder for years, months and days
+	bDirOK				: BOOL;
+
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[//	Get time and date  +  Create names
+	
+IF MesYear <> CalLocalTimeStruct.wYear THEN
+	AX_DirNames[1] := Concat(InDirectory, concat(WORD_TO_STRING(CalLocalTimeStruct.wYear), '\'));
+	MesYear := CalLocalTimeStruct.wYear;
+	bDirChange := TRUE;		
+END_IF
+
+IF MesMonth <> CalLocalTimeStruct.wMonth THEN
+	AX_DirNames[2] := Concat(AX_DirNames[1], concat(WORD_TO_STRING(CalLocalTimeStruct.wMonth), '\'));
+	MesMonth := CalLocalTimeStruct.wMonth;
+	bDirChange := TRUE;		
+END_IF
+
+IF MesDay <> CalLocalTimeStruct.wDay THEN
+	MesDay := CalLocalTimeStruct.wDay;
+END_IF		
+
+
+IF bDirChange OR NOT bFirstDirOk OR NOT bSecondDirOk OR RESET2 THEN
+	RESET2 := FALSE;
+	bFirstDirOk := FALSE;
+	bSecondDirOk := FALSE;
+	CreateDir1(InPath := AX_DirNames[1], InExe := TRUE, OutCompleted => bFirstDirOk);
+	CreateDir2(InPath := AX_DirNames[2], InExe := bFirstDirOk AND NOT bSecondDirOk, OutCompleted => bSecondDirOk);
+	
+	IF bFirstDirOk AND bSecondDirOk THEN
+		bDirChange := FALSE;
+		bDirOK := bFirstDirOk AND bSecondDirOk ;
+		CreateDir1(InExe := FALSE);
+		CreateDir2(InExe := FALSE);
+	END_IF				
+END_IF	
+]]></ST>
+    </Implementation>
+    <LineIds Name="FUN_CreateDir_CSV">
+      <LineId Id="114" Count="32" />
+      <LineId Id="54" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

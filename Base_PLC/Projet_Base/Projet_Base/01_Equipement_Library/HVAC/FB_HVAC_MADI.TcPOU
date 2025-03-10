@@ -1,0 +1,543 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_HVAC_MADI" Id="{b68d69d9-bf61-42c8-af21-d29345d54024}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_HVAC_MADI EXTENDS FB_HVAC_Base
+VAR_INPUT PERSISTENT
+	ParamTempoComAlarm						: TIME 		:= T#10S ; 	(* (s) Config : Tempo to detect LOC Alarm	*)
+	{attribute 'OPC.UA.DA' := '1'}                                  
+	ParamIpAddress							: STRING;				(* IP Address                               *)
+	{attribute 'OPC.UA.DA' := '1'}                                  
+	ParamUnitID								: BYTE  	:= 1 ; 		(* Modbus Unit ID                           *)
+	{attribute 'OPC.UA.DA' := '1'}                                 
+	ParamTcpPort							: UINT 		:= 502;		(* Modbus TCP Port                          *)
+	ParamPriority							: UINT;					(* Level of priority in the HVAC pool       *)
+	
+	ParamTimeOut							: TIME 		:= T#3S;	(* Modbus Timeout                           *)
+
+
+	
+END_VAR
+
+VAR_INPUT	
+	IN_SetptTemp				AT %Q*		: REAL:=22;
+	IN_SetptHygro							: REAL;
+	IN_CmdStart								: BOOL;
+	IN_CmdStop								: BOOL;
+	IN_CmdReset								: BOOL;
+
+	IN_CmdReleaseStop_OPC					: BOOL ; // Manual Cmd. Non prioritaire sur le mode auto. 
+	IN_CmdStop_OPC							: BOOL ; // Manual Cmd .Prioriatire sur le mode auto . Dévérouillage seulement sur ordre de start manual.  
+	
+	MesDataExd					AT %Q*: HVAC_MADI;	
+END_VAR
+
+VAR
+	
+	//M_ALARMMANAGEMENT VARIABLES 
+		TON_ComAlarm				: TON ; 												// Tempo before detecting loss of communication. 
+	
+
+	
+		
+	//M_READ VARIABLES//
+		WriteSetpt						: ARRAY[1..2] OF  FB_ModbusWriteSingleRegister;
+		WriteCmd						: ARRAY[1..2] OF  FB_ModbusWriteSingleCoil;
+		ReadStatus						: FB_ModbusReadCoils;
+		ReadStatus2						: FB_ModbusReadCoils;		
+		ReadInteger						: FB_ModbusRead ; 
+		
+
+		
+		
+		MesBlock1_Temp					: ARRAY[0..14] OF  WORD ; 
+		MesBlockInput 					: ARRAY[1..8] OF WORD ; 
+
+		MesModbusAlarmCode					: ARRAY[1..2] OF  UDINT ; 
+		MesModbusReadAlarm				:  ARRAY[1..2] OF  BOOL ; 
+		
+		
+		MesModbsWriteAlarm				: ARRAY[1..4] OF BOOL ; 
+		
+		BlockToWrite				AT %Q*	: BOOL;		
+	
+		RS_StartStop					: RS ; 
+		RS_ForceStopOPC					: RS;
+	
+		
+
+		R_TrigState						: R_TRIG;
+		F_TrigState						: F_TRIG;
+		TimeStart						: TIME;
+		TimeNotStart					: TIME;
+		
+END_VAR
+VAR_OUTPUT PERSISTENT
+	          			
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{5e84060b-7fbb-4788-ad90-84c31b1416bb}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement : BOOL
+VAR_INPUT
+END_VAR
+
+VAR
+	FB_AlarmCodeManager			: FB_AlarmCodeManager ;
+	CMWarning: BOOL;
+	CMAlarm: BOOL;
+	MesWarningCom: BOOL;
+	WriteAlarm: BOOL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[		CMWarning 		:= MesModbusReadAlarm[1] OR MesModbusReadAlarm[2];
+		CMAlarm			:= MesModbusReadAlarm[1] AND MesModbusReadAlarm[2];
+		
+		WriteAlarm		:= MesModbsWriteAlarm[1] OR MesModbsWriteAlarm[2] OR MesModbsWriteAlarm[3] OR MesModbsWriteAlarm[4] ;
+		
+	// Warning
+	MesWarningCom 		:= CMWarning ; 											//
+	//Alarm
+	TON_ComAlarm(IN:= CMAlarm, PT:= ParamTempoComAlarm, Q=>MesDataExd.MesData.MesAlarmCom) ;	 	
+
+
+	FB_AlarmCodeManager(
+		bAlarm1			:= MesDataExd.MesAlarmsSynthesis, 	// HVAC Alarm Synthesis 
+		bAlarm2			:= MesDataExd.MesData.MesAlarmCom,			// Communication Alarm #COM
+		bAlarm3			:= WriteAlarm,					// Write Alarm 
+		bAlarm4			:= FALSE,						//
+		bAlarm5			:= False,                       //
+		bAlarm6			:= False,                       //
+		bAlarm7			:= False,                       //
+		bAlarm8			:= False,                       //
+		bAlarm9			:= FALSE,						//
+		bAlarm10		:= False,                       //
+		bAlarm11		:= False,                       //
+		bAlarm12		:= False,                       //
+		bAlarm13		:= False,                       //
+		bAlarm14		:= FALSE,						//
+		bAlarm15		:= False,                       //
+		wAlarmCode		=>MesDataExd.MesData.MesAlarmCode);       
+		                                                
+                                                        
+// WARNING CODE //
+	FB_AlarmCodeManager
+(
+ 		bAlarm1			:= MesWarningCom,						// Communication warning  #COM
+		bAlarm2			:= False,                               //
+		bAlarm3			:= False,                               //
+		bAlarm4			:= False,                               //
+		bAlarm5			:= False,                               //
+		bAlarm6			:= False,                               //
+		bAlarm7			:= False,                               //
+		bAlarm8			:= False,                               //
+		bAlarm9			:= False,                               //
+		bAlarm10		:= False,                               //
+		bAlarm11		:= False,                               //
+		bAlarm12		:= FALSE,								//
+		bAlarm13		:= False,                               //
+		bAlarm14		:= False,                               //
+		bAlarm15		:= False,                               //
+		wAlarmCode		=>MesDataExd.MesData.MesWarningCode				
+);   
+
+
+// ALARM WORD EQUIPEMNT 
+(*
+	FB_AlarmCodeManager
+(
+		bAlarm0			:= ,// General alarm compressor 1                 
+ 		bAlarm1			:= ,// General alarm compressor 2                 							   
+		bAlarm2			:= ,// Low pressure alarm compressor 1                                           
+		bAlarm3			:= ,// Low pressure alarm compressor 2                                           
+		bAlarm4			:= ,// Air flow alarm                                                            
+		bAlarm5			:= ,// Fan thermal overload alarm                                                
+		bAlarm6			:= ,// Heater 1 overload alarm                                                   
+		bAlarm7			:= ,// Heater 2 overload alarm                                                   
+		bAlarm8			:= ,// Fire / smoke alarm                                                        
+		bAlarm9			:= ,// Dirty filter alarm                                                        
+		bAlarm10		:= ,// High room temperature alarm                                               
+		bAlarm11		:= ,// Low room temperature alarm                                                
+		bAlarm12		:= ,// High ambient humidity alarm                								
+		bAlarm13		:= ,// Low ambient humidity alarm                                                
+		bAlarm14		:= ,// Operating hour threshold alarm,compressor 1                               
+		bAlarm15		:= ,//Operating hour threshold alarm,compressor 2                              
+		wAlarmCode		=> 				
+);   
+
+	FB_AlarmCodeManager
+(
+		bAlarm0			:= ,// Fan operating hour threshold alarm     
+ 		bAlarm1			:= ,// Room temperature probe broken alarm    						   
+		bAlarm2			:= ,// Recovery temperature probe broken alarm                             
+		bAlarm3			:= ,// Outside temperature probe broken alarm                              
+		bAlarm4			:= ,// Outlet temperature probe broken                                     
+		bAlarm5			:= ,// Ambient humidity probe broken                                       
+		bAlarm6			:= ,// Pressure probe 1 broken alarm                                       
+		bAlarm7			:= ,// Pressure probe2 broken alarm                                        
+		bAlarm8			:= ,// Cond. 1 temperature probe broken                                    
+		bAlarm9			:= ,// Cond. 2 temperature probe broken                                    
+		bAlarm10		:= ,// High current alarm in the humidifier                                
+		bAlarm11		:= ,// Humidifier no water alarm                                           
+		bAlarm12		:= ,// Humidifier no current alarm            							
+		bAlarm13		:= ,// Clock board broken alarm                                            
+		bAlarm14		:= ,// High pressure alarm circuit 1                                       
+		bAlarm15		:= ,//OHigh pressure alarm circuit 2                                     
+		wAlarmCode		=> 				
+);   
+
+	FB_AlarmCodeManager
+(
+		bAlarm0			:= ,// Flood alarm                                
+ 		bAlarm1			:= ,// Auxiliary alarm                            					   
+		bAlarm2			:= ,// Thermal overload and high pressure , comp 1                           
+		bAlarm3			:= ,// Operating hour threshold alarm, humidifier                            
+		bAlarm4			:= ,// Thermal overload and high pressure, comp 2                            
+		bAlarm5			:= ,// Condenser fan 1 thermal overload                                      
+		bAlarm6			:= ,// Condenser fan 1 thermal overload                                      
+		bAlarm7			:= ,// Water flow alarm                                                      
+		bAlarm8			:= ,// Driver 1 disconnected                                                 
+		bAlarm9			:= ,// Driver 2 disconnected                                                 
+		bAlarm10		:= ,// Cylinder maintenance mandatory                                        
+		bAlarm11		:= ,// High conductivity alarm                                               
+		bAlarm12		:= ,// Drain alarm humidifier                     						
+		bAlarm13		:= ,// Full Cylinder alarm                                                   
+		bAlarm14		:= ,// Foam in humidifier                                                    
+		bAlarm15		:= ,// Cylinder exhausted                                                 
+		wAlarmCode		=> 				
+);   
+
+
+
+
+
+
+
+
+
+*)]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_CP" Id="{57582ed1-f8f3-4c48-aa7e-9e91e753eb9e}">
+      <Declaration><![CDATA[METHOD M_CP : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+SUPER^.M_CP() ; 
+
+
+
+
+Trig_Cmd_Read(CLK:=IN_CmdToggleRead);
+Trig_Cmd_Write(CLK:=IN_CmdToggleWrite);
+	
+IF Trig_Cmd_Read.Q THEN
+	IN_CmdToggleRead := FALSE;
+	MesDataExd.MesData.MesCP_Read := NOT MesDataExd.MesData.MesCP_Read;
+END_IF
+
+
+IF Trig_Cmd_Write.Q THEN
+	IN_CmdToggleWrite := FALSE;
+	MesDataExd.MesData.MesCP_Write := NOT MesDataExd.MesData.MesCP_Write;
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Evaluate" Id="{1ec71312-7aae-4e6d-aa37-b5724d65a764}">
+      <Declaration><![CDATA[METHOD M_Evaluate : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Evaluate 
+R_TrigState(CLK := MesDataExd.MesData.MesOn AND TpUpdate.Q);
+F_TrigState(CLK := MesDataExd.MesData.MesOn AND TpUpdate.Q);
+
+IF R_TrigState.Q THEN
+	TimeStart := TIME();
+END_IF
+IF F_TrigState.Q  THEN
+	TimeNotStart := TIME();
+	WorkingHr := WorkingHr + (TimeNotStart-TimeStart);
+	
+END_IF
+
+MesDataExd.MesData.MesWorkingHr := TIME_TO_REAL(WorkingHr) / 1000 ; 
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Read" Id="{e056d4a3-b1b3-41fb-a03d-130c377b9382}">
+      <Declaration><![CDATA[METHOD M_Read : BOOL
+VAR
+		MW 					: FB_MergeWordsToDint; 
+	MesAlarm1: WORD;
+	MesAlarm3: WORD;
+	MesAlarm2: WORD;
+	MesData: INT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//INITIALIZING MODBUS REQUESTS //
+	ReadInteger(Reset:= CmdClearFault_G  ,sIPAddr:=ParamIpAddress, tTimeout:= ParamTimeout,nTcpPort:=502);
+
+// CP-Read / Write 
+
+
+IF MesDataExd.MesData.MesCP_Read  THEN	
+
+
+	ReadInteger(
+		nQuantity		:= 15, 
+		nMBAddr			:= 1, 
+		nUnitID			:= ParamUnitID,
+		cbLength		:= SIZEOF(MesBlock1_Temp) , 
+		pDestAddr		:= ADR(MesBlock1_Temp) ,
+		ClockRead		:= MesDataExd.MesData.MesCP_Read AND ClockRead ,
+		ModbusReadAlarm	=>	MesModbusReadAlarm[1] , 
+		ErrorId			=> MesModbusAlarmCode[1]);	
+		
+				
+	ReadStatus
+	(
+		pDestAddr := ADR(MesBlockInput),
+		sIPAddr := ParamIpAddress,
+		tTimeout := ParamTimeOut,
+		nTcpPort := ParamTcpPort,
+		nQuantity := 115,
+		nMBAddr := 28,
+		cbLength := SIZEOF(MesBlockInput),
+		ClockRead := ClockRead and MesDataExd.MesData.MesCP_Read,
+		nUnitID := ParamUnitID,
+		Reset :=CmdClearFault_G  , 
+		ModbusReadAlarm=>MesModbusReadAlarm[2] ,
+		ErrorId =>MesModbusAlarmCode[2]
+	);
+
+	
+	///
+	MW(WORD_STRONG:= MesBlock1_Temp[ 0], 	SIGNED:=TRUE, FIX:=1 , SIZE:=1, VAR_OUT := MesDataExd.MesHygro_Amb);
+	MW(WORD_STRONG:= MesBlock1_Temp[ 1], 	SIGNED:=TRUE, FIX:=1 , SIZE:=1, VAR_OUT := MesDataExd.MesPressure1);
+	//MW(WORD_STRONG:= MesBlock1_Temp[ 2], 	SIGNED:=TRUE, FIX:=1 , SIZE:=1, VAR_OUT := MesDataExd.MesData.MesPressure2);
+	MW(WORD_STRONG:= MesBlock1_Temp[ 3], 	SIGNED:=TRUE, FIX:=1 , SIZE:=1, VAR_OUT := MesDataExd.MesTemp_Room);
+	MW(WORD_STRONG:= MesBlock1_Temp[ 4], 	SIGNED:=TRUE, FIX:=1 , SIZE:=1, VAR_OUT := MesDataExd.MesTemp_Outlet);
+	MW(WORD_STRONG:= MesBlock1_Temp[ 5], 	SIGNED:=TRUE, FIX:=1 , SIZE:=1, VAR_OUT := MesDataExd.MesTemp_Outside);
+	//MW(WORD_STRONG:= MesBlock1_Temp[ 6], 	SIGNED:=TRUE, FIX:=1 , SIZE:=1, VAR_OUT := MesDataExd.MesData.MesCondensing1);
+	//MW(WORD_STRONG:= MesBlock1_Temp[ 7], 	SIGNED:=TRUE, FIX:=1 , SIZE:=1, VAR_OUT := MesDataExd.MesData.MesCondensing2);
+	//MW(WORD_STRONG:= MesBlock1_Temp[ 8], 	SIGNED:=TRUE, FIX:=1 , SIZE:=1, VAR_OUT := MesDataExd.MesData.MesWaterRecov);
+	MW(WORD_STRONG:= MesBlock1_Temp[ 9], 	SIGNED:=TRUE, FIX:=1 , SIZE:=1, VAR_OUT := MesDataExd.MesData.MesSetptTemp);
+	MW(WORD_STRONG:= MesBlock1_Temp[ 10], 	SIGNED:=TRUE, FIX:=1 , SIZE:=1, VAR_OUT := MesDataExd.MesSetptTempmin);
+	MW(WORD_STRONG:= MesBlock1_Temp[ 11], 	SIGNED:=TRUE, FIX:=1 , SIZE:=1, VAR_OUT := MesDataExd.MesSetptTempmax);
+	MW(WORD_STRONG:= MesBlock1_Temp[ 12], 	SIGNED:=TRUE, FIX:=1 , SIZE:=1, VAR_OUT := MesDataExd.MesData.MesSetptHygro);
+	MW(WORD_STRONG:= MesBlock1_Temp[ 13], 	SIGNED:=TRUE, FIX:=1 , SIZE:=1, VAR_OUT := MesDataExd.MesSetptHygromin);
+	MW(WORD_STRONG:= MesBlock1_Temp[ 14], 	SIGNED:=TRUE, FIX:=1 , SIZE:=1, VAR_OUT := MesDataExd.MesSetptHygromax);
+	
+	
+	MesDataExd.MesAlarm1 := MesBlockInput[1] ; 
+	MesDataExd.MesAlarm2 := MesBlockInput[2] ; 
+	MesDataExd.MesAlarm3 := MesBlockInput[3] ; 
+	MesDataExd.MesAlarm3 := SHR(SHL(MesDataExd.MesAlarm3,8),8 ) ; 	// Keep only fist 8 bits . 
+	MesDataExd.MesAlarm3.8 := MesBlockInput[7].0  ; 		// Driver 1 disconnected
+	MesDataExd.MesAlarm3.9 := MesBlockInput[7].1  ; 		// Driver 2 disconnected
+	MesDataExd.MesAlarm3.10 := MesBlockInput[7].2  ; 		// Cylinder maintenance mandatory
+	MesDataExd.MesAlarm3.11 := MesBlockInput[7].4  ; 		// High conductivity alarm
+	MesDataExd.MesAlarm3.12 := MesBlockInput[7].7  ; 		// Drain alarm humidifier
+	MesDataExd.MesAlarm3.13 := MesBlockInput[7].8  ; 		// Full Cylinder alarm
+	MesDataExd.MesAlarm3.14 := MesBlockInput[7].10  ; 		// Foam in humidifier
+	MesDataExd.MesAlarm3.15 := MesBlockInput[7].11  ; 		//  Cylinder exhausted 
+	
+	MesDataExd.MesData.MesOn 	:=   MesBlockInput[7].15 ; 
+	MesDataExd.MesCooling 		:=   MesBlockInput[8].0 ; 
+	MesDataExd.MesHeating 		:=   MesBlockInput[8].1 ; 
+
+END_IF
+
+MesDataExd.MesAlarmsSynthesis := (MesDataExd.MesAlarm1 OR MesDataExd.MesAlarm2 OR MesDataExd.MesAlarm3) > 0 ; 
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Write" Id="{8f146635-2428-4498-97c0-73ba88e13418}">
+      <Declaration><![CDATA[METHOD M_Write : BOOL
+VAR_INPUT
+END_VAR
+VAR
+	WordToWrite		: WORD;
+	
+	WordToWrite2: WORD;
+	CHECK: BOOL;
+	WriteCmd1: BOOL;
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[WordToWrite := REAL_TO_WORD(IN_SetptTemp*10);	// FIX 1 
+WordToWrite2 := REAL_TO_WORD(IN_SetptHygro*10);	// FIX 1 
+
+
+// Write Setpoint Temp
+WriteSetpt[1]
+(
+	InputWord := (WordToWrite),
+	sIPAddr := ParamIpAddress,
+	tTimeout := ParamTimeOut,
+	nTCPport := ParamTcpPort,
+	nMBAddr := 10,
+	cbLength := SIZEOF(WordToWrite),
+	nQuantity := 1,
+	nUnitID := ParamUnitID,
+	WriteCmd := ClockWrite AND MesDataExd.Mesdata.MesCP_Write,
+	ModbusWriteAlarm=> MesModbsWriteAlarm[1] 
+);
+
+// Write Setpoint Hygro 
+
+WriteSetpt[2]
+(
+	InputWord := (WordToWrite2),
+	sIPAddr := ParamIpAddress,
+	tTimeout := ParamTimeOut,
+	nTCPport := ParamTcpPort,
+	nMBAddr := 13,
+	cbLength := SIZEOF(WordToWrite2),
+	nQuantity := 1,
+	nUnitID := ParamUnitID,
+	WriteCmd := ClockWrite AND MesDataExd.Mesdata.MesCP_Write,
+	ModbusWriteAlarm=> MesModbsWriteAlarm[2] 
+);
+
+//RS_ForceStopOPC(SET:= IN_CmdStop_OPC  , RESET1:= IN_CmdReleaseStop_OPC ) ; 
+
+RS_StartStop(SET:= IN_CmdStart , RESET1:= IN_CmdStop OR IN_CmdStop_OPC) ; //RS_ForceStopOPC.Q1 ) ; // Force stop if manual mode stop. 
+
+
+// Start Stop 
+// WRITE ON CHANGE //
+	// Detect if another status is already forced . 
+	CHECK := RS_StartStop.Q1 <>MesDataExd.MesData.MesOn ; 
+
+	WriteCmd1 			:=(CHECK AND  ClockWrite) AND MesDataExd.Mesdata.MesCP_Write  ; 
+BlockToWrite		:= RS_StartStop.Q1 ;
+
+WriteCmd[1]
+(
+	bValue :=  RS_StartStop.Q1, //TP_MaintainStart.Q,
+	sIPAddr := ParamIpAddress,
+	tTimeout := ParamTimeOut,
+	nTCPport := ParamTcpPort,
+	nMBAddr := 112,
+	nUnitID := ParamUnitID,
+	WriteCmd := WriteCmd1,
+	ModbusWriteAlarm=> MesModbsWriteAlarm[3] 
+);
+
+
+
+// Reset . One reset every day . After MainMVCB close
+
+Trig_CmdReset(CLk := IN_CmdReset  );
+FTrig_CmdReset(CLk := A1_SUBMV.A1_MainMVCB.MesDataExd.MesData.MesOpened );
+
+
+WriteCmd[2]
+(
+	bValue := FTrig_CmdReset.Q OR IN_CmdReset OR (CalLocalTimeStruct.wHour = 6 AND CalLocalTimeStruct.wMinute = 0 AND (CalLocalTimeStruct.wSecond >= 0 AND CalLocalTimeStruct.wSecond <=  5)),
+	sIPAddr := ParamIpAddress,
+	tTimeout := ParamTimeOut,
+	nTCPport := ParamTcpPort,
+	nMBAddr := 123,
+	nUnitID := ParamUnitID,
+	WriteCmd :=  MesDataExd.Mesdata.MesCP_Write AND (NOT ClockWrite OR (Trig_CmdReset.Q ) OR FTrig_CmdReset.Q) ,
+	ModbusWriteAlarm=> MesModbsWriteAlarm[4] 
+);]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_HVAC_MADI">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_HVAC_MADI.M_AlarmManagement">
+      <LineId Id="55" Count="1" />
+      <LineId Id="64" Count="1" />
+      <LineId Id="57" Count="3" />
+      <LineId Id="52" Count="2" />
+      <LineId Id="6" Count="38" />
+      <LineId Id="78" Count="1" />
+      <LineId Id="77" Count="0" />
+      <LineId Id="80" Count="2" />
+      <LineId Id="99" Count="0" />
+      <LineId Id="83" Count="15" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="111" Count="19" />
+      <LineId Id="110" Count="0" />
+      <LineId Id="132" Count="19" />
+      <LineId Id="131" Count="0" />
+      <LineId Id="101" Count="8" />
+      <LineId Id="100" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_HVAC_MADI.M_CP">
+      <LineId Id="6" Count="19" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_HVAC_MADI.M_Evaluate">
+      <LineId Id="12" Count="9" />
+      <LineId Id="31" Count="0" />
+      <LineId Id="22" Count="0" />
+      <LineId Id="27" Count="0" />
+      <LineId Id="23" Count="0" />
+      <LineId Id="35" Count="0" />
+      <LineId Id="8" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_HVAC_MADI.M_Read">
+      <LineId Id="271" Count="2" />
+      <LineId Id="362" Count="0" />
+      <LineId Id="365" Count="1" />
+      <LineId Id="275" Count="60" />
+      <LineId Id="338" Count="3" />
+      <LineId Id="353" Count="0" />
+      <LineId Id="342" Count="1" />
+      <LineId Id="29" Count="0" />
+      <LineId Id="351" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_HVAC_MADI.M_Write">
+      <LineId Id="13" Count="0" />
+      <LineId Id="80" Count="0" />
+      <LineId Id="77" Count="1" />
+      <LineId Id="16" Count="0" />
+      <LineId Id="5" Count="2" />
+      <LineId Id="17" Count="2" />
+      <LineId Id="21" Count="4" />
+      <LineId Id="116" Count="0" />
+      <LineId Id="27" Count="0" />
+      <LineId Id="100" Count="1" />
+      <LineId Id="103" Count="11" />
+      <LineId Id="117" Count="0" />
+      <LineId Id="115" Count="0" />
+      <LineId Id="102" Count="0" />
+      <LineId Id="174" Count="0" />
+      <LineId Id="123" Count="0" />
+      <LineId Id="128" Count="0" />
+      <LineId Id="121" Count="0" />
+      <LineId Id="84" Count="1" />
+      <LineId Id="145" Count="3" />
+      <LineId Id="144" Count="0" />
+      <LineId Id="99" Count="0" />
+      <LineId Id="98" Count="0" />
+      <LineId Id="89" Count="8" />
+      <LineId Id="118" Count="0" />
+      <LineId Id="88" Count="0" />
+      <LineId Id="86" Count="1" />
+      <LineId Id="82" Count="1" />
+      <LineId Id="185" Count="0" />
+      <LineId Id="152" Count="0" />
+      <LineId Id="163" Count="1" />
+      <LineId Id="153" Count="0" />
+      <LineId Id="28" Count="6" />
+      <LineId Id="37" Count="1" />
+      <LineId Id="119" Count="0" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

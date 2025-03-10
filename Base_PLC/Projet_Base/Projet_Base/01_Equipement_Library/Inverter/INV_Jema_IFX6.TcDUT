@@ -1,0 +1,60 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="INV_Jema_IFX6" Id="{c53dd61f-029e-40ed-ad60-4c36e84cba27}">
+    <Declaration><![CDATA[TYPE INV_Jema_IFX6 :
+STRUCT
+		MesData					: INV; (* Child Structure*)
+
+		AX_PowerCol				: ARRAY[1..3] OF PowerCol_INV_Jema;(* Child Structure*)
+		AX_STR					: ARRAY[1..24] OF STR;(* Child Structure*)
+		
+		MesEacTot				: REAL;     (* (kWh)Total yield [E-Total]*)
+		MesEacDay				: REAL;     (* (kWh)Daily yield [E-heute] *)
+                            	
+		MesGFDI					: WORD; 	(* (NA) GFDI reset:after set1 to reset set0 again *)		
+		                    	
+		MesI1					: REAL;		(* (A) Current in phase 1*)
+		MesI2 					: REAL;     (* (A) Current in phase 2*)
+		MesI3					: REAL;     (* (A) Current in phase 3*)
+		                    	
+		MesTmpPlant				: REAL;		(* (°C) temperature in Plant*)
+		MesTmpExt1				: REAL;     (* (°C) External temperature 1 *)
+		MesTmpExt2				: REAL;     (* (°C) External temperature 2 *)
+		MesTmp					: REAL;     (* (°C) Temperature *)
+		MesTmpPlc				: REAL;     (* (°C) Temperature of PLC*)
+		MesHygroPlc				: REAL;     (* (%) Hygrometry of PLC*)
+		
+		                    	
+		MesVdc1					: REAL;		(* (V) Voltage of DC entry*)
+		MesVdc2					: REAL;     (* (V) Voltage of DC entry*)
+		MesVdc3					: REAL;     (* (V) Voltage of DC entry*)
+		                    	
+		MesPLC_IN1				: WORD;		(* (NA) PLC inputs *)
+		MesPLC_IN2				: WORD;     (* (NA) PLC inputs *)
+		                    	
+		MesPowerColConnected_ALO : BOOL;		(* (NA) At least one power column connected*)	
+		MesNbPowerCol_Connected	: UINT ; (* (NA) Number of power column connected*)	
+		OUT_CmdHeartBeat		: BOOL;			(* (NA) Heartbit*)
+		OUT_CmdP				: BOOL := TRUE;		(* (NA) Command to activate P regulation*)
+		OUT_CmdQ				: BOOL := TRUE;     (* (NA) Command to activate Q regulation*)
+		OUT_CmdPF				: BOOL;             (* (NA) Command to activate PF regulation*)
+		OUT_CmdStart			: BOOL := TRUE; 	(* (NA) Start order (1: Start)*)
+		OUT_CmdCells			: BOOL;				(* (NA) Close Cells (1: Close)*)
+		OUT_CmdPvF				: BOOL;				(* (NA) Command to active PvF regulation*)	
+		OUT_CmdQvU				: BOOL;             (* (NA) Command to active QvU regulation*)	
+		OUT_CmdResetGFDI		: BOOL;				(* (NA) Command to reset GFDI*)
+		                    	
+		OUT_CmdControl			: WORD;			 	(* (NA) Control word to send to the INV*)
+			                	                    
+		OUT_SetptP				: REAL;             (* (kW) P Setpoint sent to the inverters*)
+		OUT_SetptQ				: REAL;             (* (kW) Q Setpoint sent to the inverters*)
+		OUT_SetptQMax			: REAL;				(* (kW) Max Q setpoint*)
+        OUT_SetptQMin       	: REAL;        	    (* (kW) Min Q setpoint*)
+		OUT_SetptPF				: REAL;			    (* (kW) PF Setpoint sent to the inverters *)
+			                                        
+		
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

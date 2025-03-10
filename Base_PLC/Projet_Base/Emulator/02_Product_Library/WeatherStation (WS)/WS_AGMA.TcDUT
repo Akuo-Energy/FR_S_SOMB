@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="WS_AGMA" Id="{e3778d20-d0a4-4c8f-81d6-d19ffac8cd4f}">
+    <Declaration><![CDATA[TYPE WS_AGMA :
+STRUCT
+	
+
+	MesData						: WS ; (* Object *)
+
+	Pyran_GTI_1					: ANA ;		(* Pyranometer GTI 1			*)
+	Pyran_GTI_2					: ANA ;		(* Pyranometer GTI 2			*)
+	Pyran_GTI_3					: ANA ;		(* Pyranometer GTI 3			*)
+	Pyran_GTI_SUB				: ANA ;		(* Pyranometer GTI SUB			*)
+	Pyran_GHI					: ANA ;		(* Pyranometer GHI				*)
+	TempSensor_Ext				: ANA ; 	(* Outside Temperature Sensor 	*)
+	TempSensor_Panel_PTR1		: ANA ; 	(* Panel Temperature Sensor 	*)
+	TempSensor_Panel_PTR2		: ANA ; 	(* Panel Temperature Sensor 	*)	
+	TempSensor_Panel_PTR3		: ANA ; 	(* Panel Temperature Sensor 	*)	
+	
+	HygroSensor_Ext				: ANA ; 	(* Outside Hygrometry Sensor	*)
+
+	WindDir						: ANA  ; 	(* Wind direction sensor 		*)
+	WindSp                      : ANA  ;  	(* Wind speed sensor            *)
+
+
+
+	
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,139 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="Datalogger_PPCVerrerie" Id="{a932dac1-5631-4db5-a029-c19a600cafb6}">
+    <Declaration><![CDATA[TYPE Datalogger_PPCVerrerie :
+STRUCT
+	MesData			: Datalogger ; 
+
+	
+	//225 kV 
+//	PM_225kV									: PM ; // ION non remonté 
+                                    			
+	ProtectRelay_MainHVCB						: ProtectRelay_S42 ; 
+	MainHVCB									: CB_MainHVCB_Sch ; 
+                                    			
+//	A1_GridHVCB									: GridHVCB ; Non remonté ? 
+                                    			
+	ProtectRelay_Transfo225kV					: ProtectRelay_T87 ; 
+	Transfo_225kV								: Transfo_HV ; 	
+	GRID										: GRID ; // non remonté ? 
+	                                			
+	                                			
+                                    			
+//	20 kV 		                    			
+	MainMVCB									: MainMVCB_Sch ; 
+	ProtectRelay_MainMVCB						: ProtectRelay_S42 ; 
+						            			
+	ProtectRelay_FeederMVCB						: ARRAY[1..2] OF ProtectRelay_S42 ; 		// 1. Midi 2. Plat 
+	FeederMVCB									: ARRAY[1..2] OF FeederMVCB_Sch ; 
+	                                	
+                                    	
+	                                	
+	// Aux                          	
+	Transfo_Aux									:  Transfo_MV ; 
+	                                			
+	UPS_CE										: UPS_VERR ; 
+	UPS_TCM										: UPS_VERR ; 
+	TapChanger 									: TapChanger ; 
+	FSS											: FSS; 				(*Fire System*)
+	DS											: TOR ; 			(*Door Sensor*)
+	ES											: TOR ; 			(*Emergency Stop*)
+	
+
+	// Substation
+	MesState									: WORD ; 			// Calculated  State of the HV + MV substation. 
+
+
+	                                    		                   
+	// 20 kV Courant Neutre et Cuve                                
+    // transfo          ?????                                                    
+	Mes20kVCourNeutCuveDefaultMasseCuve1		: BOOL;            	(*CourNeutCuveDefaultMasseCuve1	 	 *)
+	Mes20kVCourNeutCuveMaxIexp2					: BOOL;            	(*CourNeutCuveMaxIexp2				 *)
+	Mes20kVCourNeutCuveDefaultMasseCuve2		: BOOL;            	(*CourNeutCuveDefaultMasseCuve2	 	 *)
+	Mes20kVCourNeutCuveMaxIexp4					: BOOL;            	(*CourNeutCuveMaxIexp4				 *)
+	Mes20kVCourNeutCuveDefaultGround			: BOOL;            	(*CourNeutCuveDefaultGround		 	 *)
+	Mes20kVCourNeutCuveMaxI0exp4				: BOOL;            	(*CourNeutCuveMaxI0exp4			 	 *)
+	Mes20kVCourNeutCuveTempAlarm				: BOOL;            	(*CourNeutCuveTempAlarm			 	 *)
+	Mes20kVCourNeutCuveTempTrigger				: BOOL;            	(*CourNeutCuveTempTrigger			 *)
+	Mes20kVCourNeutCuveGazDischarge				: BOOL;            	(*CourNeutCuveGazDischarge			 *)
+	Mes20kVCourNeutCuvePressure					: BOOL;   		   	(*CourNeutCuvePressure				 *)
+	                                    		                   	
+	Mes20kVCourNeutCuveI1						: REAL;            	(*(A) CourNeutCuveI1			 *)
+	Mes20kVCourNeutCuveResidualI				: REAL;            	(*(A) CourNeutCuveResidualI	     *)
+	Mes20kVCourNeutCuveDecltI1					: REAL;            	(*(A) CourNeutCuveDecltI1		 *)
+	Mes20kVCourNeutCuveDecltI2					: REAL;            	(*(A) CourNeutCuveDecltI2		 *)
+	                                                               	
+	// Aux HT, BT and Transfo                                      	
+	 // AuxMVCB                                                    	          
+	MesAuxHTSect225kV							: BOOL;		       	(* AuxHTSect225kV						*)
+	MesAuxHtSmaltHTBOpen						: BOOL;		       	(* AuxHtSmaltHTBOpen					*)
+	MesAuxHtFusionFuseMeasures225kV				: BOOL;		       	(* AuxHtFusionFuseMeasures225kV			*)                                              
+	MesAuxHtFusionFuseProtect225kV				: BOOL;		       	(* AuxHtFusionFuseProtect225kV			*)
+	MesAuxHtFusionFuseCountRte225kV				: BOOL;		       	(* AuxHtFusionFuseCountRte225kV			*)
+	MesAuxHtShortCircuitCurrentProtectCcp2		: BOOL;		       	(* AuxHtShortCircuitCurrentProtectCcp2	*)
+	MesAuxHtDisjCount20kVOpen					: BOOL;		       	(* AuxHtDisjCount20kVOpen				*)
+	MesAuxHtDisjRefVoltage20kVOpen				: BOOL;		       	(* AuxHtDisjRefVoltage20kVOpen			*)
+	MesAuxHtShortCircuitCurrentProtectCcp3		: BOOL;		       	(* AuxHtShortCircuitCurrentProtectCcp3	*)
+                                                                   	
+	MesAuxBtTriggerGeneralDisj					: BOOL;		       	(*AuxBtTriggerGeneralDisj				 *)
+	MesAuxBt400VManqueAC						: BOOL;		       	(*AuxBt400VManqueAC					     *)
+	MesAuxBt400VDecltAntenneScada				: BOOL;		       	(*AuxBt400VDecltAntenneScada			 *)
+	MesAuxBt400VDecltAntennePrio				: BOOL;		       	(*AuxBt400VDecltAntennePrio			 	 *)
+	MesAuxBt400VPermutAutoStopMode				: BOOL;		       	(*AuxBt400VPermutAutoStopMode			 *)
+	MesAuxBt400VPermutAutoNormalMode			: BOOL;		       	(*AuxBt400VPermutAutoNormalMode		 	 *)
+	MesAuxBt400VPermutAutoSecoursMode			: BOOL;		       	(*AuxBt400VPermutAutoSecoursMode		 *)
+	MesAuxBt400VPermutModeAuto					: BOOL;    	       	(*AuxBt400VPermutModeAuto				 *)
+	MesAuxBt400VVoltageLossNormalAlim			: BOOL;		       	(*AuxBt400VVoltageLossNormalAlim		 *)
+	MesAuxBt400VVoltageLossSecoursAlim			: BOOL;		       	(*AuxBt400VVoltageLossSecoursAlim		 *)
+	MesAuxBt400VDefaultPermut					: BOOL;		       	(*AuxBt400VDefaultPermut				 *)
+
+
+	MesAuxBtDefaultInverter						: BOOL;  		   	(* AuxBtDefaultInverter	*)
+                                                                   	
+	MesAuxBtSyntDefaultDistrib48VccJdb			: BOOL;  		   	(* AuxBtSyntDefaultDistrib48VccJdb		*)
+	MesAuxBtSyntOpenDistrib48VccJdb				: BOOL;		       	(* AuxBtSyntOpenDistrib48VccJdb			*)
+	MesAuxBtSyntDefaultDistrib48VccLocker		: BOOL;  		   	(* AuxBtSyntDefaultDistrib48VccLocker	*)
+    MesAuxBtSyntOpenDistrib48VccLocker			: BOOL;		       	(* AuxBtSyntOpenDistrib48VccLocker		*)
+                                                                   	
+	MesAuxTransfoMeltingFusesContact			: BOOL;		       	(* AuxTransfoMeltingFusesContact	*)
+                                                                   	
+	MesAuxTransfoSwitchGear						: BOOL;	           	(*AuxTransfoSwitchGear		 *)
+                                                                   	
+	MesAuxHtOpenSectLine225kV					: BOOL;		       	(* AuxHtOpenSectLine225kV*)
+	MesAuxHtCloseSectLine225kV					: BOOL;		       	(* AuxHtCloseSectLine225kV*)
+                                                                   	
+	                                                               	
+	MesAuxHtOpenSectMalt						: BOOL;		       	(* AuxHtOpenSectMalt*)
+	MesAuxHtCloseSectMalt						: BOOL;		       	(* AuxHtCloseSectMalt*)
+                                                                   	
+	MesAuxHtTeleCondamnSl225kV				 	: BOOL;		       	(* AuxHtTeleCondamnSl225kV			*)
+	MesAuxHtDeTeleCondamnSl225kV				: BOOL;            	(* AuxHtDeTeleCondamnSl225kV		*)
+	MesAuxHtTelecommandeRelestActif				: BOOL;		       	(* AuxHtTelecommandeRelestActif		*)
+	MesAuxHtTelecommandeRelestPassif			: BOOL;	           	(* AuxHtTelecommandeRelestPassif	*)
+	                                                               
+	// Door Sensor, Fire Alarm, Local/Remote, Emergency Stop	   
+	                                                            
+	MesLocalRemoteOperation                  	: BOOL;            	(*LocalRemoteOperation    *)
+
+
+	MesAlarmCom									: BOOL ; 		   	(* Communication Error with I35 module *) 
+	MesCP_Read									: BOOL ;  			(* Cal : Read function enable *)
+
+	MesAlarmCode1								: WORD ; 			(* Internal Akuo Alarm Code   *)
+	MesAlarmCode2								: WORD ; 			(* Internal Akuo Alarm Code   *)
+	MesAlarmCode3								: WORD ; 			(* Internal Akuo Alarm Code   *)
+	MesWarningCode1								: WORD ; 			(* Internal Akuo Warning Code *)
+	MesWarningCode2								: WORD ; 			(* Internal Akuo Warning Code *)  
+	MesWarningCode3								: WORD ; 			(* Internal Akuo Warning Code *)
+	MesWarningCode4								: WORD ; 			(* Internal Akuo Warning Code *)  
+	MesWarningCode5								: WORD ; 			(* Internal Akuo Warning Code *) 
+    MesWarningCode6								: WORD ; 			(* Internal Akuo Warning Code *)     
+	MesEventCode1								: WORD ; 			(* Internal Akuo Event Code   *)  
+	MesEventCode2								: WORD ; 			(* Internal Akuo Event Code   *) 
+	MesEventCode3								: WORD ; 			(* Internal Akuo Event Code   *)  			                                                   			                                               
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

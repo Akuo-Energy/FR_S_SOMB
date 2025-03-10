@@ -1,0 +1,69 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_TOR_SD" Id="{28d308bf-6a52-4a80-974b-8f772ee94f4c}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_TOR_SD EXTENDS FB_TOR_Base
+//////////////////
+//  Smoke and Fire detection system with Typhoon triggering system. 
+//////////////////
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance/model specific) 
+	ParamTempoFire :TIME:=T#2S;//  (s)Tempo before raising an alarm
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	
+END_VAR
+
+VAR_INPUT
+	// I/O Inputs 		                                     				
+		
+	
+END_VAR
+
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//
+		FB_PermAlarm				: SR ;					// (NA) FB to maintain Fire Alarm even if sensor stop detection (burn) .
+		TON_Fire					: TON ; 
+ 
+	//M_STATEMANAGER VARIABLES//
+		MesDataExd			: TOR_Standard ;  
+		
+		
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+
+]]></ST>
+    </Implementation>
+    <Method Name="M_Execute" Id="{28c758b9-c407-4188-a506-79975af5a203}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+	IF ParamNbSensors = 9 THEN // Use of contactor bi-stable No and NC
+		IN_MesState2_IO := NOT IN_MesState2_IO;
+	END_IF
+SUPER^.M_Execute() ; 
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_TOR_SD">
+      <LineId Id="3" Count="1" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_TOR_SD.M_Execute">
+      <LineId Id="51" Count="4" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

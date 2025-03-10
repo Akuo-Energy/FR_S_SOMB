@@ -1,0 +1,73 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_EM_Base" Id="{23aabdd7-3a5d-4111-8a1d-e2e7554d6fcb}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_EM_Base
+//////////////////
+// Measurement Solution. Base FB
+//////////////////
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance specific) 
+		CmdInitialValues			: EM;
+		ParamStepEactCons			: REAL := 10;					// kWh step for tariff meter
+		ParamStepEactProd			: REAL := 10;                 // kWh step for tariff meter
+		ParamStepEreactCons			: REAL := 10;                 // kVArh step for tariff meter
+		ParamStepEreactProd			: REAL := 10;                 // kVArh step for tariff meter
+		ParamEssNum					: UINT :=1 ; 					// ESS Num
+END_VAR
+
+VAR_INPUT
+	//Child objects
+		IN_CmdReset_L					: BOOL;													// (NA) Local reset of the alarms	
+END_VAR
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//
+		TON_ComAlarm				: TON ; 												// Tempo before deteting loss of communication. 
+
+	//M_INIT VARIABLES //
+		bInit						: BOOL 				:= TRUE ; 							// (NA) Initialize object parameters at first cycle 
+		
+	// M_EXECUTE VARIABLES //
+ //	MesDataExd			: EM;					// (NA) Structure of the Tariff Meter
+		
+	// M_EVALUATE VARIABLES //
+		trig1 						: R_TRIG;												// (NA) Trigger for the pulses
+		trig2 						: R_TRIG;												// (NA) Trigger for the pulses
+		trig3 						: R_TRIG;												// (NA) Trigger for the pulses
+		trig4 						: R_TRIG;												// (NA) Trigger for the pulses
+
+                      
+END_VAR
+
+VAR_INPUT
+		MesPulseEactCons			: BOOL;													// Pulse Input signal for the Active energy consumed measurement
+		MesPulseEactProd			: BOOL;													// Pulse Input signal for the Active energy produced measurement
+		MesPulseEreactCons			: BOOL;													// Pulse Input signal for the Reactive energy consumed measurement
+		MesPulseEreactProd			: BOOL;													// Pulse Input signal for the Reactive energy produced measurement
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_Execute" Id="{673122ff-1e9a-414e-80f5-339234c9f5ec}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	// EMULATOR
+
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_EM_Base">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_EM_Base.M_Execute">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

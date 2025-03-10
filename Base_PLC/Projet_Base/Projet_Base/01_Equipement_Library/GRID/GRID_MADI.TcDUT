@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="GRID_MADI" Id="{49b020b1-7c3d-41a4-bc53-8c74d3ba8bb8}">
+    <Declaration><![CDATA[///////////
+// Structure For DEIECommand. Main Operating Data to be saved (ex: OPC)  
+//////////
+TYPE GRID_MADI :
+STRUCT
+	// TC
+	MesData					: GRID ;(* Object *)
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

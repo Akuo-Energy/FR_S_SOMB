@@ -1,0 +1,276 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_UPS_PS10048" Id="{87bb6280-a5ae-46b4-915e-ee17a4cba362}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_UPS_PS10048 EXTENDS FB_UPS_Base
+//////////////////
+// SEPAM system for High Voltage or Low Voltage Grid Protection. 
+//////////////////
+
+VAR_INPUT 
+	ParamTcpPort				: UINT:=502;		(* (NA) Tcp port *)
+	ParamIPAddress				: STRING;           (* (NA) IP address*)
+	ParamUnitID					: BYTE;             (* (NA) Unit ID*)
+END_VAR
+
+VAR_OUTPUT
+	
+END_VAR
+
+VAR_INPUT
+	
+	MesDataExd    	AT %Q*	: UPS_PS10048;
+
+END_VAR
+
+
+VAR
+
+	FB_ModbusRead	          	: ARRAY[1..4] OF FB_ModbusRead; 
+			
+	MesBlock1_Temp 				: ARRAY [1..1] OF WORD ; 
+	MesBlock2_Temp 				: ARRAY [1..11] OF WORD ; 
+	MesBlock3_Temp 				: ARRAY [1..8] OF WORD ; 
+	MesBlock4_Temp 				: ARRAY [1..2] OF WORD ; 
+	
+	AX_ModbusReadAlarm			: ARRAY[1..4] OF BOOL;
+	AX_ModbusReadAlarmId		: ARRAY[1..4] OF UDINT;	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{249370d0-0e89-45bd-8e79-fd6836d603fe}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Manages Sepam Alarms. Alarms opens HT CB until Sepam manual Reset. Warning Opens CB-L but does not maintain warning.
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager 	: FB_AlarmCodeManager; 
+ 	ComWarning				: BOOL;
+	ComAlarms				: BOOL;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// ALARM CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= MesDataExd.MesData.MesAlarmCom,			// Com alarm
+		bAlarm2			:= MesDataExd.MesData.MesFault_Major,				// True := Major fault : cannot recover
+		bAlarm3			:= MesDataExd.MesData.MesAlarm_AcOff,				// True := AC off		
+		bAlarm4			:= MesDataExd.MesData.MesAlarm_GeneralOff,			// True := Imminent shut down
+		bAlarm5			:= MesDataExd.MesData.MesFault_Bat,					// True := Battery disconnected
+		bAlarm6			:= MesDataExd.MesData.MesFault_Charger,				// True := Charger out of order										 
+		bAlarm7			:= MesDataExd.MesData.MesFault_12V,					// True := 12V absent 
+		bAlarm8			:= MesDataExd.MesData.MesFault_48V,					// True := 48V absent
+		bAlarm9			:= MesDataExd.MesData.MesToggleRead,				// True := AC power supply low 
+		bAlarm10		:= FALSE, 									//										
+		bAlarm11		:= FALSE,                                   //
+		bAlarm12		:= FALSE,                                   //
+		bAlarm13		:= FALSE,                                   //
+		bAlarm14		:= FALSE,                                   //
+		bAlarm15		:= FALSE, 									// 
+		wAlarmCode		=>MesDataExd.MesData.MesAlarmCode);		
+
+// WARNING CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= MesDataExd.MesData.MesFault_Minor,				// True := Minor fault (overtemp, overcurrent, overvolt)
+		bAlarm2			:= MesDataExd.MesData.MesAlarm_Ulow ,		// Battery  Capacity is low 
+		bAlarm4			:= FALSE,									//
+		bAlarm5			:= FALSE,									//
+		bAlarm6			:= FALSE,									//
+		bAlarm7			:= FALSE,									// 
+		bAlarm8			:= FALSE,									// 
+		bAlarm9			:= FALSE,									// 
+		bAlarm10		:= FALSE,									// 
+		bAlarm11		:= FALSE,									// 
+		bAlarm12		:= FALSE,									// 
+		bAlarm13		:= FALSE,									// 
+		bAlarm14		:= FALSE,									// 
+		bAlarm15		:= FALSE,									// 
+		wAlarmCode		=>MesDataExd.MesData.MesWarningCode);					
+
+// EVENT CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:=FALSE, 									// 
+		bAlarm2			:=FALSE, 									// 
+		bAlarm3			:=FALSE, 									// 
+		bAlarm4			:=FALSE, 									// 
+		bAlarm5			:=FALSE, 									//
+		bAlarm6			:=FALSE,        							//
+		bAlarm7			:=FALSE,        							//
+		bAlarm8			:=FALSE,        							//
+		bAlarm9			:=FALSE,        							//
+		bAlarm10		:=FALSE, 									//
+		bAlarm11		:=FALSE,        							//
+		bAlarm12		:=FALSE,        							//
+		bAlarm13		:=FALSE,        							//
+		bAlarm14		:=FALSE,        							//
+		bAlarm15		:=FALSE, 									//
+		wAlarmCode		=> MesDataExd.MesData.MesEventCode);		
+			
+		]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Evaluate" Id="{880e9a67-c29e-4a68-8752-3aae411c1d1d}">
+      <Declaration><![CDATA[METHOD M_Evaluate
+VAR_INPUT
+END_VAR
+
+VAR
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Read" Id="{48acfc1f-7ba7-41b3-8d75-241df3b319ff}">
+      <Declaration><![CDATA[METHOD M_Read
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR_INPUT
+	
+END_VAR
+VAR 
+	MW					: FB_MergeWordsToFloat;
+	MW_1				: FB_MergeWordsToDint;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// CP-Read / Write 
+
+
+IF MesDataExd.MesData.MesCP_Read  THEN		
+	
+	FB_ModbusRead[1]
+		(
+			nTCPPort		:= ParamTcpPort,
+			ClockRead		:= MesDataExd.MesData.MesCP_Read AND ClockRead, 
+			Reset			:= CmdClearFault_G OR IN_CmdReset_L,
+			sIPAddr			:= ParamIPAddress ,
+			nUnitID			:= 1, 
+			tTimeout		:= T#5S,
+			nQuantity		:= 1, 
+			nMBAddr			:= 44000 , 
+			cbLength		:= SIZEOF(MesBlock1_Temp) , 
+			pDestAddr		:= ADR(MesBlock1_Temp) , 
+			ModbusReadAlarm	=> AX_ModbusReadAlarm[1] , 
+			ErrorId			=> AX_ModbusReadAlarmId[1]
+		);
+		
+	FB_ModbusRead[2]
+		(
+			nTCPPort		:= ParamTcpPort,
+			ClockRead		:= MesDataExd.MesData.MesCP_Read AND ClockRead, 
+			Reset			:= CmdClearFault_G OR IN_CmdReset_L,
+			sIPAddr			:= ParamIPAddress ,
+			nUnitID			:= 1, 
+			tTimeout		:= T#5S,
+			nQuantity		:= 9, 
+			nMBAddr			:= 44100 , 
+			cbLength		:= SIZEOF(MesBlock2_Temp) , 
+			pDestAddr		:= ADR(MesBlock2_Temp) , 
+			ModbusReadAlarm	=> AX_ModbusReadAlarm[2], 
+			ErrorId			=> AX_ModbusReadAlarmId[2]
+		);
+		
+	FB_ModbusRead[3]
+		(
+			nTCPPort		:= ParamTcpPort,
+			ClockRead		:= MesDataExd.MesData.MesCP_Read AND ClockRead	, 
+			Reset			:= CmdClearFault_G OR IN_CmdReset_L,
+			sIPAddr			:= ParamIPAddress ,
+			nUnitID			:= 1, 
+			tTimeout		:= T#5S,
+			nQuantity		:= 6, 
+			nMBAddr			:= 44150 , 
+			cbLength		:= SIZEOF(MesBlock3_Temp) , 
+			pDestAddr		:= ADR(MesBlock3_Temp) , 
+			ModbusReadAlarm	=> AX_ModbusReadAlarm[3], 
+			ErrorId			=> AX_ModbusReadAlarmId[3]
+		);
+	
+	FB_ModbusRead[4]
+		(
+			nTCPPort		:= ParamTcpPort,
+			ClockRead		:= MesDataExd.MesData.MesCP_Read AND ClockRead, 
+			Reset			:= CmdClearFault_G OR IN_CmdReset_L,
+			sIPAddr			:= ParamIPAddress,
+			nUnitID			:= 1, 
+			tTimeout		:= T#5S,
+			nQuantity		:= 2, 
+			nMBAddr			:= 44050 , 
+			cbLength		:= SIZEOF(MesBlock4_Temp) , 
+			pDestAddr		:= ADR(MesBlock4_Temp) , 
+			ModbusReadAlarm	=> AX_ModbusReadAlarm[4], 
+			ErrorId			=> AX_ModbusReadAlarmId[4]
+		);
+		
+	//COM
+	MesDataExd.MesData.MesAlarmCom 			:= NOT WORD_TO_BOOL(MesBlock1_Temp[1]);
+	MesDataExd.MesSoc						:= WORD_TO_REAL(MesBlock2_Temp[1])* 0.01;
+	
+	MW( WORD_STRONG:= MesBlock2_Temp[3  ],	WORD_WEAK := MesBlock2_Temp[2  ], VAR_OUT := MesDataExd.MesSoc);
+	MW( WORD_STRONG:= MesBlock2_Temp[5  ],	WORD_WEAK := MesBlock2_Temp[4  ], VAR_OUT := MesDataExd.MesUdc_48V);
+	MW( WORD_STRONG:= MesBlock2_Temp[7  ],	WORD_WEAK := MesBlock2_Temp[6  ], VAR_OUT := MesDataExd.MesUdc_12V);
+	MW( WORD_STRONG:= MesBlock2_Temp[9  ],	WORD_WEAK := MesBlock2_Temp[8  ], VAR_OUT := MesDataExd.MesUBatt);
+	MW( WORD_STRONG:= MesBlock2_Temp[11 ],	WORD_WEAK := MesBlock2_Temp[10 ], VAR_OUT := MesDataExd.MesIdc_Bat);
+
+	MW( WORD_STRONG:= MesBlock3_Temp[2  ],	WORD_WEAK := MesBlock3_Temp[1  ], VAR_OUT := MesDataExd.MesDischarge);
+	MesDataExd.MesEbackUp		  		:= WORD_TO_REAL(MesBlock3_Temp[3  ]) * 0.01;
+	MesDataExd.MesEBackUpEna	  		:= WORD_TO_BOOL(MesBlock3_Temp[4  ]);
+	MesDataExd.MesBatTestPer	  		:= WORD_TO_BOOL(MesBlock3_Temp[5  ]);
+	MesDataExd.MesVacTripSelect	  		:= WORD_TO_BOOL(MesBlock3_Temp[6  ]);	
+	MW( WORD_STRONG:= MesBlock3_Temp[8  ],	WORD_WEAK := MesBlock3_Temp[7  ], VAR_OUT := MesDataExd.MesCapacity_Nom);
+	
+	MesDataExd.MesFault_Minor 			:= MesBlock4_Temp[1].8;
+	MesDataExd.MesFault_Major  		:= MesBlock4_Temp[1].11;
+	MesDataExd.MesAlarm_AcOff 			:= MesBlock4_Temp[2].0;
+	MesDataExd.MesAlarm_GeneralOff		:= MesBlock4_Temp[2].1;
+	MesDataExd.MesData.MesAlarm_Ulow	:= MesBlock4_Temp[2].2;
+	MesDataExd.MesFault_Bat			:= MesBlock4_Temp[2].3;
+//		MesDataExd.MesFault_Bat			:= MesBlock4_Temp[2].4;
+	MesDataExd.MesFault_12V			:= MesBlock4_Temp[2].5;
+	MesDataExd.MesFault_48V			:= MesBlock4_Temp[2].6;
+	MesDataExd.MesAlarm_AcLow			:= MesBlock4_Temp[2].7; 
+		
+END_IF 
+
+	// properties update 
+MesDataExd.MesData.MesUdc 				:= MesDataExd.MesUdc_12V ; 
+MesDataExd.MesData.MesDischarging 		:= MesDataExd.MesAlarm_AcOff 	; 
+	
+MesDataExd.MesData.MesAlarmState 		:= MesDataExd.MesFault_Minor OR MesDataExd.MesFault_Major OR MesDataExd.MesAlarm_GeneralOff OR 
+											 MesDataExd.MesFault_Bat OR MesDataExd.MesFault_Bat  ; ]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_UPS_PS10048">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_UPS_PS10048.M_AlarmManagement">
+      <LineId Id="768" Count="54" />
+      <LineId Id="834" Count="0" />
+      <LineId Id="823" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_UPS_PS10048.M_Evaluate">
+      <LineId Id="83" Count="0" />
+      <LineId Id="55" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_UPS_PS10048.M_Read">
+      <LineId Id="1649" Count="0" />
+      <LineId Id="1651" Count="1" />
+      <LineId Id="1608" Count="0" />
+      <LineId Id="1653" Count="0" />
+      <LineId Id="1505" Count="89" />
+      <LineId Id="544" Count="0" />
+      <LineId Id="1654" Count="0" />
+      <LineId Id="1612" Count="0" />
+      <LineId Id="1636" Count="0" />
+      <LineId Id="1616" Count="0" />
+      <LineId Id="1619" Count="0" />
+      <LineId Id="1623" Count="0" />
+      <LineId Id="1620" Count="2" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

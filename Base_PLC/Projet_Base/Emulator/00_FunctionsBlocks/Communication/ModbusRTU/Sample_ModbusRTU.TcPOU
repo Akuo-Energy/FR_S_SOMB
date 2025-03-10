@@ -1,0 +1,62 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="Sample_ModbusRTU" Id="{b1c3bfa2-77b2-4465-8c33-d17099e2ccaa}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM Sample_ModbusRTU
+VAR
+	ModbusRTU				: FB_ModbusRTU;
+	MesBlock				: ARRAY[1..8] OF ARRAY[1..120] OF WORD;	
+	AX_Addr					: ARRAY[1..8] OF UINT 	:= [1,		1,		1,		1,		1, 		1, 		1, 		1];
+	AX_Qty					: ARRAY[1..8] OF UINT	:= [1,		1,		1,		1,		1, 		1, 		1, 		1];
+	AX_UnitId				: ARRAY[1..8] OF BYTE	:= [1,		1,		1,		1,		1, 		1, 		1, 		1];
+	AX_Function				: ARRAY[1..8] OF UINT	:= [1,		2,		3,		4,		5, 	 	6, 	 	15, 	16];	
+	AX_Priority				: ARRAY[1..8] OF UINT	:= [1,		1,		1,		1,		1, 	 	1, 	 	1, 		1 ];
+	AX_bStart				: ARRAY[1..8] OF BOOL;
+	MbStruct				: ARRAY[1..8] OF Struct_InputRTU;	
+	
+	KK: INT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[ModbusRTU();
+
+FOR KK := 1 TO 8 DO 
+	MbStruct[KK].InBuffer := ADR(MesBlock[KK]);
+	MbStruct[KK].InFunction := AX_Function[KK];
+	MbStruct[KK].InQuantity := AX_Qty[KK];
+	MbStruct[KK].InStartAddr := AX_Addr[KK];
+	MbStruct[KK].InUnitID := AX_UnitId[KK];
+END_FOR
+
+
+IF CalLocalTimeStruct.wSecond MOD 5 = 0 THEN
+	FOR KK := 1 TO 8 DO
+		IF AX_bStart[KK] THEN
+			ModbusRTU.M_AddAction_FIFO(InStruct := MbStruct[KK], InPriority := AX_Priority[KK]);
+		END_IF
+	END_FOR
+	
+END_IF
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="Sample_ModbusRTU">
+      <LineId Id="5" Count="0" />
+      <LineId Id="37" Count="0" />
+      <LineId Id="17" Count="0" />
+      <LineId Id="16" Count="0" />
+      <LineId Id="25" Count="2" />
+      <LineId Id="33" Count="0" />
+      <LineId Id="36" Count="0" />
+      <LineId Id="39" Count="1" />
+      <LineId Id="35" Count="0" />
+      <LineId Id="15" Count="0" />
+      <LineId Id="61" Count="0" />
+      <LineId Id="63" Count="1" />
+      <LineId Id="62" Count="0" />
+      <LineId Id="44" Count="0" />
+      <LineId Id="42" Count="0" />
+      <LineId Id="46" Count="0" />
+      <LineId Id="45" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,69 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.9">
+  <DUT Name="PM_Q100" Id="{fdafb6b2-4224-4ba4-b3a4-2deb440c7aff}">
+    <Declaration><![CDATA[TYPE PM_Q100 :
+STRUCT
+	//Device Status 
+	MesState1		: WORD ;	(* Bit0: 1=Decide OK, Bit2: 0=Battery OK, Bit4:	1=SD card error, Bit8: 1= Parameter load is in progress, Bit10: 1=	parameter check is in progress, Bit12: 1=Parameter ativation is in progress *)
+	MesState2		: WORD;		(* Bit0:	1= rotation is clockwis	*)
+	                            
+	MesData			: PM;       (**)
+                                
+	MesVN			: REAL;		(*  (V) Voltage neutral conductor  *)
+	CalTanPhi		: REAL;		(*  (NA) TanPhi                    *)
+	MesCosPhiA		: REAL;		(*  (NA) Active power factor a     *)
+	MesCosPhiB		: REAL;		(*  (NA) Active power factor b     *)
+	MesCosPhiC		: REAL;		(*  (NA) Active power factor c     *)
+	MesCosPhi		: REAL;		(*  (NA) Active power factor       *)
+	MesEPerPulse	: REAL;		(*  (Wh, VArh, VAh per pulse) COnversion factor of counter pulses into energy values    *)
+	                            
+	MesEac1_dmd		: REAL;		(* Active energy based on active power Pa Demand	Counter  *)
+	MesEac2_dmd		: REAL;		(* Active energy based on active power Pb Demand	Counter  *)
+	MesEac3_dmd		: REAL;		(* Active energy based on active power Pc Demand Counter     *)
+	MesEac_dmd		: REAL;		(* Active energy based on active power Pa Demand Counter     *)
+								                                                             
+	MesEac1_sup		: REAL;		(* Active energy based on active power Pa Supply Counter     *)
+	MesEac2_sup		: REAL;		(* Active energy based on active power Pb Supply Counter     *)
+	MesEac3_sup		: REAL;		(* Active energy based on active power Pc Supply Counter     *)
+	MesEac_sup		: REAL;		(* Active energy based on active power P Supply Counter      *)
+								                                                                   
+	MesEreac1_cap	: REAL;		(* Reactive energy based on reactive power Qa capacitive Counter   *)
+	MesEreac2_cap	: REAL;		(* Reactive energy based on reactive power Qb capacitive Counter   *)
+	MesEreac3_cap	: REAL;		(* Reactive energy based on reactive power Qc capacitive Counter   *)
+	MesEreac_cap	: REAL;		(* Reactive energy based on reactive power Q capacitive Counter    *)
+								                                                                   
+	MesEreac1_ind	: REAL;		(* Reactive energy based on reactive power Qa inductive Counter    *)
+	MesEreac2_ind	: REAL;		(* Reactive energy based on reactive power Qb inductive Counter    *)
+	MesEreac3_ind	: REAL;		(* Reactive energy based on reactive power Qc inductive Counter    *)
+	MesEreac_ind	: REAL;		(* Reactive energy based on reactive power Q  inductive Counter    *)
+								                                                                   
+	CalEac1_dmd		: REAL;		(* Active energy based on active power Pa Demand         *)
+	CalEac2_dmd		: REAL;		(* Active energy based on active power Pb Demand         *)
+	CalEac3_dmd		: REAL;		(* Active energy based on active power Pc Demand         *)
+	CalEac_dmd		: REAL;		(* Active energy based on active power Pa Demand         *)
+								                                                         
+	CalEac1_sup		: REAL;		(* Active energy based on active power Pa Supply         *)
+	CalEac2_sup		: REAL;		(* Active energy based on active power Pb Supply         *)
+	CalEac3_sup		: REAL;		(* Active energy based on active power Pc Supply         *)
+	CalEac_sup		: REAL;		(* Active energy based on active power P Supply          *)
+								                                                         
+	CalEreac1_cap	: REAL;		(* Reactive energy based on reactive power Qa capacitive *)
+	CalEreac2_cap	: REAL;		(* Reactive energy based on reactive power Qb capacitive *)
+	CalEreac3_cap	: REAL;	    (* Reactive energy based on reactive power Qc capacitive *)
+	CalEreac_cap	: REAL;	    (* Reactive energy based on reactive power Q capacitive  *)
+								                                                         
+	CalEreac1_ind	: REAL;	    (* Reactive energy based on reactive power Qa inductive  *)
+	CalEreac2_ind	: REAL;	    (* Reactive energy based on reactive power Qb inductive  *)
+	CalEreac3_ind	: REAL;	    (* Reactive energy based on reactive power Qc inductive  *)
+	CalEreac_ind	: REAL;	    (* Reactive energy based on reactive power Q  inductive  *)
+		
+	MesAlarmCodeAkuo			: WORD;		(* Akuo Custom AlarmCode	*)
+	MesWarningCodeAkuo			: WORD;		(* Akuo Custom WarningCode	*)
+	
+	
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

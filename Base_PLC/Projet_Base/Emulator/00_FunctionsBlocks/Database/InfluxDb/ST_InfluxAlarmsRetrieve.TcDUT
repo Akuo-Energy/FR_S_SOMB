@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="ST_InfluxAlarmsRetrieve" Id="{28453d55-fbea-4ae9-8731-67a9e8b4da1c}">
+    <Declaration><![CDATA[TYPE ST_InfluxAlarmsRetrieve :
+STRUCT
+    {attribute 'TagName' := 'time'}
+	MesTime			: LINT;
+    {attribute 'TagName' := 'Message'}
+	Message		 	: T_MaxString;	// Alarm Message 
+    {attribute 'FieldName' := 'ID'}	
+	ID				: ULINT;
+    {attribute 'FieldName' := 'Value'}	
+	Value 			: BOOL;
+    {attribute 'FieldName' := 'Ack'}	
+	Ack				: BOOL;	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

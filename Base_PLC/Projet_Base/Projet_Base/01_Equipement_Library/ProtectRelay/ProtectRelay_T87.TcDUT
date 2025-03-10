@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.9">
+  <DUT Name="ProtectRelay_T87" Id="{8112a2fa-c48b-4881-8e94-fff49592d25a}">
+    <Declaration><![CDATA[TYPE ProtectRelay_T87 :
+STRUCT
+	
+	MesData							: ProtectRelay ; 		(* Object 								    *)
+
+	MesAlarm_DiscordSectLigneHTB	: BOOL;   				(*DiscordSectLigneHTB*)
+	MesAlarm_DiscordSectMaltHTB		: BOOL;   				(*DiscordSectMaltHTB	*)
+	MesAlarm_DiscordSectDisjHTB		: BOOL;   				(*DiscordSectDisjHTB	*)
+	MesAlarm_TeleCondamne			: BOOL;   				(*TeleCondamne		*)
+	MesAlarm_DeTeleCondamne			: BOOL;   				(*DeTeleCondamne		*)
+	MesAlarm_DiscordTeleCondamne	: BOOL;	  				(*DiscordTeleCondamne*)
+                                                			
+	MesAlarm_IoMaxCoteProd			: BOOL;   				(*IoMaxCoteProd*)
+	MesAlarmUMax					: BOOL;   				(*UMax		*)
+	MesAlarmUMax_Long				: BOOL;   				(*UMax_Long	*)
+	MesAlarm_PhaseRpt				: BOOL;					(*PhaseRpt*)
+	MesWarning_ImgTherm				: BOOL;					(*ImgTherm alarm*)
+	MesAlarm_ImgTherm				: BOOL;					(*ImgTherm warning*)
+	MesAlarm_DifferTransfo			: BOOL;					(*DifferTransfo*)
+	MesAlarm_FreqMax				: BOOL;					(*FreqMax*)
+	MesAlarm_FreqMin				: BOOL;					(*FreqMin*)	
+	                                            			
+	MesU0							: REAL;					(*(V) Residual Voltage*)
+	MesP							: REAL;					(*(kW) Active Power*)	
+	MesQ							: REAL;					(*(kVAr) Reactive Power*)
+	
+
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

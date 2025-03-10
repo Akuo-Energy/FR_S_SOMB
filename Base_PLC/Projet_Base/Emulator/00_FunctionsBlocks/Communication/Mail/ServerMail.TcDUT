@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="ServerMail" Id="{748e7e06-fd49-4d75-a20f-0e80019ab7c3}">
+    <Declaration><![CDATA[
+TYPE ServerMail :
+STRUCT
+
+	MesAlarmCode			: WORD;			(*alarm code *)
+	
+	AX_MailAddr				: ARRAY[1..CstNbUser] OF STRING(255);		(* Mail Address List*)
+	AX_Subscribed			: ARRAY[1..CstNbUser] OF BOOL;				(* Mail subscription list*)
+	AX_NomUtili				: ARRAY[1..CstNbUser] OF STRING(50); 		(* User Name List*)
+	AX_UserLVL				: ARRAY[1..CstNbUser] OF WORD; 		(* User Level*)
+	
+	OUT_NbMailSent			: ULINT;									(* Number of mail being sent *)
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,503 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.13">
+  <POU Name="FB_GRID_Enedis" Id="{ddbb70b9-09c1-44b8-ac02-13365af0730f}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_GRID_Enedis EXTENDS FB_GRID_Base
+//////////////////
+// Grid Operator interface. Base FB
+//////////////////
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance specific) 
+		{attribute 'OPC.UA.DA' := '1'} 
+		ParamRseAvailable						: BOOL:=TRUE;		(* (NA) GRID with RSE option*)
+		{attribute 'OPC.UA.DA' := '1'} 
+		ParamTaAvailable						: BOOL:=TRUE;		(* (NA) GRID with Teleaction option*)
+		{attribute 'OPC.UA.DA' := '1'} 
+		ParamP0Available						: BOOL:=TRUE; 		(* (NA) GRID with P regulation option*)
+		{attribute 'OPC.UA.DA' := '1'} 
+		ParamQ0Available						: BOOL:=TRUE; 		(* (NA) GRID with Q regulation option*)
+		{attribute 'OPC.UA.DA' := '1'} 
+		ParamU0Available						: BOOL:=TRUE; 		(* (NA) GRID with U regulation option*)
+		{attribute 'OPC.UA.DA' := '1'} 
+		ParamPmaxPark							: REAL;				(* (kW) Contractual maximal power plant active power*)
+		{attribute 'OPC.UA.DA' := '1'} 
+		ParamPMin								: REAL;				(* (kW)   Contractual minimal power plant active power*)
+		{attribute 'OPC.UA.DA' := '1'} 
+		ParamQMax								: REAL;				(* (Kvar) Contractual maximal power plant reactive power*)
+		{attribute 'OPC.UA.DA' := '1'} 
+		ParamQMin								: REAL; 			(* (Kvar) Contractual maximal power plant reactive power*)
+		{attribute 'OPC.UA.DA' := '1'} 
+		ParamUMax								: REAL;				(* (Kvar) Contractual maximal power plant reactive power*)
+		{attribute 'OPC.UA.DA' := '1'} 
+		ParamUMin								: REAL; 			(* (Kvar) Contractual maximal power plant reactive power*)
+		
+		ParamTONFiltering						: TIME:=T#200MS; 	(* (ms) Minimum tempo filter before command validation (noise filtering)*)
+		
+		MesDataExd								: GRID_Enedis;    
+		
+END_VAR
+
+
+VAR_INPUT
+	WatchDog	: BOOL;
+	// I/O Inputs 
+		//FROM ENEDIS
+		IN_CmdAutCpl_IO							: BOOL; 			(* Coupling Authorization (Autorisation de couplage)			              	*)
+		IN_CmdAutCpl_End_IO						: BOOL; 			(* End of coupling Authorization (Fin d'autorisation de couplage)			    *)
+		IN_CmdDisconnect_End_IO					: BOOL; 			(* End of disconnect order(Fin de demande de decouplage)                        *)
+		IN_CmdDisconnect_IO						: BOOL;				(* Disconnect order(Demande de decouplage)                                      *)
+		IN_CmdRSEOn_IO							: BOOL;				(* Start of RSE (Mise en RSE)                                                   *)
+		IN_CmdRSEOff_IO							: BOOL;				(* Stop of RSE (Mise Hors RSE)                                                  *)
+		IN_CmdStopPReg_IO						: BOOL;				(* Desactivation of P0 regulation(Fin de passage a P0)                          *)
+		IN_CmdStartPReg_IO						: BOOL;				(* Activation of P0 regulation (Passage a P0)                                   *)
+		IN_CmdStopQReg_IO						: BOOL;				(* Desactivation of Q0 regulation(Fin de passage a Q0)                          *)
+		IN_CmdStartQreg_IO						: BOOL;				(* Activation of Q0 regulation(Passage a Q0)                                    *)
+		IN_CmdEmergencyDisconnect_End_IO		: BOOL;				(* End of Emergency disconnect order(Fin demande d'effacement d'urgence) 	   	*)
+		IN_CmdEmergencyDisconnect_IO			: BOOL;				(* Emergency disconnect order(Demande d'effacement d'urgence)                   *)
+		IN_CmdDisconnectFromTac_IO				: BOOL; 			(* Teleaction disconnect(Decouplage par tac)                                    *)
+		IN_CmdSynchro_IO						: BOOL;				(* Synchronisation signal														*)
+		
+		(* 4..20mA *)                                   			
+		IN_MesP0Reg_IO							: INT; 				(* (kW)   Grid P0	*)
+		IN_MesQ0Reg_IO							: INT; 				(* (KVar) Grid Q0 	*)
+		IN_MesU0Reg_IO							: INT; 				(* (KV)   Grid V0   *)
+		                                                			                                  			
+		//FROM AKSES                                    			
+		IN_CmdAutCpl_other						: BOOL; 			
+		IN_CmdEmergencyDisconnect_other			: BOOL; 			
+		IN_CmdEmergencyDisconnect_End_other		: BOOL; 			
+		IN_CmdDisconnect_other					: BOOL; 			
+		IN_CmdDisconnect_end_other				: BOOL; 			
+		IN_CmdStartPReg_other					: BOOL; 			
+		IN_CmdStartQReg_other					: BOOL; 			
+		IN_CmdStopPReg_other					: BOOL; 			
+		IN_CmdStopQReg_other					: BOOL;
+
+		//FROM TAC 
+		IN_CmdTAOn_IO							: BOOL; 			(* Teleaction in service(Teleaction en service)                                 *)
+		IN_CmdTAOff_IO							: BOOL; 			(* Teleaction out of service (Teleaction Hors service)                          *)
+		IN_CmdTacInFault_IO						: BOOL; 			(* Teleaction in fault(Défaut Tac)							 					*)
+		IN_CmdOpenTAC_IO						: BOOL; 
+		IN_CmdConsignationTAC_IO				: BOOL; 
+		IN_CmdUnavailableTAC					: BOOL; 
+			
+		                                                			
+		(*TC Relais Protection*)                        			
+		IN_ConnectAuthorizationLost				: BOOL; 			// Tous les cas pour un Reset aut Couplage recu
+		IN_Unavailable							: BOOL; 			// Disjoncteur général en Local, ou tous les départs en Local ou Bouton d'arret d'urgence 
+		IN_PP_Connected							: BOOL; 			// Centrale Couplée si DG = Fermé et au moins 1 départ antenne en production et au moins un onduleur en Prod
+                                     			
+		OUT_MesFaultDecoupling_IO				: BOOL; 			(* Decoupling due to faults c13100 and c15400 combined with CB position    	*)
+                                             			
+END_VAR                                                 			
+                                                        			
+                                                        			
+VAR_OUTPUT 
+
+	// DEIE                                              			
+		OUT_MesPPUnavailable_IO					: BOOL; 			(* TS centrale indisponible                                                	*)
+		OUT_MesPPConnected_IO					: BOOL; 			(* Centrale couplée(1)/Centrale Découplée(0)                               	*)
+		OUT_MesPPDisconnected_IO				: BOOL; 			(* Centrale Découplée														*)
+		OUT_MesAutCpl_IO 						: BOOL; 			(* Autorisation de couplage reçue(1)/Attente d'autorisation de couplage(0)	*)
+		OUT_MesAutCpl_end_IO 					: BOOL; 			(* Autorisation de couplage attente                                        	*)
+		OUT_MesDisconnect_IO 					: BOOL; 			(* Demande de découplage reçue(1)/Fin de demande de découplage(0)         	*)
+		OUT_MesDisconnect_End_IO 				: BOOL; 			(* Demande de découplage attente                                           	*)
+		OUT_MesEmergencyDisconnect_IO 			: BOOL; 			(* Demande d effacement d'urgence reçue                                   	*)
+		OUT_MesEmergencyDisconnect_End_IO 		: BOOL; 			(* Demande d effacement d'urgence attente		                          	*)
+		OUT_MesRSEON_IO							: BOOL; 			(* Demande mise en RSE reçue                                              	*)
+		OUT_MesRSEOff_IO						: BOOL; 			(* Demande mise en RSE en attente                                         	*)
+		OUT_MesStartPReg_IO						: BOOL; 			(* Demande mise en regulation de P reçue                                  	*)
+		OUT_MesStopPReg_IO						: BOOL; 			(* Demande mise en regulation de P en attente                             	*)
+		OUT_MesStartQReg_IO						: BOOL; 			(* Demande mise en regulation de Q reçue                                  	*)
+		OUT_MesStopQReg_IO						: BOOL; 			(* Demande mise en regulation de Q en attente	                          	*)
+		
+		(* 4..20mA *)                                   			
+		OUT_MesP_IO							: REAL; 				(* (kW)   Grid P0	*)
+		OUT_MesQ_IO							: REAL; 				(* (KVar) Grid Q0 	*)
+		OUT_MesU_IO							: REAL; 				(* (KV)   Grid V0   *)
+		
+	// Synchro temporelle - EMS 
+		Ecart_HeureGrid						: DINT;
+		
+	// TAC
+		OUT_CmdTacInFault_IO					: BOOL; 
+		OUT_MesOpenTAC_IO 						: BOOL; 
+		OUT_MesTAOn_IO							: BOOL; 			(* Demande mise en TeleAction reçue                                       	*)
+		OUT_MesTAOff_IO							: BOOL; 			(* Demande mise en TeleAction en attente                                  	*)
+		
+				
+	// SOFREL
+		
+		OUT_MesP_IO_SOFREL					: REAL; 				(* (kW)   Grid P0	*)
+		OUT_MesQ_IO_SOFREL					: REAL; 				(* (KVar) Grid Q0 	*)
+		OUT_MesU_IO_SOFREL					: REAL; 				(* (KV)   Grid V0   *)
+END_VAR
+
+
+VAR PERSISTENT
+	
+END_VAR
+VAR
+		//TON
+		TONConnectAuthorization					: TON;
+		TONConnectAuthorization_end				: TON;
+		TONEmergencyDisconnect	               	: TON;
+	    TONEmergencyDisconnect_end	            : TON;
+	    TONDisconnect	                		: TON;
+	    TONDisconnect_end                		: TON;
+	    TONPRegOn				                : TON;
+	    TONPRegOff				                : TON;
+	    TONQregOn				                : TON;
+	    TONQRegOff				                : TON;
+	    TONRSEOn				                : TON;
+	    TONRSEOff				                : TON;
+	    TONTAOn					                : TON;
+	    TONTAOff				                : TON;
+	
+		R_Trig_SynchTime						: R_TRIG;
+
+		Reste 									: DINT;
+		Modulo 									: DINT;
+		Heure_Pulse 							: DINT;
+		bTest 									: BOOL;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{bbb67521-ce73-4ba8-bd9e-5911c6d928e6}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// alarm and warning management
+/////////////////
+
+VAR 
+	FB_AlarmCodeManager			: FB_AlarmCodeManager ; 
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// ALARM CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:=MesDataExd.MesData.OUT_MesPPUnavailable, // Power plant is unavailable
+		bAlarm2			:=FALSE, //
+		bAlarm3			:=FALSE, //
+		bAlarm4			:=FALSE, //
+		bAlarm5			:=FALSE, //
+		bAlarm6			:=FALSE, //
+		bAlarm7			:=FALSE, //
+		bAlarm8			:=FALSE, //
+		bAlarm9			:=FALSE, //
+		bAlarm10		:=FALSE, //
+		bAlarm11		:=FALSE, //
+		bAlarm12		:=FALSE, //
+		bAlarm13		:=FALSE, //
+		bAlarm14		:=FALSE, //
+		bAlarm15		:=FALSE, //						 
+		wAlarmCode		=>MesDataExd.MesData.MesAlarmCode);
+
+// WARNING CODE //
+	FB_AlarmCodeManager(		
+		bAlarm1			:=IN_ConnectAuthorizationLost, 							//Loss of coupling authorization
+		bAlarm2			:=FALSE,													//			
+		bAlarm3			:=MesDataExd.MesData.OUT_SetptP > ParamPmaxPark OR MesDataExd.MesData.OUT_SetptP <= 0 ,		// P Setpoint from grid outside of permitted range
+		bAlarm4			:=MesDataExd.MesData.OUT_SetptQ > ParamQMax OR MesDataExd.MesData.OUT_SetptQ <= ParamQMin, 	// Q Setpoint from grid outside of permitted range
+		bAlarm5			:=MesDataExd.MesData.OUT_MesPPConnected						, 	//Powerplant is connected  
+		bAlarm6			:=NOT MesDataExd.MesData.OUT_MesPPConnected					, 	//Powerplant is disconnected
+		bAlarm7			:=MesDataExd.OUT_CmdPReg							    , 	//Q regulation mode is active     
+		bAlarm8			:=NOT MesDataExd.MesData.OUT_CmdAutCpl		    		, 	//Waiting for coupling authorization	
+		bAlarm9			:=MesDataExd.MesData.OUT_CmdDisconnect				, 	//Disconnect order
+		bAlarm10		:=MesDataExd.MesData.OUT_CmdEmergencyDisconnect 	        , 	//Emergency Disconnect order
+		bAlarm11		:=MesDataExd.OUT_CmdPReg												, 	// P regulation mode is active
+		bAlarm12		:=MesDataExd.OUT_Rse								    , 	// RSE mode active  
+		bAlarm13		:=MesDataExd.OUT_TA 							, 	//Teleaction active
+		bAlarm14		:=IN_CmdDisconnectFromTac_IO , 		// Disconnect order from TAC
+		bAlarm15		:=IN_CmdTacInFault_IO , 			// TAC in Fault 
+		wAlarmCode		=>MesDataExd.MesData.MesWarningCode);		
+
+// EVENT CODE 1//
+	FB_AlarmCodeManager(
+		bAlarm1			:=FALSE , // 
+		bAlarm2			:=NOT MesDataExd.OUT_CmdPReg							    , 	//P regulation mode is inactive
+		bAlarm3			:=MesDataExd.MesData.OUT_CmdAutCpl					, 	//Coupling authorization
+		bAlarm4			:=FALSE ,//
+		bAlarm5			:=IN_CmdSynchro_IO			    						, 	// Synchronization signal 
+		bAlarm6			:=NOT MesDataExd.MesData.OUT_CmdDisconnect			, 	//End of disconnect order 
+		bAlarm7			:=FALSE ,// 
+		bAlarm8			:=NOT MesDataExd.MesData.OUT_CmdEmergencyDisconnect					, 	//End of Emergency Disconnect order
+		bAlarm9			:=FALSE , // 
+		bAlarm10		:=FALSE , // 
+		bAlarm11		:=NOT MesDataExd.OUT_CmdPReg												, 	//P regulation mode is inactive
+		bAlarm12		:=FALSE ,//  
+		bAlarm13		:=NOT MesDataExd.OUT_Rse							    , 	//RSE mode inactive  
+		bAlarm14		:=FALSE ,//
+		bAlarm15		:=NOT MesDataExd.OUT_TA							, 	//Teleaction inactive
+		wAlarmCode		=>MesDataExd.MesData.MesEventCode);   
+                          	
+// EVENT CODE 2 //		                                              	
+	FB_AlarmCodeManager(                                              	
+		bAlarm1			:=IN_CmdAutCpl_IO , 							// Coupling authorization received from DEIE
+		bAlarm2			:=IN_CmdDisconnect_End_IO,						// End of disconnect order received from  DEIE
+		bAlarm3			:=IN_CmdDisconnect_IO		   , 				// Disconnect order received from DEIE
+		bAlarm4			:= IN_CmdEmergencyDisconnect_End_IO	   	, 		// End of Emergency disconnect order received from DEIE
+		bAlarm5			:=IN_CmdAutCpl_other, 							// Coupling authoriztion received from HMI
+		bAlarm6			:=IN_CmdDisconnect_other		 , 				// Disconnect order received from HMI
+		bAlarm7			:=IN_CmdDisconnect_end_other,	 				// End of disconnect order received from HMI
+		bAlarm8			:=IN_CmdEmergencyDisconnect_IO	, 				// Emergency disconnect order received from DEIE
+		bAlarm9			:=IN_Unavailable, 								// Power plant is unavaiblable ( MainMVCB in local or ES) 
+		bAlarm10		:=IN_CmdEmergencyDisconnect_other, 	//Emergency disconnect order received from HMI
+		bAlarm11		:=IN_CmdEmergencyDisconnect_End_other	, 	//End of Emergency disconnect order received from HMI
+		bAlarm12		:=FALSE, 	//
+		bAlarm13		:=FALSE, 	//       
+		bAlarm14		:=FALSE, 	//
+		bAlarm15		:=FALSE	,//
+		wAlarmCode		=>MesDataExd.MesData.MesEventCode2);
+		
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_CP" Id="{d8c7224f-a858-448b-a33d-43e2f4b6927a}">
+      <Declaration><![CDATA[METHOD M_CP
+//////////////////
+//  Emulator
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Evaluate" Id="{fd1b4c2c-9a71-4974-a6f8-7ee9cdc95749}">
+      <Declaration><![CDATA[METHOD M_Evaluate
+//////////////////
+//  Evaluate grid variables 
+/////////////////
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	WatchDog	: BOOL;
+END_VAR
+
+
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[WatchDog		:= TRUE;
+
+//Filtering Input
+	TONConnectAuthorization		(IN:=IN_CmdAutCpl_IO,PT:=ParamTONFiltering);
+	TONEmergencyDisconnect		(IN:=IN_CmdEmergencyDisconnect_IO,PT:=ParamTONFiltering);	
+	TONEmergencyDisconnect_end	(IN:=IN_CmdEmergencyDisconnect_End_IO,PT:=ParamTONFiltering);	
+	TONDisconnect				(IN:=IN_CmdDisconnect_IO,PT:=ParamTONFiltering);	
+	TONDisconnect_end			(IN:=IN_CmdDisconnect_End_IO,PT:=ParamTONFiltering);
+	TONPRegOn				(IN:=IN_CmdStartPReg_IO,PT:=ParamTONFiltering);			
+	TONPRegOff				(IN:=IN_CmdStopPReg_IO,PT:=ParamTONFiltering);				
+	TONQregOn				(IN:=IN_CmdStartQreg_IO,PT:=ParamTONFiltering);				
+	TONQRegOff				(IN:=IN_CmdStopQReg_IO,PT:=ParamTONFiltering);				
+	TONRSEOn				(IN:=IN_CmdRSEOn_IO,PT:=ParamTONFiltering);				
+	TONRSEOff				(IN:=IN_CmdRSEOff_IO,PT:=ParamTONFiltering);				
+	TONTAOn					(IN:=IN_CmdTAOn_IO,PT:=ParamTONFiltering);					
+	TONTAOff				(IN:=IN_CmdTAOff_IO,PT:=ParamTONFiltering);		
+
+//Filtering Input
+	TONConnectAuthorization		(IN:=IN_CmdAutCpl_IO,PT:=ParamTONFiltering);
+	TONEmergencyDisconnect		(IN:=IN_CmdEmergencyDisconnect_IO,PT:=ParamTONFiltering);	
+	TONEmergencyDisconnect_end	(IN:=IN_CmdEmergencyDisconnect_End_IO,PT:=ParamTONFiltering);	
+	TONDisconnect				(IN:=IN_CmdDisconnect_IO,PT:=ParamTONFiltering);	
+	TONDisconnect_end			(IN:=IN_CmdDisconnect_End_IO,PT:=ParamTONFiltering);
+	TONPRegOn					(IN:=IN_CmdStartPReg_IO,PT:=ParamTONFiltering);			
+	TONPRegOff					(IN:=IN_CmdStopPReg_IO,PT:=ParamTONFiltering);				
+	TONQregOn					(IN:=IN_CmdStartQreg_IO,PT:=ParamTONFiltering);				
+	TONQRegOff					(IN:=IN_CmdStopQReg_IO,PT:=ParamTONFiltering);				
+	TONRSEOn					(IN:=IN_CmdRSEOn_IO,PT:=ParamTONFiltering);				
+	TONRSEOff					(IN:=IN_CmdRSEOff_IO,PT:=ParamTONFiltering);				
+	TONTAOn						(IN:=IN_CmdTAOn_IO,PT:=ParamTONFiltering);					
+	TONTAOff					(IN:=IN_CmdTAOff_IO,PT:=ParamTONFiltering);	
+
+// Calculate the difference between the closest hour and the trigger from GRID
+	// closest hour is min betwenn the rest of the Euclydian division 3600s = 1h	
+	R_Trig_SynchTime(CLK := IN_CmdSynchro_IO OR bTest);
+	IF R_Trig_SynchTime.Q THEN
+		Heure_Pulse	:= DT_TO_DINT(systemtime_to_dt(TIMESTR := CalLocalTimeStruct));
+		Reste := Heure_Pulse MOD 3600;
+		IF (3600-Reste) < Reste THEN
+			Ecart_HeureGrid := -(3600-Reste);
+		ELSE
+			Ecart_HeureGrid := Reste;
+		END_IF
+		//Ecart_HeureGrid := MIN(3600-Reste, Reste);
+		MesDataExd.MesEcart_HeureGrid := Ecart_HeureGrid;
+	END_IF
+
+//Converting P0 & Q0
+	IF ParamP0Available THEN
+		//OUT_P0 :=  (MesP0RegIO/ 32767.0) * REAL_TO_INT(ParamPmaxPark);
+	MesDataExd.MesData.OUT_SetptP :=  (IN_MesP0Reg_IO/ 32767.0) * ABS(ParamPMin - ParamPmaxPark) + (ParamPMin);
+	END_IF
+	IF ParamQ0Available THEN
+	MesDataExd.MesData.OUT_SetptQ := ( IN_MesQ0Reg_IO / 32767.0) * ABS(ParamQMin - ParamQMax) + (ParamQMin);
+	END_IF	
+//Logical Equation
+	(*PLCUnavailable Si Watchdog n'est pas mis a jour a chaque temps de cycle Ou que la centrale est en Local *)
+	MesDataExd.MesData.OUT_MesPPUnavailable := NOT WatchDog OR IN_Unavailable;
+	
+	(*Centrale Couplée *)
+	MesDataExd.MesData.OUT_MesPPConnected := IN_PP_Connected;
+	
+	(*Autorisation de couplage*)
+		IF TONConnectAuthorization.Q OR IN_CmdAutCpl_other THEN
+		MesDataExd.MesData.OUT_CmdAutCpl := 1 ;
+		END_IF
+		
+	(*Défaut GTE > 50s : Reset Aut Couplage recus*)
+	(*Défaut C13_100 : Reset Aut Couplage recus*)
+		IF IN_ConnectAuthorizationLost THEN  //IN_Long_GTE_Fault OR IN_C13_100_Fault OR IN_UnknownFault OR IN_3GTE_Fault THEN
+		MesDataExd.MesData.OUT_CmdAutCpl  := FALSE ;
+		END_IF
+	
+	(* RESEAU 6 ET 7 - DEMANDE DE DECOUPLAGE*)
+		IF TONDisconnect.Q OR IN_CmdDisconnect_other THEN
+			MesDataExd.MesData.OUT_CmdDisconnect := 1 ;
+		END_IF
+	
+		IF TONDisconnect_end.Q OR IN_CmdDisconnect_end_other THEN
+		MesDataExd.MesData.OUT_CmdDisconnect := 0 ;
+		END_IF
+
+	(* RESEAU 8 ET 9 - DEMANDE D’EFFACEMENT D’URGENCE*)
+		IF TONEmergencyDisconnect.Q OR  IN_CmdEmergencyDisconnect_other THEN
+		MesDataExd.MesData.OUT_CmdEmergencyDisconnect := 1 ;
+		END_IF
+	
+		IF TONEmergencyDisconnect_end.Q OR IN_CmdEmergencyDisconnect_End_other THEN
+		MesDataExd.MesData.OUT_CmdEmergencyDisconnect := 0 ;
+		END_IF
+	(* RESEAU 10 ET 11 - PASSAGE A P0*)
+		IF TONPRegOn.Q OR IN_CmdStartPReg_other THEN
+		MesDataExd.OUT_CmdPReg := 1 ;
+		END_IF
+		
+		IF TONPRegOff.Q OR IN_CmdStopPReg_other THEN
+		MesDataExd.OUT_CmdPReg := 0 ;
+		END_IF
+		
+	(* RESEAU 12 ET 13 - PASSAGE A Q0*)
+		IF TONQregOn.Q OR IN_CmdStartQReg_other THEN
+		MesDataExd.OUT_CmdQReg := 1 ;
+		END_IF
+		
+		IF TONQregOff.Q OR IN_CmdStopQReg_other THEN
+		MesDataExd.OUT_CmdQReg := 0 ;
+		END_IF
+
+				
+	(* RSE*)
+		IF TONRSEOn.Q  THEN
+		MesDataExd.OUT_Rse := 1 ;
+		ELSIF TONRSEOff.Q THEN
+		MesDataExd.OUT_Rse := 0 ;
+		END_IF
+		
+	(* TA*)
+		IF TONTAOn.Q  THEN
+		MesDataExd.OUT_TA := 1 ;
+		ELSIF TONTAOff.Q THEN
+		MesDataExd.OUT_TA := 0 ;
+		END_IF
+		
+	
+// Update Outputs IO to GRID 
+OUT_MesPPUnavailable_IO				:= MesDataExd.MesData.OUT_MesPPUnavailable ; 			
+OUT_MesPPConnected_IO				:= MesDataExd.MesData.OUT_MesPPConnected ; 	
+OUT_MesPPDisconnected_IO			:= NOT MesDataExd.MesData.OUT_MesPPConnected ; 
+OUT_MesAutCpl_IO 					:= MesDataExd.MesData.OUT_CmdAutCpl ; 			
+OUT_MesAutCpl_end_IO 				:= NOT MesDataExd.MesData.OUT_CmdAutCpl ; 		
+OUT_MesDisconnect_IO 				:= MesDataExd.MesData.OUT_CmdDisconnect ; 		
+OUT_MesDisconnect_End_IO 			:= NOT MesDataExd.MesData.OUT_CmdDisconnect ; 		
+OUT_MesEmergencyDisconnect_IO 		:= MesDataExd.MesData.OUT_CmdEmergencyDisconnect ; 		
+OUT_MesEmergencyDisconnect_End_IO 	:= NOT MesDataExd.MesData.OUT_CmdEmergencyDisconnect ; 		
+
+OUT_MesRSEON_IO						:= MesDataExd.OUT_Rse ;
+OUT_MesRSEOff_IO					:= NOT MesDataExd.OUT_Rse ;
+OUT_MesTAOn_IO						:= MesDataExd.OUT_TA ; 
+OUT_MesTAOff_IO						:= NOT MesDataExd.OUT_TA ; 
+
+OUT_MesStartPReg_IO	 := MesDataExd.OUT_CmdPReg ; 
+OUT_MesStopPReg_IO	 := NOT MesDataExd.OUT_CmdPReg ; 
+OUT_MesStartQReg_IO	 := MesDataExd.OUT_CmdQReg ; 
+OUT_MesStopQReg_IO	 := NOT MesDataExd.OUT_CmdQReg ; 
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{a9fde774-0653-433e-9795-8976ae5fbe72}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// PERMANENT CONDITIONS //
+	M_CP() ; 
+	
+// METHODS CALLS //
+	IF bInit THEN
+		M_Init() ; 
+		bInit:= FALSE ; 
+	ELSIF CmdInit_G THEN 
+		bInit:= TRUE ;
+	END_IF
+
+	M_Evaluate() ; 
+	M_AlarmManagement(); 
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{4d0f75ae-2cbc-47ab-aa2b-9bc50f37083b}">
+      <Declaration><![CDATA[METHOD M_Init
+VAR 
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Au démarrage du code , on maintient en mémoire l'autorization de couplage ssi la centrale est connectée. 
+IF NOT A1_SUBMV.A1_MainMVCB.MesDataExd.MesData.MesClosed THEN // La centrale n'est pas connectée
+	MesDataExd.MesData.OUT_CmdAutCpl := FALSE ;
+	MesDataExd.OUT_CmdPReg := FALSE;
+	MesDataExd.OUT_CmdQReg := FALSE;
+
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_GRID_Enedis">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_GRID_Enedis.M_AlarmManagement">
+      <LineId Id="730" Count="75" />
+      <LineId Id="194" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_GRID_Enedis.M_CP">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_GRID_Enedis.M_Evaluate">
+      <LineId Id="2134" Count="15" />
+      <LineId Id="2259" Count="15" />
+      <LineId Id="2278" Count="13" />
+      <LineId Id="2150" Count="97" />
+      <LineId Id="1631" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_GRID_Enedis.M_Execute">
+      <LineId Id="745" Count="12" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_GRID_Enedis.M_Init">
+      <LineId Id="8" Count="4" />
+      <LineId Id="17" Count="0" />
+      <LineId Id="13" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

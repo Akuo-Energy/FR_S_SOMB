@@ -1,0 +1,38 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="PRG_RestartPlc" Id="{a9da522d-bcf3-4058-af5e-42eb5ef1f88a}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM PRG_RestartPlc
+VAR
+END_VAR
+VAR_INPUT
+	CmdRestart 	: BOOL;
+END_VAR
+
+VAR
+	RestartProcess : NT_Reboot;
+	Trig_Restart	: R_TRIG;
+	
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[Trig_Restart(CLK := CmdRestart);
+
+RestartProcess
+(
+	NETID := '',
+	START := Trig_Restart.Q,
+	DELAY := 5,
+	TMOUT := T#1S
+);]]></ST>
+    </Implementation>
+    <LineIds Name="PRG_RestartPlc">
+      <LineId Id="5" Count="0" />
+      <LineId Id="15" Count="0" />
+      <LineId Id="14" Count="0" />
+      <LineId Id="16" Count="1" />
+      <LineId Id="21" Count="0" />
+      <LineId Id="37" Count="0" />
+      <LineId Id="25" Count="0" />
+      <LineId Id="23" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

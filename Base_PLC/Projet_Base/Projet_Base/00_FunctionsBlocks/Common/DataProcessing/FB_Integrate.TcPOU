@@ -1,0 +1,58 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_Integrate" Id="{f716dc59-ad62-41bd-aa13-40598c651737}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Integrate
+// This FB increments the value of the Input with every call of the FB. DO NOT CALL THIS TWICE IN A CYCLE.
+// Integration is done with the trapeze method
+// The Reset input resets the value to 0
+VAR_INPUT
+	IN_DataToIntegrate		: REAL;
+	IN_CmdReset				: BOOL;
+	
+END_VAR
+VAR_OUTPUT
+	OUT_IntegrationValue	: REAL;
+END_VAR
+VAR
+	OldData					: REAL;
+	OldTime					: TIME;
+	DeltaTime				: TIME;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF OldTime > T#0S THEN
+	DeltaTime := TIME()-OldTime;
+	
+	OUT_IntegrationValue := OUT_IntegrationValue+(IN_DataToIntegrate + OldData)*TIME_TO_REAL(DeltaTime)/2000.0;
+	
+	OldTime := TIME();
+	OldData := IN_DataToIntegrate;
+	
+	IF IN_CmdReset THEN
+		OUT_IntegrationValue := 0.0;
+		OldData := 0.0;
+	END_IF
+ELSE
+	OldTime := TIME();
+	OldData := IN_DataToIntegrate;
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="FB_Integrate">
+      <LineId Id="37" Count="0" />
+      <LineId Id="19" Count="0" />
+      <LineId Id="34" Count="0" />
+      <LineId Id="25" Count="0" />
+      <LineId Id="20" Count="0" />
+      <LineId Id="23" Count="0" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="28" Count="0" />
+      <LineId Id="27" Count="0" />
+      <LineId Id="29" Count="0" />
+      <LineId Id="32" Count="0" />
+      <LineId Id="30" Count="0" />
+      <LineId Id="38" Count="1" />
+      <LineId Id="41" Count="0" />
+      <LineId Id="40" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

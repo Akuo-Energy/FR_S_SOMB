@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="E_ComState" Id="{d4be720f-11f2-4cb9-9d95-eece16bad425}">
+    <Declaration><![CDATA[TYPE E_ComState :
+(
+	INIT := 0,
+	IDLE,
+	CONNECT,
+	DATATRANSFER,
+	DISCONNECT
+);
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

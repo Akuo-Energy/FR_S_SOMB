@@ -1,0 +1,151 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.13">
+  <POU Name="FB_WS_Base" Id="{aba49be0-1123-468c-bc4c-215ae1e0db7e}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_WS_Base 
+VAR_INPUT PERSISTENT
+		//M_INIT VARIABLES // 	
+		bInit						: BOOL := TRUE ; 			// (NA) Initialize object parameters at first cycle 
+END_VAR
+
+VAR_INPUT
+	IN_CmdReset_L 					: BOOL ;  					//(NA) [P,H]   Reset Command . 
+END_VAR
+
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//
+	
+		
+	                                             
+	//M_STATEMANAGER VARIABLES//
+	
+		
+	//M_EVALUATE VARIABLES//
+//	MesDataExd				: WS ;						// (NA) [P,H,B] PTR concept Data structure
+ 
+	// M_EXECUTE //             	
+		KK							: BYTE ; 					// (NA) Loop over child objects 
+		
+
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{fb59d850-4ba2-4796-9926-941a66e5ddd8}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Generates object alarms and manages resets. 
+//////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_EquipmentCalls" Id="{adbdf807-3243-4188-8fe9-a3e9c863b538}">
+      <Declaration><![CDATA[METHOD M_EquipmentCalls
+//////////////////
+// Evaluate AMS characteristics
+//////////////////
+
+VAR
+	// Method local variables (reinitialized at each cycle) 
+
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Evaluate" Id="{e9ab1838-278f-40bc-8820-e84e5bc09b06}">
+      <Declaration><![CDATA[METHOD M_Evaluate
+//////////////////
+// Evaluate available Powers and AMG characteristics . 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{05bdbad1-4a9d-4411-a6c1-fd5e03806250}">
+      <Declaration><![CDATA[METHOD M_Execute
+/////////////////////
+// Action Calls and Object Calls
+/////////////////////
+VAR
+	
+
+
+
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+// INITIALIZE // 
+	IF bInit THEN
+		M_Init() ; 
+		bInit		:= FALSE ; 
+		
+	ELSIF CmdInit_G THEN 
+		bInit		:= TRUE ;
+		
+	END_IF
+
+// OBJECT CALLS //
+	M_EquipmentCalls() ; 
+	
+// METHODS CALLS //
+	// Order is important 
+
+	M_Evaluate();
+	
+	M_AlarmManagement(); 
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{2d358e75-b6e4-4db6-8366-c9f16c87ec9b}">
+      <Declaration><![CDATA[METHOD M_Init 
+VAR
+	KK 				: UINT;
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_WS_Base">
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_WS_Base.M_AlarmManagement">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_WS_Base.M_EquipmentCalls">
+      <LineId Id="49" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_WS_Base.M_Evaluate">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_WS_Base.M_Execute">
+      <LineId Id="251" Count="19" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_WS_Base.M_Init">
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

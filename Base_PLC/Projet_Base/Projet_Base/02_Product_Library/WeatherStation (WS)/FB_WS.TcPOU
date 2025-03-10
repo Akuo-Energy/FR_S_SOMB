@@ -1,0 +1,343 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.13">
+  <POU Name="FB_WS" Id="{69de29ce-3076-41ec-975f-9ceadb93b491}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_WS EXTENDS FB_WS_Base
+//////////////////
+//  WS product
+//////////////////
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance specific) 
+		ParamDurationInteger : TIME := T#10S ; (* (s) Duration on which the irradiation is integered*)
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+END_VAR
+
+VAR_INPUT
+	
+	// I/O Inputs 
+	A1_Pyran_GTI_1			: FB_ANA_IO ;		
+	A1_Pyran_GTI_2			: FB_ANA_IO ;							
+	A1_Pyran_GHI_1			: FB_ANA_IO ;				
+	A1_Pyran_GHI_2			: FB_ANA_IO ;
+	A1_TempSensor_Panel_1	: FB_ANA_IO ;		
+	A1_TempSensor_Panel_2	: FB_ANA_IO ;		
+	A1_TempSensor_Panel_3	: FB_ANA_IO ;	
+	A1_TempSensor_Panel_4	: FB_ANA_IO ;
+	
+	A1_WS600 				: FB_ANA_AllInOne ;
+	
+	AX_TempSensor_Panel		: ARRAY [1..CstNbPanTmp] OF FB_ANA_IO ; 
+	AX_Pyrano_GHI			: ARRAY [1..CstNbPyrano_GHI] OF FB_ANA_IO ; 
+	AX_Pyrano_GTI			: ARRAY [1..CstNbPyrano_GTI] OF FB_ANA_IO ; 
+	
+	//Modbus RTU
+	ModbusRTU		: FB_ModbusRTU;
+	ModbusRTU_2		: FB_ModbusRTU;
+	
+END_VAR
+
+VAR
+
+	TON : TON;
+	ClockCal 		: BOOL;
+	
+	MesDataExd			: WS_RAV2; 
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{89da4e01-90e2-4962-8240-3f5e6569febf}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Generates object alarms and manages resets. 
+//////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager			: FB_AlarmCodeManager ; 
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[///// SYNTHESE A FAIRE //
+
+
+ 
+
+// ALARM CODE //
+
+// Attention une alarm doit être mise en commentaire de la manière suivante (* *), l'utilisation du // pose pb sur Bazefield 
+
+	FB_AlarmCodeManager(
+		bAlarm1			:= FALSE,						//
+		bAlarm2			:= FALSE,						//
+		bAlarm3			:= FALSE,						//
+		bAlarm4			:= FALSE,						//
+		bAlarm5			:= FALSE,						//
+		bAlarm6			:= FALSE,						//
+		bAlarm7			:= FALSE,						//
+		bAlarm8			:= FALSE,						//
+		bAlarm9			:= FALSE,						//
+		bAlarm10		:= FALSE,						//
+		bAlarm11		:= FALSE,						//
+		bAlarm12		:= FALSE,						//
+		bAlarm13		:= FALSE,						//
+		bAlarm14		:= FALSE,						//
+		bAlarm15		:= FALSE,						//
+		wAlarmCode		=>MesDataExd.MesData.MesAlarmCode); 
+	
+
+// WARNING CODE //
+	FB_AlarmCodeManager(
+ 		bAlarm1			:= FALSE,						//
+		bAlarm2			:= FALSE,						//
+		bAlarm3			:= FALSE,						//
+		bAlarm4			:= FALSE,						//
+		bAlarm5			:= FALSE,						//
+		bAlarm6			:= FALSE,						//
+		bAlarm7			:= FALSE,						//
+		bAlarm8			:= FALSE,						//
+		bAlarm9			:= FALSE,						//
+		bAlarm10		:= FALSE,						//
+		bAlarm11		:= FALSE,						//
+		bAlarm12		:= FALSE,						//
+		bAlarm13		:= FALSE,						//     
+		bAlarm14		:= FALSE,						//     
+		bAlarm15		:= FALSE,						//
+		wAlarmCode		=>MesDataExd.MesData.MesWarningCode);		
+		
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_EquipmentCalls" Id="{9476ed28-06f4-4f30-a7ab-8005b04eac5d}">
+      <Declaration><![CDATA[METHOD M_EquipmentCalls
+//////////////////
+// Evaluate AMS characteristics
+//////////////////
+
+VAR
+	// Method local variables (reinitialized at each cycle) 
+
+	KK : UINT ;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+A1_Pyran_GTI_1.M_Execute() ; 		
+A1_Pyran_GTI_2.M_Execute() ; 			
+A1_Pyran_GHI_1.M_Execute() ; 			
+A1_Pyran_GHI_2.M_Execute() ; 			
+A1_TempSensor_Panel_1.M_Execute() ; 	
+A1_TempSensor_Panel_2.M_Execute() ; 	
+A1_TempSensor_Panel_3.M_Execute() ; 	
+A1_TempSensor_Panel_4.M_Execute() ; 	
+A1_WS600.M_Execute() ; 
+
+FOR KK := 1 TO CstNbPyrano_GTI DO
+	AX_Pyrano_GTI[KK].M_Execute();
+END_FOR
+
+FOR KK := 1 TO CstNbPyrano_GHI DO
+	AX_Pyrano_GHI[KK].M_Execute();
+END_FOR	]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Evaluate" Id="{362753e4-8360-4b5f-b385-2b34a48b4de9}">
+      <Declaration><![CDATA[METHOD M_Evaluate
+//////////////////
+// Evaluate available Powers and AMG characteristics 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	KK : UINT;
+	
+	CalNbPyranoActive		: INT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//ModbusRTU();
+
+// SUBMV DataExd
+
+	// Ne sert à rien sauf à remplir le configurator
+	MesDataExd.Pyran_GTI_1  			:= A1_Pyran_GTI_1.MesDataExd; 
+	MesDataExd.Pyran_GTI_2 				:= A1_Pyran_GTI_2.MesDataExd; 
+	MesDataExd.Pyran_GHI_1    			:= A1_Pyran_GHI_1.MesDataExd; 
+	MesDataExd.Pyran_GHI_2    			:= A1_Pyran_GHI_2.MesDataExd; 
+	
+	MesDataExd.TempSensor_Panel_1		:= A1_TempSensor_Panel_1.MesDataExd; 
+	MesDataExd.TempSensor_Panel_2		:= A1_TempSensor_Panel_2.MesDataExd; 
+	MesDataExd.TempSensor_Panel_3		:= A1_TempSensor_Panel_3.MesDataExd; 
+	MesDataExd.TempSensor_Panel_4		:= A1_TempSensor_Panel_4.MesDataExd; 
+	
+	// Utile 
+	MesDataExd.Pyran_GTI_1  		:= AX_Pyrano_GTI[1].MesDataExd; 
+	MesDataExd.Pyran_GTI_2 			:= AX_Pyrano_GTI[2].MesDataExd; 
+	MesDataExd.Pyran_GHI_1    		:= AX_Pyrano_GHI[1].MesDataExd; 
+	MesDataExd.Pyran_GHI_2    		:= AX_Pyrano_GHI[2].MesDataExd; 
+	MesDataExd.TempSensor_Panel_1	:= AX_TempSensor_Panel[1].MesDataExd;
+	MesDataExd.TempSensor_Panel_2	:= AX_TempSensor_Panel[2].MesDataExd;
+	MesDataExd.TempSensor_Panel_3	:= AX_TempSensor_Panel[3].MesDataExd;
+	MesDataExd.TempSensor_Panel_4	:= AX_TempSensor_Panel[4].MesDataExd;
+	
+	MesDataExd.WS600 				:= A1_WS600.MesDataExd;
+	
+	MesDataExd.Pyrano_GTI[1].MesData		:= MesDataExd.Pyran_GTI_1.MesData;
+	MesDataExd.Pyrano_GTI[2].MesData 		:= MesDataExd.Pyran_GTI_2.MesData;
+	MesDataExd.Pyrano_GHI[1].MesData		:= MesDataExd.Pyran_GHI_1.MesData;
+	MesDataExd.Pyrano_GHI[2].MesData 		:= MesDataExd.Pyran_GHI_2.MesData;
+	MesDataExd.TempSensor_Panel[1].MesData	:= MesDataExd.TempSensor_Panel_1.MesData;	
+	MesDataExd.TempSensor_Panel[2].MesData	:= MesDataExd.TempSensor_Panel_2.MesData;	
+	MesDataExd.TempSensor_Panel[3].MesData	:= MesDataExd.TempSensor_Panel_3.MesData;	
+	MesDataExd.TempSensor_Panel[4].MesData	:= MesDataExd.TempSensor_Panel_4.MesData;	
+
+// Calculated and Cumulated Values
+	MesDataExd.MesData.MesGTI := 0 ; 
+	MesDataExd.MesData.MesGHI := 0 ;
+		
+	FOR KK:= 1 TO CstNbPyrano_GTI DO 
+		MesDataExd.MesData.MesGTI := MesDataExd.MesData.MesGTI +  SEL(AX_Pyrano_GTI[KK].MesDataExd.MesData.MesAlarmCode = 0 , 0 , AX_Pyrano_GTI[KK].MesDataExd.MesData.Value )  ; 
+		CalNbPyranoActive := CalNbPyranoActive + SEL(AX_Pyrano_GTI[KK].MesDataExd.MesData.MesAlarmCode = 0 , 0 , 1 ) ; 
+	END_FOR 
+	
+	FOR KK:= 1 TO CstNbPyrano_GHI DO 
+		MesDataExd.MesData.MesGTI := MesDataExd.MesData.MesGTI +  SEL(AX_Pyrano_GHI[KK].MesDataExd.MesData.MesAlarmCode = 0 , 0 , AX_Pyrano_GHI[KK].MesDataExd.MesData.Value )  ; 
+		CalNbPyranoActive := CalNbPyranoActive + SEL(AX_Pyrano_GHI[KK].MesDataExd.MesData.MesAlarmCode = 0 , 0 , 1 ) ; 
+	END_FOR 
+	
+	MesDataExd.MesData.MesGTI := SEL( CalNbPyranoActive>= 1 , 0 , MesDataExd.MesData.MesGTI / CalNbPyranoActive ) ; 
+	MesDataExd.MesData.MesGHI := SEL( CalNbPyranoActive>= 1 , 0 , MesDataExd.MesData.MesGHI / CalNbPyranoActive ) ; 
+	
+	TON( IN := NOT TON.Q, PT := ParamDurationInteger );
+	
+	ClockCal := TON.Q;
+	
+	IF ClockCal THEN 
+		MesDataExd.MesData.MesGHI_Cumul := MesDataExd.MesData.MesGHI_Cumul + MesDataExd.MesData.MesGHI * TIME_TO_INT(ParamDurationInteger)/3600 /1000  ;
+		MesDataExd.MesData.MesGTI_Cumul := MesDataExd.MesData.MesGTI_Cumul + MesDataExd.MesData.MesGTI * TIME_TO_INT(ParamDurationInteger)/3600 /1000  ;
+		ClockCal := FALSE;
+	END_IF
+	
+	ClockCal := FALSE;
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{94312ea3-d3d4-4ffd-bab7-ba7d297ef355}">
+      <Declaration><![CDATA[METHOD M_Init 
+VAR
+	KK 				: UINT;
+	
+	ParamIDModbusCard: INT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+	FOR KK:=1 TO CstNbPyrano_GTI DO 
+		
+		Ax_Pyrano_GTI[KK].ParamRangeMax := 1600 ; 
+		Ax_Pyrano_GTI[KK].ParamRangeMin := 0 ; 	
+		Ax_Pyrano_GTI[KK].ParamVarMaxAlarm := 1500 ; 
+		Ax_Pyrano_GTI[KK].ParamVarMinAlarm := -10 ;	
+	
+	END_FOR
+	
+	FOR KK:=1 TO CstNbPyrano_GHI DO 
+		
+		Ax_Pyrano_GHI[KK].ParamRangeMax := 1600 ; 
+		Ax_Pyrano_GHI[KK].ParamRangeMin := 0 ; 	
+		Ax_Pyrano_GHI[KK].ParamVarMaxAlarm := 1500 ; 
+		Ax_Pyrano_GHI[KK].ParamVarMinAlarm := -10 ;	
+	
+	END_FOR
+
+	A1_WS600.ParamUnitID	   		:= 1;
+	
+	A1_TempSensor_Panel_1.ParamRangeMax := 90 ; 
+	A1_TempSensor_Panel_1.ParamRangeMin := -10 ; 	
+	A1_TempSensor_Panel_1.ParamVarMaxAlarm := 70 ; 
+	A1_TempSensor_Panel_1.ParamVarMinAlarm := 0 ;	
+	A1_TempSensor_Panel_1.ParamNbSensors := 2 ; 
+	A1_TempSensor_Panel_1.ParamDiffMax := 5 ; 	
+	
+	A1_TempSensor_Panel_2.ParamRangeMax := 90 ; 
+	A1_TempSensor_Panel_2.ParamRangeMin := -10 ; 	
+	A1_TempSensor_Panel_2.ParamVarMaxAlarm := 70 ; 
+	A1_TempSensor_Panel_2.ParamVarMinAlarm := 0 ;	
+	A1_TempSensor_Panel_2.ParamNbSensors := 2 ; 
+	A1_TempSensor_Panel_2.ParamDiffMax := 5 ; 
+	
+	A1_TempSensor_Panel_3.ParamRangeMax := 90 ; 
+	A1_TempSensor_Panel_3.ParamRangeMin := -10 ; 	
+	A1_TempSensor_Panel_3.ParamVarMaxAlarm := 70 ; 
+	A1_TempSensor_Panel_3.ParamVarMinAlarm := 0 ;	
+	A1_TempSensor_Panel_3.ParamNbSensors := 2 ; 
+	A1_TempSensor_Panel_3.ParamDiffMax := 5 ; 
+	
+	A1_TempSensor_Panel_4.ParamRangeMax := 90 ; 
+	A1_TempSensor_Panel_4.ParamRangeMin := -10 ; 	
+	A1_TempSensor_Panel_4.ParamVarMaxAlarm := 70 ; 
+	A1_TempSensor_Panel_4.ParamVarMinAlarm := 0 ;	
+	A1_TempSensor_Panel_4.ParamNbSensors := 2 ; 
+	A1_TempSensor_Panel_4.ParamDiffMax := 5 ; ]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_WS">
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_WS.M_AlarmManagement">
+      <LineId Id="252" Count="0" />
+      <LineId Id="292" Count="0" />
+      <LineId Id="295" Count="0" />
+      <LineId Id="291" Count="0" />
+      <LineId Id="170" Count="0" />
+      <LineId Id="30" Count="0" />
+      <LineId Id="306" Count="0" />
+      <LineId Id="305" Count="0" />
+      <LineId Id="307" Count="0" />
+      <LineId Id="31" Count="20" />
+      <LineId Id="53" Count="15" />
+      <LineId Id="281" Count="0" />
+      <LineId Id="223" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_WS.M_EquipmentCalls">
+      <LineId Id="205" Count="0" />
+      <LineId Id="204" Count="0" />
+      <LineId Id="220" Count="6" />
+      <LineId Id="230" Count="0" />
+      <LineId Id="237" Count="0" />
+      <LineId Id="231" Count="1" />
+      <LineId Id="229" Count="0" />
+      <LineId Id="234" Count="2" />
+      <LineId Id="233" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_WS.M_Evaluate">
+      <LineId Id="348" Count="63" />
+      <LineId Id="270" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_WS.M_Init">
+      <LineId Id="223" Count="0" />
+      <LineId Id="225" Count="0" />
+      <LineId Id="232" Count="0" />
+      <LineId Id="226" Count="3" />
+      <LineId Id="231" Count="0" />
+      <LineId Id="224" Count="0" />
+      <LineId Id="234" Count="7" />
+      <LineId Id="233" Count="0" />
+      <LineId Id="222" Count="0" />
+      <LineId Id="205" Count="0" />
+      <LineId Id="242" Count="0" />
+      <LineId Id="245" Count="12" />
+      <LineId Id="265" Count="0" />
+      <LineId Id="260" Count="4" />
+      <LineId Id="244" Count="0" />
+      <LineId Id="266" Count="0" />
+      <LineId Id="268" Count="4" />
+      <LineId Id="267" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

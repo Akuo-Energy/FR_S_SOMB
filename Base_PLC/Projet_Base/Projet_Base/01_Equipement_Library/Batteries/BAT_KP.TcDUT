@@ -1,0 +1,65 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="BAT_KP" Id="{477c112a-6baf-4b38-a640-1f815cf23cd2}">
+    <Declaration><![CDATA[{attribute 'pack_mode' := '1'}
+
+TYPE BAT_KP :
+STRUCT
+	MesData						: BAT;			(* Base model*)
+
+	MesSoCConnected				: REAL; 		(* (%) SoC Connected (not including racks with protection).*)
+
+	MesNbCellbalancing				: WORD	; (*(NA) Battery Cell Balancing Count [NCellBal]            *)
+	MesNbCycle						: UINT  ; (* (NA) Number of cycles*)
+	MesChargeStatus					: UINT  ; (* (NA) Charge status*)
+	MesTypeBattery					: WORD  ; (* (NA) Type of battery read on BMS*)
+	MesNbRackTot					: WORD	; (*(NA) String Count [NStr]                         		*)
+	MesRemoteControl				: BOOL  ; (* (NA) is remote control active on battery system		*)
+	MesNbRackConnected              : WORD	; (*(NA) Connected String Count [NStrCon]                   *)
+
+	
+	MesIdcMax_Rack                  : REAL  ; (*(A) Max String Current [StrAMax]                        *)
+	MesIDRack_Imax_Rack             : WORD	; (*(NA) Max String Current String [StrAMaxStr]             *)
+	MesIdcMin_Rack                  : REAL  ; (*(A) Min String Current [StrAMin]                        *)
+	MesIDRack_Imin_Rack             : WORD	; (*(NA) Min String Current String [StrAMinStr]             *)
+
+	MesIdc_Rack                     : REAL  ; (*(A) Average String Current [StrAAvg]                    *)
+
+
+	MesTempMax_Module               : REAL  ; (*(C) Max Module Temperature [ModTmpMax]                  *)
+	MesIDRack_TempMax_Module        : WORD	; (*(NA) Max Module Temperature String [ModTmpMaxStr]       *)
+	MesIDModule_TempMax_Module      : WORD	; (*(NA) Max Module Temperature Module [ModTmpMaxMod]       *)
+
+	MesTempMin_Module               : REAL  ; (*(C) Min Module Temperature [ModTmpMin]                  *)
+	MesIDRack_TempMin_Module        : WORD	; (*(NA) Min Module Temperature String [ModTmpMinStr]       *)
+	MesIDModule_TempMin_Module      : WORD	; (*(NA) Min Module Temperature Module [ModTmpMinMod]       *)
+	MesTemp_Module                  : REAL  ; (*(C) Average Module Temperature [ModTmpAvg]              *)
+
+	
+	MesUdcMax_Cell          		: REAL ; (* (V) Max Cell Voltage [CellVMax]                  *)
+	MesIDRack_UdcMax_Cell   		: WORD ; (* (NA) Max Cell Voltage String [CellVMaxStr]       *)
+	MesIDModule_UdcMax_Cell 		: WORD ; (* (NA) Max Cell Voltage Module [CellVMaxMod]       *)
+	MesUdcMin_Cell          		: REAL ; (* (V) Min Cell Voltage [CellVMin]                  *)
+	MesIDRack_UdcMin_Cell   		: WORD ; (* (NA) Min Cell Voltage String [CellVMinStr]       *)
+	MesIDModule_UdcMin_Cell 		: WORD ; (* (NA) Min Cell Voltage Module [CellVMinMod]       *)
+
+	
+	MesUdcMax_Rack          		: REAL ; (* (V) Max String Voltage [StrVMax]                  *)
+	MesIDRack_UdcMax_Rack   		: WORD ; (* (NA) Max Cell Voltage String [StrVMaxStr]       *)
+	MesUdcMin_Rack          		: REAL ; (* (V) Min Cell Voltage [StrVMin]                  *)
+	MesIDRack_UdcMin_Rack   		: WORD ; (* (NA) Min Cell Voltage String [StrVMinStr]       *)
+	MesUdc_Rack						: REAL ;	(* (V) Voltage of the cells, average [StrVAvg]*)
+
+
+	MesChargeNom					: REAL ; (* (Ah) Nameplate Charge Capacity [AHRtg]          	*)
+	     
+	MesHeartbeat             		: WORD ; (* (NA) Battery Heartbeat [Hb]                      *)
+	MesIDAlarm              		: DWORD ; (* (NA) Battery Event 1 Bitfield [Evt1]             *)                        	
+
+	AX_RACK							: ARRAY[1..CstNbRack_BAT_G] OF RackString_KP;
+END_STRUCT
+END_TYPE
+
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

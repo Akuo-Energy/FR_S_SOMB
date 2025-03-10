@@ -1,0 +1,776 @@
+﻿<div id="Content1_19" data-tchmi-type="TcHmi.Controls.System.TcHmiContent" data-tchmi-top="0" data-tchmi-left="0" data-tchmi-right="-29" data-tchmi-bottom="0" data-tchmi-width-mode="Parent" data-tchmi-height-mode="Parent" data-tchmi-min-width="0" data-tchmi-creator-viewport-width="480" data-tchmi-left-unit="px" data-tchmi-top-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-width-unit="px" data-tchmi-height-unit="px" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px">
+
+<div id="Button_StopBESS" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="50" data-tchmi-height-unit="px" data-tchmi-left="10" data-tchmi-left-unit="px" data-tchmi-text="Stop BESS  " data-tchmi-top="76" data-tchmi-top-unit="px" data-tchmi-width="153" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-font-size="20" data-tchmi-is-enabled="%s%PLC1.GVL_CFG.A1_HPP.ParamLocalMode%/s%" data-tchmi-right-unit="px" data-tchmi-text-horizontal-alignment="Right" data-tchmi-text-font-size-unit="px" data-tchmi-bottom-unit="px" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-font-weight="Bold" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px">
+
+
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">[
+  {
+    "event": "Button_StopBESS.onStatePressed",
+    "actions": [
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%s%PLC1.HPP_HMI.bConfirmAction_HMI%/s%",
+        "valueType": "tchmi:general#/definitions/BOOL",
+        "value": {
+          "objectType": "FunctionExpression",
+          "functionExpression": "Confirm(\"Confirm\",\"Are you sure ?\" ,\"Yes\" ,\"No\" ,\"NoIdea\" )"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "Condition",
+        "active": true,
+        "asyncWait": true,
+        "parts": [
+          {
+            "if": [
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "symbolExpression": "%s%PLC1.HPP_HMI.bConfirmAction_HMI%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": true
+                },
+                "compareOperator": "==",
+                "logic": null
+              }
+            ],
+            "then": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%s%PLC1.HPP_HMI.bToggle_Stop_HMI%/s%",
+                "valueType": "tchmi:general#/definitions/BOOL",
+                "value": {
+                  "objectType": "FunctionExpression",
+                  "functionExpression": "!%s%PLC1.HPP_HMI.bToggle_Stop_HMI%/s%"
+                },
+                "asyncWait": true
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]</script>
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
+{
+  "color": "rgba(222, 218, 218, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-text-color" type="application/json">
+{
+  "color": "rgba(0, 0, 0, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-width" type="application/json">
+{
+  "left": 1,
+  "right": 1,
+  "top": 1,
+  "bottom": 1,
+  "leftUnit": "px",
+  "rightUnit": "px",
+  "topUnit": "px",
+  "bottomUnit": "px"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-style" type="application/json">
+{
+  "left": "Solid",
+  "right": "Solid",
+  "top": "Solid",
+  "bottom": "Solid"
+}
+</script>
+</div>
+
+<div id="TcHmiRegion_8" data-tchmi-type="TcHmi.Controls.System.TcHmiRegion" data-tchmi-height="700" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-top="205" data-tchmi-top-unit="px" data-tchmi-width="400" data-tchmi-width-unit="px" data-tchmi-right="0" data-tchmi-width-mode="Parent" data-tchmi-bottom="-5" data-tchmi-height-mode="Parent" data-tchmi-tooltip="" data-tchmi-target-content="%f%if(GetBitMask(%s%PLC1.OpcUa.AllDataR.HPP.CalState%/s%,0)){&quot;HMI/MainContent/TechnoPays/I_TO/Command/I_TO_Command_Off.content&quot;}else{&quot;HMI/MainContent/TechnoPays/I_TO/Command/I_TO_Command_OnGrid.content&quot;}%/f%" data-tchmi-is-enabled="True" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px">
+
+</div>
+
+<div id="Button_StartBESS" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="50" data-tchmi-height-unit="px" data-tchmi-left="173" data-tchmi-left-unit="px" data-tchmi-text="Start BESS  " data-tchmi-top="76" data-tchmi-top-unit="px" data-tchmi-width="162" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-font-size="20" data-tchmi-is-enabled="%s%PLC1.GVL_CFG.A1_HPP.ParamLocalMode%/s%" data-tchmi-right-unit="px" data-tchmi-text-horizontal-alignment="Right" data-tchmi-bottom-unit="px" data-tchmi-text-font-size-unit="px" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-font-weight="Bold" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px">
+
+
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">[
+  {
+    "event": "Button_StartBESS.onStatePressed",
+    "actions": [
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%s%PLC1.HPP_HMI.bConfirmAction_HMI%/s%",
+        "valueType": "tchmi:general#/definitions/BOOL",
+        "value": {
+          "objectType": "FunctionExpression",
+          "functionExpression": "Confirm(\"Confirm\",\"Are you sure ?\" ,\"Yes\" ,\"No\" ,\"NoIdea\" )"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "Condition",
+        "active": true,
+        "asyncWait": true,
+        "parts": [
+          {
+            "if": [
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "symbolExpression": "%s%PLC1.HPP_HMI.bConfirmAction_HMI%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": true
+                },
+                "compareOperator": "==",
+                "logic": null
+              }
+            ],
+            "then": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%s%PLC1.HPP_HMI.bToggle_Start_HMI%/s%",
+                "valueType": "tchmi:general#/definitions/BOOL",
+                "value": {
+                  "objectType": "FunctionExpression",
+                  "functionExpression": "!%s%PLC1.HPP_HMI.bToggle_Start_HMI%/s%"
+                },
+                "asyncWait": true
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]</script>
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
+{
+  "color": "rgba(222, 218, 218, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-text-color" type="application/json">
+{
+  "color": "rgba(0, 0, 0, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-width" type="application/json">
+{
+  "left": 1,
+  "right": 1,
+  "top": 1,
+  "bottom": 1,
+  "leftUnit": "px",
+  "rightUnit": "px",
+  "topUnit": "px",
+  "bottomUnit": "px"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-style" type="application/json">
+{
+  "left": "Solid",
+  "right": "Solid",
+  "top": "Solid",
+  "bottom": "Solid"
+}
+</script>
+</div>
+
+<div id="TcHmiCheckbox_183" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiCheckbox" data-tchmi-height="25" data-tchmi-height-unit="px" data-tchmi-left="15" data-tchmi-left-unit="px" data-tchmi-top="89" data-tchmi-top-unit="px" data-tchmi-width="25" data-tchmi-width-unit="px" data-tchmi-is-enabled="True" data-tchmi-background-color="%f%if(GetBitMask(%s%PLC1.OpcUa.AllDataR.HPP.CalState%/s%, 0)==true){'{&quot;color&quot;:&quot;rgba(153,204,51,1)&quot;}'}else{'{&quot;color&quot;:&quot;rgba(250,15,15,0)&quot;}'} %/f%" data-tchmi-text-font-size-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px">
+
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-border-radius" type="application/json">
+{
+  "topLeft": 25.0,
+  "topRight": 25.0,
+  "bottomLeft": 25.0,
+  "bottomRight": 25.0,
+  "topLeftUnit": "px",
+  "topRightUnit": "px",
+  "bottomLeftUnit": "px",
+  "bottomRightUnit": "px"
+}
+</script>
+</div>
+
+<div id="TcHmiContainer_130" data-tchmi-type="TcHmi.Controls.System.TcHmiContainer" data-tchmi-height="25" data-tchmi-height-unit="px" data-tchmi-left="50" data-tchmi-left-unit="px" data-tchmi-top="89" data-tchmi-top-unit="px" data-tchmi-width="27" data-tchmi-width-unit="px" data-tchmi-creator-visibility="Collapsed">
+
+
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">[
+  {
+    "event": "TcHmiContainer_130.onPressed",
+    "actions": [
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%s%PLC1.OpcUa.AllDataW.CmdStop%/s%",
+        "valueType": "tchmi:general#/definitions/BOOL",
+        "value": {
+          "objectType": "FunctionExpression",
+          "functionExpression": "Confirm(\"Confirm\",\"Are you sure of this action ?\" ,\"Yes\" ,\"Cancel\" ,\"NoIdea\" )"
+        },
+        "asyncWait": true
+      }
+    ]
+  }
+]</script>
+
+</div>
+
+<div id="TcHmiCheckbox_184" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiCheckbox" data-tchmi-height="25" data-tchmi-height-unit="px" data-tchmi-left="180" data-tchmi-left-unit="px" data-tchmi-top="89" data-tchmi-top-unit="px" data-tchmi-width="25" data-tchmi-width-unit="px" data-tchmi-is-enabled="True" data-tchmi-background-color="%f%if(GetBitMask(%s%PLC1.OpcUa.AllDataR.HPP.CalState%/s%, 2)==true){'{&quot;color&quot;:&quot;rgba(153,204,51,1)&quot;}'}else{'{&quot;color&quot;:&quot;rgba(250,15,15,0)&quot;}'} %/f%">
+
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-border-radius" type="application/json">
+{
+  "topLeft": 25.0,
+  "topRight": 25.0,
+  "bottomLeft": 25.0,
+  "bottomRight": 25.0,
+  "topLeftUnit": "px",
+  "topRightUnit": "px",
+  "bottomLeftUnit": "px",
+  "bottomRightUnit": "px"
+}
+</script>
+</div>
+<div id="TcHmiContainer_150" data-tchmi-type="TcHmi.Controls.System.TcHmiContainer" data-tchmi-height="25" data-tchmi-height-unit="px" data-tchmi-left="210" data-tchmi-left-unit="px" data-tchmi-top="89" data-tchmi-top-unit="px" data-tchmi-width="27" data-tchmi-width-unit="px" data-tchmi-zindex="1" data-tchmi-creator-visibility="Collapsed">
+
+
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">[
+  {
+    "event": "TcHmiContainer_150.onPressed",
+    "actions": [
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%s%PLC1.OpcUa.AllDataW.CmdStart%/s%",
+        "valueType": "tchmi:general#/definitions/BOOL",
+        "value": {
+          "objectType": "FunctionExpression",
+          "functionExpression": "Confirm(\"Confirm\",\"Are you sure of this action ?\" ,\"Yes\" ,\"Cancel\" ,\"NoIdea\" )"
+        },
+        "asyncWait": true
+      }
+    ]
+  }
+]</script>
+
+</div>
+
+<div id="TcHmiToggleButton" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiToggleButton" data-tchmi-height="50" data-tchmi-height-unit="px" data-tchmi-left="105" data-tchmi-left-unit="px" data-tchmi-text="Mode Local" data-tchmi-top="10" data-tchmi-top-unit="px" data-tchmi-width="124" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-font-size="20" data-tchmi-background-color="%f%if(%s%PLC1.GVL_CFG.A1_HPP.ParamLocalMode%/s%){'{&quot;color&quot;:&quot;rgba(153,204,51,1)&quot;}'}else{'{&quot;color&quot;:&quot;rgba(232,226,226,255)&quot;}'}%/f%" data-tchmi-text-color="{
+  &quot;color&quot;: &quot;rgba(0, 0, 0, 1)&quot;
+}" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-text-font-size-unit="px" data-tchmi-text-horizontal-alignment="Center" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-font-weight="Bold">
+
+
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">[
+  {
+    "event": "TcHmiToggleButton.onMouseClick",
+    "actions": [
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%s%PLC1.GVL_CFG.A1_HPP.ParamLocalMode%/s%",
+        "valueType": "tchmi:general#/definitions/BOOL",
+        "value": {
+          "objectType": "FunctionExpression",
+          "functionExpression": "!%s%PLC1.GVL_CFG.A1_HPP.ParamLocalMode%/s%"
+        },
+        "asyncWait": true
+      }
+    ]
+  }
+]</script>
+
+
+
+
+
+
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-border-width" type="application/json">
+{
+  "left": 1,
+  "right": 1,
+  "top": 1,
+  "bottom": 1,
+  "leftUnit": "px",
+  "rightUnit": "px",
+  "topUnit": "px",
+  "bottomUnit": "px"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-style" type="application/json">
+{
+  "left": "Solid",
+  "right": "Solid",
+  "top": "Solid",
+  "bottom": "Solid"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-color" type="application/json">
+{
+  "color": "rgba(0, 0, 0, 1)"
+}
+</script>
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-text-color" type="application/json">
+"{
+  &quot;color&quot;: &quot;rgba(0, 0, 0, 1)&quot;
+}"
+</script>
+</div>
+
+<div id="TcHmiButton_231" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="50" data-tchmi-height-unit="px" data-tchmi-left="173" data-tchmi-left-unit="px" data-tchmi-text="Aut.Couplage  " data-tchmi-top="136" data-tchmi-top-unit="px" data-tchmi-width="162" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-font-size="20" data-tchmi-is-enabled="%s%PLC1.GVL_CFG.A1_HPP.ParamLocalMode%/s%" data-tchmi-right-unit="px" data-tchmi-text-horizontal-alignment="Right" data-tchmi-bottom-unit="px" data-tchmi-text-font-size-unit="px" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-font-weight="Bold" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px">
+
+
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">[
+  {
+    "event": "TcHmiButton_231.onStatePressed",
+    "actions": [
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%s%PLC1.HPP_HMI.bConfirmAction_HMI%/s%",
+        "valueType": "tchmi:general#/definitions/BOOL",
+        "value": {
+          "objectType": "FunctionExpression",
+          "functionExpression": "Confirm(\"Confirm\",\"Are you sure ?\" ,\"Yes\" ,\"No\" ,\"NoIdea\" )"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "Condition",
+        "active": true,
+        "asyncWait": true,
+        "parts": [
+          {
+            "if": [
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "symbolExpression": "%s%PLC1.HPP_HMI.bConfirmAction_HMI%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": true
+                },
+                "compareOperator": "==",
+                "logic": null
+              }
+            ],
+            "then": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%s%PLC1.HPP_HMI.bToggle_AutCouplage_HMI%/s%",
+                "valueType": "tchmi:general#/definitions/BOOL",
+                "value": {
+                  "objectType": "FunctionExpression",
+                  "functionExpression": "!%s%PLC1.HPP_HMI.bToggle_AutCouplage_HMI%/s%"
+                },
+                "asyncWait": true
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]</script>
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-border-style" type="application/json">
+{
+  "left": "Solid",
+  "right": "Solid",
+  "top": "Solid",
+  "bottom": "Solid"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-width" type="application/json">
+{
+  "left": 1,
+  "right": 1,
+  "top": 1,
+  "bottom": 1,
+  "leftUnit": "px",
+  "rightUnit": "px",
+  "topUnit": "px",
+  "bottomUnit": "px"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-text-color" type="application/json">
+{
+  "color": "rgba(0, 0, 0, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
+{
+  "color": "rgba(222, 218, 218, 1)"
+}
+</script>
+</div>
+<div id="TcHmiCheckbox_192" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiCheckbox" data-tchmi-height="25" data-tchmi-height-unit="px" data-tchmi-left="180" data-tchmi-left-unit="px" data-tchmi-top="150" data-tchmi-top-unit="px" data-tchmi-width="25" data-tchmi-width-unit="px" data-tchmi-is-enabled="True" data-tchmi-background-color="%f%if(%s%PLC1.OpcUa.AllDataR.PDL.A1_DEIE.OUT_CmdAut_Cpl%/s%==true){'{&quot;color&quot;:&quot;rgba(153,204,51,1)&quot;}'}else{'{&quot;color&quot;:&quot;rgba(250,15,15,0)&quot;}'} %/f%" data-tchmi-toggle-state="Normal">
+
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-border-radius" type="application/json">
+{
+  "topLeft": 25.0,
+  "topRight": 25.0,
+  "bottomLeft": 25.0,
+  "bottomRight": 25.0,
+  "topLeftUnit": "px",
+  "topRightUnit": "px",
+  "bottomLeftUnit": "px",
+  "bottomRightUnit": "px"
+}
+</script>
+</div>
+<div id="TcHmiContainer_151" data-tchmi-type="TcHmi.Controls.System.TcHmiContainer" data-tchmi-height="25" data-tchmi-height-unit="px" data-tchmi-left="50" data-tchmi-left-unit="px" data-tchmi-top="144" data-tchmi-top-unit="px" data-tchmi-width="27" data-tchmi-width-unit="px" data-tchmi-zindex="1" data-tchmi-creator-visibility="Collapsed">
+
+
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">[
+  {
+    "event": "TcHmiContainer_151.onPressed",
+    "actions": [
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%s%PLC1.OpcUa.AllDataW.CmdConnectAuthorization%/s%",
+        "valueType": "tchmi:general#/definitions/BOOL",
+        "value": {
+          "objectType": "FunctionExpression",
+          "functionExpression": "Confirm(\"Confirm\",\"Are you sure of this action ?\" ,\"Yes\" ,\"Cancel\" ,\"NoIdea\" )"
+        },
+        "asyncWait": true
+      }
+    ]
+  }
+]</script>
+
+</div>
+
+<div id="TcHmiButton_232" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="50" data-tchmi-height-unit="px" data-tchmi-left="10" data-tchmi-left-unit="px" data-tchmi-text="Decouplage  " data-tchmi-top="136" data-tchmi-top-unit="px" data-tchmi-width="153" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-font-size="20" data-tchmi-is-enabled="%s%PLC1.GVL_CFG.A1_HPP.ParamLocalMode%/s%" data-tchmi-right-unit="px" data-tchmi-text-horizontal-alignment="Right" data-tchmi-text-font-size-unit="px" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-font-weight="Bold" data-tchmi-bottom-unit="px" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px">
+
+
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">[
+  {
+    "event": "TcHmiButton_232.onStatePressed",
+    "actions": [
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%s%PLC1.HPP_HMI.bConfirmAction_HMI%/s%",
+        "valueType": "tchmi:general#/definitions/BOOL",
+        "value": {
+          "objectType": "FunctionExpression",
+          "functionExpression": "Confirm(\"Confirm\",\"Are you sure ?\" ,\"Yes\" ,\"No\" ,\"NoIdea\" )"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "Condition",
+        "active": true,
+        "asyncWait": true,
+        "parts": [
+          {
+            "if": [
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "symbolExpression": "%s%PLC1.HPP_HMI.bConfirmAction_HMI%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": true
+                },
+                "compareOperator": "==",
+                "logic": null
+              }
+            ],
+            "then": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%s%PLC1.HPP_HMI.bToggle_Disconnect_HMI%/s%",
+                "valueType": "tchmi:general#/definitions/BOOL",
+                "value": {
+                  "objectType": "FunctionExpression",
+                  "functionExpression": "!%s%PLC1.HPP_HMI.bToggle_Disconnect_HMI%/s%"
+                },
+                "asyncWait": true
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]</script>
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-border-style" type="application/json">
+{
+  "left": "Solid",
+  "right": "Solid",
+  "top": "Solid",
+  "bottom": "Solid"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-width" type="application/json">
+{
+  "left": 1,
+  "right": 1,
+  "top": 1,
+  "bottom": 1,
+  "leftUnit": "px",
+  "rightUnit": "px",
+  "topUnit": "px",
+  "bottomUnit": "px"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-text-color" type="application/json">
+{
+  "color": "rgba(0, 0, 0, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
+{
+  "color": "rgba(222, 218, 218, 1)"
+}
+</script>
+</div>
+
+<div id="TcHmiCheckbox_191" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiCheckbox" data-tchmi-height="25" data-tchmi-height-unit="px" data-tchmi-left="15" data-tchmi-left-unit="px" data-tchmi-top="150" data-tchmi-top-unit="px" data-tchmi-width="25" data-tchmi-width-unit="px" data-tchmi-is-enabled="True" data-tchmi-background-color="%f%if(GetBitMask(%s%PLC1.OpcUa.AllDataR.HPP.CalState%/s%, 0)==true){'{&quot;color&quot;:&quot;rgba(153,204,51,1)&quot;}'}else{'{&quot;color&quot;:&quot;rgba(250,15,15,0)&quot;}'} %/f%">
+
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-border-radius" type="application/json">
+{
+  "topLeft": 25.0,
+  "topRight": 25.0,
+  "bottomLeft": 25.0,
+  "bottomRight": 25.0,
+  "topLeftUnit": "px",
+  "topRightUnit": "px",
+  "bottomLeftUnit": "px",
+  "bottomRightUnit": "px"
+}
+</script>
+</div>
+<div id="TcHmiContainer_149" data-tchmi-type="TcHmi.Controls.System.TcHmiContainer" data-tchmi-height="25" data-tchmi-height-unit="px" data-tchmi-left="183" data-tchmi-left-unit="px" data-tchmi-top="157" data-tchmi-top-unit="px" data-tchmi-width="27" data-tchmi-width-unit="px" data-tchmi-creator-visibility="Collapsed">
+
+
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">[
+  {
+    "event": "TcHmiContainer_149.onPressed",
+    "actions": [
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%s%PLC1.OpcUa.AllDataW.HPP_CmdOff%/s%",
+        "valueType": "tchmi:general#/definitions/BOOL",
+        "value": {
+          "objectType": "FunctionExpression",
+          "functionExpression": "Confirm(\"Confirm\",\"Are you sure of this action ?\" ,\"Yes\" ,\"Cancel\" ,\"NoIdea\" )"
+        },
+        "asyncWait": true
+      }
+    ]
+  }
+]</script>
+
+</div>
+
+<div data-tchmi-grid-row-index="0" data-tchmi-grid-column-index="0" id="TcHmiImage_188" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="57" data-tchmi-height-unit="px" data-tchmi-left="10" data-tchmi-left-unit="px" data-tchmi-src="Imports/Images/warning_rot_pressed.svg" data-tchmi-top="10" data-tchmi-top-unit="px" data-tchmi-width="59" data-tchmi-width-unit="px" data-tchmi-zindex="217" data-tchmi-visibility="%f%if(%s%PLC1.GVL_CFG.A1_HPP.MesData.MesAlarmCode%/s%>0) {'Visible'}else{'Collapsed'}%/f%" data-tchmi-bottom-unit="px" data-tchmi-right-unit="px" data-tchmi-opacity="1" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px">
+
+                
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
+[
+  {
+    "event": "TcHmiImage_188.onMouseEnter",
+    "actions": [
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%i%Old_TargetContent%/i%",
+        "value": {
+          "objectType": "Symbol",
+          "valueType": "tchmi:general#/definitions/String",
+          "symbolExpression": "%ctrl%TcHmiRegion_8::TargetContent%/ctrl%"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%TcHmiRegion_8::TargetContent%/ctrl%",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:framework#/definitions/ContentPath",
+          "value": "HMI/MainContent/TechnoPays/I_TO/Command/I_TO_Command_Alarms.content"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%i%HPP_Alarms_Visu%/i%",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:general#/definitions/String",
+          "value": "Visible"
+        },
+        "asyncWait": true
+      }
+    ]
+  },
+  {
+    "event": "TcHmiImage_188.onMouseLeave",
+    "actions": [
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%TcHmiRegion_8::TargetContent%/ctrl%",
+        "value": {
+          "objectType": "Symbol",
+          "valueType": "tchmi:general#/definitions/String",
+          "symbolExpression": "%i%Old_TargetContent%/i%"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%i%HPP_Alarms_Visu%/i%",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:general#/definitions/String",
+          "value": "Collapsed"
+        },
+        "asyncWait": true
+      }
+    ]
+  }
+]
+</script>
+</div>
+
+<div data-tchmi-grid-row-index="0" data-tchmi-grid-column-index="0" id="TcHmiImage_189" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="57" data-tchmi-height-unit="px" data-tchmi-left="10" data-tchmi-left-unit="px" data-tchmi-src="Imports/Images/warning_gelb_pressed.svg" data-tchmi-top="10" data-tchmi-top-unit="px" data-tchmi-width="59" data-tchmi-width-unit="px" data-tchmi-zindex="31" data-tchmi-visibility="%f%if(%s%PLC1.GVL_CFG.A1_HPP.MesData.MesWarningCode%/s%>0) {'Visible'}else{'Collapsed'}%/f%" data-tchmi-bottom-unit="px" data-tchmi-right-unit="px" data-tchmi-opacity="1" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px">
+
+                
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
+[
+  {
+    "event": "TcHmiImage_189.onMouseEnter",
+    "actions": [
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%i%Old_TargetContent%/i%",
+        "value": {
+          "objectType": "Symbol",
+          "valueType": "tchmi:general#/definitions/String",
+          "symbolExpression": "%ctrl%TcHmiRegion_8::TargetContent%/ctrl%"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%TcHmiRegion_8::TargetContent%/ctrl%",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:framework#/definitions/ContentPath",
+          "value": "HMI/MainContent/TechnoPays/I_TO/Command/I_TO_Command_Alarms.content"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%i%HPP_Alarms_Visu%/i%",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:general#/definitions/String",
+          "value": "Visible"
+        },
+        "asyncWait": true
+      }
+    ]
+  },
+  {
+    "event": "TcHmiImage_189.onMouseLeave",
+    "actions": [
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%TcHmiRegion_8::TargetContent%/ctrl%",
+        "value": {
+          "objectType": "Symbol",
+          "valueType": "tchmi:general#/definitions/String",
+          "symbolExpression": "%i%Old_TargetContent%/i%"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%i%HPP_Alarms_Visu%/i%",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:general#/definitions/String",
+          "value": "Collapsed"
+        },
+        "asyncWait": true
+      }
+    ]
+  }
+]
+</script>
+</div>
+
+</div>

@@ -1,0 +1,189 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_INV_Smartlogger" Id="{59edaaf9-e60a-4862-bfc1-6a5dccd901f6}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_INV_Smartlogger EXTENDS FB_INV_Base
+//////////////////
+// SmartLogger Huawei
+//////////////////
+
+VAR 
+		KK_ModbusRead					: BYTE;	
+		Emul_Smooth						: ARRAY[1..CstNbInv_PTR_G] OF FB_Smooth ; 
+		Emul_MesModbusReadAlarm			: ARRAY[1..CstNbInv_PTR_G] OF BOOL;
+		Emul_MesModbusReadAlarm2		: BOOL ; 
+		Emul_MesModbusReadAlarm3		: BOOL ; 
+		Emul_AlarmINV					: BOOL ; 
+		Emul_ComError					: BOOL ; 
+	
+		Emul_MesModbusCurtailAlarm		: BOOL;	
+		Emul_RS							: SR; 
+END_VAR
+
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance specific) 
+	ParamIPAdress		   : STRING 	:= '127.0.0.1'; 	// (NA)Config: IP Adress of PV INverter
+
+	ParamUnitID 			: BYTE  := 0; 			  // (NA)   Modbus Unit ID. 
+	ParamNbINV				: BYTE:=1 ; // Number of inverters behind the smartlogger 
+	ParamnTcpPort			: UINT := 502;	// TCP port number 
+	ParamPnomINV			: REAL:=60; // (kW) Nominal Power For one inverter 
+	ParamSLNum				: BYTE ; 			// (NA) Config :Numerous of the ESS in the PP
+			
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	
+END_VAR
+
+VAR
+	// M_ALARMMNGMT VARIABLES //
+	                                     		
+	
+	// M_READ VARIABLES//
+
+	MesDataExd	AT %Q*		: SL_Huawei;
+
+//		FB_ModbusRead_I1          	: ARRAY[1..CstNbINVperPTR_G] OF  FB_ModbusRead ; 	// (NA) FB for Modbus Reading
+		FB_ModbusRead_I2          	: FB_ModbusRead ; 	// (NA) FB for Modbus Reading
+		FB_ModbusRead_I3          	: FB_ModbusRead ; 	// (NA) FB for Modbus Reading
+			
+//		MesBlock1_Temp 				: ARRAY[1..CstNbINVperPTR_G] OF ARRAY[0..24]  OF WORD; 			// (NA) Temporary Block with multiple modbus reading (Caution : Double Word variables)
+//		MesBlock1_Temp 				: ARRAY[0..25*CstNbINVperPTR_G-1]  OF WORD; 			// (NA) Temporary Block with multiple modbus reading (Caution : Double Word variables)
+		MesBlock2_Temp 				: ARRAY[0..56] OF WORD;				// (NA) Temporary Block with multiple modbus reading (Caution : Double Word variables)
+		MesBlock3_Temp 				: ARRAY[0..14] OF WORD;				// (NA) Temporary Block with multiple modbus reading (Caution : Double Word variables)
+
+		
+//		MesModbusReadAlarm 		  	: ARRAY[1..CstNbINVperPTR_G] OF BOOL ; 			// (NA) Modbus Read Alarm for all modbus frames		
+		MesModbusReadAlarm2 		: BOOL ; 			// (NA) Modbus Read Alarm for all modbus frames			
+		MesModbusReadAlarm3 		: BOOL ; 			// (NA) Modbus Read Alarm for all modbus frames			
+
+//		MesModbusAlarmCode			: ARRAY[1..CstNbINVperPTR_G] OF UDINT;							// (NA) Modbus Read Alarm Code
+		MesModbusAlarmCode2			: UDINT;							// (NA) Modbus Read Alarm Code
+		MesModbusAlarmCode3			: UDINT;							// (NA) Modbus Read Alarm Code
+
+	
+	// M_CURTAIL VARIABLES //
+		FB_ModbusWrite_I2 		  	: FB_ModbusWrite ; 			// (NA) Functionnal Block for Writing Curtail limit through modbus	
+		MesModbusWriteCode          : UDINT ; 							// (NA) Modbus Write Alarm Code 	
+		
+		MesModbusCurtailAlarm		: BOOL ;				   			// (NA) Modbus Write Curtail Alarm 
+		WriteBlock_Temp 	AT %Q*					: ARRAY[0..3] OF WORD; 	// Temporary Block with multiple modbus writing	 
+			
+	// M_STARTSTOP//
+
+	// M_STATEMANAGER//
+	
+	//M_EXECUTE VARIABLES //
+
+
+
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_Execute" Id="{cddc204d-895d-450d-9417-93f56be69e15}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+MesDataExd.MesEff			            := 0.9 ; 
+MesDataExd.MesData.MesTemp				:= 25 ; 
+
+
+	MesDataExd.MesData.MesP 			:= 0; 			
+
+		FOR KK_ModbusRead:=1 TO ParamNbINV DO
+
+			Emul_RS(SET1:= IN_CmdStop, RESET:=IN_CmdStart ) ; 
+			IF Emul_AlarmINV  THEN 
+			MesDataExd.MesData.MesIDState		:= 6 ; 
+			ELSIF Emul_RS.Q1 THEN 
+			MesDataExd.MesData.MesIDState		:= 0 ;
+			ELSIF MesP_INVmppt=0 THEN 
+
+			MesDataExd.MesData.MesIDState		:= 5 ;
+			ELSIF IN_SetptPlimit < ParamPnomINV THEN 
+			MesDataExd.MesData.MesIDState		:= 3 ; 
+			MesDataExd.MesData.MesOn		:= TRUE; 
+			ELSIF Emul_ComError THEN 
+			MesDataExd.MesData.MesIDState		:= 7 ; 
+			ELSE
+			MesDataExd.MesData.MesIDState		:= 1 ; 
+			MesDataExd.MesData.MesOn			:= TRUE; 
+			END_IF	
+			
+
+
+			// Aggregate 
+		MesDataExd.MesData.MesP 			:= MesDataExd.MesData.MesP +AX_PTR[ParamSLNum].AX_INV[KK_ModbusRead].MesDataExd.MesData.MesP ; 
+			
+		END_FOR
+		
+			
+		
+	MesDataExd.MesData.MesPdc			:= MesDataExd.MesData.MesP //MesDataExd.MesData.MesEff; 
+	MesDataExd.MesData.MesQ		    :=  IN_SetptQlimit; 
+	MesDataExd.MesData.MesIdc 		:= MesDataExd.MesData.MesPdc/AX_PTR[ParamSLNum].AX_INV[1].MesDataExd.MesData.MesUdc;  
+
+	MesDataExd.MesData.MesCosPhi			:=SEL( MesDataExd.MesData.MesP > 0.01 , 1 ,  COS.MesDataExd.MesData.MesQ MesDataExd.MesData.MesP ) ) ; 
+	
+
+	MesDataExd.MesData.MesU12			:=  A1_SUBMV.A1_PM.MesDataExd.MesData.MesU12 ; 
+	MesDataExd.MesData.MesU23			:=  A1_SUBMV.A1_PM.MesDataExd.MesData.MesU23 ;  
+	MesDataExd.MesData.MesU31			:=  A1_SUBMV.A1_PM.MesDataExd.MesData.MesU31 ; 
+	MesDataExd.MesData.MesI1			:= SEL.MesDataExd.MesData.MesU12= 0 , MesDataExd.MesData.MesP*1000 MesDataExd.MesData.MesU12/SQRT(3) ,0 ) ; 
+	MesDataExd.MesData.MesI2			:= MesDataExd.MesData.MesI1  ; 
+	MesDataExd.MesData.MesI3			:= MesDataExd.MesData.MesI1 ; 
+		
+		
+	MesDataExd.MesData.MesSetptPMax 	:= ParamPn ; 
+	MesDataExd.MesData.MesSetptQMax 	:= 0.6*ParamPn ; 
+	MesDataExd.MesData.MesSetptQMin	:= -0.6*ParamPn  ; 
+		
+
+
+MesDataExd.MesData.MesEDay			            := MesDataExd.MesData.MesEDay + MesDataExd.MesData.MesP*ParamCycleTime_Emul/3600000	;
+	IF CalLocalTimeStruct.wHour = 1 AND CalLocalTimeStruct.wMinute = 0 AND ParamCycleTime_Emul = 10 THEN
+	MesDataExd.MesData.MesEDay	:=0 ;
+	END_IF
+	
+MesDataExd.MesData.MesETot			            := MesDataExd.MesData.MesETot + MesDataExd.MesData.MesP*ParamCycleTime_Emul/3600000	;
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_INV_Smartlogger">
+      <LineId Id="113" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_INV_Smartlogger.M_Execute">
+      <LineId Id="542" Count="1" />
+      <LineId Id="562" Count="0" />
+      <LineId Id="565" Count="2" />
+      <LineId Id="569" Count="2" />
+      <LineId Id="573" Count="25" />
+      <LineId Id="602" Count="3" />
+      <LineId Id="622" Count="0" />
+      <LineId Id="621" Count="0" />
+      <LineId Id="606" Count="10" />
+      <LineId Id="620" Count="0" />
+      <LineId Id="618" Count="1" />
+      <LineId Id="623" Count="2" />
+      <LineId Id="627" Count="0" />
+      <LineId Id="629" Count="1" />
+      <LineId Id="628" Count="0" />
+      <LineId Id="626" Count="0" />
+      <LineId Id="563" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

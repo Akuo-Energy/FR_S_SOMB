@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="SUBHV_Exd" Id="{dd260888-0096-4098-a8e6-99ec964683b6}">
+    <Declaration><![CDATA[///////////
+// Structure For PDL. Main Operating Data to be saved ( ex: OPC ).  
+//////////
+TYPE SUBHV_Exd :
+STRUCT
+	//INPUT
+	MesData						: SUBHV ;     						 (* MesData *)
+
+	EM							: ARRAY[1..CstNbEM_G] OF EM_Standard ; 		 (* EM *)
+	Datalogger_PPC				: Datalogger_SchSkid ;     		 (* PPC *)
+	Datalogger_SECU				: ARRAY[1..2] OF  Datalogger_Secu ;  (* PPC *)
+	PM							: PM_Standard ; 
+	//REAL
+
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

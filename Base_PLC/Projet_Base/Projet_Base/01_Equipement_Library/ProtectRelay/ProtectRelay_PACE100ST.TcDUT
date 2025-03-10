@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="ProtectRelay_PACE100ST" Id="{7d565e52-f2bc-4264-b0ab-5ceea446beae}">
+    <Declaration><![CDATA[TYPE ProtectRelay_PACE100ST :
+STRUCT   
+	
+		Thermal_Overload			: REAL ; (* %  0 TO 250                         *)
+	//Status                                 (*                                     *)
+		Comut						: BOOL ; (* Cell's selector is in remote position    *)
+		CB_Close					: BOOL ; (*  Cell is closes                                   *)
+		CB_In_Alarm					: BOOL ; (*Cell is in alarm                                     *)
+		Trip_Counter				: INT;   (*  Number of trip *)
+
+                                  
+		Mesdata 					: ProtectRelay;   (*                                     *)
+        
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

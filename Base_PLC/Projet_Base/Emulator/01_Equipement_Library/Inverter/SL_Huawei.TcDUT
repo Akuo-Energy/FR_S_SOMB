@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="SL_Huawei" Id="{ca7a89b8-2335-4b68-969c-09d922ba6f53}">
+    <Declaration><![CDATA[///////////
+// Structure For Inverter. Main Operating Data to be saved ( ex: OPC ) .  
+//////////
+TYPE SL_Huawei :
+STRUCT
+	
+		MesData				: INV ;  (* INV *) 
+	
+	// INV Measures
+		MesEDay				: REAL ;     	(*/ (kWh) Daily Energy*)
+	    MesETot				: REAL ;		(*/ (kWh) Total Energy*)
+		MesOn				: BOOL ;        (* Smartlogger is ON*)
+		MesI1				: REAL ;        (* (A) AC current phase 1*)
+		MesI2				: REAL ;        (* (A) AC current phase 1*)
+	    MesI3				: REAL ;        (* (A) AC current phase 1*)
+		MesU12				: REAL ;        (*(V) AC Voltage phase1 to phase2*)
+        MesU23				: REAL ;        (*(V) AC Voltage phase2 to phase3*)
+        MesU31				: REAL ;        (*(V) AC Voltage phase3 to phase1*)
+		MesEff				: REAL ; 		(* (%) Inverter efficiency*)
+		MesSetptPMax		: REAL ;        (* (kW) Maximal Active power setpoint*)
+		MesSetptQMax		: REAL ;        (*(kVAr) Maximal reactive power setpoint*)
+		MesSetptQMin		: REAL ;        (*(kVAr) Minimal reactive power setpoint*)
+		OUT_SetptPlimit		: REAL ;        (*(kW) Maximal Active power setpoint sent by PPC*)
+		OUT_SetptQlimit		: REAL ;        (*(kVAr) Maximal Reactive power setpoint sent by PPC*)
+
+END_STRUCT
+END_TYPE
+
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

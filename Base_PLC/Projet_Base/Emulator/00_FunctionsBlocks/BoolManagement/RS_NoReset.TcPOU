@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="RS_NoReset" Id="{26411fe7-9d67-43f0-95b0-0a53cee47758}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK RS_NoReset
+//Output reset the input if the input is false 
+VAR_INPUT
+	Set 		: BOOL;
+	Reset 		: BOOL;
+END_VAR
+VAR_OUTPUT
+	Q1 			: BOOL;
+END_VAR
+VAR
+	TRIG 		: R_TRIG;
+	RS 			: RS;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[TRIG(CLK := Set);
+RS(Set := TRIG.Q, RESET1 := Reset AND NOT Set, Q1 => Q1);
+]]></ST>
+    </Implementation>
+    <LineIds Name="RS_NoReset">
+      <LineId Id="9" Count="0" />
+      <LineId Id="16" Count="1" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

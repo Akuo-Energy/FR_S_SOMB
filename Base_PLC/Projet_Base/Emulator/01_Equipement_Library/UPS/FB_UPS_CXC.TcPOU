@@ -1,0 +1,99 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_UPS_CXC" Id="{f7e5f63c-bcbf-4b58-9363-29b6ba638ddc}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_UPS_CXC EXTENDS FB_UPS_Base
+//////////////////
+// UPS 
+//////////////////
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance/model specific) 
+
+		ParamIPAddress				: STRING 	:= '192.168.20.66'; 	// (NA)Config: IP Adress of PV INverter
+		ParamUnitID 				: BYTE  	:= 1; 			  		// (NA)   Modbus Unit ID. 
+		ParamTCPPort				: UINT		:= 502;					// (NA) TCP port for modbus
+		
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	
+END_VAR
+
+VAR_INPUT
+	// I/O Inputs
+		IN_MesCbUPS_IO				: BOOL ; // 1 = opened. 
+END_VAR
+
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//
+
+	//M_READ//
+		MesDataExd						AT %Q*	: UPS_CXC ; 
+		AX_ModbusRead		   		: ARRAY [1..2] OF FB_ModbusRead ; 					// (NA) FB for Modbus Reading
+		ModbusReadInput				: FB_ModbusReadInput ; 		       
+                                 
+		MesBlock_Temp 				: ARRAY [1..2] OF ARRAY[1..120]  OF WORD; 			// (NA) Temporary Block with multiple modbus reading (Caution : Double Word variables)
+		MesBlockInput				: ARRAY[1..1] OF BYTE ; 
+		
+	
+	//M_EXECUTE //
+		bInit: BOOL;
+		
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_Execute" Id="{5738721f-fc16-4d24-9d0e-437ab8bc1b7a}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+IF bInit THEN
+	bInit := FALSE ; 
+MesDataExd.MesData.MesSoC := 50 ; 
+END_IF
+
+MesDataExd.MesIdc := 3 ; 
+
+MesDataExd.MesUBatt := 47.5 ; 
+IF MesDataExd.MesData.MesSoC >=100 THEN 
+MesDataExd.MesData.MesIBatt := SEL(A1_SUBMV.A1_MainMVCB.MesDataExd.MesData.MesClosed , MesDataExd.MesData.MesIdc ,0   ) ; // can only be negative discharging 
+ELSE
+MesDataExd.MesData.MesIBatt :=  SEL(A1_SUBMV.A1_MainMVCB.MesDataExd.MesData.MesClosed , MesDataExd.MesData.MesIdc , 4   ) ;
+END_IF
+MesDataExd.MesSoC :=  MAX( 0 , MesDataExd.MesData.MesSoC  + 100.MesDataExd.MesData.MesIBatt*.MesDataExd.MesData.MesUBatt * 1/3600000 * ParamCycleTime_Emul / ParamEBatt ) ; 
+
+
+MesDataExd.MesIload  := MesDataExd.MesData.MesIdc + MesDataExd.MesData.MesIBatt ; 
+
+MesDataExd.MesUdc :=  SEL(A1_SUBMV.MesDataExd.MesData.A1_MainMVCB.MesDataExd.MesData.MesClosed  MesDataExd.MesData.MesUBatt , 48 ) ;; 
+MesDataExd.MesUac	:= SEL(A1_SUBMV.MesDataExd.MesData.A1_MainMVCB.MesDataExd.MesData.MesClosed  ,0 , 230 ) ;
+
+MesDataExd.MesData.MesBatteryLow := MesDataExd.MesData.MesSoC < 20 ; // Low battery capacity 
+MesDataExd.MesData.MesDischarging := MesDataExd.MesData.MesIBatt < 0; 
+MesDataExd.MesData.MesFaultSynthesis := MesDataExd.MesData.MesBatteryLow OR MesDataExd.MesData.MesDischarging ; 
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_UPS_CXC">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_UPS_CXC.M_Execute">
+      <LineId Id="114" Count="4" />
+      <LineId Id="120" Count="9" />
+      <LineId Id="140" Count="0" />
+      <LineId Id="130" Count="9" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

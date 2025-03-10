@@ -1,0 +1,67 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_HVAC_MADI" Id="{79fceedb-f68f-4e4b-9945-89cc3ded62d5}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_HVAC_MADI
+VAR_INPUT PERSISTENT
+	ParamTempoComAlarm						: TIME 			:= T#10S ; 						// (s) Config : Tempo to detect LOC Alarm
+	ParamIpAddress							: STRING;		// IP Address
+	ParamUnitID								: BYTE  	:= 1 ; // Modbus Unit ID 
+	ParamTcpPort							: UINT 		:= 502;	// Modbus TCP Port
+	ParamPriority							: UINT;							// Level of priority in the HVAC pool
+	ParamClockWriteTime						: TIME 		:= T#2S;	// Modbus Writing Frequency 
+	ParamClockReadTime						: TIME 		:= T#1S;// Modbus Reading  Frequency 
+	ParamTimeOut							: TIME 		:= T#3S;	// Modbus Timeout
+
+
+	
+END_VAR
+
+VAR_INPUT	
+	IN_SetptTemp				AT %Q*		: REAL:=22;
+	IN_SetptHygro							: REAL;
+	IN_CmdStart								: BOOL;
+	IN_CmdStop								: BOOL;
+	IN_CmdReset								: BOOL;
+
+	IN_CmdReleaseStop_OPC					: BOOL ; // Manual Cmd. Non prioritaire sur le mode auto. 
+	IN_CmdStop_OPC							: BOOL ; // Manual Cmd .Prioriatire sur le mode auto . Dévérouillage seulement sur ordre de start manual.  
+	
+	
+END_VAR
+
+VAR
+	
+	MesDataExd					AT %Q*: HVAC_MADI;
+
+	MesDataExd					AT %Q*: HVAC;
+		
+	
+		BlockToWrite				AT %Q*	: BOOL;		
+		ClockWrite					AT %Q*	: BOOL;
+		ClockRead					AT %Q*	: BOOL;
+		
+		
+END_VAR
+VAR_OUTPUT PERSISTENT
+	          			
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_Execute" Id="{d7261a04-2391-4200-8612-ee34182f54b4}">
+      <Declaration><![CDATA[METHOD M_Execute : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_HVAC_MADI">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_HVAC_MADI.M_Execute">
+      <LineId Id="13" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

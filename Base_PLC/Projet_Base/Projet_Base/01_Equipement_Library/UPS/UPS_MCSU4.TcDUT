@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UPS_MCSU4" Id="{626d6ca5-9f4e-4068-b329-7d0bcdb90d02}">
+    <Declaration><![CDATA[///////////
+// Structure For I35. Main Operating Data to be saved ( ex: OPC ) .  
+//////////
+TYPE UPS_MCSU4 :
+STRUCT
+	
+	MesData				: UPS ; 	(* (NA) Object										*)
+	            		                                                            	
+	MesAlarmUmax		: BOOL; 	(* (NA) Over voltage alarm 							*)
+                                                                                    	
+	MesAlarmTemp		: BOOL; 	(* (NA) Ambient temperature high alarm 				*)
+	MesAlarmTemp_Bat	: BOOL;		(* (NA) Battery temperature high alarm		    	*)
+                                                                                    	
+	MesAlarmI_diff		: BOOL;		(* (NA) Differential battery discharge current alarm*)
+	MesAlarmI_Earth		: BOOL;		(* (NA) Earth leaking current alarm					*)
+	MesFuse_Burned		: BOOL;		(* (NA) Power Distribution Unit Fuse Fail			*)
+	MesOpen_CBBat		: BOOL;		(* (NA) Battery Switch Open							*)
+	MesOpen_Aux			: BOOL;		(* (NA) LVDS Open Auxiliary contacts of contactor 	*)
+	
+	MesAlarmRectifer	: BOOL;		(* (NA) Rectifier failure							*)
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

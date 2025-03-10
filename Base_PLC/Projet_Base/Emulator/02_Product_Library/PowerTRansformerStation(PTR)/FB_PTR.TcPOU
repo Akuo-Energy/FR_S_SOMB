@@ -1,0 +1,280 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_PTR" Id="{fad27329-9b58-41a6-9acc-e6e26205a852}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_PTR EXTENDS FB_PTR_Base
+//////////////////
+//  AMGv1 product (2 to 4 inverters per containers) . One contacteur per product
+//////////////////
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance specific) 
+	ParamUnitID							: BYTE;                            					 // (NA) Unit ID
+	
+END_VAR
+
+VAR_OUTPUT
+	//Child object
+	// Instances
+	
+
+END_VAR
+
+VAR_INPUT
+	// I/O Inputs 
+		// ALARM MANAGEMENT //
+		IN_MesCouplerState_IO				: UINT ; 			// Coupler State	 IO	
+
+		//A1_INV_Smartlogger			 		:  FB_INV_Smartlogger  ; // (NA) INV Object INstance (= Sma SC2750)
+		
+		A1_Datalogger						: FB_Datalogger_SchSkid;
+		AX_INV								: ARRAY[1..CstNbInv_PTR_G] OF  FB_INV_Sch4400 ; // Schneider 
+                            				
+		A1_MainMVCB_PTR						: FB_CB_MainMVCB ; 
+                            				
+		A1_SD_Transfo						: FB_TOR_Sd ;			// (NA)TOR Smoke detector object instance Post Transformator
+		A1_SD_INV							: FB_TOR_Sd ;			// (NA)TOR Smoke detector object instance SCADA
+		A1_DS_Transfo						: FB_TOR_Ds ;			// (NA)TOR Door Sensor object instance Post Transformator
+		A1_DS_INV							: FB_TOR_Ds ;			// (NA)TOR Door Sensor object instance SCADA
+		A1_Transfo							: FB_Transfo_MV;		// Transfo 
+		A1_MainCBAux						: FB_TOR_Standard; 
+		A1_Fan								: FB_Fan_Basic;		
+		
+END_VAR
+
+VAR
+	
+
+		
+	//M_EVALUATE VARIABLES//
+	MesDataExd				: PTR_Exd ;						// (NA) [P,H,B] AMG specific data structure 
+	
+	// M_EXECUTE //             	
+		
+	//GET/SET PROPERTY MANAGEMENT//
+	
+	//M_INIT VARIABLES // 	
+	
+	// I/O //
+		// Outputs	
+		CmdEmergencyStop			: BOOL ; 					// Emergency Stop from PTR. IO
+	
+
+
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_EquipmentCalls" Id="{73a72254-8f2c-4a20-85d8-d7a162236990}">
+      <Declaration><![CDATA[METHOD M_EquipmentCalls
+//////////////////
+// Evaluate AMS characteristics
+//////////////////
+
+VAR
+	// Method local variables (reinitialized at each cycle) 
+
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[FOR KK:= 1 TO ParamNbINV DO 
+	AX_INV[KK].M_Execute();
+END_FOR
+
+A1_Datalogger.M_Execute();
+//A1_INV_Smartlogger.M_Execute();
+A1_MainMVCB_PTR.M_Execute() ;		 	
+A1_SD_Transfo.M_Execute();			
+A1_SD_INV.M_Execute();		
+A1_DS_Transfo.M_Execute();			
+A1_DS_INV.M_Execute();				
+A1_Transfo.M_Execute();			
+A1_MainCBAux.M_Execute();	
+A1_Fan.M_Execute();			]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Evaluate" Id="{31cf45de-f9cf-41e9-819e-ebea82abd99f}">
+      <Declaration><![CDATA[METHOD M_Evaluate
+//////////////////
+// Evaluate available Powers and AMG characteristics . 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	KK : INT;
+	II : INT;
+	K  : INT;
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Feeder is open : no voltage for the PTRs related to it 
+FOR II:=0 TO (CstNbFeederMVCB_G-1) DO
+	IF  A1_SUBMV.AX_FeederMVCB[II+1].IN_MesClosed_IO THEN
+		FOR KK:= II*2 +1 TO (II+1)*2 DO
+			FOR K:=1 TO ParamNbINV DO
+				AX_PTR[KK].AX_INV[K].IN_Emul_VacPresent := TRUE;
+			END_FOR
+		END_FOR
+	ELSE
+		FOR KK:= II*2 +1 TO (II+1)*2 DO
+			FOR K:=1 TO ParamNbINV DO
+				AX_PTR[KK].AX_INV[K].IN_Emul_VacPresent := FALSE;
+			END_FOR
+		END_FOR
+	END_IF
+END_FOR
+
+MesDataExd.MesData.MesP := 0;
+FOR KK:= 1 TO ParamNbINV DO  
+MesDataExd.MesData.MesP := AX_INV[KK].MesDataExd.MesData.MesP + MesDataExd.MesData.MesP ;
+END_FOR 
+
+MesDataExd.MesData.MesQ := 0;
+FOR KK:= 1 TO ParamNbINV DO  
+MesDataExd.MesData.MesQ := AX_INV[KK].MesDataExd.MesData.MesQ + MesDataExd.MesData.MesQ ;
+END_FOR ]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{85c464ae-dafc-4e42-9b9c-fb0281fba985}">
+      <Declaration><![CDATA[METHOD M_Init 
+VAR
+	MesIPAdressINV			: STRING ; 
+	KK						: BYTE;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Ajout pour emulator /// 
+
+A1_Datalogger.ParamID_PTR := ParamPTRNum ;
+
+
+
+///
+
+
+
+(*
+A1_INV_Smartlogger.ParamTempoComAlarm	:= T#5S ; 
+A1_INV_Smartlogger.ParamTimeOutCurtail  := T#5S ; 
+A1_INV_Smartlogger.ParamClockReadTime 	:= T#1S ; 
+A1_INV_Smartlogger.ParamClockWriteTime  := T#1S ; 
+A1_INV_Smartlogger.ParamTimeout		    :=  T#2S; 
+A1_INV_Smartlogger.ParamPn            := 15000 ; 
+A1_INV_Smartlogger.ParamIPAdress	    := '10.0.0.50' ; // '192.168.1.10'; 
+A1_INV_Smartlogger.ParamUnitID 		    :=  1; 
+A1_INV_Smartlogger.ParamNbINV			:= 2 ; 		
+A1_INV_Smartlogger.ParamnTcpPort		:=  502; 
+A1_INV_Smartlogger.ParamPnomINV		    := 1500; 
+A1_INV_Smartlogger.ParamSLNum			:= ParamPTRNum ; 
+*)
+FOR KK:= 1 TO ParamNbINV DO 
+	AX_INV[KK].ParamTempoComAlarm	:= T#5S ; 
+	AX_INV[KK].ParamTimeOutCurtail  := T#5S ; 
+	AX_INV[KK].ParamClockReadTime 	:= T#1S ; 
+	AX_INV[KK].ParamClockWriteTime  := T#1S ; 
+	AX_INV[KK].ParamTimeout		    := T#2S; 
+	AX_INV[KK].ParamPn              := 15000 ; 
+	AX_INV[KK].ParamIPAddress	    := CONCAT(STR1:= '192.168.1.' , STR2:= INT_TO_STRING(KK+10)) ; 
+	AX_INV[KK].ParamUnitID 		    := 1; 
+	AX_INV[KK].ParamTcpPort			:= 502; 
+	AX_INV[KK].ParamNumInv			:= KK ; 
+END_FOR		 
+
+
+A1_MainMVCB_PTR.ParamClosedInput_Connected := TRUE ; 
+A1_MainMVCB_PTR.ParamNC := TRUE ;
+A1_MainMVCB_PTR.ParamNbFdbck := 1 ; 
+A1_MainMVCB_PTR.ParamSectLigne := 0 ; 
+A1_MainMVCB_PTR.ParamTP_Impulsion := T#2S ; 
+A1_MainMVCB_PTR.ParamTimeOut_Alarm := T#500MS ; 
+A1_MainMVCB_PTR.ParamTimeOut_Close := T#1S ; 
+A1_MainMVCB_PTR.ParamTimeOut_Open := T#1S ;
+
+
+
+A1_SD_Transfo.ParamAtleastOne := TRUE; 
+A1_SD_Transfo.ParamNbSensors := 1; 				
+A1_SD_Transfo.ParamCableCutSecurity	:= TRUE; 
+A1_SD_Transfo.ParamTempoFire := T#5S ; 
+
+A1_SD_INV.ParamAtleastOne := TRUE; 
+A1_SD_INV.ParamNbSensors := 1; 				
+A1_SD_INV.ParamCableCutSecurity	:= TRUE; 
+A1_SD_INV.ParamTempoFire := T#5S ; 
+
+A1_DS_Transfo.ParamAtleastOne := TRUE ; 
+A1_DS_Transfo.ParamNbSensors := 1 ; 
+A1_DS_Transfo.ParamCableCutSecurity := TRUE ; 	
+A1_DS_Transfo.ParamTempoDoorAlarm := T#60S ; 
+		
+A1_DS_INV.ParamAtleastOne := TRUE ; 
+A1_DS_INV.ParamNbSensors := 1 ; 
+A1_DS_INV.ParamCableCutSecurity := TRUE ; 	
+A1_DS_INV.ParamTempoDoorAlarm := T#60S ;		
+
+		
+A1_MainCBAux.ParamAtleastOne := TRUE ; 
+A1_MainCBAux.ParamNbSensors := 1 ; 
+A1_MainCBAux.ParamCableCutSecurity := TRUE ;	
+
+A1_Fan.ParamNbSensors := 2 ; 			]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_PTR">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PTR.M_EquipmentCalls">
+      <LineId Id="267" Count="2" />
+      <LineId Id="292" Count="0" />
+      <LineId Id="291" Count="0" />
+      <LineId Id="280" Count="0" />
+      <LineId Id="246" Count="0" />
+      <LineId Id="257" Count="3" />
+      <LineId Id="264" Count="2" />
+    </LineIds>
+    <LineIds Name="FB_PTR.M_Evaluate">
+      <LineId Id="808" Count="14" />
+      <LineId Id="797" Count="0" />
+      <LineId Id="826" Count="8" />
+      <LineId Id="825" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PTR.M_Init">
+      <LineId Id="509" Count="0" />
+      <LineId Id="514" Count="4" />
+      <LineId Id="513" Count="0" />
+      <LineId Id="510" Count="2" />
+      <LineId Id="490" Count="0" />
+      <LineId Id="502" Count="1" />
+      <LineId Id="491" Count="10" />
+      <LineId Id="379" Count="0" />
+      <LineId Id="391" Count="0" />
+      <LineId Id="381" Count="3" />
+      <LineId Id="386" Count="0" />
+      <LineId Id="394" Count="1" />
+      <LineId Id="387" Count="0" />
+      <LineId Id="389" Count="0" />
+      <LineId Id="309" Count="0" />
+      <LineId Id="468" Count="1" />
+      <LineId Id="478" Count="6" />
+      <LineId Id="471" Count="2" />
+      <LineId Id="397" Count="0" />
+      <LineId Id="401" Count="2" />
+      <LineId Id="399" Count="1" />
+      <LineId Id="404" Count="2" />
+      <LineId Id="398" Count="0" />
+      <LineId Id="407" Count="0" />
+      <LineId Id="409" Count="2" />
+      <LineId Id="408" Count="0" />
+      <LineId Id="369" Count="0" />
+      <LineId Id="412" Count="2" />
+      <LineId Id="370" Count="0" />
+      <LineId Id="375" Count="0" />
+      <LineId Id="454" Count="0" />
+      <LineId Id="461" Count="1" />
+      <LineId Id="377" Count="0" />
+      <LineId Id="456" Count="0" />
+      <LineId Id="378" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

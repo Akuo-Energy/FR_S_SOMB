@@ -1,0 +1,1170 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <FileVersion>1.0.0.0</FileVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{550af1f4-eb72-4e81-b293-dd8f435129b7}</ProjectGuid>
+    <SubObjectsSortedByName>True</SubObjectsSortedByName>
+    <DownloadApplicationInfo>true</DownloadApplicationInfo>
+    <WriteProductVersion>true</WriteProductVersion>
+    <GenerateTpy>false</GenerateTpy>
+    <Name>Emulator</Name>
+    <ProgramVersion>3.1.4024.12</ProgramVersion>
+    <Application>{6ee0aeba-ab30-485f-a2a0-c19b1200f9aa}</Application>
+    <TypeSystem>{c7456762-da6b-4464-889d-9ff736fae875}</TypeSystem>
+    <Implicit_Task_Info>{15816909-8e5c-45fe-ab1a-d104f499eab2}</Implicit_Task_Info>
+    <Implicit_KindOfTask>{5b409e2d-6645-435e-86c8-a736587eb13f}</Implicit_KindOfTask>
+    <Implicit_Jitter_Distribution>{0a537191-0cfb-4f9e-8eea-4dcb3a8bd948}</Implicit_Jitter_Distribution>
+    <LibraryReferences>{202d47c8-5fc3-49b6-895e-4486e4006ef8}</LibraryReferences>
+    <Released>false</Released>
+  </PropertyGroup>
+  <ItemGroup>
+    <Folder Include="00_FunctionsBlocks">
+      <ExcludeFromBuild>false</ExcludeFromBuild>
+    </Folder>
+    <Folder Include="00_FunctionsBlocks\AlarmManagement" />
+    <Folder Include="00_FunctionsBlocks\Annexesfunction" />
+    <Folder Include="00_FunctionsBlocks\BoolManagement" />
+    <Folder Include="00_FunctionsBlocks\Communication" />
+    <Folder Include="00_FunctionsBlocks\Communication\IEC104" />
+    <Folder Include="00_FunctionsBlocks\Communication\Mail" />
+    <Folder Include="00_FunctionsBlocks\Communication\ModbusRTU" />
+    <Folder Include="00_FunctionsBlocks\Communication\ModbusTCP" />
+    <Folder Include="00_FunctionsBlocks\Communication\SMS" />
+    <Folder Include="00_FunctionsBlocks\Ctrl" />
+    <Folder Include="00_FunctionsBlocks\Database" />
+    <Folder Include="00_FunctionsBlocks\Database\Firebird" />
+    <Folder Include="00_FunctionsBlocks\Database\InfluxDb" />
+    <Folder Include="00_FunctionsBlocks\Database\SQLCe" />
+    <Folder Include="00_FunctionsBlocks\Database\SQLite" />
+    <Folder Include="00_FunctionsBlocks\DataProcessing" />
+    <Folder Include="00_FunctionsBlocks\DataProcessing\Compress" />
+    <Folder Include="00_FunctionsBlocks\DataProcessing\Database" />
+    <Folder Include="00_FunctionsBlocks\DataProcessing\MergeWord" />
+    <Folder Include="00_FunctionsBlocks\DataProcessing\ReadFile" />
+    <Folder Include="00_FunctionsBlocks\DataProcessing\SplitWord" />
+    <Folder Include="00_FunctionsBlocks\DataProcessing\WriteFile" />
+    <Folder Include="00_FunctionsBlocks\Fifo" />
+    <Folder Include="00_FunctionsBlocks\HistorizationVisu" />
+    <Folder Include="00_FunctionsBlocks\Templates" />
+    <Folder Include="01_Equipement_Library">
+      <ExcludeFromBuild>false</ExcludeFromBuild>
+    </Folder>
+    <Folder Include="01_Equipement_Library\Actuators" />
+    <Folder Include="01_Equipement_Library\Batteries" />
+    <Folder Include="01_Equipement_Library\Datalogger" />
+    <Folder Include="01_Equipement_Library\Fan" />
+    <Folder Include="01_Equipement_Library\FireSystem %28FSS%29" />
+    <Folder Include="01_Equipement_Library\GRID" />
+    <Folder Include="01_Equipement_Library\HVAC" />
+    <Folder Include="01_Equipement_Library\Inverter" />
+    <Folder Include="01_Equipement_Library\IPC" />
+    <Folder Include="01_Equipement_Library\Operation Meter" />
+    <Folder Include="01_Equipement_Library\PCS" />
+    <Folder Include="01_Equipement_Library\ProtectRelay" />
+    <Folder Include="01_Equipement_Library\Router" />
+    <Folder Include="01_Equipement_Library\Sensors" />
+    <Folder Include="01_Equipement_Library\Sensors\ANA" />
+    <Folder Include="01_Equipement_Library\Sensors\COM" />
+    <Folder Include="01_Equipement_Library\Sensors\TOR" />
+    <Folder Include="01_Equipement_Library\Tariff Meter" />
+    <Folder Include="01_Equipement_Library\Transfo" />
+    <Folder Include="01_Equipement_Library\UPS" />
+    <Folder Include="02_Product_Library">
+      <ExcludeFromBuild>false</ExcludeFromBuild>
+    </Folder>
+    <Folder Include="02_Product_Library\EnergyStorageSystem%28ESS%29" />
+    <Folder Include="02_Product_Library\PowerTRansformerStation%28PTR%29" />
+    <Folder Include="02_Product_Library\SolarPowerPlant %28SPP%29" />
+    <Folder Include="02_Product_Library\Substation%28SUB_HV%29" />
+    <Folder Include="02_Product_Library\Substation%28SUB_MV%29" />
+    <Folder Include="02_Product_Library\WeatherStation %28WS%29" />
+    <Folder Include="03_Power_Plant %28PP%29">
+      <ExcludeFromBuild>false</ExcludeFromBuild>
+    </Folder>
+    <Folder Include="04_Application">
+      <ExcludeFromBuild>false</ExcludeFromBuild>
+    </Folder>
+    <Folder Include="04_Application\ADS" />
+    <Folder Include="04_Application\CONFIG" />
+    <Folder Include="04_Application\IO" />
+    <Folder Include="04_Application\MAIN" />
+    <Folder Include="04_Application\Checks" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="00_FunctionsBlocks\AlarmManagement\FB_AlarmCodeManager.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\AlarmManagement\FB_CheckCommand.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\AlarmManagement\FB_CheckSetpt.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\AlarmManagement\FB_DetectFixedValue.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\AlarmManagement\FB_DetectFlicker.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\AlarmManagement\FB_HeartBeatMasterBackup.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\AlarmManagement\FB_UnknownEvent.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\AlarmManagement\FUN_Alarms_CSV.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\AlarmManagement\FUN_ReadAlarm_CSV.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\AlarmManagement\ServerCSV.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\AlarmManagement\ServerSms.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\AlarmManagement\SMS_Server.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Annexesfunction\FUN_ConnectVPN.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Annexesfunction\FUN_DisconnectVPN.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Annexesfunction\FUN_GetPublicIp.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Annexesfunction\FUN_PingHost.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Annexesfunction\PRG_RestartPlc.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Annexesfunction\PRG_RestartService.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\BoolManagement\FB_CountNinTimeWindow.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\BoolManagement\FB_TapVariable.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\BoolManagement\FB_Toggle2Tap.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\BoolManagement\FB_WordToArrayOfBool.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\BoolManagement\FB_WriteOnChange.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\BoolManagement\RS_NoReset.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Communication\IEC104\E_ComState.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Communication\IEC104\FB_IEC104ServerAkuo.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Communication\IEC104\GVL_Cst.TcGVL">
+      <SubType>Code</SubType>
+      <LinkAlways>true</LinkAlways>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Communication\IEC104\ST_IEC104AkuoParam.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Communication\Mail\FUN_SendMail.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Communication\Mail\ServerMail.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Communication\ModbusRTU\CheckStruct.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Communication\ModbusRTU\FB_ModbusRTU.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Communication\ModbusRTU\FB_ReadModbusRTU_V2.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Communication\ModbusRTU\Sample_ModbusRTU.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Communication\ModbusRTU\Struct_InputRTU.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Communication\ModbusTCP\FB_ModbusRead.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Communication\ModbusTCP\FB_ModbusReadCoils.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Communication\ModbusTCP\FB_ModbusReadInput.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Communication\ModbusTCP\FB_ModbusReadInputRegs.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Communication\ModbusTCP\FB_ModbusWrite.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Communication\ModbusTCP\FB_ModbusWriteMultipleCoils.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Communication\ModbusTCP\FB_ModbusWriteSingleCoil.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Communication\ModbusTCP\FB_ModbusWriteSingleRegister.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Communication\SMS\FB_DeleteAllSMS.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Communication\SMS\FB_DeleteSMS.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Communication\SMS\FB_Extract_Num_Mes.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Communication\SMS\FB_Login.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Communication\SMS\FB_ReadSMS.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Communication\SMS\FB_SendSMS.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Communication\SMS\ST_SMSDataSetEntry_Read.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Communication\SMS\ST_SMSDataSetEntry_Send.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Ctrl\FB_PIDRegulation.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Database\CheckConfig.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Database\Firebird\Firebird_CreateTables.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Database\Firebird\Firebird_InsertBuffer.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Database\Firebird\Firebird_InsertBuffer_vEpoch.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Database\Firebird\Firebird_ReadAlarms.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Database\Firebird\Firebird_RetrieveHDBID.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Database\Firebird\Firebird_SelectBuffer.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Database\Firebird\Firebird_WriteAlarms.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Database\Firebird\LoggerFirebird.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Database\Firebird\St_AlarmsV2.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Database\InfluxDb\InfluxDb_AlarmsManagement.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Database\InfluxDb\InfluxDb_ReadValues.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Database\InfluxDb\InfluxDb_WriteAlarms.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Database\InfluxDb\InfluxDb_WriteStruct.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Database\InfluxDb\LoggerInfluxDb.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Database\InfluxDb\ST_InfluxAlarmsInsert.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Database\InfluxDb\ST_InfluxAlarmsRetrieve.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Database\PRG_EpochConverter.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Database\PRG_TimestructConverter.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Database\SQLCe\FB_SQLExpert_InsertBuffer_1.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Database\SQLite\SQLite_CreateDb_V2_1.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Database\SQLite\SQLite_DeleteConfDb_1.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Database\St_DataHisto.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Database\St_DataHisto_Epoch.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Database\UnixTimestamp.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\DataProcessing\Compress\FB_CompressFile.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\DataProcessing\Compress\FUN_CompressCSV.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\DataProcessing\Database\DataBase_V2.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\DataProcessing\Database\FB_DeleteFile.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\DataProcessing\Database\FB_SQLExpert_InsertBuffer.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\DataProcessing\Database\SQLite_CreateDb_V2.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\DataProcessing\Database\SQLite_DeleteConfDb.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\DataProcessing\FB_Average.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\DataProcessing\FB_CountBitOfWordAtTrue.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\DataProcessing\FB_Integrate.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\DataProcessing\FB_MessageDynamique.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\DataProcessing\FB_MovingAverage.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\DataProcessing\FB_Ramp.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\DataProcessing\FB_Ramp_Time.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\DataProcessing\FB_Smooth.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\DataProcessing\FB_XorWord.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\DataProcessing\FUN_Transpose.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\DataProcessing\MergeWord\FB_ISKRA_T5.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\DataProcessing\MergeWord\FB_ISKRA_T6.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\DataProcessing\MergeWord\FB_MergeWordsToDint.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\DataProcessing\MergeWord\FB_MergeWordsToFloat.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\DataProcessing\MergeWord\FB_MergeWordsToUint.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\DataProcessing\MergeWord\FB_MergeWordsToUlint.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\DataProcessing\MergeWord\FB_SplitFloatToWords.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\DataProcessing\MergeWord\FB_WordsToDint64BE.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\DataProcessing\MergeWord\FB_WordsToFloat32MLE.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\DataProcessing\ReadFile\FB_Read.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\DataProcessing\ReadFile\FB_ReadCSV.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\DataProcessing\ReplaceAll.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\DataProcessing\SavePersistent.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\DataProcessing\Split.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\DataProcessing\SplitWord\FB_SplitRealToWords.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\DataProcessing\SplitWord\FB_SplitRealToWords_IEEE754.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\DataProcessing\SplitWord\FB_SplitUlintToWords.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\DataProcessing\SplitWord\FB_SplitWordToByte.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\DataProcessing\Substring.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\DataProcessing\WriteFile\CheckStruct_Alarms.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\DataProcessing\WriteFile\FB_CreateDir_V2.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\DataProcessing\WriteFile\FB_WriteFile.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\DataProcessing\WriteFile\FB_Write_CSV.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\DataProcessing\WriteFile\FUN_CreateDir_CSV.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\DataProcessing\WriteFile\LoggerCSV.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\DataProcessing\WriteFile\ST_Journal.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\DataProcessing\WriteFile\ST_ValuesAlarms.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\DataProcessing\WriteFile\ST_ValuesWrite.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Fifo\FB_CommandAlternate.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Fifo\FB_DBDatasetFifo.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Fifo\FB_DBDatasetFifo_1min.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Fifo\FB_SMSDatasetFifo_Read.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Fifo\FB_SMSDatasetFifo_Send.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Fifo\GVL_Fifo.TcGVL">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\HistorizationVisu\FB_OperationIndex.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\HistorizationVisu\GetTime.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="00_FunctionsBlocks\Templates\FB_EX_Example.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Actuators\CB_AuxMVCB_Sch.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Actuators\CB.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Actuators\CB_Standard.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Actuators\FB_CB_AuxMVCB.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Actuators\FB_CB_Base.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Actuators\FB_CB_FeederMVCB.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Actuators\FB_CB_GridMVCB.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Actuators\FB_CB_MainHVCB.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Actuators\FB_CB_MainMVCB.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Actuators\FB_CB_MeasureMVCB.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Actuators\FB_CB_MVSwitch.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Actuators\CB_FeederMVCB_Sch.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Actuators\CB_MainHVCB_Sch.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Actuators\CB_MainMVCB_Sch.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Actuators\CB_MeasureMVCB_Sch.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Batteries\Cell.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Batteries\FB_SystemBMS_Base.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Batteries\FB_SystemBMS_M3.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Batteries\Rack.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Batteries\RackString.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Batteries\SystemBMS.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Datalogger\Datalogger.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Datalogger\Datalogger_PPCVerrerie.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Datalogger\Datalogger_SchSkid.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Datalogger\Datalogger_SENECA.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Datalogger\FB_Datalogger_Base.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Datalogger\FB_Datalogger_PPCVerrerie.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Datalogger\FB_Datalogger_SchSkid.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Datalogger\FB_Datalogger_SENECA.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Fan\Fan.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Fan\FB_Fan_Basic.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\FireSystem %28FSS%29\FB_FSS.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\FireSystem %28FSS%29\FSS.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\FireSystem %28FSS%29\FSS_Standard.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\GRID\FB_GRID_Base.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\GRID\FB_GRID_Enedis.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\GRID\GRID.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\GRID\GRID_Enedis.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\HVAC\FB_HVAC.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\HVAC\FB_HVAC_Base.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\HVAC\FB_HVAC_MADI.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\HVAC\FB_HVAC_Standard.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\HVAC\HVAC.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\HVAC\HVAC_MADI.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\HVAC\HVAC_Standard.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Inverter\FB_INV_1000CP_XT.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Inverter\FB_INV_Base.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Inverter\FB_INV_Sch4400.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Inverter\FB_INV_Smartlogger.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Inverter\FB_INV_Sun2000KtlMo.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Inverter\INV.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Inverter\INV_1000CP_XT.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Inverter\INV_1000CP_XT_StringMonitor.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Inverter\INV_Huawei.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Inverter\INV_Sch4400.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Inverter\SL_Huawei.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Inverter\STR.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\IPC\FB_IPC.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\IPC\IPC.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Operation Meter\FB_PM_520_230.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Operation Meter\FB_PM_A40.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Operation Meter\FB_PM_Base.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Operation Meter\FB_PM_ION7650.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Operation Meter\FB_PM_Janitza.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Operation Meter\FB_PM_PM3250.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Operation Meter\FB_PM_PM800.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Operation Meter\FB_PM_SicamQ100.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Operation Meter\FB_PM_SM103E.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Operation Meter\PM.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Operation Meter\PM_PM800.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Operation Meter\PM_Q100.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Operation Meter\PM_SicamQ100.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Operation Meter\PM_Standard.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\PCS\FB_PCS_Base.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\PCS\FB_PCS_Jema.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\PCS\PCS.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\PCS\PowerCol_Jema.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\PCS\PowerCol_Jema_Alarms.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\ProtectRelay\FB_ProtectRelay_Base.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\ProtectRelay\FB_ProtectRelay_DM2.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\ProtectRelay\FB_ProtectRelay_Flair23DM.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\ProtectRelay\FB_ProtectRelay_NSXCB.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\ProtectRelay\FB_ProtectRelay_PACE100ST.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\ProtectRelay\FB_ProtectRelay_REF615.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\ProtectRelay\FB_ProtectRelay_SEPAM10a.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\ProtectRelay\FB_ProtectRelay_SepamS48.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\ProtectRelay\FB_ProtectRelay_SepamT20.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\ProtectRelay\FB_ProtectRelay_VIP410.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\ProtectRelay\FB_ProtectRelay_WIP1.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\ProtectRelay\ProtectRelay.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\ProtectRelay\ProtectRelay_Flair23DM.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\ProtectRelay\ProtectRelay_NSXCB.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\ProtectRelay\ProtectRelay_PACE100ST.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\ProtectRelay\ProtectRelay_REFIO.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\ProtectRelay\ProtectRelay_S42.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\ProtectRelay\ProtectRelay_S48.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\ProtectRelay\ProtectRelay_T20.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\ProtectRelay\ProtectRelay_T87.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\ProtectRelay\ProtectRelay_VIP410.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\ProtectRelay\ProtectRelay_WIP1.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Router\FB_Router.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Router\Router.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Router\Router_Standard.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Sensors\ANA\ANA.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Sensors\ANA\FB_ANA_Base.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Sensors\ANA\FB_ANA_IO.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Sensors\ANA\FB_ANA_Irra_Fx.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Sensors\COM\AllInOne.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Sensors\COM\FB_AllInOne.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Sensors\COM\FB_ANA_SMP1X.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Sensors\COM\SMP1X.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Sensors\TOR\FB_TOR_Base.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Sensors\TOR\FB_TOR_CB.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Sensors\TOR\FB_TOR_DS.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Sensors\TOR\FB_TOR_ES.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Sensors\TOR\FB_TOR_Fuse.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Sensors\TOR\FB_TOR_MS.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Sensors\TOR\FB_TOR_Rain.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Sensors\TOR\FB_TOR_SD.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Sensors\TOR\FB_TOR_Spd.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Sensors\TOR\FB_TOR_Standard.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Sensors\TOR\FB_TOR_ToS.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Sensors\TOR\TOR.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Sensors\TOR\TOR_Rain.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Sensors\TOR\TOR_Standard.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Tariff Meter\EM.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Tariff Meter\EM_Standard.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Tariff Meter\FB_EM.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Tariff Meter\FB_EM_Base.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Tariff Meter\FB_EM_Pulse.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Transfo\FB_Transfo_Base.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Transfo\FB_Transfo_HVCom.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Transfo\FB_Transfo_MV.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Transfo\FB_Transfo_MVCom.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Transfo\Transfo.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Transfo\Transfo_HV.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\Transfo\Transfo_MV.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\UPS\FB_UPS_Base.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\UPS\FB_UPS_CXC.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\UPS\FB_UPS_Eneris.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\UPS\FB_UPS_PS10048.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\UPS\UPS.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\UPS\UPS_CXC.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\UPS\UPS_ENERIS.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\UPS\UPS_Eneris.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\UPS\UPS_Eneris.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01_Equipement_Library\UPS\UPS_PS10048.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="02_Product_Library\EnergyStorageSystem%28ESS%29\ESS.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="02_Product_Library\EnergyStorageSystem%28ESS%29\FB_ESS.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="02_Product_Library\EnergyStorageSystem%28ESS%29\FB_ESS_Base.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="02_Product_Library\PowerTRansformerStation%28PTR%29\FB_PTR.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="02_Product_Library\PowerTRansformerStation%28PTR%29\FB_PTR_Base.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="02_Product_Library\PowerTRansformerStation%28PTR%29\PTR.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="02_Product_Library\PowerTRansformerStation%28PTR%29\PTR_Exd.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="02_Product_Library\Substation%28SUB_HV%29\FB_SUBHV.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="02_Product_Library\Substation%28SUB_HV%29\FB_SUBHV_Base.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="02_Product_Library\Substation%28SUB_HV%29\SUBHV.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="02_Product_Library\Substation%28SUB_HV%29\SUBHV_Exd.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="02_Product_Library\Substation%28SUB_MV%29\FB_SUBMV.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="02_Product_Library\Substation%28SUB_MV%29\FB_SUBMV_Base.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="02_Product_Library\Substation%28SUB_MV%29\SUBMV.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="02_Product_Library\Substation%28SUB_MV%29\SUBMV_Exd.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="02_Product_Library\WeatherStation %28WS%29\FB_WS.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="02_Product_Library\WeatherStation %28WS%29\FB_WS_Base.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="02_Product_Library\WeatherStation %28WS%29\WS.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="02_Product_Library\WeatherStation %28WS%29\WS_AGMA.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="03_Power_Plant %28PP%29\FB_PP.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="03_Power_Plant %28PP%29\PP.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="04_Application\ADS\ADS_Custom.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="04_Application\ADS\ADS_Param.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="04_Application\Checks\CheckBounds.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="04_Application\Checks\CheckDivDInt.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="04_Application\Checks\CheckDivLInt.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="04_Application\Checks\CheckDivLReal.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="04_Application\Checks\CheckDivReal.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="04_Application\Checks\CheckLRangeSigned.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="04_Application\Checks\CheckLRangeUnsigned.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="04_Application\Checks\CheckPointer.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="04_Application\Checks\CheckRangeSigned.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="04_Application\Checks\CheckRangeUnsigned.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="04_Application\CONFIG\GVL_BASE.TcGVL">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="04_Application\CONFIG\GVL_Beckhoff.TcGVL">
+      <SubType>Code</SubType>
+      <LinkAlways>true</LinkAlways>
+    </Compile>
+    <Compile Include="04_Application\CONFIG\GVL_CFG.TcGVL">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="04_Application\CONFIG\GVL_Check.TcGVL">
+      <SubType>Code</SubType>
+      <LinkAlways>true</LinkAlways>
+    </Compile>
+    <Compile Include="04_Application\CONFIG\GVL_DataBaseStructures.TcGVL">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="04_Application\CONFIG\GVL_EmulConfig.TcGVL">
+      <SubType>Code</SubType>
+      <LinkAlways>true</LinkAlways>
+    </Compile>
+    <Compile Include="04_Application\IO\IO.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="04_Application\IO\PRG_IO.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="04_Application\IO\ST_AI.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="04_Application\IO\ST_AO.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="04_Application\IO\ST_DI.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="04_Application\IO\ST_DO.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="04_Application\MAIN\MAIN_Emul.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Emul_Task.TcTTO">
+      <SubType>Code</SubType>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <PlaceholderReference Include="Tc2_ModbusRTU">
+      <DefaultResolution>Tc2_ModbusRTU, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc2_ModbusRTU</Namespace>
+    </PlaceholderReference>
+    <PlaceholderReference Include="Tc2_ModbusSrv">
+      <DefaultResolution>Tc2_ModbusSrv, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc2_ModbusSrv</Namespace>
+    </PlaceholderReference>
+    <PlaceholderReference Include="Tc2_Standard">
+      <DefaultResolution>Tc2_Standard, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc2_Standard</Namespace>
+    </PlaceholderReference>
+    <PlaceholderReference Include="Tc2_System">
+      <DefaultResolution>Tc2_System, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc2_System</Namespace>
+    </PlaceholderReference>
+    <PlaceholderReference Include="Tc2_TcpIp">
+      <DefaultResolution>Tc2_TcpIp, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc2_TcpIp</Namespace>
+    </PlaceholderReference>
+    <PlaceholderReference Include="Tc2_Utilities">
+      <DefaultResolution>Tc2_Utilities, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc2_Utilities</Namespace>
+    </PlaceholderReference>
+    <PlaceholderReference Include="Tc3_Module">
+      <DefaultResolution>Tc3_Module, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc3_Module</Namespace>
+    </PlaceholderReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Emulator.tmc">
+      <SubType>Content</SubType>
+    </None>
+  </ItemGroup>
+  <ProjectExtensions>
+    <PlcProjectOptions>
+      <XmlArchive>
+        <Data>
+          <o xml:space="preserve" t="OptionKey">
+      <v n="Name">"&lt;ProjectRoot&gt;"</v>
+      <d n="SubKeys" t="Hashtable" ckt="String" cvt="OptionKey">
+        <v>{192FAD59-8248-4824-A8DE-9177C94C195A}</v>
+        <o>
+          <v n="Name">"{192FAD59-8248-4824-A8DE-9177C94C195A}"</v>
+          <d n="SubKeys" t="Hashtable" />
+          <d n="Values" t="Hashtable" />
+        </o>
+        <v>{246001F4-279D-43AC-B241-948EB31120E1}</v>
+        <o>
+          <v n="Name">"{246001F4-279D-43AC-B241-948EB31120E1}"</v>
+          <d n="SubKeys" t="Hashtable" />
+          <d n="Values" t="Hashtable" ckt="String" cvt="Boolean">
+            <v>UnicodeStrings</v>
+            <v>False</v>
+          </d>
+        </o>
+        <v>{29BD8D0C-3586-4548-BB48-497B9A01693F}</v>
+        <o>
+          <v n="Name">"{29BD8D0C-3586-4548-BB48-497B9A01693F}"</v>
+          <d n="SubKeys" t="Hashtable" ckt="String" cvt="OptionKey">
+            <v>Rules</v>
+            <o>
+              <v n="Name">"Rules"</v>
+              <d n="SubKeys" t="Hashtable" />
+              <d n="Values" t="Hashtable" />
+            </o>
+          </d>
+          <d n="Values" t="Hashtable" />
+        </o>
+        <v>{40450F57-0AA3-4216-96F3-5444ECB29763}</v>
+        <o>
+          <v n="Name">"{40450F57-0AA3-4216-96F3-5444ECB29763}"</v>
+          <d n="SubKeys" t="Hashtable" />
+          <d n="Values" t="Hashtable" ckt="String">
+            <v>ActiveVisuExtensionsLength</v>
+            <v>0</v>
+            <v>ActiveVisuProfile</v>
+            <v>"IR0whWr8bwfwBwAAhiaVXgAAAABVAgAAWdTSaQAAAAABAAAAAAAAAAEaUwB5AHMAdABlAG0ALgBTAHQAcgBpAG4AZwACTHsAZgA5ADUAYgBiADQAMgA2AC0ANQA1ADIANAAtADQAYgA0ADUALQA5ADQAMAAwAC0AZgBiADAAZgAyAGUANwA3AGUANQAxAGIAfQADCE4AYQBtAGUABDBUAHcAaQBuAEMAQQBUACAAMwAuADEAIABCAHUAaQBsAGQAIAA0ADAAMgA0AC4AMAAFFlAAcgBvAGYAaQBsAGUARABhAHQAYQAGTHsAMQA2AGUANQA1AGIANgAwAC0ANwAwADQAMwAtADQAYQA2ADMALQBiADYANQBiAC0ANgAxADQANwAxADMAOAA3ADgAZAA0ADIAfQAHEkwAaQBiAHIAYQByAGkAZQBzAAhMewAzAGIAZgBkADUANAA1ADkALQBiADAANwBmAC0ANABkADYAZQAtAGEAZQAxAGEALQBhADgAMwAzADUANgBhADUANQAxADQAMgB9AAlMewA5AGMAOQA1ADgAOQA2ADgALQAyAGMAOAA1AC0ANAAxAGIAYgAtADgAOAA3ADEALQA4ADkANQBmAGYAMQBmAGUAZABlADEAYQB9AAoOVgBlAHIAcwBpAG8AbgALBmkAbgB0AAwKVQBzAGEAZwBlAA0KVABpAHQAbABlAA4aVgBpAHMAdQBFAGwAZQBtAE0AZQB0AGUAcgAPDkMAbwBtAHAAYQBuAHkAEAxTAHkAcwB0AGUAbQARElYAaQBzAHUARQBsAGUAbQBzABIwVgBpAHMAdQBFAGwAZQBtAHMAUwBwAGUAYwBpAGEAbABDAG8AbgB0AHIAbwBsAHMAEyhWAGkAcwB1AEUAbABlAG0AcwBXAGkAbgBDAG8AbgB0AHIAbwBsAHMAFCRWAGkAcwB1AEUAbABlAG0AVABlAHgAdABFAGQAaQB0AG8AcgAVIlYAaQBzAHUATgBhAHQAaQB2AGUAQwBvAG4AdAByAG8AbAAWFHYAaQBzAHUAaQBuAHAAdQB0AHMAFwxzAHkAcwB0AGUAbQAYGFYAaQBzAHUARQBsAGUAbQBCAGEAcwBlABkmRABlAHYAUABsAGEAYwBlAGgAbwBsAGQAZQByAHMAVQBzAGUAZAAaCGIAbwBvAGwAGyJQAGwAdQBnAGkAbgBDAG8AbgBzAHQAcgBhAGkAbgB0AHMAHEx7ADQAMwBkADUAMgBiAGMAZQAtADkANAAyAGMALQA0ADQAZAA3AC0AOQBlADkANAAtADEAYgBmAGQAZgAzADEAMABlADYAMwBjAH0AHRxBAHQATABlAGEAcwB0AFYAZQByAHMAaQBvAG4AHhRQAGwAdQBnAGkAbgBHAHUAaQBkAB8WUwB5AHMAdABlAG0ALgBHAHUAaQBkACBIYQBmAGMAZAA1ADQANAA2AC0ANAA5ADEANAAtADQAZgBlADcALQBiAGIANwA4AC0AOQBiAGYAZgBlAGIANwAwAGYAZAAxADcAIRRVAHAAZABhAHQAZQBJAG4AZgBvACJMewBiADAAMwAzADYANgBhADgALQBiADUAYwAwAC0ANABiADkAYQAtAGEAMAAwAGUALQBlAGIAOAA2ADAAMQAxADEAMAA0AGMAMwB9ACMOVQBwAGQAYQB0AGUAcwAkTHsAMQA4ADYAOABmAGYAYwA5AC0AZQA0AGYAYwAtADQANQAzADIALQBhAGMAMAA2AC0AMQBlADMAOQBiAGIANQA1ADcAYgA2ADkAfQAlTHsAYQA1AGIAZAA0ADgAYwAzAC0AMABkADEANwAtADQAMQBiADUALQBiADEANgA0AC0ANQBmAGMANgBhAGQAMgBiADkANgBiADcAfQAmFk8AYgBqAGUAYwB0AHMAVAB5AHAAZQAnVFUAcABkAGEAdABlAEwAYQBuAGcAdQBhAGcAZQBNAG8AZABlAGwARgBvAHIAQwBvAG4AdgBlAHIAdABpAGIAbABlAEwAaQBiAHIAYQByAGkAZQBzACgQTABpAGIAVABpAHQAbABlACkUTABpAGIAQwBvAG0AcABhAG4AeQAqHlUAcABkAGEAdABlAFAAcgBvAHYAaQBkAGUAcgBzACs4UwB5AHMAdABlAG0ALgBDAG8AbABsAGUAYwB0AGkAbwBuAHMALgBIAGEAcwBoAHQAYQBiAGwAZQAsEnYAaQBzAHUAZQBsAGUAbQBzAC1INgBjAGIAMQBjAGQAZQAxAC0AZAA1AGQAYwAtADQAYQAzAGIALQA5ADAANQA0AC0AMgAxAGYAYQA3ADUANgBhADMAZgBhADQALihJAG4AdABlAHIAZgBhAGMAZQBWAGUAcgBzAGkAbwBuAEkAbgBmAG8AL0x7AGMANgAxADEAZQA0ADAAMAAtADcAZgBiADkALQA0AGMAMwA1AC0AYgA5AGEAYwAtADQAZQAzADEANABiADUAOQA5ADYANAAzAH0AMBhNAGEAagBvAHIAVgBlAHIAcwBpAG8AbgAxGE0AaQBuAG8AcgBWAGUAcgBzAGkAbwBuADIMTABlAGcAYQBjAHkAMzBMAGEAbgBnAHUAYQBnAGUATQBvAGQAZQBsAFYAZQByAHMAaQBvAG4ASQBuAGYAbwA0MEwAbwBhAGQATABpAGIAcgBhAHIAaQBlAHMASQBuAHQAbwBQAHIAbwBqAGUAYwB0ADUaQwBvAG0AcABhAHQAaQBiAGkAbABpAHQAeQDQAAIaA9ADAS0E0AUGGgfQBwgaAUUHCQjQAAkaBEUKCwQDAAAABQAAAA0AAAAAAAAA0AwLrQIAAADQDQEtDtAPAS0Q0AAJGgRFCgsEAwAAAAUAAAANAAAAFQAAANAMC60BAAAA0A0BLRHQDwEtENAACRoERQoLBAMAAAAFAAAADQAAAAAAAADQDAutAgAAANANAS0S0A8BLRDQAAkaBEUKCwQDAAAABQAAAA0AAAAUAAAA0AwLrQIAAADQDQEtE9APAS0Q0AAJGgRFCgsEAwAAAAUAAAANAAAAAAAAANAMC60CAAAA0A0BLRTQDwEtENAACRoERQoLBAMAAAAFAAAADQAAAAAAAADQDAutAgAAANANAS0V0A8BLRDQAAkaBEUKCwQDAAAABQAAAA0AAAAAAAAA0AwLrQIAAADQDQEtFtAPAS0X0AAJGgRFCgsEAwAAAAUAAAANAAAAFQAAANAMC60EAAAA0A0BLRjQDwEtENAZGq0BRRscAdAAHBoCRR0LBAMAAAAFAAAADQAAAAAAAADQHh8tINAhIhoCRSMkAtAAJRoFRQoLBAMAAAADAAAAAAAAAAoAAADQJgutAAAAANADAS0n0CgBLRHQKQEtENAAJRoFRQoLBAMAAAADAAAAAAAAAAoAAADQJgutAQAAANADAS0n0CgBLRHQKQEtEJoqKwFFAAEC0AABLSzQAAEtF9AAHy0t0C4vGgPQMAutAQAAANAxC60XAAAA0DIarQDQMy8aA9AwC60CAAAA0DELrQMAAADQMhqtANA0Gq0A0DUarQA="</v>
+          </d>
+        </o>
+      </d>
+      <d n="Values" t="Hashtable" />
+    </o>
+        </Data>
+        <TypeList>
+          <Type n="Boolean">System.Boolean</Type>
+          <Type n="Hashtable">System.Collections.Hashtable</Type>
+          <Type n="Int32">System.Int32</Type>
+          <Type n="OptionKey">{54dd0eac-a6d8-46f2-8c27-2f43c7e49861}</Type>
+          <Type n="String">System.String</Type>
+        </TypeList>
+      </XmlArchive>
+    </PlcProjectOptions>
+  </ProjectExtensions>
+</Project>

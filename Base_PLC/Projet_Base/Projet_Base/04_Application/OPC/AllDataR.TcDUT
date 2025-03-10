@@ -1,0 +1,51 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="AllDataR" Id="{af7c2bb0-329b-4ba0-9398-be02d4671aa9}">
+    <Declaration><![CDATA[TYPE AllDataR :
+	
+// 	REGLES : 														
+// 	Mettre seulement les structures des produits 					
+// 	Séparer les Structures (Pas AX_PTR mais PTR_1, PTR_2, ...)		
+// 	Les noms des variables sont globales (Pas ION7650 mais PM) 		 
+//	PP
+//	PTR_1, PTR_2, PTR_3
+//	INV		
+
+STRUCT
+	
+//PP               	
+	PP					: PP;              	   (* PP *)
+	
+//SUB_MV               	
+	SUBMV				: SUBMV_Exd;       	   (* SUB.MV*)
+//SUB_HV               	
+	SUBHV				: SUBHV_Exd;       	   (* SUB.MV*)
+// PTR        	
+	PTR					: ARRAY[1..CstNbPTR_G] OF  PTR_Exd;        (* PTR *)
+
+
+
+	ESS_Test			: ARRAY[1..CstNbPTR_G] OF  ESS_Exd;        (* PTR *)
+
+	ESS					: ARRAY[1..CstNbPTR_G] OF  ESS_Exd;        (* PTR *)
+
+
+	
+//WS                	
+	WS					: WS_RAV2;              		(* WS *)
+                                           		
+//COM                                      		
+	SMS					: ServerSms;       		(* SMS      *)
+	MAIL				: ServerMail;      		(* MAIL     *)
+	COM					: COM_Status;	   		(* COM      *)
+	CSV					: ServerCSV;       		(* CSV      *)
+	CSVData				: LoggerCSV;       		(* CSVData  *) 
+	OPCUA				: OPCAlarms ; 				(* OPCUA  *) 
+	IO					: IO ; 	
+
+END_STRUCT
+
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

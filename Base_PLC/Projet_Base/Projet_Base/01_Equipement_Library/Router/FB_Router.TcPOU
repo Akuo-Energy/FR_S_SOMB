@@ -1,0 +1,251 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_Router" Id="{086c7b9a-1dbb-41db-8c6d-2db38da678eb}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Router
+
+VAR_INPUT PERSISTENT 
+	ParamTempoRestart		: TIME 		:= T#30S ;	(*  (s)Tempo to wait before resupplying the ADSL routeur*)
+
+	
+END_VAR
+
+        	
+VAR_INPUT           	
+	Heure_Local     		: TIMESTRUCT;
+	IN_CmdRestart 			: BOOL;
+
+	
+	IN_CmdReset_L			: BOOL ;	// (NA) External Reset Command
+		// M_Evaluate //	
+MesDataExd			: Router_Standard;
+END_VAR     
+
+
+VAR_OUTPUT
+	//Child objects
+	OUT_CmdOpen_IO			: BOOL;	
+END_VAR        	
+      	
+VAR                 	
+	bInit					: BOOL;	// Booleen d'initialisation
+		
+	TP_Restart				: TP;
+	// State Mananger //
+	MesState				: BYTE; // Cal
+	
+
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{6fb859d9-0b71-4b1c-ad82-5aa2f80f816a}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Generates object alarms and manages resets. 
+//////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager		: FB_AlarmCodeManager ;  
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[	
+// ALARM CODE //
+	FB_AlarmCodeManager(
+		bAlarm1				:= FALSE,						//
+		bAlarm2				:= FALSE,                       //
+		bAlarm3				:= FALSE,                       //
+		bAlarm4				:= FALSE,                       //
+		bAlarm5				:= FALSE,                       //
+		bAlarm6				:= FALSE,                       //
+		bAlarm7				:= FALSE,                       //
+		bAlarm8				:= FALSE,                       //
+		bAlarm9				:= FALSE,                       //
+		bAlarm10			:= FALSE,                       //
+		bAlarm11			:= FALSE,                       //
+		bAlarm12			:= FALSE,						//
+		bAlarm13			:= FALSE ,                      //
+		bAlarm14			:= FALSE ,                      //
+		bAlarm15			:= FALSE,                       //
+		wAlarmCode			=>MesDataExd.MesData.MesAlarmCode);       
+			                                                
+// WARNING CODE //                                          
+	FB_AlarmCodeManager(
+		bAlarm1				:= FALSE, 						//				
+		bAlarm2				:= FALSE,                       //
+		bAlarm3				:= FALSE,                       //
+		bAlarm4				:= FALSE,                       //
+		bAlarm5				:= FALSE,                       //
+		bAlarm6				:= FALSE,                       //
+		bAlarm7				:= FALSE,                       //
+		bAlarm8				:= FALSE,                       //
+		bAlarm9				:= FALSE,                       //
+		bAlarm10			:= FALSE,                       //
+		bAlarm11			:= FALSE,                       //
+		bAlarm12			:= FALSE,                       //
+		bAlarm13			:= FALSE,                       //
+		bAlarm14			:= FALSE,                       //
+		bAlarm15			:= FALSE,                       //
+		wAlarmCode			=>MesDataExd.MesData.MesWarningCode);
+		
+// EVENT CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= OUT_CmdOpen_IO, 					// ADSL is running 
+		bAlarm2			:= FALSE , 							//
+		bAlarm3			:= FALSE,                           //
+		bAlarm4			:= FALSE,                           //
+		bAlarm5			:= FALSE,                           //
+		bAlarm6			:= FALSE,                           //
+		bAlarm7			:= FALSE,                           //
+		bAlarm8			:= FALSE,                           //
+		bAlarm9			:= FALSE,                           //
+		bAlarm10		:= FALSE,                           //
+		bAlarm11		:= FALSE,                           //
+		bAlarm12		:= FALSE,                           //
+		bAlarm13		:= FALSE,                           //
+		bAlarm14		:= FALSE,                           //
+		bAlarm15		:= FALSE,                           //
+		wAlarmCode		=>MesDataExd.MesData.MesEventCode);]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Evaluate" Id="{0c304889-711d-4077-b9b9-c6b1e1f113d0}">
+      <Declaration><![CDATA[METHOD M_Evaluate
+//////////////////
+// Evaluate available Powers and AMG characteristics . 
+/////////////////
+
+VAR 
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{f3722b6b-1b05-4cce-a9b7-58f126816e23}">
+      <Declaration><![CDATA[METHOD M_Execute : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF NOT bInit THEN
+	M_Init();
+ELSIF CmdInit_G OR IN_CmdReset_L THEN
+	bInit := TRUE;
+ELSE
+	
+	M_OpenClose(); 
+	M_StateManager();
+	M_Evaluate();
+END_IF
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{a8bd40e3-e7eb-424d-bf7e-5f1e696581fa}">
+      <Declaration><![CDATA[METHOD M_Init : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[bInit := TRUE;
+
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_OpenClose" Id="{4361cc1a-9b14-4947-a285-1f265ded5aac}">
+      <Declaration><![CDATA[METHOD M_OpenClose
+//////////////////
+// Manages Opening of the contactor
+//////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+// Rest Command
+TP_Restart(IN:= IN_CmdRestart , PT:=ParamTempoRestart) ;
+OUT_CmdOpen_IO	 := TP_Restart.Q ;  // Impulsion that goes back to zero as soon as the state of the TP goes down . 
+
+IF  IN_CmdRestart THEN
+	 IN_CmdRestart := FALSE;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_StateManager" Id="{c79d25b5-7638-43f5-8eec-faf5ae2bb022}">
+      <Declaration><![CDATA[METHOD M_StateManager
+//////////////////
+// Detect which is the state of the inverter. IF loss of communication MesState =0 , the last inverter state is kept .  
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+	
+END_VAR
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// OPERATIONNAL INDEX //
+IF NOT  OUT_CmdOpen_IO THEN 
+	MesState.2 := 1;
+ELSE
+	MesState.0 := 1;
+END_IF
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_Router">
+      <LineId Id="151" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Router.M_AlarmManagement">
+      <LineId Id="1940" Count="13" />
+      <LineId Id="2021" Count="2" />
+      <LineId Id="1954" Count="20" />
+      <LineId Id="1993" Count="1" />
+      <LineId Id="1996" Count="16" />
+    </LineIds>
+    <LineIds Name="FB_Router.M_Evaluate">
+      <LineId Id="588" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Router.M_Execute">
+      <LineId Id="6" Count="2" />
+      <LineId Id="44" Count="0" />
+      <LineId Id="11" Count="0" />
+      <LineId Id="28" Count="0" />
+      <LineId Id="39" Count="1" />
+      <LineId Id="38" Count="0" />
+      <LineId Id="30" Count="0" />
+      <LineId Id="37" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Router.M_Init">
+      <LineId Id="6" Count="0" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="8" Count="0" />
+      <LineId Id="7" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Router.M_OpenClose">
+      <LineId Id="14" Count="0" />
+      <LineId Id="23" Count="2" />
+      <LineId Id="34" Count="0" />
+      <LineId Id="2" Count="0" />
+      <LineId Id="43" Count="1" />
+    </LineIds>
+    <LineIds Name="FB_Router.M_StateManager">
+      <LineId Id="95" Count="0" />
+      <LineId Id="113" Count="0" />
+      <LineId Id="115" Count="0" />
+      <LineId Id="117" Count="1" />
+      <LineId Id="116" Count="0" />
+      <LineId Id="114" Count="0" />
+      <LineId Id="12" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

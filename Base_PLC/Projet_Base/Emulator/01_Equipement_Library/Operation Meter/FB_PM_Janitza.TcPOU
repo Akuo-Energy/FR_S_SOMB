@@ -1,0 +1,133 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_PM_Janitza" Id="{505ac0e1-2e24-4174-829d-8353cdafb38c}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_PM_Janitza EXTENDS FB_PM_Base
+//////////////////
+// Measurement Solution based on Janitza, but access through JemaPLC
+//////////////////
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance specific) 
+	ParamIPAdress			   	: STRING 		:= '192.168.1.30'; 				// (NA) IP Adress of D50 .
+	ParamUnitID 				: BYTE  := 1; 			  							// (NA)   Modbus Unit ID.	
+
+
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	
+END_VAR
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//
+	
+	//M_READ VARIABLES//
+		FB_ModbusRead_I1			: ARRAY[1..1] OF  FB_ModbusRead ; 		// (NA) FB for Modbus Reading
+	
+		MesBlock1_Temp 				: ARRAY[0..125] OF WORD;	//(NA) Temporary Block with multiple modbus reading (U30 + I35)
+		
+		MesModbusReadAlarm 		  	: ARRAY[1..1] OF BOOL ; 					// (NA) Modbus Read Alarm for communication 
+		
+		MesModbusAlarmCode			: UDINT;												// (NA) Modbus Read Alarm Code	
+		
+	//M_INIT VARIABLES //
+
+	// M_EXECUTE VARIABLES //
+			MesDataExd AT %Q*				: PM_Standard ;
+	
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_Execute" Id="{8615bc76-6d85-4ccb-95dd-71ba639b8177}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	// EMULATOR
+	// Method local variables (reinitialized at each cycle) 
+	///MesDataExd.MesData.dl 		: SUBMV_Exd;
+	MesStateCB 		: BOOL;
+MesDataExd.MesData.ull		: PM;
+	
+	KK: INT;
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//MesDataExd.MesData.dl	 := A1_SUBMV.MesDataExd.MesData.
+
+MesStateCB 	 := A1_SUBMV.A1_MainMVCB.MesDataExd.MesData.MesClosed ; 
+MesData.MesP := - A1_SUBMV.A1_PM_Aux.MesDataExd.MesData.MesP ;	// initiliaze with auxiliaries power 
+MesData.MesQ := - A1_SUBMV.A1_PM_Aux.MesDataExd.MesData.MesQ   ; // aux + reactif in transfo  
+
+
+IF MesStateCB THEN
+MesDataExd.MesData.MesU 	:= A1_PP.MesDataExd.MesData.MesU;
+MesDataExd.MesData.MesU12 	:= A1_PP.MesDataExd.MesData.MesU;
+MesDataExd.MesData.MesU23 	:= A1_PP.MesDataExd.MesData.MesU;
+MesDataExd.MesData.MesU31 	:= A1_PP.MesDataExd.MesData.MesU;
+MesDataExd.MesData.MesV 	:= A1_PP.MesDataExd.MesData.MesU/SQRT(3);
+MesDataExd.MesData.MesV1 	:= A1_PP.MesDataExd.MesData.MesU/SQRT(3);
+MesDataExd.MesData.MesV2 	:= A1_PP.MesDataExd.MesData.MesU/SQRT(3);
+MesDataExd.MesData.MesV3 	:= A1_PP.MesDataExd.MesData.MesU/SQRT(3);
+MesDataExd.MesData.MesFreq := A1_PP.MesDataExd.MesData.MesFreq;
+	
+	
+	FOR KK:= 1 TO CstNbESS_G DO 
+		//MesDataExd.MesData.MesP 	:= AX_PTR[KK].MesDataExd.MesData.MesP + MesDataExd.MesData.MesP  - ParamLossImpedance * SEL(AX_PTR[KK].MesDataExd.MesData.MesU=0,  EXPT(((AX_PTR[KK].MesDataExd.MesData.MesP*1000) / AX_PTR[KK].MesDataExd.MesData.MesU/SQRT(3)),2) , 0 )/1000  ;		// Create some error due to transfo 
+	MesDataExd.MesData.MesQ 	:= AX_PTR[KK].MesDataExd.MesData.MesQ + MesDataExd.MesData.MesQ ;
+	END_FOR
+	
+	
+MesDataExd.MesData.MesQ 	:= MesDataExd.MesData.MesQ + ABS(MesDataExd.MesData.MesP) * 0.1 	; // Add transfo conso
+	
+	
+MesDataExd.MesData.MesP1 	:= MesDataExd.MesData.MesP ;
+MesDataExd.MesData.MesP2 	:= MesDataExd.MesData.MesP ;
+MesDataExd.MesData.MesP3 	:= MesDataExd.MesData.MesP ;
+
+MesDataExd.MesData.MesQ1 	:= MesDataExd.MesData.MesQ;
+MesDataExd.MesData.MesQ2 	:= MesDataExd.MesData.MesQ;
+MesDataExd.MesData.MesQ3 	:= MesDataExd.MesData.MesQ;
+MesDataExd.MesData.MesS := SQRT( MesDataExd.MesData.MesP * MesDataExd.MesData.MesP + MesDataExd.MesData.MesQ.MesDataExd.MesData.MesQ ) ; 
+	
+MesDataExd.MesData.MesI 	:= MesDataExd.MesData.MesS/(SQRT(3)*A1_PP.MesDataExd.MesData.MesU);
+MesDataExd.MesData.MesI1 	:= MesDataExd.MesData.MesS/(SQRT(3)*A1_PP.MesDataExd.MesData.MesU);
+MesDataExd.MesData.MesI2 	:= MesDataExd.MesData.MesS/(SQRT(3)*A1_PP.MesDataExd.MesData.MesU);
+MesDataExd.MesData.MesI3 	:= MesDataExd.MesData.MesS/(SQRT(3)*A1_PP.MesDataExd.MesData.MesU);
+ELSE 
+MesDataExd.MesData.:= MesDataExd.MesData.ull;
+END_IF
+
+IF MesDataExd.MesData.MesP > 0 THEN
+MesDataExd.MesData.MesEActProd := MesDataExd.MesData.MesEActProd + MesDataExd.MesData.MesP*ParamCycleTime_Emul/3600000	;
+END_IF
+IF MesDataExd.MesData.MesP < 0 THEN
+MesDataExd.MesData.MesEActCons := MesDataExd.MesData.MesEActCons -.MesDataExd.MesData.MesP*ParamCycleTime_Emul/3600000	;
+END_IF
+IF MesDataExd.MesData.MesQ > 0 THEN
+MesDataExd.MesData.MesEReactProd := MesDataExd.MesData.MesEReactProd + MesDataExd.MesData.MesQ*ParamCycleTime_Emul/3600000	;
+END_IF
+IF MesDataExd.MesData.MesQ < 0 THEN
+MesDataExd.MesData.MesEReactCons := MesDataExd.MesData.MesEReactCons -.MesDataExd.MesData.MesQ*ParamCycleTime_Emul/3600000	;
+END_IF
+
+MesDataNull.MesEReactCons := MesDataExd.MesData.MesEReactCons;	
+MesDataNull.MesEReactProd := MesDataExd.MesData.MesEReactProd;	
+MesDataNull.MesEActCons := MesDataExd.MesData.MesEActCons;		
+MesDataNull.MesEActProd := MesDataExd.MesData.MesEActProd;		
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_PM_Janitza">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PM_Janitza.M_Execute">
+      <LineId Id="746" Count="61" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

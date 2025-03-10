@@ -1,0 +1,96 @@
+﻿<div id="InfosIO_EL1809-3_4" data-tchmi-type="TcHmi.Controls.System.TcHmiContent" data-tchmi-top="0" data-tchmi-left="0" data-tchmi-width="800" data-tchmi-height="640">
+
+<div id="TcHmiTextblock_15098" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="30" data-tchmi-height-unit="px" data-tchmi-left="86" data-tchmi-left-unit="px" data-tchmi-text="EL1809 - 3" data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-width="150" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-font-size="20" data-tchmi-text-horizontal-alignment="Center">
+
+</div>
+
+<div id="TcHmiDatagrid_68" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiDatagrid" data-tchmi-height="525" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px"    data-tchmi-top="30" data-tchmi-top-unit="px" data-tchmi-width="340" data-tchmi-width-unit="px" data-tchmi-src-data="%s%PLC1.IO.MesIoPDLBlock3_DI_3%/s%" data-tchmi-row-numbers-font-size="14" data-tchmi-row-numbers-font-style="Normal" data-tchmi-row-numbers-font-weight="Bold" data-tchmi-header-height-unit="px" data-tchmi-header-font-size-unit="px" data-tchmi-header-font-size="15" data-tchmi-header-font-style="Normal" data-tchmi-header-font-weight="Bold" data-tchmi-row-numbers-width-unit="px" data-tchmi-row-numbers-font-size-unit="px">
+
+
+<script data-tchmi-target-attribute="data-tchmi-cell-content-padding" type="application/json">
+{
+  "left": 3,
+  "leftUnit": "px",
+  "right": 3,
+  "rightUnit": "px",
+  "top": 0,
+  "topUnit": "px",
+  "bottom": 0,
+  "bottomUnit": "px"
+}
+</script>
+
+
+<script data-tchmi-target-attribute="data-tchmi-src-column" type="application/json">
+[
+  {
+    "name": "Description",
+    "label": "Description",
+    "control": "TextBox",
+    "width": 70,
+    "widthUnit": "%",
+    "resize": true,
+    "sortable": false,
+    "minWidth": 100,
+    "minWidthUnit": "px",
+    "cellBackground": null,
+    "textColor": null,
+    "editable": false,
+    "horizontalAlignment": "Left",
+    "verticalAlignment": "Center",
+    "format": null
+  },
+  {
+    "name": "Value",
+    "label": "Value",
+    "control": "TextBox",
+    "width": 30,
+    "widthUnit": "%",
+    "resize": true,
+    "sortable": false,
+    "minWidth": 30,
+    "minWidthUnit": "px",
+    "cellBackground": null,
+    "textColor": null,
+    "editable": false,
+    "horizontalAlignment": "Center",
+    "verticalAlignment": "Center",
+    "format": null
+  }
+]
+</script>
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-header-background-color" type="application/json">
+{
+  "color": "rgba(153, 204, 51, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-color" type="application/json">
+{
+  "color": "rgba(153, 204, 51, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-row-numbers-background-color" type="application/json">
+{
+  "color": "rgba(153, 204, 51, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-row-numbers-text-color" type="application/json">
+{
+  "color": "rgba(0, 0, 0, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-header-text-color" type="application/json">
+{
+  "color": "rgba(0, 0, 0, 1)"
+}
+</script>
+</div>
+
+</div>

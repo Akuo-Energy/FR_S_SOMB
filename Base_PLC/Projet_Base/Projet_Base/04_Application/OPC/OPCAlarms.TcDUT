@@ -1,0 +1,26 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="OPCAlarms" Id="{c8482c42-2a8a-4d99-a3ca-8e851c421c0e}">
+    <Declaration><![CDATA[TYPE OPCAlarms :
+	
+// 	REGLES : 														
+// 	Mettre seulement les structures des produits 					
+// 	Séparer les Structures (Pas AX_PTR mais PTR_1, PTR_2, ...)		
+// 	Les noms des variables sont globales (Pas ION7650 mais PM) 		 
+//	PP
+//	PTR_1, PTR_2, PTR_3
+//	INV		
+
+STRUCT
+	
+//OPC
+	MesAlarmCode		: WORD ; 				 (* OPC Alarm Code   *)
+	MesWarningCode		: WORD ; 				 (* OPC Warning Code *)
+	MesEventCode 		: ARRAY[1..9] OF WORD ; (* OPC Event Code *)
+
+END_STRUCT
+
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

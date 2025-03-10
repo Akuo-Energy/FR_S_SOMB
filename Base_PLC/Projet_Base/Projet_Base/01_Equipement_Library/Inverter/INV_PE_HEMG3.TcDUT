@@ -1,0 +1,80 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="INV_PE_HEMG3" Id="{57078a6b-7cbf-483b-8dec-c1d65af5ddf7}">
+    <Declaration><![CDATA[///////////
+// Structure for PE Inverter. Main Operating Data to be saved (ex: OPC).  
+//////////
+TYPE INV_PE_HEMG3:
+STRUCT
+	
+	// INV Measures
+	MesData					: INV ;	(* (NA) MesData 																										*) 		            		
+	// Power column (PE name : Modules) 
+	AX_PowerCol				: ARRAY[1..6] OF PowerCol_INV_PE_HEMG3;	(* (NA) Power column of the PE Skid  *) 
+	AX_DU 					: ARRAY[1..CstNb_DU_G] OF INV_DU; (* (NA) Disconnecting Units Channels *)
+	
+	//Electrical Measurements	
+	MesI1					: REAL; (* (A) Current phase 1 (R). INV: SV1.4 Grid current I1 (HEMK)															*)
+	MesI2					: REAL; (* (A) Current phase 2 (S). INV: SV1.5 Grid current I2 (HEMK)															*)
+	MesI3					: REAL; (* (A) Current phase 3 (T). INV: SV1.6 Grid current I3  (HEMK)															*)
+	MesU12					: REAL; (* (V) Phase AB RMS voltage (line to line)at grid side of AC circuit breaker CB501. INV: SV1.1 Grid voltage RS (HEMK)	*)
+	MesU23					: REAL; (* (V) Phase BC RMS voltage (line to line)at grid side of AC circuit breaker CB501. INV: SV1.2 Grid voltage ST(HEMK)	*)
+	MesU31					: REAL; (* (V) Phase CA RMS voltage (line to line)at grid side of AC circuit breaker CB501. INV: SV1.3 Grid voltage TR (HEMK)	*)
+	MesPconnected			: REAL; (* (%) Current available active power. INV: SV4.2.1 P limit inst 														*)                                                     									
+	MesStatusCurtail_P		: WORD; 			(* (NA) P control : Cause of P control*)
+	MesStatusCurtail_Q		: WORD; 			(* (NA) Q control : Cause of Q control*)
+	MesInsuResistor_AC		: REAL;	(* (Ohms) AC Insulation Resistance. INV: SV3.2.2  Resistor 																*)
+	OUT_CmdInvLocal			: BOOL; (*determine whether setpoint is from local or remote *)
+	
+	
+	
+	//Communication Status                                                                                              									
+	MesStateCom				: BOOL; (* (NA) Cal: False := Not communicating, True := Communicating	 														*)
+	
+	//Status Summary
+	MesStateCBac			: BOOL; (* (NA) False := Open, True := Close, Status of event139 "CB501 Closed". AC circuit breaker CB501 is closed 			*)
+	MesStateCBdc			: BOOL; (* (NA) False := Open, True := Close, Status of event140 "CB201 Closed". DC circuit breaker CB201 is closed             *)
+	MesEarthing_Relay		: BOOL; (* (NA) False := Open, True := Close, Status of event157 "K202 Closed". Ground relay K202 is closed                     *)
+	MesFaultGnd				: BOOL; (* (NA) False := Alert, True := No alert, Ground fault status. Digital outputDO_121 follows the state of this register  *)
+	MesStateNoAlert			: BOOL; (* (NA) False := Alert iverter has detected an abnormal event which prevents operation. ; True := No alert.             *)
+	MesState				: UINT; (* (NA) This parameter should be used for informational status only                                                     *)
+	MesAlarmID				: UINT; (* (NA) Fallo actual *)
+	MesWarningID			: UINT; (* (NA) Warning actual*)
+
+
+	MesBdrigeCtlMod			: UINT;	(* (NA) Inverter bridge control mode                                                                                    *)
+	MesWorkingHr			: REAL; (* (Hr) Total duration that the inverter has been online since power up                                                 *)
+	MesEventID				: REAL;	(* (NA) Event ID of the currently active event. 0= No event, 1 = Emergency stop, 3 = Remote emergency stop. SV8.15      *)
+	
+	MesSetptP				: REAL;	(* (%) Measurement of active power setpoint. INV: G8.1.3 P reference  	                                                *)                        	 
+	MesSetptQ				: REAL;	(* (%) Measurement of reactive power setpoint. INV: G8.1.4 Q reference	                                   	            *)
+	MesSetptCosPhi			: REAL; (* (pu) Measurement of power factor setpoint. INV: G8.1.4 Cos phi reference                                	            *)
+	MesStartDisabled		: BOOL; (* (NA) Start disable : False := Start can be abled 						 											*)
+	
+	// System Commands
+	ParamID_QMode			: UINT := 1; 		(* (NA) reactive power control mode : 0: Cos Phi, 1: Q,  2: I, 4: V/Q mode   G8.1.2 register: 40551  		*)
+	ParamID_PMode			: UINT := 1; 		(* (NA) active power control mode : 0: MPPt, 1: I, 2: P, 3: Vdc										 		*)
+		                                    	                                                                                                         		
+	MesCP_Start        		: BOOL;				(* (NA) Start conditions. INV: SV4.3.1-Start conditions all											 		*)                 		        		
+	                                                                                                         											
+	// Inverter's Control Cabinet  Status                                                                       											
+	MesTemp_DU				: REAL;			 	(* (C) Disconnecting unit temperature. INV: SV4.1.4b DU Internal  											*)
+	MesTemp_Control			: REAL; 		 	(* (C) Control cabinet temperature. INV: SV4.1.4 Internal temperature										*)
+	MesTemp_IGBTmax			: REAL; 		 	(* (C) Maximum IGBT temperature. INV: SV4.1.5 Max IGBTs temperature											*)
+	MesTemp_PowerColmax		: REAL; 		 	(* (C) Maximum power column temperature. INV: SV4.1.6 Max modules temperature								*)
+	MesAlarm_Control		: UINT;			 	(* (NA) Control cabinet alarm. INV: SV4.1.1 Current fault 													*) 
+	MesWarning_Control		: UINT;			 	(* (NA) Control cabinet warning. INV: SV4.1.2 Current warning					    						*)			
+	MesState_Control 		: UINT;			 	(* (NA) Control cabinet state. INV: SV4.1.3 Current status													*)
+	                                         	                                                    	                                						
+	// Reset command                         	                                                    	                                						
+	OUT_CmdReset 			: BOOL; 		 	(* (NA) OUT reset command. INV: Reset command 43012															*)
+	OUT_CmdEmergencyStop	: BOOL; 		 	(* (NA) OUT emergency stop command. INV: Emergengy stop command 43200										*) 
+	MesNbRunningModules		: REAL; 			(* (NA) Number of modules running*)
+
+    MesEventCode2			: WORD ;                                                                                     															
+END_STRUCT
+END_TYPE
+
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,76 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="PowerCol_Jema" Id="{8fc4c86f-db8d-4330-a05b-4057e06fe46c}">
+    <Declaration><![CDATA[///////////
+// Structure For Jema Module 
+//////////
+TYPE PowerCol_Jema :
+STRUCT
+	
+		MesData					: PowerCol ; (* MesData *) 
+
+		MesTempControl      		: REAL ; 		// {0}(°C) Temperature of control card
+		MesTempPowerUnit    		: REAL ;		// {0}(°C) Temperature of Power Unit
+		MesTempCabinet      		: REAL ; 		// {0}(°C) Cabinet temperature
+		MesTempCoil1        		: REAL ; 		// {0}(°C) Coil temperature
+		MesRegAlarm0        		: WORD ; 		// {0}Alarm Word of PCS
+		MesRegAlarm1        		: WORD ; 		// {0}Alarm Word of PCS 
+		MesRegAlarm2        		: WORD ; 		// {0}Alarm Word of PCS 
+		MesRegAlarm3        		: WORD ;  		// {0}Alarm Word of PCS
+		MesRegAlarm4        		: WORD ;  		// {0}Alarm Word of PCS
+		MesDeratingWord				: WORD ;		// {0}Derating word of PCS
+		MesHeartbit					: REAL ;		// {0}Heartbit
+		MesDoorOpened				: BOOL ;		// {1}Door of the Power module is opened	
+		
+		MesJemaAlarms				: PowerCol_JemaAlarms;
+
+			
+
+END_STRUCT
+END_TYPE
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

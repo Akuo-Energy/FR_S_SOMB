@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="EMS" Id="{54d4f263-a2ff-4513-a869-f6fb146e001c}">
+    <Declaration><![CDATA[TYPE EMS :
+STRUCT
+	IN_EMS		: IN_EMS;
+	OUT_EMS		: OUT_EMS;
+	
+	MesAlarmCode		: WORD;
+	MesWarningCode		: WORD;
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="PowerCol_INV_Jema" Id="{543a29c6-5c1e-4e71-982b-c734aef8975f}">
+    <Declaration><![CDATA[TYPE PowerCol_INV_Jema :
+STRUCT
+	
+	MesData				: PowerCol_INV ; 
+	
+	MesTempControl  	: REAL; 	(* (°C) Temperature of control card*)
+	MesIn_State			: WORD;     (* (NA) MesIn_State		*)
+	MesOut_State		: WORD;     (* (NA) MesOut_State	*)
+	MesTempPowerUnit	: REAL;     (* (NA) MesTempPowerUnit*)
+	MesTempCabinet		: REAL;     (* (NA) MesTempCabinet	*)
+	MesRegAlarm0		: WORD;     (* (NA) MesRegAlarm0	*)
+	MesRegAlarm1		: WORD;     (* (NA) MesRegAlarm1	*)
+	MesRegAlarm2		: WORD;     (* (NA) MesRegAlarm2	*)
+	MesRegAlarm3		: WORD;     (* (NA) MesRegAlarm3	*)
+	MesRegAlarm4		: WORD;     (* (NA) MesRegAlarm4	*)
+	MesDeratingWord		: WORD ;	(*	(NA) Derating word of PCS*)
+	MesHeartbit			: REAL ;	(*	(NA) Heartbit*)
+	MesDoorOpened		: BOOL ;	(*	(NA) Door of the Power module is opened	*)
+		
+	MesJemaAlarms		: PowerCol_INV_JemaAlarms; (* Alarms Struct*)
+	
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

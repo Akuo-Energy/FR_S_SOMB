@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="PPC_Sma" Id="{32d64eba-0be7-49c1-9b96-6128c6e84875}">
+    <Declaration><![CDATA[///////////
+// Structure For Inverter. Main Operating Data to be saved ( ex: OPC ) .  
+//////////
+TYPE PPC_Sma :
+STRUCT
+	
+		// INV Measures
+		MesData		: PPC ; 
+		
+		
+		MesPState			: REAL;
+		MesQState			: REAL;
+		MesGeneState		: REAL;
+
+		MesPNomControlled	: REAL;
+		MesPControlled		: REAL;
+		MesQnomControlled	: REAL;
+		MesQControlled		: REAL;
+		
+		
+END_STRUCT
+END_TYPE
+
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

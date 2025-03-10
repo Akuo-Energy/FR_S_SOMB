@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_XorWord" Id="{0366aa15-dd0a-4ca1-973a-7c3683021266}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_XorWord
+// Takes in a Word and its past value and input the bits that have changed and the bits active in 2 arrays of array of bool
+VAR_INPUT
+	MyNewWord	:WORD;      //Mon nouveau AlarmCode actualisée a chaque temps de Cycle
+	MyWord		:WORD;		// AlarmCode du cycle précedent
+END_VAR
+VAR_OUTPUT
+	XORarray 	:ARRAY [0..15] OF BOOL;  //Tableau avec les bits qui ont subit une modif entre MyNewWord et MyWord
+	Boolarray	:ARRAY [0..15] OF BOOL; // MyNewWord convertis en Array of BOOL
+END_VAR
+VAR
+	MyXorWord:WORD;
+	FB_Word_TO_Bool : FB_WordToArrayOfBool;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// Operateur XOR pour trouver les Bits modifiés
+MyXorWord:= Myword XOR MyNewWord;
+
+FB_Word_TO_Bool(MyWord:=MyXorWord,ArrayOfBool=>XORarray);
+FB_Word_TO_Bool(MyWord:=MyNewWord,ArrayOfBool=>Boolarray);]]></ST>
+    </Implementation>
+    <LineIds Name="FB_XorWord">
+      <LineId Id="23" Count="3" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

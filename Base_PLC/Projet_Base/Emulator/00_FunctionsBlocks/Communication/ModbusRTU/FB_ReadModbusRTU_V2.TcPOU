@@ -1,0 +1,272 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_ReadModbusRTU_V2" Id="{f8a593d6-6e1f-4232-a93f-4bd9d22bb0ff}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_ReadModbusRTU_V2
+/////////////////////////////////////////////////////////////////////// 
+///////Read Modbus RTU on Rising Edge of Trigger ClockRead ////////
+//If there is lost of communication, ParamNbAlms then if still 
+//error wait ParamTimeRetry then loop 
+//Version : V1.1
+///////////////////////////////////////////////////////////////////////
+
+VAR_INPUT
+	InClockRead 			: BOOL;  		// Boolean to start the read
+	InStartAddr				: WORD;  		// First address of the block
+	InQuantity			    : WORD;	 		// Quantity of registers to read
+	InUnitID				: BYTE ; 		// Unit Id of the Slave to be read
+	InTimeout 				: TIME:=T#2S;   // Timeout param for the read
+	InAddrDest		        : POINTER TO BYTE;
+	InFunctionRead          : UINT;          // 0 := ReadInputRegs, 1 := ReadRegs 
+	ParamEnableRetryPause	: BOOL ; 
+	Reset					: BOOL ;
+END_VAR
+
+VAR_OUTPUT
+	OutErrorMbRead  		: BOOL; 	                // Alarm if three modbus attempts failed.
+	OutBusy					: BOOL;					    //Busy
+	OutErrorId				: INT;            //Id number of the error based on TC
+	OutbCompleted			: BOOL;
+	TmpError				: BOOL;	
+END_VAR
+
+VAR
+	//Parameters
+	ParamNbAlms				: UINT := 3;				// Parameter for the number of retries before the alarme
+	ParamTimeRetry 			: TIME:=T#30S;				//Time to wait before a retry
+	
+	//Instantiation of FB
+	MB 						: ModbusRtuMaster_PcCOM; 		// Multiple registers reading FROM SUB9 Interface
+	MB_EL					: ModbusRtuMasterV2_KL6x22B;  // Multiple registers reading FROM EL6021 Interface
+	R_TRIG          		: R_TRIG; 					// Rising edge detection for the trigger.
+	TempoRetry      		: TP;
+	
+	//Variables of the code 
+	Step            		: INT; 		    			// Grafcet step
+	AlarmCounter    		: UINT; 					// Alarm Counter. Incremennted if modbus errOR  Alarm if counter =3 , resetable.  
+	bRetry          		: BOOL:= FALSE; 			// Boolean to denote the retries
+	
+	TmpBusy					: BOOL;
+	TmpErrorId				: INT;	
+	
+	TON_ReadRTU						: TON; 
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[OutbCompleted:= FALSE;
+// RESET //
+	IF Reset THEN 
+			AlarmCounter		:= MAX(0,AlarmCounter-1) ;	// on enleve 1 au compteur pour supprimer l'alamrme. 
+			OutErrorId 			:= 0 ; 
+			OutErrorMbRead 	:=FALSE;
+			Reset 				:= FALSE;
+	END_IF
+	
+// ALARM MANAGEMENT //
+TempoRetry(PT := ParamTimeRetry);
+IF AlarmCounter = ParamNbAlms THEN 
+	OutErrorMbRead 	:=TRUE;
+	bRetry := SEL(ParamEnableRetryPause , FALSE ,  TRUE);		// False = disable retry 	
+ELSE
+	bRetry := FALSE;
+	
+END_IF
+
+	// MODBUS SEQUENCE //
+	CASE step OF
+		0://Idle
+			R_TRIG(CLK := InClockRead);
+			IF R_TRIG.Q THEN 
+				R_TRIG(CLK := FALSE);
+				Step :=1;
+				OutBusy         := TRUE;
+			END_IF
+		1 ://Processing Reply  
+			TON_ReadRTU(IN:= TRUE , PT:= InTimeout + T#100MS ) ; // Overlay timeout . 
+	    	CASE InFunctionRead OF
+				1: 
+					MB_EL.ReadCoils
+					(
+						UnitID := InUnitId, 
+						Quantity := InQuantity, 
+						MBAddr := InStartAddr, 
+						cbLength := 2* InQuantity, 
+						pMemoryAddr := InAddrDest, 
+						Execute := TRUE, 
+						Timeout := InTimeout,
+						Error => TmpError,
+						Busy => TmpBusy,
+						ErrorId => TmpErrorId,
+					);	
+				2:
+					MB_EL.ReadInputStatus
+					(
+						UnitID := InUnitId, 
+						Quantity := InQuantity, 
+						MBAddr := InStartAddr, 
+						cbLength := 2* InQuantity, 
+						pMemoryAddr := InAddrDest, 
+						Execute := TRUE, 
+						Timeout := InTimeout,
+						Error => TmpError,
+						Busy => TmpBusy,
+						ErrorId => TmpErrorId,
+					);	
+				3:
+					MB_EL.ReadRegs
+					(
+						UnitID := InUnitId, 
+						Quantity := InQuantity, 
+						MBAddr := InStartAddr, 
+						cbLength := 2* InQuantity, 
+						pMemoryAddr := InAddrDest, 
+						Execute := TRUE, 
+						Timeout := InTimeout,
+						Error => TmpError,
+						Busy => TmpBusy,
+						ErrorId => TmpErrorId,
+					  );
+				4:
+					MB_EL.ReadInputRegs
+					(
+						UnitID := InUnitId, 
+						Quantity := InQuantity, 
+						MBAddr := InStartAddr, 
+						cbLength := 2* InQuantity, 
+						pMemoryAddr := InAddrDest, 
+						Execute := TRUE, 
+						Timeout := InTimeout,
+						Error => TmpError,
+						Busy => TmpBusy,
+						ErrorId => TmpErrorId,
+					);
+				5:
+					MB_EL.WriteSingleCoil
+					(
+						UnitID := InUnitId, 
+						Quantity := InQuantity, 
+						MBAddr := InStartAddr, 
+						cbLength := 2* InQuantity, 
+						pMemoryAddr := InAddrDest, 
+						Execute := TRUE, 
+						Timeout := InTimeout,
+						Error => TmpError,
+						Busy => TmpBusy,
+						ErrorId => TmpErrorId,
+					);
+				6:
+					MB_EL.WriteSingleRegister
+					(
+						UnitID := InUnitId, 
+						Quantity := InQuantity, 
+						MBAddr := InStartAddr, 
+						cbLength := 2* InQuantity, 
+						pMemoryAddr := InAddrDest, 
+						Execute := TRUE, 
+						Timeout := InTimeout,
+						Error => TmpError,
+						Busy => TmpBusy,
+						ErrorId => TmpErrorId,
+					);
+				15:
+					MB_EL.WriteMultipleCoils
+					(
+						UnitID := InUnitId, 
+						Quantity := InQuantity, 
+						MBAddr := InStartAddr, 
+						cbLength := 2* InQuantity, 
+						pMemoryAddr := InAddrDest, 
+						Execute := TRUE, 
+						Timeout := InTimeout,
+						Error => TmpError,
+						Busy => TmpBusy,
+						ErrorId => TmpErrorId,
+					);
+				16:
+					MB_EL.WriteRegs
+					(
+						UnitID := InUnitId, 
+						Quantity := InQuantity, 
+						MBAddr := InStartAddr, 
+						cbLength := 2* InQuantity, 
+						pMemoryAddr := InAddrDest, 
+						Execute := TRUE, 
+						Timeout := InTimeout,
+						Error => TmpError,
+						Busy => TmpBusy,
+						ErrorId => TmpErrorId,
+					);
+			END_CASE
+			
+			IF NOT (TmpBusy) AND NOT (TmpError) THEN
+				TempoRetry(In:= FALSE);
+				TON_ReadRTU(IN:= FALSE ) ; 
+				MB_EL.ReadInputRegs(Execute:= FALSE);
+				MB_EL.ReadRegs(Execute:= FALSE);
+				MB_EL.ReadCoils(Execute:= FALSE);
+				MB_EL.ReadInputStatus(Execute:= FALSE);
+				MB_EL.WriteSingleCoil(Execute:= FALSE);
+				MB_EL.WriteSingleRegister(Execute:= FALSE);
+				MB_EL.WriteMultipleCoils(Execute:= FALSE);
+				MB_EL.WriteRegs(Execute:= FALSE);
+				OutErrorId 		:= 0;
+				OutErrorMbRead	:= FALSE;
+				AlarmCounter	:= 0; // Reset counter after successful modbus read. 
+				OutbCompleted 	:= TRUE ; 
+				Step 			:= 0;
+				OutBusy         := FALSE;
+			ELSIF ((NOT (TmpBusy) AND TmpError) OR TON_ReadRTU.Q)  AND NOT(bRetry) THEN
+
+				TempoRetry(In:= FALSE);
+				bRetry := FALSE;
+				MB_EL.ReadCoils(Execute:= FALSE);
+				MB_EL.ReadInputRegs(Execute:= FALSE);
+				MB_EL.ReadInputStatus(Execute:= FALSE);
+				MB_EL.ReadRegs(Execute:= FALSE);
+				MB_EL.WriteSingleCoil(Execute:= FALSE);
+				MB_EL.WriteSingleRegister(Execute:= FALSE);
+				MB_EL.WriteMultipleCoils(Execute:= FALSE);
+				MB_EL.WriteRegs(Execute:= FALSE);
+				AlarmCounter 	:= MIN(AlarmCounter + 1,3) ; 
+				OutErrorId		:= SEL(TON_ReadRTU.Q , TmpErrorId ,250 );
+				Step 			:= 0;
+				TON_ReadRTU(IN:= FALSE ) ; 
+				OutBusy         := FALSE;
+			ELSIF NOT (TmpBusy) AND TmpError AND bRetry THEN
+				MB_EL.ReadInputRegs(Execute:= FALSE);
+				MB_EL.ReadRegs(Execute:= FALSE);
+				MB_EL.ReadCoils(Execute:= FALSE);
+				MB_EL.ReadInputStatus(Execute:= FALSE);
+				MB_EL.WriteSingleCoil(Execute:= FALSE);
+				MB_EL.WriteSingleRegister(Execute:= FALSE);
+				MB_EL.WriteMultipleCoils(Execute:= FALSE);
+				MB_EL.WriteRegs(Execute:= FALSE);
+				step := 2;
+				OutBusy         := FALSE;
+			END_IF	
+		2: 
+			TempoRetry(In:= TRUE);		// LEAVE SOME TIME BEFORE NEW ATTEMPT . 
+			IF NOT(TempoRetry.Q) THEN
+				TempoRetry(In:= FALSE);
+				//AlarmCounter := 0;
+				step := 0;
+				
+			END_IF
+			
+	END_CASE
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_ReadModbusRTU_V2">
+      <LineId Id="1430" Count="0" />
+      <LineId Id="1636" Count="5" />
+      <LineId Id="1617" Count="0" />
+      <LineId Id="1642" Count="0" />
+      <LineId Id="1432" Count="8" />
+      <LineId Id="1442" Count="161" />
+      <LineId Id="1694" Count="6" />
+      <LineId Id="1693" Count="0" />
+      <LineId Id="1604" Count="12" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

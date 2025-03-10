@@ -1,0 +1,46 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="ProtectRelay" Id="{ec95d22d-64a2-4e36-ad97-c2d8a1da0472}">
+    <Declaration><![CDATA[///////////
+// Structure For I35. Main Operating Data to be saved (ex: OPC).  
+//////////
+TYPE ProtectRelay :
+STRUCT
+		MesI1						: REAL ; 			(* (A) Maximal Current measured before fault on phase 1*)
+		MesI2						: REAL ;			(* (A) Maximal Current measured before fault on phase 2*)
+		MesI3						: REAL ;			(* (A) Maximal Current measured before fault on phase 3*)
+		MesI0						: REAL ; 			(*(A) Measured  maximal residual current               *)
+		MesI						: REAL ;			(*(A) Phase current value (averaged)               	   *)
+		                                        		                                                    
+		MesFreq						: REAL ;			(* (Hz) Frequency measured                             *)
+		                                        		                                                    
+		MesImax1					: REAL ; 			(* (A) AC Max current during Fault phase 1             *)
+		MesImax2                    : REAL ; 			(* (A) AC Max current during Fault phase 2             *)
+		MesImax3                    : REAL ; 			(* (A) AC Max current during Fault phase 3		       *)
+		MesImax0                    : REAL ; 			(* (A) AC Max residual current during Fault	           *)
+		
+		MesTripped                  : BOOL ;            (* Trip Synthesis *)                                        		                                                    
+		MesAlarmCom					: BOOL ;			(* Communication Error with Sepam                      *)
+                                                		                                                   
+		MesAlarmTCS					: BOOL ; 			(* TCS in fault. RPN can not trip anymore              *)
+		MesAlarmImax				: BOOL ; 			(* Imax alarm, ANSI Trip 50, 51 , 50G, 51G Synthesis                                       *)
+		MesAlarmUmin				: BOOL ;			(* Short GTE Fault                                     *)
+		MesAlarmUmin_Long			: BOOL ;			(* Long GTE FAULT                                      *)
+      	MesAlarm_GTE3Time			: BOOL ; ;			(* 3 GTE FAULT   in 30 minutes                                   *)
+		MesU12                      : REAL ;            (* (V) Voltage between phase 2 and phase 1 *)
+		MesU23                      : REAL ;            (* (V) Voltage between phase 3 and phase 2 *)     
+		MesU31                      : REAL ;            (* (V) Voltage between phase 1 and phase 3 *)                                                                                              
+		
+		MesWatchdog	                : BOOL ;            (* Watchdog *) 
+
+		MesCP_Read					: BOOL := FALSE;	(* Cal Read function enable                            *)
+		MesCP_Write					: BOOL := FALSE;	(* Cal Write function enable                           *)
+		                                                                                                     
+		MesAlarmCode				: WORD ; 			(* (NA) Internal Akuo AlarmCode                        *)
+		MesWarningCode				: WORD ; 			(* (NA) Internal Akuo WarningCode                      *)
+		MesEventCode				: WORD ; 			(* (NA) Internal Akuo EventCode		                   *)
+		
+END_STRUCT
+END_TYPE]]></Declaration>
+  </DUT>
+</TcPlcObject>

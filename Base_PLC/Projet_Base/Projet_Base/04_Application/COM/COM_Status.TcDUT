@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="COM_Status" Id="{0ed8f9ef-09b5-4beb-a7b5-16baa358c4de}">
+    <Declaration><![CDATA[TYPE COM_Status :
+	
+// TO make it work, import the NetworkScan .exe, add it as a service and prepare the XML.
+
+STRUCT
+	// Network ( IP + port ) 
+	MesWatchdog_Internet 		: BOOL := TRUE ; (* Watchdog internet    	   *)  
+	MesWatchdog_Router 			: BOOL := TRUE ; (* Watchdog router      	   *) 
+	MesWatchdog_Router_SMS  	: BOOL := TRUE ; (* Watchdog router SMS  	   *) 
+	MesWatchdog_IndusPC 		: BOOL := TRUE ; (* Watchdog indusPC     	   *)  
+	MesWatchdog_IEC104			: BOOL := TRUE ; (* Watchdog IEC104	     	   *) 
+	MesWatchdog_PLC         	: BOOL := TRUE ; (* Watchdog PLC	     	   *) 
+
+	
+	// Services 
+	MesRunning_HMIServer    	: BOOL :=TRUE  ; (* HMI server is running      *) 
+	MesRunning_OpenVPN      	: BOOL :=TRUE  ; (* OpenVPN is running         *) 
+	MesRunning_TV           	: BOOL :=TRUE  ; (* TV is running              *) 
+	MesRunning_OPCUa        	: BOOL :=TRUE  ; (* OPC Ua is running          *) 
+	MesRunning_Chronograf   	: BOOL :=TRUE  ; (* Chronograf is running      *) 
+	MesRunning_Telegraf     	: BOOL :=TRUE  ; (* Telegraf is running        *) 
+	MesRunning_Influx       	: BOOL :=TRUE  ; (* Influx is running          *) 
+	MesRunning_ModBus       	: BOOL :=TRUE  ; (* Modbus TCP is running          *) 
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

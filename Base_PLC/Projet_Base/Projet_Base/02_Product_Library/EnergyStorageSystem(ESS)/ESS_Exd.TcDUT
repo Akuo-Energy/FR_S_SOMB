@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="ESS_Exd" Id="{b6922142-186e-431f-8cca-4ee4b3d38f56}">
+    <Declaration><![CDATA[{attribute 'pack_mode' := '1'}
+TYPE ESS_Exd :
+STRUCT
+	
+	
+		MesData						: ESS ; (* MesData*)
+		
+		AX_PCS 						: ARRAY[1..CstNbPcs_ESS_G] OF PCS_Sma;			(* PCS Object *) 
+		AX_Bat						: ARRAY[1..CstNbBAT_Ess_G] OF BAT_NARADA;
+		DS_ESS						: TOR_Standard;
+		Spd							: TOR_Standard;
+		ES							: TOR_Standard;	
+		SD_Bat1						: TOR_Standard ; 
+		SD_Bat2						: TOR_Standard ; 
+		UPS_24V						: UPS_Eneris ; 
+		Transfo 					: ARRAY[1..2] OF Transfo_MV  ;
+		H2_signal 					: ARRAY[1..CstNbBAT_Ess_G] OF  TOR_Standard ;
+		FSS           :  ARRAY[1..CstNbBAT_Ess_G] OF FSS_Standard ;
+		ES_BESS       : ARRAY[1..CstNbBAT_Ess_G] OF  TOR_Standard ;
+		BMS_Fault     :  ARRAY[1..CstNbBAT_Ess_G] OF TOR_Standard ;
+		ES_PCS		  : ARRAY[1..CstNbPcs_ESS_G] OF	 TOR_Standard ;
+		DC_Switch_PCS :  ARRAY[1..CstNbPcs_ESS_G] OF TOR_Standard ;
+		
+
+	
+		
+		
+		
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,56 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_CompressFile" Id="{5cb82170-754f-4f5f-9670-b7c83050ca4c}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_CompressFile
+// FB to Compress all files of the directory. 
+VAR_INPUT
+	IN_Directory			: T_MaxString; // directory of the file to compress
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	StartProcess 			: NT_StartProcess;
+	bTest 					: BOOL;
+	TrigJour				: R_TRIG;
+	RsJour					: RS;
+	DirAlarms				: T_MaxString;
+	DirRawdata				: T_MaxString;
+	TimeStructYesterday		: TIMESTRUCT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+TrigJour(CLK := CalLocalTimeStruct.wHour =0);
+RsJour(SET := TrigJour.Q);
+
+TimeStructYesterday := DT_TO_SYSTEMTIME( SYSTEMTIME_TO_DT (CalLocalTimeStruct) - T#1D);
+
+IF RsJour.Q1 THEN
+	DirAlarms := CONCAT(STR1 := CONCAT(STR1 := CONCAT(STR1 := CONCAT(STR1 := CONCAT(STR1 := CONCAT(STR1 := CONCAT(STR1 := CONCAT(STR1 := CONCAT(STR1 := Concat(STR1 := Concat(STR1 := IN_Directory, STR2 := WORD_TO_STRING(TimeStructYesterday.wYear)), STR2 := '\'), STR2 := WORD_TO_STRING(TimeStructYesterday.wMonth)), STR2 := '\'), STR2:='ALARMS_'), STR2:= WORD_TO_STRING(TimeStructYesterday.wYear)), STR2:='-'),STR2:=WORD_TO_STRING(TimeStructYesterday.wMonth)),STR2:='-'),STR2:=WORD_TO_STRING(TimeStructYesterday.wDay)),STR2:='.csv');
+	DirRawdata:= CONCAT(STR1 := CONCAT(STR1 := CONCAT(STR1 := CONCAT(STR1 := CONCAT(STR1 := CONCAT(STR1 := CONCAT(STR1 := CONCAT(STR1 := CONCAT(STR1 := Concat(STR1 := Concat(STR1 := IN_Directory, STR2 := WORD_TO_STRING(TimeStructYesterday.wYear)), STR2 := '\'), STR2 := WORD_TO_STRING(TimeStructYesterday.wMonth)), STR2 := '\'), STR2:='RAWDATA_'), STR2:= WORD_TO_STRING(TimeStructYesterday.wYear)), STR2:='-'),STR2:=WORD_TO_STRING(TimeStructYesterday.wMonth)),STR2:='-'),STR2:=WORD_TO_STRING(TimeStructYesterday.wDay)),STR2:='.csv');
+	StartProcess
+	(
+		NETID := '',
+		PATHSTR := 'C:\Windows\System32\compact.exe',
+		DIRNAME := 'C:\Windows\System32',
+		COMNDLINE :=  CONCAT(STR1:=CONCAT(STR1:=CONCAT(STR1:=CONCAT(STR1:=' /c "',STR2:=DirAlarms), str2:='"  "'), STR2:=DirRawdata),str2:='"'),
+		Start := RsJour.Q1,
+		TMOUT := T#3M
+	);
+	IF NOT StartProcess.BUSY THEN
+		IF NOT StartProcess.ERR THEN
+			StartProcess(Start := FALSE);
+			RsJour(RESET1:= TRUE);
+			RsJour(RESET1:= FALSE);
+		ELSE
+			StartProcess(Start := FALSE);
+		END_IF
+	END_IF	
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="FB_CompressFile">
+      <LineId Id="80" Count="26" />
+      <LineId Id="25" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

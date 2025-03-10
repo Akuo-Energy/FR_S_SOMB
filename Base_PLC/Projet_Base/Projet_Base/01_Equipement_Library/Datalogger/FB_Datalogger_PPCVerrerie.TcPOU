@@ -1,0 +1,997 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_Datalogger_PPCVerrerie" Id="{926a2a01-431f-42c6-b3ce-cead21fcec93}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Datalogger_PPCVerrerie	EXTENDS FB_Datalogger_Base	// Data from PPC ( MV + HV )
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance specific) 
+	ParamTempoComAlarm			: TIME 			:= T#10S ; 						// (s) Config : Tempo to detect LOC Alarm
+	{attribute 'OPC.UA.DA' := '1'} 
+	ParamClockReadTime 			: TIME 			:= TIME#200MS;	  				// (Time) Read Modbus Frequency.  
+	ParamTimeout				: TIME  		:= T#2S ;			  			// (Time) Timeout for modbus reading
+	ParamIPAdr : STRING := '192.168.1.2'; // IP Address for Modbus Requests 
+END_VAR
+VAR_INPUT
+	IN_CmdToggleRead			: BOOL ;
+	IN_CmdReset_L				: BOOL  ; // Reset Order .
+	
+	MesDataExd	AT %Q*				: Datalogger_PPCVerrerie;
+	
+END_VAR
+VAR
+
+	
+	//M_ALARMMANAGEMENT VARIABLES//
+	TON_ComAlarm				: TON ; 												// Tempo before detecting loss of communication. 
+	TON_ComWarning				: TON ; 												// Tempo before detecting loss of one frame.   
+	
+	MesComWarning				: BOOL ; 												// True if bad communication .
+	
+	// M_EXECUTE VARIABLES //
+	
+	TP1							: TP ; 												// (NA) Tempo to define Modbus Reading Frequency  
+	
+    Trig_Cmd_Read				: R_TRIG;                       
+
+	// Modbus Read Variables
+	
+	FB_ModbusReadAI : ARRAY[1..2] OF FB_ModbusRead;
+	FB_ModbusReadDI : ARRAY[1..2] OF FB_ModbusReadCoils;
+	
+	ClockRead					AT %Q*		: BOOL ;
+	
+	// Temp Blocks Filled by Requests
+	
+	AI_List_1 				: ARRAY[1..128] OF WORD;
+	AI_List_2 				: ARRAY[1..128] OF WORD;
+	DI_List_1 				: ARRAY[1..2048] OF BOOL;
+	DI_List_2 				: ARRAY[1..2048] OF BOOL;
+	
+	
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+	
+	
+]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{2da3f74f-9dbd-4b2e-bc4f-a6f9a9881b6b}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement : BOOL
+VAR_INPUT
+END_VAR
+//////////////////
+// Digiware measurement tool alarm and warning management
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager			: FB_AlarmCodeManager ; 
+	
+	ComWarning					: BOOL;			// Error in one of the Modbus Requests
+	ComAlarm					: BOOL;			// Error in all Modbus Requests
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[ComWarning 	:= FB_ModbusReadAI[1].ModbusReadAlarm OR FB_ModbusReadAI[2].ModbusReadAlarm OR FB_ModbusReadDI[1].ModbusReadAlarm OR FB_ModbusReadDI[2].ModbusReadAlarm;
+ComAlarm 	:= FB_ModbusReadAI[1].ModbusReadAlarm AND FB_ModbusReadAI[2].ModbusReadAlarm AND FB_ModbusReadDI[1].ModbusReadAlarm AND FB_ModbusReadDI[2].ModbusReadAlarm;
+	
+TON_ComAlarm(IN:= ComAlarm , PT:= ParamTempoComAlarm, Q= MesDataExd.MesData.MesAlarmCom) ;	
+TON_ComWarning(IN:= ComWarning  , PT:= ParamTempoComAlarm, Q=>MesComWarning) ;
+
+//	General com alarm : All the read FB fucked up
+
+
+// ALARM CODES //
+	FB_AlarmCodeManager(
+		bAlarm1			:= MesDataExd.MesData.MesAlarmCom , 						// Communication Alarm #COM
+		bAlarm2			:= MesDataExd.MesData.Transfo_225kV.MesWarning_TempLevel1,	// Transfo_225kV : Img Therm 1
+		bAlarm3			:= MesDataExd.MesData.Transfo_225kV.MesWarning_TempLevel2,	// Transfo_225kV : Img Therm 2
+		bAlarm4			:= MesDataExd.MesData.Transfo_225kV.MesDataExd.MesData.MesAlarmTemp,	// Transfo_225kV : Trigger Temp Oil
+		bAlarm5			:= MesDataExd.MesData.Transfo_225kV.MesAlarm_TapChanger ,	// Transfo 225kV : Defaillance Regleur
+		bAlarm6			:= MesDataExd.MesData.Mes20kVCourNeutCuveTempTrigger,		// 20 kV Courant Neutre Cuve : Temp Trigger
+		bAlarm7			:= MesDataExd.MesData.Mes20kVCourNeutCuveGazDischarge,		// 20 kV Courant Neutre Cuve : Gaz Discharge
+		bAlarm8			:= MesDataExd.MesData.Mes20kVCourNeutCuvePressure,			// 20 kV Courant Neutre Cuve : Pressure
+		bAlarm9			:= MesDataExd.MesData.Transfo_225kV.MesDataExd.MesData.MesAlarmGas,	// Transfo 225kV : Trigger BuchHolz
+		bAlarm10		:= MesDataExd.MesData.Transfo_225kV.MesTrigger_Deletion,	// Transfo_225kV : Trigger Deletion
+		bAlarm11		:= MesDataExd.MesData.Transfo_225kV.MesAlarm_OilLevel,      // Transfo_225kV : Alarm Oil level
+		bAlarm12		:= MesDataExd.MesData.DS.MesAlarmState,          		// DS : Doors Open          
+		bAlarm13		:= MesDataExd.MesData.FSS.MesAlarmFire,			        // FSS : Fire Alarm
+		bAlarm14		:= MesDataExd.MesData.MesLocalRemoteOperation, 			// Local/Remote Operation
+		bAlarm15		:= MesDataExd.MesData.ES.MesAlarmState,         	 	// ES : Emergency Stop			 
+		wAlarmCode		=>MesDataExd.MesData.MesAlarmCode1);
+
+	FB_AlarmCodeManager(	
+		bAlarm1			:= MesDataExd.MesData.ProtectRelay_Transfo225kV.MesAlarm_DiscordSectLigneHTB,	//	ProtectRelay_Transfo_225kV :	Alarm Discord Sect Ligne HTB
+		bAlarm2			:= MesDataExd.MesData.ProtectRelay_Transfo225kV.MesAlarm_DiscordSectMaltHTB ,   //  ProtectRelay_Transfo_225kV : Alarm Discord Sect Malt HTB 
+		bAlarm3			:= MesDataExd.MesData.ProtectRelay_Transfo225kV.MesAlarm_DiscordSectDisjHTB ,   //  ProtectRelay_Transfo_225kV : Alarm Discord Sect Disj HTB 
+		bAlarm4			:= MesDataExd.MesData.ProtectRelay_Transfo225kV.MesAlarm_TeleCondamne       ,   //  ProtectRelay_Transfo_225kV : Alarm Tele Condamne       
+		bAlarm5			:= MesDataExd.MesData.ProtectRelay_Transfo225kV.MesAlarm_DeTeleCondamne     ,   //  ProtectRelay_Transfo_225kV : Alarm DeTele Condamne     
+		bAlarm6			:= MesDataExd.MesData.ProtectRelay_Transfo225kV.MesAlarm_DiscordTeleCondamne,   //  ProtectRelay_Transfo_225kV : Alarm Discord Tele Condamne
+		bAlarm7			:= MesDataExd.MesData.ProtectRelay_Transfo225kV.MesDataExd.MesData.MesAlarmImax        ,   //  ProtectRelay_Transfo_225kV : Alarm Imax
+		bAlarm8			:= MesDataExd.MesData.ProtectRelay_Transfo225kV.MesAlarm_IoMaxCoteProd      ,   //  ProtectRelay_Transfo_225kV : Alarm Io Max Cote Prod
+		bAlarm9			:= MesDataExd.MesData.ProtectRelay_Transfo225kV.MesDataExd.MesData.MesAlarmUmin        ,   //  ProtectRelay_Transfo_225kV : Alarm U min
+		bAlarm10		:= MesDataExd.MesData.ProtectRelay_Transfo225kV.MesDataExd.MesData.MesAlarmUmin_Long   ,   //  ProtectRelay_Transfo_225kV : Alarm U min Long
+		bAlarm11		:= MesDataExd.MesData.ProtectRelay_Transfo225kV.MesAlarmUMax                ,   //  ProtectRelay_Transfo_225kV : Alarm U max
+		bAlarm12		:= MesDataExd.MesData.ProtectRelay_Transfo225kV.MesAlarmUMax_Long           ,   //  ProtectRelay_Transfo_225kV : Alarm U max Long
+		bAlarm13		:= MesDataExd.MesData.ProtectRelay_Transfo225kV.MesAlarm_PhaseRpt           ,   //  ProtectRelay_Transfo_225kV : Alarm Phase Rpt
+		bAlarm14		:= MesDataExd.MesData.ProtectRelay_Transfo225kV.MesAlarm_ImgTherm     		,	//	ProtectRelay_Transfo_225kV : Alarm Img Therm
+		bAlarm15		:= MesDataExd.MesData.ProtectRelay_Transfo225kV.MesAlarm_DifferTransfo		,	//  ProtectRelay_Transfo_225kV : Alarm Differ Transfo
+		wAlarmCode		=>MesDataExd.MesData.MesAlarmCode2);	
+
+
+	FB_AlarmCodeManager(	
+		bAlarm1			:= MesDataExd.MesData.ProtectRelay_Transfo225kV.MesAlarm_FreqMax ,	// ProtectRelay_Transfo_225kV : Alarm Freq Max
+		bAlarm2			:= MesDataExd.MesData.ProtectRelay_Transfo225kV.MesAlarm_FreqMin ,  // ProtectRelay_Transfo_225kV : Alarm Freq Min
+		bAlarm3			:= MesDataExd.MesData.MainHVCB.MesDataExd.MesData.MesClosed ,					// MainHVCB : Closed 
+		bAlarm4			:= MesDataExd.MesData.MainHVCB.MesAlarm_SF6      ,					// MainHVCB : Alarm SF6
+		bAlarm5			:= MesDataExd.MesData.MainHVCB.MesAlarm_Disarmed ,					// MainHVCB : Alarm Disarmed
+		bAlarm6			:= MesDataExd.MesData.MainHVCB.MesComutLocal     ,					// MainHVCB : Comut Local
+		bAlarm7			:= MesDataExd.MesData.Transfo_225kV.MesTransfoRefrigLocal,    		// Transfo_225kV : Transfo Refrig Local
+		bAlarm8			:= MesDataExd.MesData.Transfo_225kV.MesTrigger_NonReturnValve,      // Transfo_225kV : Trigger Non Return Valve
+		bAlarm9			:= MesDataExd.MesData.Transfo_225kV.MesTrigger_ProtectRelay,        // Transfo_225kV : Trigger Protect Relay
+		bAlarm10		:= MesDataExd.MesData.Transfo_Aux.MesDataExd.MesData.MesAlarmTemp,				// Transfo_Aux : Alarm Temp
+		bAlarm11		:= MesDataExd.MesData.Transfo_Aux.MesDataExd.MesData.MesAlarmGas,              // Transfo_Aux : Alarm Gas
+		bAlarm12		:= MesDataExd.MesData.Transfo_Aux.MesDataExd.MesData.MesAlarmOilLevel,         // Transfo_Aux : Alarm Pressure
+		bAlarm13		:= MesDataExd.MesData.MesAuxTransfoMeltingFusesContact,			// Transfo_Aux : Melting Fuses Contact     
+		bAlarm14		:= MesDataExd.MesData.MesAuxTransfoSwitchGear,                     // Transfo_Aux : Transfo Switch Gear
+		bAlarm15		:=FALSE,
+		wAlarmCode		=>MesDataExd.MesData.MesAlarmCode3);			
+		
+		
+// WARNING CODES //
+	FB_AlarmCodeManager(		
+		bAlarm1			:=MesComWarning	,				 							// Communication Warning
+		bAlarm2			:= MesDataExd.MesData.ProtectRelay_MainHVCB.MesAlarm_Phase1 , 			// ProtectRelay_MainHVCB : Default Phase 1       
+		bAlarm3			:= MesDataExd.MesData.ProtectRelay_MainHVCB.MesAlarm_Phase2 , 			// ProtectRelay_MainHVCB : Default Phase 2       
+		bAlarm4			:= MesDataExd.MesData.ProtectRelay_MainHVCB.MesAlarm_Phase3 , 			// ProtectRelay_MainHVCB : Default Phase 3       
+		bAlarm5			:= MesDataExd.MesData.ProtectRelay_MainHVCB.MesAlarm_PhaseRpt , 		// ProtectRelay_MainHVCB : Default Phase Rpt      
+		bAlarm6			:= MesDataExd.MesData.ProtectRelay_MainHVCB.MesAlarm_Ground , 			// ProtectRelay_MainHVCB : Default Phase Ground        
+		bAlarm7			:= MesDataExd.MesData.ProtectRelay_MainHVCB.MesAlarm_GroundRpt , 		// ProtectRelay_MainHVCB : Default Phase Ground Rpt     
+		bAlarm8			:= MesDataExd.MesData.ProtectRelay_MainHVCB.MesAlarm_MaxUInverse , 		// ProtectRelay_MainHVCB : Default Max U Inverse   
+		bAlarm9			:= MesDataExd.MesData.ProtectRelay_MainHVCB.MesAlarm_MaxP , 			// ProtectRelay_MainHVCB : Default Max P
+		bAlarm10		:= MesDataExd.MesData.ProtectRelay_MainHVCB.MesAlarm_CB , 				// ProtectRelay_MainHVCB : Default Circuit Breaker
+		bAlarm11		:= MesDataExd.MesData.ProtectRelay_MainHVCB.MesAlarm_Watchdog , 		// ProtectRelay_MainHVCB : Default Watchdog     
+		bAlarm12		:= MesDataExd.MesData.ProtectRelay_MainHVCB.MesDataExd.MesData.MesAlarmTCS  , 		// ProtectRelay_MainHVCB : Default Major        
+		bAlarm13		:= MesDataExd.MesData.ProtectRelay_Transfo225kV.MesAlarm_PhaseRpt ,		// ProtectRelay_Transfo225kV : Default Phase Rpt
+		bAlarm14		:= MesDataExd.MesData.ProtectRelay_Transfo225kV.MesAlarm_ImgTherm , 	// ProtectRelay_Transfo225kV : Default img Therm
+		bAlarm15		:= MesDataExd.MesData.MainHVCB.MesAlarm_ArmingMotor , 					// MainHVCB : Default Arming Motor
+		wAlarmCode		=>MesDataExd.MesData.MesWarningCode1);
+
+	FB_AlarmCodeManager(		
+		bAlarm1			:= MesDataExd.MesData.MainHVCB.MesAlarm_230V, 							// MainHVCB : Default Aux 230 Vac				 
+		bAlarm2			:= MesDataExd.MesData.MainHVCB.MesAlarmPwr, 							// MainHVCB : Default Alim Bobine
+		bAlarm3			:= MesDataExd.MesData.Transfo_225kV.MesWarningGas, 						// Transfo_225kV : Buchholz Gas Warning
+		bAlarm4			:= MesDataExd.MesData.Transfo_225kV.MesDataExd.MesData.MesWarningTemp, 			// Transfo_225kV : Temperature Warning
+		bAlarm5			:= MesDataExd.MesData.ProtectRelay_Transfo225kV.MesDataExd.MesData.MesAlarmTCS , 	// ProtectRelay_Transfo225kV : Major Default
+		bAlarm6			:= MesDataExd.MesData.ProtectRelay_Transfo225kV.MesWarning_ImgTherm , 	// ProtectRelay_Transfo225kV : Warning Img Therm
+		bAlarm7			:= MesDataExd.MesData.TapChanger.MesAlarm,								// 225 kV Regleur : Default
+		bAlarm8			:= MesDataExd.MesData.TapChanger.MesAlarm_Discordance, 					// 225 kV Regleur : Default Discordance
+		bAlarm9			:= MesDataExd.MesData.ProtectRelay_MainMVCB.MesAlarm_Phase1, 			// Protection Relay Main MVCB : Default Phase 1
+		bAlarm10		:= MesDataExd.MesData.ProtectRelay_MainMVCB.MesAlarm_Phase2, 			// Protection Relay Main MVCB : Default Phase 2
+		bAlarm11		:= MesDataExd.MesData.ProtectRelay_MainMVCB.MesAlarm_CB, 				// Protection Relay Main MVCB : Default Circuit Breaker
+		bAlarm12		:=FALSE , 													//
+		bAlarm13		:= MesDataExd.MesData.MainMVCB.MesTripped 	, 							// Main MVCB : Tripped
+		bAlarm14		:= MesDataExd.MesData.ProtectRelay_MainMVCB.MesDataExd.MesData.MesAlarmTCS , 		// Protection Relay Main MVCB : Alarm TCS
+		bAlarm15		:= MesDataExd.MesData.ProtectRelay_MainMVCB.MesDataExd.MesData.MesWatchdog,		// Protection Relay Main MVCB : Watchdog
+		wAlarmCode		=>MesDataExd.MesData.MesWarningCode2);		
+
+	FB_AlarmCodeManager(		
+		bAlarm1			:= MesDataExd.MesData.ProtectRelay_FeederMVCB[1].MesDataExd.MesData.MesAlarmImax, 							//  ProtectRelay_FeederMVCB Midi Max I Alarm
+		bAlarm2			:= MesDataExd.MesData.ProtectRelay_FeederMVCB[1].MesAlarm_MaxP ,								//  ProtectRelay_FeederMVCB Midi Max P Alarm 
+		bAlarm3			:= MesDataExd.MesData.ProtectRelay_FeederMVCB[1].MesAlarm_Ground , 								//  ProtectRelay_FeederMVCB Midi Ground Alarm
+		bAlarm4			:= MesDataExd.MesData.ProtectRelay_FeederMVCB[1].MesAlarm_CablesOvercharge, 					//	ProtectRelay_FeederMVCB Midi Cables Overcharge
+		bAlarm5			:= MesDataExd.MesData.ProtectRelay_FeederMVCB[1].MesAlarm_FaultFrom225kV, 						//  ProtectRelay_FeederMVCB Midi Fault From 225 kV   
+		bAlarm6			:= MesDataExd.MesData.ProtectRelay_FeederMVCB[1].MesDataExd.MesData.MesAlarmTCS , 							//  ProtectRelay_FeederMVCB Midi Default Major       
+		bAlarm7			:= MesDataExd.MesData.ProtectRelay_FeederMVCB[2].MesDataExd.MesData.MesAlarmImax, 	 						//  ProtectRelay_FeederMVCB Plat Max I Alarm      
+		bAlarm8			:= MesDataExd.MesData.ProtectRelay_FeederMVCB[2].MesAlarm_MaxP ,			     				//  ProtectRelay_FeederMVCB Plat Max P Alarm        
+		bAlarm9			:= MesDataExd.MesData.ProtectRelay_FeederMVCB[2].MesAlarm_Ground , 		   						//  ProtectRelay_FeederMVCB Plat Ground Alarm          
+		bAlarm10		:= MesDataExd.MesData.ProtectRelay_FeederMVCB[2].MesAlarm_CablesOvercharge, 					//  ProtectRelay_FeederMVCB Plat Cables Overcharge 
+		bAlarm11		:= MesDataExd.MesData.ProtectRelay_FeederMVCB[2].MesAlarm_FaultFrom225kV, 	 					//  ProtectRelay_FeederMVCB Plat Fault From 225 kV    
+		bAlarm12		:= MesDataExd.MesData.ProtectRelay_FeederMVCB[2].MesDataExd.MesData.MesAlarmTCS,				 			//  ProtectRelay_FeederMVCB Plat Default Major                  
+		bAlarm13		:=FALSE,   //
+		bAlarm14		:=FALSE,   //
+		bAlarm15		:=FALSE,   //
+		wAlarmCode		=>MesDataExd.MesData.MesWarningCode3);
+
+	FB_AlarmCodeManager(		
+		bAlarm1			:= MesDataExd.MesData.Mes20kVCourNeutCuveDefaultMasseCuve1,			//	 20 kV Courant Neutre Cuve Default Masse 1
+		bAlarm2			:= MesDataExd.MesData.Mes20kVCourNeutCuveDefaultMasseCuve2,			//	 20 kV Courant Neutre Cuve Default Masse 2
+		bAlarm3			:= MesDataExd.MesData.Mes20kVCourNeutCuveDefaultGround,				//	 20 kV Courant Neutre Cuve Default Ground 
+		bAlarm4			:= MesDataExd.MesData.Mes20kVCourNeutCuveTempAlarm,					//	 20 kV Courant Neutre Cuve Temp  
+		bAlarm5			:= MesDataExd.MesData.MesAuxBt400VDefaultPermut, 					//	 Aux Bt 400 V  : Default Permut 
+		bAlarm6			:= MesDataExd.MesData.UPS_CE.MesAlarm_Batt, 			      		//	 UPC CE : Default Batt
+		bAlarm7			:= MesDataExd.MesData.UPS_CE.MesDataExd.MesData.MesAlarmState, 				//	 UPC CE : Default Redress
+		bAlarm8			:= MesDataExd.MesData.UPS_CE.MesAlarm_IsolBatt,		    			//   UPC CE : Default Isol Batt
+		bAlarm9			:= MesDataExd.MesData.UPS_TCM.MesAlarm_Batt,			      		//   UPC TCM : Default Batt
+		bAlarm10		:= MesDataExd.MesData.UPS_TCM.MesDataExd.MesData.MesAlarmState,	 			//	 UPC TCM : Default Redress
+		bAlarm11		:= MesDataExd.MesData.MesAuxBtDefaultInverter, 						//	 Aux Bt : Default Inverter
+		bAlarm12		:= MesDataExd.MesData.MesAuxBtSyntDefaultDistrib48VccJdb, 			//	 Aux Bt Synt : Default Distrib 48 Vcc Jdb
+		bAlarm13		:= MesDataExd.MesData.MesAuxBtSyntDefaultDistrib48VccLocker, 		//	 Aux Bt Synt : Default Distrib 48 Vcc Locker
+		bAlarm14		:=FALSE, //
+		bAlarm15		:=FALSE, //
+		wAlarmCode		=>MesDataExd.MesData.MesWarningCode4);		
+		
+	FB_AlarmCodeManager(		
+		bAlarm1			:= MesDataExd.MesData.Mes20kVCourNeutCuveMaxIexp2,	//	 20 kV Courant Neutre Cuve Default Max I Exp 2
+		bAlarm2			:= MesDataExd.MesData.Mes20kVCourNeutCuveMaxIexp4,  //	 20 kV Courant Neutre Cuve Default Max I Exp 4
+		bAlarm3			:= MesDataExd.MesData.Mes20kVCourNeutCuveMaxI0exp4, //	 20 kV Courant Neutre Cuve Default Max I0 Exp 4
+		bAlarm4			:= MesDataExd.MesData.ProtectRelay_FeederMVCB[1].MesDataExd.MesData.MesTripped, // ProtectRelay_FeederMVCB Midi Tripped
+		bAlarm5			:= MesDataExd.MesData.ProtectRelay_FeederMVCB[2].MesDataExd.MesData.MesTripped, // ProtectRelay_FeederMVCB Plat Tripped
+		bAlarm6			:= MesDataExd.MesData.MesAuxHTSect225kV		,					//	Aux HT : Sect 225 kV
+		bAlarm7			:= MesDataExd.MesData.MesAuxHtSmaltHTBOpen	,                   //	Aux HT : Malt HTB Open
+		bAlarm8			:= MesDataExd.MesData.MesAuxHtFusionFuseMeasures225kV	,       //	Aux HT : Fusion Fuse Measures 225 kV
+		bAlarm9			:= MesDataExd.MesData.MesAuxHtFusionFuseProtect225kV	,       //  Aux HT : Fusion Fuse Protect 225 kV
+		bAlarm10		:= MesDataExd.MesData.MesAuxHtFusionFuseCountRte225kV	,       //	Aux HT : Fusion Fuse Count Rte 225 kV
+		bAlarm11		:= MesDataExd.MesData.MesAuxHtShortCircuitCurrentProtectCcp2,   //  Aux HT : Short Circuit Current Protect Ccp2
+		bAlarm12		:= MesDataExd.MesData.MesAuxHtDisjCount20kVOpen		,           //	Aux HT : Disj Count 20kV Open
+		bAlarm13		:= MesDataExd.MesData.MesAuxHtDisjRefVoltage20kVOpen,			//  Aux HT : Disj Ref Voltage 20kV Open
+		bAlarm14		:= MesDataExd.MesData.MesAuxHtShortCircuitCurrentProtectCcp3, 	//	Aux HT : Short Circuit Current Protect Ccp3
+		bAlarm15		:= MesDataExd.MesData.MesAuxBtTriggerGeneralDisj, 				//  Aux BT : Trigger General Disj
+		wAlarmCode		=>MesDataExd.MesData.MesWarningCode5);
+		
+	FB_AlarmCodeManager(		
+		bAlarm1			:= MesDataExd.MesData.Mes20kVCourNeutCuveMaxIexp2,	//	 20 kV Courant Neutre Cuve Default Max I Exp 2
+		bAlarm2			:= MesDataExd.MesData.Mes20kVCourNeutCuveMaxIexp4,  //	 20 kV Courant Neutre Cuve Default Max I Exp 4
+		bAlarm3			:= MesDataExd.MesData.Mes20kVCourNeutCuveMaxI0exp4, //	 20 kV Courant Neutre Cuve Default Max I0 Exp 4
+		bAlarm4			:= MesDataExd.MesData.ProtectRelay_FeederMVCB[1].MesDataExd.MesData.MesTripped, // ProtectRelay_FeederMVCB Midi Tripped
+		bAlarm5			:= MesDataExd.MesData.ProtectRelay_FeederMVCB[2].MesDataExd.MesData.MesTripped, // ProtectRelay_FeederMVCB Plat Tripped
+		bAlarm6			:= MesDataExd.MesData.MesAuxHTSect225kV		,					//	Aux HT : Sect 225 kV
+		bAlarm7			:= MesDataExd.MesData.MesAuxHtSmaltHTBOpen	,                   //	Aux HT : Malt HTB Open
+		bAlarm8			:= MesDataExd.MesData.MesAuxHtFusionFuseMeasures225kV	,       //	Aux HT : Fusion Fuse Measures 225 kV
+		bAlarm9			:= MesDataExd.MesData.MesAuxHtFusionFuseProtect225kV	,       //  Aux HT : Fusion Fuse Protect 225 kV
+		bAlarm10		:= MesDataExd.MesData.MesAuxHtFusionFuseCountRte225kV	,       //	Aux HT : Fusion Fuse Count Rte 225 kV
+		bAlarm11		:= MesDataExd.MesData.MesAuxHtShortCircuitCurrentProtectCcp2,   //  Aux HT : Short Circuit Current Protect Ccp2
+		bAlarm12		:= MesDataExd.MesData.MesAuxHtDisjCount20kVOpen		,           //	Aux HT : Disj Count 20kV Open
+		bAlarm13		:= MesDataExd.MesData.MesAuxHtDisjRefVoltage20kVOpen,			//  Aux HT : Disj Ref Voltage 20kV Open
+		bAlarm14		:= MesDataExd.MesData.MesAuxHtShortCircuitCurrentProtectCcp3, 	//	Aux HT : Short Circuit Current Protect Ccp3
+		bAlarm15		:= MesDataExd.MesData.MesAuxBtTriggerGeneralDisj, 				//  Aux BT : Trigger General Disj
+		wAlarmCode		=>MesDataExd.MesData.MesWarningCode6);
+		
+		
+// EVENT CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= MesDataExd.MesData.MesAuxBt400VManqueAC			 ,  		// Aux BT 400 V : Manque AC     
+		bAlarm2			:= MesDataExd.MesData.MesAuxBt400VDecltAntenneScada	 ,  		// Aux BT 400 V : Declt Antenne Scada
+		bAlarm3			:= MesDataExd.MesData.MesAuxBt400VDecltAntennePrio	 ,  		// Aux BT 400 V : Declt Antenne Prio
+		bAlarm4			:= MesDataExd.MesData.MesAuxBt400VVoltageLossNormalAlim	, 		// Aux BT 400 V : Voltage Loss Normal Alim
+		bAlarm5			:= MesDataExd.MesData.MesAuxBt400VVoltageLossSecoursAlim,   	// Aux BT 400 V : Voltage Loss Secours Alim
+		bAlarm6			:= MesDataExd.MesData.MesAuxBt400VDefaultPermut	,           	// Aux BT 400 V : Default Permut 
+		bAlarm7			:= MesDataExd.MesData.TapChanger.MesModeAuto, 					// 225 kV Regleur :	Mode Auto
+		bAlarm8			:= MesDataExd.MesData.TapChanger.MesModeManual,                 // 225 kV Regleur :	Mode Manual                                                                                                                                                                                              
+		bAlarm9			:= MesDataExd.MesData.TapChanger.MesState_ManoeuverAuthorized, 	// 225 kV Regleur :	State Manoeuver Authorized
+		bAlarm10		:= MesDataExd.MesData.TapChanger.MesAlarm_NoOutletDetected, 	// 225 kV Regleur :	No Outlet Detected	
+		bAlarm11		:= MesDataExd.MesData.ProtectRelay_MainHVCB.OUT_CmdOpen , 		// ProtectRelay_MainHVCB : Cmd Open
+		bAlarm12		:= MesDataExd.MesData.ProtectRelay_MainHVCB.OUT_CmdClose,       // ProtectRelay_MainHVCB : Cmd Close
+		bAlarm13		:= MesDataExd.MesData.ProtectRelay_MainMVCB.OUT_CmdOpen ,       // ProtectRelay_MainMVCB : Cmd Open
+		bAlarm14		:= MesDataExd.MesData.ProtectRelay_MainMVCB.OUT_CmdClose,       // ProtectRelay_MainMVCB : Cmd Close
+		bAlarm15		:=FALSE, 
+		wAlarmCode		=>MesDataExd.MesData.MesEventCode1);
+	
+	FB_AlarmCodeManager(	
+		bAlarm1			:= MesDataExd.MesData.ProtectRelay_FeederMVCB[1].OUT_CmdOpen , 	// ProtectRelay_FeederMVCB Midi : Cmd Open
+		bAlarm2			:= MesDataExd.MesData.ProtectRelay_FeederMVCB[1].OUT_CmdClose,     // ProtectRelay_FeederMVCB Midi  : Cmd Close
+		bAlarm3			:= MesDataExd.MesData.ProtectRelay_FeederMVCB[2].OUT_CmdOpen  ,    // ProtectRelay_FeederMVCB Plat  : Cmd Open
+		bAlarm4			:= MesDataExd.MesData.ProtectRelay_FeederMVCB[2].OUT_CmdClose ,	// ProtectRelay_FeederMVCB Plat  : Cmd Close
+		bAlarm5			:= MesDataExd.MesData.TapChanger.OUT_CmdRampUp,					// 225 kV Regleur : Cmd Ramp Up
+		bAlarm6			:= MesDataExd.MesData.TapChanger.OUT_CmdRampDown ,                 // 225 kV Regleur :	Cmd Ramp Down
+		bAlarm7			:= MesDataExd.MesData.MesAuxHtOpenSectLine225kV	 ,				// Aux Ht : Sect Line 225 kV Open
+		bAlarm8			:= MesDataExd.MesData.MesAuxHtCloseSectLine225kV	,               // Aux Ht : Sect Line 225 kV Close
+		bAlarm9			:= MesDataExd.MesData.MesAuxHtTeleCondamnSl225kV	 ,				// Aux Ht : Tele Condamn Sl 225 kV 
+		bAlarm10		:= MesDataExd.MesData.MesAuxHtDeTeleCondamnSl225kV,       		// Aux Ht : DeTele Condamn Sl 225 kV
+		bAlarm11		:= MesDataExd.MesData.MesAuxHtTelecommandeRelestActif ,			// Aux Ht : Telecommande Relest Actif
+		bAlarm12		:= MesDataExd.MesData.MesAuxHtTelecommandeRelestPassif,           // Aux Ht : Telecommande Relest Passif
+		bAlarm13		:= FALSE,
+		bAlarm14		:= FALSE,
+		bAlarm15		:= FALSE,
+		wAlarmCode		=>MesDataExd.MesData.MesEventCode2);	
+		
+		
+	FB_AlarmCodeManager(
+		bAlarm1			:= MesDataExd.MesData.MesAuxHtOpenSectMalt,				// Aux Ht Sect Malt : Open
+		bAlarm2			:= MesDataExd.MesData.MesAuxHtCloseSectMalt,				// Aux Ht Sect Malt : Close
+		bAlarm3			:= MesDataExd.MesData.MesAuxBtSyntOpenDistrib48VccJdb,		// Aux Bt Synt : Open Distrib 48 Vcc Jdb
+		bAlarm4			:= MesDataExd.MesData.MesAuxBtSyntOpenDistrib48VccLocker,	// Aux Bt Synt : Open Distrib 48 Vcc Locker
+		bAlarm5			:= MesDataExd.MesData.MesAuxBt400VPermutAutoStopMode	,	// Aux Bt 400 V Permut Auto Stop Mode				
+		bAlarm6			:= MesDataExd.MesData.MesAuxBt400VPermutAutoNormalMode	 ,	// Aux Bt 400 V Permut Auto Normal Mode
+		bAlarm7			:= MesDataExd.MesData.MesAuxBt400VPermutAutoSecoursMode,	// Aux Bt 400 V Permut Auto Secours Mode
+		bAlarm8			:= MesDataExd.MesData.MesAuxBt400VPermutModeAuto	,		// Aux Bt 400 V Permut Mode Auto
+		bAlarm9			:= MesDataExd.MesData.UPS_CE.MesOpened_CBRectifier	,		// UPC CE : Opened CB Rectifier
+		bAlarm10		:= MesDataExd.MesData.UPS_CE.MesOpened_CBBatt		    ,	// UPC CE : Opened CB Batt
+		bAlarm11		:= MesDataExd.MesData.UPS_CE.MesOpened_CBAntenna		 ,	// UPC CE : Opened CB Antenna
+		bAlarm12		:= MesDataExd.MesData.UPS_TCM.MesOpened_CBRectifier	,	// UPC TCM : Opened CB Rectifier
+		bAlarm13		:= MesDataExd.MesData.UPS_TCM.MesOpened_CBBatt	   	 ,		// UPC TCM : Opened CB Batt
+		bAlarm14		:= MesDataExd.MesData.UPS_TCM.MesOpened_CBAntenna	  ,		// UPC TCM : Opened CB Antenna 
+		bAlarm15		:= FALSE,//  
+		wAlarmCode		=>MesDataExd.MesData.MesEventCode3);
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_CP" Id="{2cebc2db-4a3a-4f80-9e5d-36d14bfb3bdf}">
+      <Declaration><![CDATA[METHOD M_CP
+//////////////////
+//  Emulator
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+SUPER^.M_CP() ; 
+
+
+
+
+Trig_Cmd_Read(CLK:=IN_CmdToggleRead);
+Trig_Cmd_Write(CLK:=IN_CmdToggleWrite);
+	
+IF Trig_Cmd_Read.Q THEN
+	IN_CmdToggleRead := FALSE;
+	MesDataExd.MesData.MesCP_Read := NOT MesDataExd.MesData.MesCP_Read;
+END_IF
+
+
+IF Trig_Cmd_Write.Q THEN
+	IN_CmdToggleWrite := FALSE;
+	MesDataExd.MesData.MesCP_Write := NOT MesDataExd.MesData.MesCP_Write;
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{1c3eb40b-875d-4bc0-a3b1-8a147dccca6f}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	// EMULATOR
+
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// READING AND WRITING CLOCK //
+	TP1(IN:=NOT TP1.Q , PT:= ParamClockReadTime);
+	ClockRead 		:= TP1.Q;
+	
+// METHODS CALLS //
+
+	M_Read() ; 
+	M_CP();
+	
+// EVALUATE  /////////////
+	
+
+	
+	////////////////////
+	M_AlarmManagement(); ]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Read" Id="{c6b5762e-2335-4278-b528-9ee3210da977}">
+      <Declaration><![CDATA[METHOD M_Read : BOOL
+VAR_INPUT
+END_VAR
+VAR
+	MW					: FB_MergeWordsToDint;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// CP-Read / Write 
+
+
+IF MesDataExd.MesData.MesCP_Read  THEN	
+
+	// Analogic Inputs Modbus Requests
+	
+	FB_ModbusReadAI[1](pDestAddr := ADR(AI_List_1),
+					sIPAddr := ParamIPAdr,
+					tTimeout := ParamTimeout,
+					nTcpPort := 502,
+					nQuantity := 123,
+					nMBAddr := 593,
+					cbLength := SIZEOF(AI_List_1),
+					nUnitID := 1,
+					ClockRead := ClockRead,
+					Reset := IN_CmdReset_L);
+					
+	FB_ModbusReadAI[2](pDestAddr := ADR(AI_List_2),
+					sIPAddr := ParamIPAdr,
+					tTimeout := ParamTimeout,
+					nTcpPort := 502,
+					nQuantity := 97,
+					nMBAddr := 721,
+					cbLength := SIZEOF(AI_List_2),
+					nUnitID := 1,
+					ClockRead := ClockRead,
+					Reset := IN_CmdReset_L);
+					
+	// Digital Inputs Modbus Requests 
+	
+	FB_ModbusReadDI[1](pDestAddr := ADR(DI_List_1),
+					sIPAddr := ParamIPAdr,
+					tTimeout := ParamTimeout,
+					nTcpPort := 502,
+					nQuantity := 1683,
+					nMBAddr := 480,
+					cbLength := SIZEOF(DI_List_1),
+					nUnitID := 1,
+					ClockRead := ClockRead,
+					Reset := IN_CmdReset_L);
+					
+	FB_ModbusReadDI[2](pDestAddr := ADR(DI_List_2),
+					sIPAddr := ParamIPAdr,
+					tTimeout := ParamTimeout,
+					nTcpPort := 502,
+					nQuantity := 1249,
+					nMBAddr := 5072,
+					cbLength := SIZEOF(DI_List_2),
+					nUnitID := 1,
+					ClockRead := ClockRead,
+					Reset := IN_CmdReset_L);
+	
+					
+					
+	//  MesDataExd.MesData.Filling Digital Data				
+	
+	MesDataExd.MesData.ProtectRelay_MainHVCB.MesAlarm_Phase1			:= DI_List_1[1]   ;
+	MesDataExd.MesData.ProtectRelay_MainHVCB.MesAlarm_Phase2		    := DI_List_1[2]   ;
+	MesDataExd.MesData.ProtectRelay_MainHVCB.MesAlarm_Phase3			:= DI_List_1[3]   ;
+	MesDataExd.MesData.ProtectRelay_MainHVCB.MesAlarm_PhaseRpt			:= DI_List_1[33]  ;
+	MesDataExd.MesData.ProtectRelay_MainHVCB.MesAlarm_Ground			:= DI_List_1[35]  ;
+	MesDataExd.MesData.ProtectRelay_MainHVCB.MesAlarm_GroundRpt		:= DI_List_1[36]  ;
+	MesDataExd.MesData.ProtectRelay_MainHVCB.MesAlarm_MaxUInverse		:= DI_List_1[37]  ;
+	MesDataExd.MesData.ProtectRelay_MainHVCB.MesAlarm_MaxP				:= DI_List_1[38]  ;
+	MesDataExd.MesData.ProtectRelay_MainHVCB.MesAlarm_CB				:= DI_List_1[39]  ;	
+	MesDataExd.MesData.ProtectRelay_MainHVCB.MesAlarm_Watchdog			:= DI_List_1[148] ;
+	
+				
+	MesDataExd.MesData.ProtectRelay_Transfo225kV.MesAlarm_DiscordSectLigneHTB		   := DI_List_1[164]    ;
+	MesDataExd.MesData.ProtectRelay_Transfo225kV.MesAlarm_DiscordSectMaltHTB         := DI_List_1[165]    ;
+	MesDataExd.MesData.ProtectRelay_Transfo225kV.MesAlarm_DiscordSectDisjHTB         := DI_List_1[166]    ;
+	MesDataExd.MesData.ProtectRelay_Transfo225kV.MesAlarm_TeleCondamne               := DI_List_1[167]    ;
+	MesDataExd.MesData.ProtectRelay_Transfo225kV.MesAlarm_DeTeleCondamne             := DI_List_1[168]    ;
+	MesDataExd.MesData.ProtectRelay_Transfo225kV.MesAlarm_DiscordTeleCondamne	       := DI_List_1[169]    ;
+	MesDataExd.MesData.ProtectRelay_Transfo225kV.MesDataExd.MesData.MesAlarmImax                := DI_List_1[171]    ;
+	MesDataExd.MesData.ProtectRelay_Transfo225kV.MesAlarm_IoMaxCoteProd              := DI_List_1[172]    ;
+	MesDataExd.MesData.ProtectRelay_Transfo225kV.MesDataExd.MesData.MesAlarmUmin                := DI_List_1[173]    ;
+	MesDataExd.MesData.ProtectRelay_Transfo225kV.MesDataExd.MesData.MesAlarmUmin_Long           := DI_List_1[174]    ;
+	MesDataExd.MesData.ProtectRelay_Transfo225kV.MesAlarmUMax                        := DI_List_1[175]    ;
+	MesDataExd.MesData.ProtectRelay_Transfo225kV.MesAlarmUMax_Long                   := DI_List_1[176]    ;
+	MesDataExd.MesData.ProtectRelay_Transfo225kV.MesAlarm_PhaseRpt           	 	   := DI_List_1[177]    ;
+	MesDataExd.MesData.ProtectRelay_Transfo225kV.MesWarning_ImgTherm                 := DI_List_1[178]    ;
+	MesDataExd.MesData.ProtectRelay_Transfo225kV.MesAlarm_ImgTherm                   := DI_List_1[179]    ;
+	MesDataExd.MesData.ProtectRelay_Transfo225kV.MesAlarm_DifferTransfo              := DI_List_1[180]    ;
+	MesDataExd.MesData.ProtectRelay_Transfo225kV.MesAlarm_FreqMax                    := DI_List_1[181]    ;
+	MesDataExd.MesData.ProtectRelay_Transfo225kV.MesAlarm_FreqMin                    := DI_List_1[183]    ;
+	
+	
+	MesDataExd.MesData.MainHVCB.MesDataExd.MesData.MesClosed            				:= DI_List_1[193]    ;
+	MesDataExd.MesData.MainHVCB.MesAlarm_SF6              				:= DI_List_1[197]    ;
+	MesDataExd.MesData.MainHVCB.MesAlarm_Disarmed             	 		:= DI_List_1[198]    ;
+	MesDataExd.MesData.MainHVCB.MesComutLocal         			   		:= DI_List_1[199]    ;
+	MesDataExd.MesData.MainHVCB.MesAlarm_ArmingMotor           			:= DI_List_1[200]    ;
+	MesDataExd.MesData.MainHVCB.MesAlarm_230V           					:= DI_List_1[201]    ;
+	MesDataExd.MesData.MainHVCB.MesAlarmPwr          			 			:= DI_List_1[202]    ;
+	
+	MesDataExd.MesData.Transfo_225kV.MesWarningGas               			:= DI_List_1[220]    ;
+	MesDataExd.MesData.Transfo_225kV.MesDataExd.MesData.MesAlarmGas           	 	:= DI_List_1[221]    ;
+	MesDataExd.MesData.Transfo_225kV.MesDataExd.MesData.MesWarningTemp               := DI_List_1[222]    ;
+	MesDataExd.MesData.Transfo_225kV.MesDataExd.MesData.MesAlarmGas             		:= DI_List_1[223]    ;
+	MesDataExd.MesData.Transfo_225kV.MesWarning_TempLevel1           		:= DI_List_1[224]    ;
+	MesDataExd.MesData.Transfo_225kV.MesWarning_TempLevel2          		:= DI_List_1[225]    ;
+	MesDataExd.MesData.Transfo_225kV.MesTrigger_Deletion            		:= DI_List_1[228]    ;
+	MesDataExd.MesData.Transfo_225kV.MesAlarm_OilLevel              		:= DI_List_1[229]    ;
+	MesDataExd.MesData.Transfo_225kV.MesTransfoRefrigLocal                := DI_List_1[230]    ;
+	MesDataExd.MesData.Transfo_225kV.MesTrigger_NonReturnValve       		:= DI_List_1[231]    ;
+	MesDataExd.MesData.Transfo_225kV.MesTrigger_ProtectRelay      		:= DI_List_1[232]    ;
+	MesDataExd.MesData.Transfo_225kV.MesAlarm_TapChanger            		:= DI_List_1[233]    ;
+	
+	MesDataExd.MesData.Mes20kVCourNeutCuveDefaultMasseCuve1		:= DI_List_1[305]	;
+	MesDataExd.MesData.Mes20kVCourNeutCuveMaxIexp2				:= DI_List_1[306]   ;
+	MesDataExd.MesData.Mes20kVCourNeutCuveDefaultMasseCuve2  		:= DI_List_1[307]   ;
+	MesDataExd.MesData.Mes20kVCourNeutCuveMaxIexp4				:= DI_List_1[308]   ;
+	MesDataExd.MesData.Mes20kVCourNeutCuveDefaultGround	    	:= DI_List_1[309]   ;
+	MesDataExd.MesData.Mes20kVCourNeutCuveMaxI0exp4		    	:= DI_List_1[310]   ;
+	MesDataExd.MesData.Mes20kVCourNeutCuveTempAlarm		    	:= DI_List_1[439]   ;
+	MesDataExd.MesData.Mes20kVCourNeutCuveTempTrigger				:= DI_List_1[440]   ;
+	MesDataExd.MesData.Mes20kVCourNeutCuveGazDischarge			:= DI_List_1[441]   ;
+	MesDataExd.MesData.Mes20kVCourNeutCuvePressure           		:= DI_List_1[442]   ;
+	
+	MesDataExd.MesData.ProtectRelay_MainMVCB.MesAlarm_Phase1 			:= DI_List_1[457]	;
+	MesDataExd.MesData.ProtectRelay_MainMVCB.MesAlarm_Phase2			:= DI_List_1[459]   ; // Phase 3  ? 
+	MesDataExd.MesData.ProtectRelay_MainMVCB.MesAlarm_CB 				:= DI_List_1[495]   ;
+	MesDataExd.MesData.ProtectRelay_MainMVCB.MesDataExd.MesData.MesTripped 		:= DI_List_1[586]   ; // Mes20kVGeneralHVCellProtectCircuitBreaker
+	 /  MesDataExd.MesData.Mes20kVGeneralHVCellDefaultFrom225kV			:= DI_List_1[592]   ;
+	
+	MesDataExd.MesData.ProtectRelay_FeederMVCB[1].MesDataExd.MesData.MesAlarmImax 							:=	DI_List_1[609]	;
+	MesDataExd.MesData.ProtectRelay_FeederMVCB[1].MesAlarm_MaxP									:=	DI_List_1[611]  ;
+	MesDataExd.MesData.ProtectRelay_FeederMVCB[1].MesAlarm_Ground									:=	DI_List_1[613]  ;
+	//  MesDataExd.MesData.AX_ProtectRelay_FeederMVCB[1].Mes20kVMidiSepamDefaultCablesOvercharge	:=	DI_List_1[641]  ;
+	//  MesDataExd.MesData.AX_ProtectRelay_FeederMVCB[1].Mes20kVMidiHVCellDefaultFrom225kV			:=	DI_List_1[647]  ;
+	MesDataExd.MesData.ProtectRelay_FeederMVCB[1].MesDataExd.MesData.MesTripped								:=	DI_List_1[738]  ;
+	                                                                                	
+	MesDataExd.MesData.ProtectRelay_FeederMVCB[2].MesDataExd.MesData.MesAlarmImax							:=	 DI_List_1[761] ;
+	MesDataExd.MesData.ProtectRelay_FeederMVCB[2].MesAlarm_MaxP									:=   DI_List_1[763] ;
+	MesDataExd.MesData.ProtectRelay_FeederMVCB[2].MesAlarm_Ground									:=   DI_List_1[765] ;  
+	//  MesDataExd.MesData.AX_ProtectRelay_FeederMVCB[2].Mes20kVMidiSepamDefaultCablesOvercharge	:=   DI_List_1[793] ;
+	//  MesDataExd.MesData.AX_ProtectRelay_FeederMVCB[2].Mes20kVMidiHVCellDefaultFrom225kV			:=   DI_List_1[799] ;
+	MesDataExd.MesData.ProtectRelay_FeederMVCB[2].MesDataExd.MesData.MesTripped								:=   DI_List_1[890] ;
+	
+	MesDataExd.MesData.TapChanger.MesAlarm  := DI_List_1[1065] ;
+	
+	MesDataExd.MesData.MesAuxHTSect225kV							:=	DI_List_1[1217]	 ;
+	MesDataExd.MesData.MesAuxHtSmaltHTBOpen						:=	DI_List_1[1219]	 ;
+	MesDataExd.MesData.MesAuxHtFusionFuseMeasures225kV			:=	DI_List_1[1225]	 ;
+	MesDataExd.MesData.MesAuxHtFusionFuseProtect225kV				:=	DI_List_1[1226]	 ;
+	MesDataExd.MesData.MesAuxHtFusionFuseCountRte225kV			:=	DI_List_1[1227]	 ;
+	MesDataExd.MesData.MesAuxHtShortCircuitCurrentProtectCcp2		:=	DI_List_1[1228]	 ;
+	MesDataExd.MesData.MesAuxHtDisjCount20kVOpen					:=	DI_List_1[1230]	 ;
+	MesDataExd.MesData.MesAuxHtDisjRefVoltage20kVOpen				:=	DI_List_1[1231]	 ;
+	MesDataExd.MesData.MesAuxHtShortCircuitCurrentProtectCcp3		:=	DI_List_1[1232]	 ;
+	MesDataExd.MesData.MesAuxBtTriggerGeneralDisj					:=	DI_List_1[1372]	 ;
+	MesDataExd.MesData.MesAuxBt400VManqueAC						:=	DI_List_1[1373]	 ;
+	MesDataExd.MesData.MesAuxBt400VDecltAntenneScada				:=	DI_List_1[1374]  ;
+	MesDataExd.MesData.MesAuxBt400VDecltAntennePrio				:=	DI_List_1[1375]	 ;
+	MesDataExd.MesData.MesAuxBt400VPermutAutoStopMode				:=	DI_List_1[1377]	 ;
+	MesDataExd.MesData.MesAuxBt400VPermutAutoNormalMode			:=	DI_List_1[1378]	 ;
+	MesDataExd.MesData.MesAuxBt400VPermutAutoSecoursMode			:=	DI_List_1[1379]	 ;
+	MesDataExd.MesData.MesAuxBt400VPermutModeAuto					:=	DI_List_1[1380]	 ;
+	MesDataExd.MesData.MesAuxBt400VVoltageLossNormalAlim			:=	DI_List_1[1381]	 ;
+	MesDataExd.MesData.MesAuxBt400VVoltageLossSecoursAlim			:=	DI_List_1[1382]	 ;
+	MesDataExd.MesData.MesAuxBt400VDefaultPermut					:=	DI_List_1[1383]	 ;
+	
+	
+	
+	MesDataExd.MesData.UPS_CE.MesAlarm_Batt 						:=	DI_List_1[1384]	 ;
+	MesDataExd.MesData.UPS_CE.MesDataExd.MesData.MesAlarmState 				:=	DI_List_1[1385]	 ;
+	MesDataExd.MesData.UPS_CE.MesAlarm_IsolBatt					:=	DI_List_1[1386]	 ;
+	MesDataExd.MesData.UPS_CE.MesOpened_CBRectifier				:=	DI_List_1[1387]	 ;
+	MesDataExd.MesData.UPS_CE.MesOpened_CBBatt					:=	DI_List_1[1388]	 ;
+	MesDataExd.MesData.UPS_CE.MesOpened_CBAntenna					:=	DI_List_1[1389]	 ;
+	MesDataExd.MesData.UPS_TCM.MesAlarm_Batt						:=	DI_List_1[1390]	 ;
+	MesDataExd.MesData.UPS_TCM.MesDataExd.MesData.MesAlarmState				:=	DI_List_1[1391]	 ;
+	MesDataExd.MesData.UPS_TCM.MesOpened_CBRectifier				:=	DI_List_1[1392]	 ;
+	MesDataExd.MesData.UPS_TCM.MesOpened_CBBatt	   				:=	DI_List_1[1393]	 ;
+	MesDataExd.MesData.UPS_TCM.MesOpened_CBAntenna				:=	DI_List_1[1394]	 ;
+	 
+	MesDataExd.MesData.MesAuxBtDefaultInverter					:=	DI_List_1[1395]	 ;
+	MesDataExd.MesData.MesAuxBtSyntDefaultDistrib48VccJdb			:=	DI_List_1[1397]	 ;
+	MesDataExd.MesData.MesAuxBtSyntOpenDistrib48VccJdb			:=	DI_List_1[1398]	 ;
+	MesDataExd.MesData.MesAuxBtSyntDefaultDistrib48VccLocker		:=	DI_List_1[1403]	 ;
+	MesDataExd.MesData.MesAuxBtSyntOpenDistrib48VccLocker			:=	DI_List_1[1404]	 ;
+	 
+	MesDataExd.MesData.Transfo_Aux.MesDataExd.MesData.MesAlarmTemp			:=	DI_List_1[1522]	 ;
+	MesDataExd.MesData.Transfo_Aux.MesDataExd.MesData.MesAlarmGas			:=	DI_List_1[1523]	 ;
+	MesDataExd.MesData.Transfo_Aux.MesDataExd.MesData.MesAlarmOilLevel		:=	DI_List_1[1524]	 ;
+	 
+	MesDataExd.MesData.MesAuxTransfoMeltingFusesContact			:=	DI_List_1[1525]	 ;                             
+	MesDataExd.MesData.MesAuxTransfoSwitchGear	            	:=	DI_List_1[1526]  ;
+	
+	MesDataExd.MesData.DS.MesAlarmState          	  	:=	DI_List_1[1673] ;
+	MesDataExd.MesData.FSS.MesAlarmFire				:=	DI_List_1[1674]	;
+	MesDataExd.MesData.MesLocalRemoteOperation  	:=	DI_List_1[1682]	;
+	MesDataExd.MesData.ES.MesAlarmState         		:=	DI_List_1[1683]	;
+	 
+	
+						
+	 /  MesDataExd.MesData.ProtectRelay_MainHVCB.MesDataExd.MesData.MesWatchdog 	  := DI_List_2[1]	; 
+	MesDataExd.MesData.ProtectRelay_MainHVCB.MesDataExd.MesData.MesAlarmTCS    := DI_List_2[12]	;
+	
+	MesDataExd.MesData.ProtectRelay_Transfo225kV.MesDataExd.MesData.MesAlarmTCS 	 := DI_List_2[39] ;
+	 // Mes225kVTransfoDefaultInternDisjCde := DI_List_2[46] ;
+	
+	MesDataExd.MesData.ProtectRelay_MainMVCB.MesDataExd.MesData.MesWatchdog 	 :=   DI_List_2[97]	; 
+	MesDataExd.MesData.ProtectRelay_MainMVCB.MesDataExd.MesData.MesAlarmTCS   := 	DI_List_2[108]	;
+	
+	MesDataExd.MesData.ProtectRelay_FeederMVCB[1].MesDataExd.MesData.MesWatchdog   :=   DI_List_2[129] ;
+	MesDataExd.MesData.ProtectRelay_FeederMVCB[1].MesDataExd.MesData.MesAlarmTCS   := 	 DI_List_2[140] ;
+	
+	MesDataExd.MesData.ProtectRelay_FeederMVCB[2].MesDataExd.MesData.MesWatchdog	  :=   DI_List_2[161]  ; 
+	MesDataExd.MesData.ProtectRelay_FeederMVCB[2].MesDataExd.MesData.MesAlarmTCS   := 	 DI_List_2[172]  ;
+	
+	MesDataExd.MesData.TapChanger.MesAlarm_Discordance				  :=  DI_List_2[225]	;
+	MesDataExd.MesData.TapChanger.MesAlarm_NoOutletDetected			  :=  DI_List_2[226]	;          
+	MesDataExd.MesData.TapChanger.MesModeAuto							  :=  DI_List_2[227]	;
+	MesDataExd.MesData.TapChanger.MesModeManual						  :=  DI_List_2[228]	;
+	MesDataExd.MesData.TapChanger.MesState_ManoeuverAuthorized 		  :=  DI_List_2[230]	;
+	
+	MesDataExd.MesData.ProtectRelay_MainHVCB.OUT_CmdOpen  			  :=  DI_List_2[990] ;
+	MesDataExd.MesData.ProtectRelay_MainHVCB.OUT_CmdClose     		  :=  DI_List_2[991] ;
+	
+	//  MesDataExd.MesData.Mes225kVTransfoDeclenchOpen	 := DI_List_2[1019] ;
+	//  MesDataExd.MesData.Mes225kVTransfoEnclenchClose    := DI_List_2[1020] ;
+	
+	MesDataExd.MesData.ProtectRelay_MainMVCB.OUT_CmdOpen 	 :=  DI_List_2[1077] ;
+	MesDataExd.MesData.ProtectRelay_MainMVCB.OUT_CmdClose  :=  DI_List_2[1078] ;
+	
+	MesDataExd.MesData.ProtectRelay_FeederMVCB[1].OUT_CmdOpen 	:=	DI_List_2[1106]  ; // MIDI 
+	MesDataExd.MesData.ProtectRelay_FeederMVCB[1].OUT_CmdClose :=  DI_List_2[1107]  ;
+	
+	MesDataExd.MesData.ProtectRelay_FeederMVCB[2].OUT_CmdOpen   :=  DI_List_2[1135]	;	// PLAT 
+	MesDataExd.MesData.ProtectRelay_FeederMVCB[2].OUT_CmdClose  :=  DI_List_2[1136]  ;
+	
+	MesDataExd.MesData.TapChanger.OUT_CmdRampUp	:=  DI_List_2[1193] ;
+	MesDataExd.MesData.TapChanger.OUT_CmdRampDown :=	DI_List_2[1194] ;           
+	MesDataExd.MesData.TapChanger.MesModeManual	:=  DI_List_2[1195]	;
+	MesDataExd.MesData.TapChanger.MesModeAuto    :=  DI_List_2[1196] ;
+	
+	MesDataExd.MesData.MesAuxHtOpenSectLine225kV		  :=  DI_List_1[1242]  	;
+	MesDataExd.MesData.MesAuxHtCloseSectLine225kV		  :=  DI_List_1[1243] 	;
+	MesDataExd.MesData.MesAuxHtOpenSectMalt			  :=  DI_List_1[1244]   ;  
+	MesDataExd.MesData.MesAuxHtCloseSectMalt			  :=  DI_List_1[1245]   ; 	
+	MesDataExd.MesData.MesAuxHtTeleCondamnSl225kV		  :=  DI_List_1[1246] 	;
+	MesDataExd.MesData.MesAuxHtDeTeleCondamnSl225kV	  :=  DI_List_1[1247]   ;                          
+	MesDataExd.MesData.MesAuxHtTelecommandeRelestActif  :=  DI_List_1[1248]   ;
+	MesDataExd.MesData.MesAuxHtTelecommandeRelestPassif :=  DI_List_1[1249]   ;
+	
+	//  MesDataExd.MesData.Filling Analogic Data			           
+					                                
+	MW(WORD_STRONG :=  AI_List_1[1  ],	WORD_WEAK := AI_List_1[1  ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.ProtectRelay_MainHVCB.MesDataExd.MesData.MesI1);
+	MW(WORD_STRONG :=  AI_List_1[2  ],	WORD_WEAK := AI_List_1[2  ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.ProtectRelay_MainHVCB.MesDataExd.MesData.MesI2);
+	MW(WORD_STRONG :=  AI_List_1[3  ],	WORD_WEAK := AI_List_1[3  ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.ProtectRelay_MainHVCB.MesDataExd.MesData.MesI3);
+	MW(WORD_STRONG :=  AI_List_1[12 ],	WORD_WEAK := AI_List_1[12 ], SIZE := 1, FIX := 3, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.ProtectRelay_MainHVCB.MesDataExd.MesData.MesU12);
+	MW(WORD_STRONG :=  AI_List_1[13 ],	WORD_WEAK := AI_List_1[13 ], SIZE := 1, FIX := 3, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.ProtectRelay_MainHVCB.MesDataExd.MesData.MesU23);
+	MW(WORD_STRONG :=  AI_List_1[14 ],	WORD_WEAK := AI_List_1[14 ], SIZE := 1, FIX := 3, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.ProtectRelay_MainHVCB.MesDataExd.MesData.MesU31);
+	MW(WORD_STRONG :=  AI_List_1[18 ],	WORD_WEAK := AI_List_1[18 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.ProtectRelay_MainHVCB.MesU0);
+	MW(WORD_STRONG :=  AI_List_1[21 ],	WORD_WEAK := AI_List_1[21 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.ProtectRelay_MainHVCB.MesDataExd.MesData.MesFreq);
+	MW(WORD_STRONG :=  AI_List_1[22 ],	WORD_WEAK := AI_List_1[22 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.ProtectRelay_MainHVCB.MesP);
+	MW(WORD_STRONG :=  AI_List_1[23 ],	WORD_WEAK := AI_List_1[23 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.ProtectRelay_MainHVCB.MesQ);
+	MW(WORD_STRONG :=  AI_List_1[27 ],	WORD_WEAK := AI_List_1[27 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.ProtectRelay_MainHVCB.MesCosPhi);
+	                               
+	MW(WORD_STRONG :=  AI_List_1[33 ],	WORD_WEAK := AI_List_1[33 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.ProtectRelay_Transfo225kV.MesDataExd.MesData.MesI1);
+	MW(WORD_STRONG :=  AI_List_1[34 ],	WORD_WEAK := AI_List_1[34 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.ProtectRelay_Transfo225kV.MesDataExd.MesData.MesI2);
+	MW(WORD_STRONG :=  AI_List_1[35 ],	WORD_WEAK := AI_List_1[35 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.ProtectRelay_Transfo225kV.MesDataExd.MesData.MesI3);
+	MW(WORD_STRONG :=  AI_List_1[44 ],	WORD_WEAK := AI_List_1[44 ], SIZE := 1, FIX := 3, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.ProtectRelay_Transfo225kV.MesDataExd.MesData.MesU12);
+	MW(WORD_STRONG :=  AI_List_1[45 ],	WORD_WEAK := AI_List_1[45 ], SIZE := 1, FIX := 3, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.ProtectRelay_Transfo225kV.MesDataExd.MesData.MesU23);
+	MW(WORD_STRONG :=  AI_List_1[46 ],	WORD_WEAK := AI_List_1[46 ], SIZE := 1, FIX := 3, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.ProtectRelay_Transfo225kV.MesDataExd.MesData.MesU31);
+	MW(WORD_STRONG :=  AI_List_1[54 ],	WORD_WEAK := AI_List_1[54 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.ProtectRelay_Transfo225kV.MesP);
+	MW(WORD_STRONG :=  AI_List_1[55 ],	WORD_WEAK := AI_List_1[55 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.ProtectRelay_Transfo225kV.MesQ);
+	
+	MW(WORD_STRONG :=  AI_List_1[65 ],	WORD_WEAK := AI_List_1[65 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.Mes20kVCourNeutCuveI1);
+	MW(WORD_STRONG :=  AI_List_1[69 ],	WORD_WEAK := AI_List_1[69 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.Mes20kVCourNeutCuveResidualI);
+	MW(WORD_STRONG :=  AI_List_1[92 ],	WORD_WEAK := AI_List_1[92 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.Mes20kVCourNeutCuveDecltI1);
+	MW(WORD_STRONG :=  AI_List_1[95 ],	WORD_WEAK := AI_List_1[95 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.Mes20kVCourNeutCuveDecltI2);
+	
+	MW(WORD_STRONG :=  AI_List_1[97  ],	WORD_WEAK := AI_List_1[97  ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.ProtectRelay_MainMVCB.MesDataExd.MesData.MesI1);
+	MW(WORD_STRONG :=  AI_List_1[98  ],	WORD_WEAK := AI_List_1[98  ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.ProtectRelay_MainMVCB.MesDataExd.MesData.MesI2);
+	MW(WORD_STRONG :=  AI_List_1[99  ],	WORD_WEAK := AI_List_1[99  ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.ProtectRelay_MainMVCB.MesDataExd.MesData.MesI3);
+	MW(WORD_STRONG :=  AI_List_1[108 ],	WORD_WEAK := AI_List_1[108 ], SIZE := 1, FIX := 3, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.ProtectRelay_MainMVCB.MesDataExd.MesData.MesU12);
+	MW(WORD_STRONG :=  AI_List_1[109 ],	WORD_WEAK := AI_List_1[109 ], SIZE := 1, FIX := 3, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.ProtectRelay_MainMVCB.MesDataExd.MesData.MesU23);
+	MW(WORD_STRONG :=  AI_List_1[110 ],	WORD_WEAK := AI_List_1[110 ], SIZE := 1, FIX := 3, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.ProtectRelay_MainMVCB.MesDataExd.MesData.MesU31);
+	MW(WORD_STRONG :=  AI_List_1[114 ],	WORD_WEAK := AI_List_1[114 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.ProtectRelay_MainMVCB.MesU0);
+	MW(WORD_STRONG :=  AI_List_1[117 ],	WORD_WEAK := AI_List_1[117 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.ProtectRelay_MainMVCB.MesDataExd.MesData.MesFreq);
+	MW(WORD_STRONG :=  AI_List_1[119 ],	WORD_WEAK := AI_List_1[119 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.ProtectRelay_MainMVCB.MesP);
+	MW(WORD_STRONG :=  AI_List_1[120 ],	WORD_WEAK := AI_List_1[120 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.ProtectRelay_MainMVCB.MesQ);
+	MW(WORD_STRONG :=  AI_List_1[123 ],	WORD_WEAK := AI_List_1[123 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.ProtectRelay_MainMVCB.MesCosPhi);
+	
+	MW(WORD_STRONG :=  AI_List_2[1 	 ], WORD_WEAK := AI_List_2[1 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.ProtectRelay_FeederMVCB[1].MesDataExd.MesData.MesI1);
+	MW(WORD_STRONG :=  AI_List_2[2   ], WORD_WEAK := AI_List_2[2 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.ProtectRelay_FeederMVCB[1].MesDataExd.MesData.MesI2);
+	MW(WORD_STRONG :=  AI_List_2[3   ], WORD_WEAK := AI_List_2[3 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.ProtectRelay_FeederMVCB[1].MesDataExd.MesData.MesI3);
+	MW(WORD_STRONG :=  AI_List_2[22  ], WORD_WEAK := AI_List_2[22 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.ProtectRelay_FeederMVCB[1].MesP);
+	MW(WORD_STRONG :=  AI_List_2[23  ], WORD_WEAK := AI_List_2[23 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.ProtectRelay_FeederMVCB[1].MesQ);
+	                                                        
+	MW(WORD_STRONG :=  AI_List_2[33 ], WORD_WEAK := AI_List_2[33 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.ProtectRelay_FeederMVCB[2].MesDataExd.MesData.MesI1);
+	MW(WORD_STRONG :=  AI_List_2[34 ], WORD_WEAK := AI_List_2[34 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.ProtectRelay_FeederMVCB[2].MesDataExd.MesData.MesI2);
+	MW(WORD_STRONG :=  AI_List_2[35 ], WORD_WEAK := AI_List_2[35 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.ProtectRelay_FeederMVCB[2].MesDataExd.MesData.MesI3);
+	MW(WORD_STRONG :=  AI_List_2[54 ], WORD_WEAK := AI_List_2[54 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.ProtectRelay_FeederMVCB[2].MesP);         
+	MW(WORD_STRONG :=  AI_List_2[55 ], WORD_WEAK := AI_List_2[55 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.ProtectRelay_FeederMVCB[2].MesQ);         
+
+END_IF
+//MW(WORD_STRONG :=  AI_List_2[97 ], WORD_WEAK := AI_List_2[97 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.Mes20kVPlatSepamQ);	
+
+
+
+
+
+
+(*			
+//  MesDataExd.MesData.Filling Digital Data				
+
+MesData.Mes225kVCombiDefaultPhase1			:= DI_List_1[1]   ;
+MesData.Mes225kVCombiDefaultPhase2		    := DI_List_1[2]   ;
+MesData.Mes225kVCombiDefaultPhase3			:= DI_List_1[3]   ;
+MesData.Mes225kVCombiDefaultPhaseRpt		:= DI_List_1[33]  ;
+MesData.Mes225kVCombiDefaultGround			:= DI_List_1[35]  ;
+MesData.Mes225kVCombiDefaultGroundRpt		:= DI_List_1[36]  ;
+MesData.Mes225kVCombiDefaultMaxUInverse		:= DI_List_1[37]  ;
+MesData.Mes225kVCombiDefaultMaxP			:= DI_List_1[38]  ;
+MesData.Mes225kVCombiDefaultCircuitbreaker	:= DI_List_1[39]  ;	
+MesData.Mes225kVCombiDefaultWatchdog		:= DI_List_1[148] ;
+			
+MesDataExd.MesData.Mes225kVTransfoDiscordSectLigneHTB		   := DI_List_1[164]    ;
+MesDataExd.MesData.Mes225kVTransfoDiscordSectMaltHTB         := DI_List_1[165]    ;
+MesDataExd.MesData.Mes225kVTransfoDiscordSectDisjHTB         := DI_List_1[166]    ;
+MesDataExd.MesData.Mes225kVTransfoTeleCondamne               := DI_List_1[167]    ;
+MesDataExd.MesData.Mes225kVTransfoDeTeleCondamne             := DI_List_1[168]    ;
+MesDataExd.MesData.Mes225kVTransfoDiscordTeleCondamne	       := DI_List_1[169]    ;
+MesDataExd.MesData.Mes225kVTransfoMaxI	                   := DI_List_1[170]    ;
+MesDataExd.MesData.Mes225kVTransfoMaxICoteProd               := DI_List_1[171]    ;
+MesDataExd.MesData.Mes225kVTransfoMaxIoCoteProd              := DI_List_1[172]    ;
+MesDataExd.MesData.Mes225kVTransfoMinU                       := DI_List_1[173]    ;
+MesDataExd.MesData.Mes225kVTransfoMinULong                   := DI_List_1[174]    ;
+MesDataExd.MesData.Mes225kVTransfoMaxU                       := DI_List_1[175]    ;
+MesDataExd.MesData.Mes225kVTransfoMaxULong                   := DI_List_1[176]    ;
+MesDataExd.MesData.Mes225kVTransfoDefaultPhaseRpt            := DI_List_1[177]    ;
+MesDataExd.MesData.Mes225kVTransfoAlarmImgTherm              := DI_List_1[178]    ;
+MesDataExd.MesData.Mes225kVTransfoDefaultImgTherm            := DI_List_1[179]    ;
+MesDataExd.MesData.Mes225kVTransfoDifferTransfo              := DI_List_1[180]    ;
+MesDataExd.MesData.Mes225kVTransfoMaxFreq                    := DI_List_1[181]    ;
+MesDataExd.MesData.Mes225kVTransfoMinFreq                    := DI_List_1[183]    ;
+MesDataExd.MesData.Mes225kVTransfoCircuitBreaker             := DI_List_1[193]    ;
+MesDataExd.MesData.Mes225kVTransfoDisjManqueSf6              := DI_List_1[197]    ;
+MesDataExd.MesData.Mes225kVTransfoCmdDisjDesarm              := DI_List_1[198]    ;
+MesDataExd.MesData.Mes225kVTransfoCmdDisjDistVerr            := DI_List_1[199]    ;
+MesDataExd.MesData.Mes225kVTransfoDefaultMoteurArm           := DI_List_1[200]    ;
+MesDataExd.MesData.Mes225kVTransfoDefaultAux230Vac           := DI_List_1[201]    ;
+MesDataExd.MesData.Mes225kVTransfoDefaultAlimBobine          := DI_List_1[202]    ;
+MesDataExd.MesData.Mes225kVTransfoAlarmBuchholz              := DI_List_1[220]    ;
+MesDataExd.MesData.Mes225kVTransfoTriggerBuchHolz            := DI_List_1[221]    ;
+MesDataExd.MesData.Mes225kVTransfoAlarmTempOil               := DI_List_1[222]    ;
+MesDataExd.MesData.Mes225kVTransfoTriggerTempOil             := DI_List_1[223]    ;
+MesDataExd.MesData.Mes225kVTransfoImgTherm1erStade           := DI_List_1[224]    ;
+MesDataExd.MesData.Mes225kVTransfoImgTherm2emeStade          := DI_List_1[225]    ;
+MesDataExd.MesData.Mes225kVTransfoDcltSurpression            := DI_List_1[228]    ;
+MesDataExd.MesData.Mes225kVTransfoNiveauMiniOil              := DI_List_1[229]    ;
+MesDataExd.MesData.Mes225kVTransfoRefrigLocal                := DI_List_1[230]    ;
+MesDataExd.MesData.Mes225kVTransfoDcltClapetAntiRetour       := DI_List_1[231]    ;
+MesDataExd.MesData.Mes225kVTransfoDcltRelaisProtectRegl      := DI_List_1[232]    ;
+MesDataExd.MesData.Mes225kVTransfoDefaillanceRegl            := DI_List_1[233]    ;
+
+MesDataExd.MesData.Mes20kVCourNeutCuveDefaultMasseCuve1		:= DI_List_1[305]	;
+MesDataExd.MesData.Mes20kVCourNeutCuveMaxIexp2				:= DI_List_1[306]   ;
+MesDataExd.MesData.Mes20kVCourNeutCuveDefaultMasseCuve2  		:= DI_List_1[307]   ;
+MesDataExd.MesData.Mes20kVCourNeutCuveMaxIexp4				:= DI_List_1[308]   ;
+MesDataExd.MesData.Mes20kVCourNeutCuveDefaultGround	    	:= DI_List_1[309]   ;
+MesDataExd.MesData.Mes20kVCourNeutCuveMaxI0exp4		    	:= DI_List_1[310]   ;
+MesDataExd.MesData.Mes20kVCourNeutCuveTempAlarm		    	:= DI_List_1[439]   ;
+MesDataExd.MesData.Mes20kVCourNeutCuveTempTrigger				:= DI_List_1[440]   ;
+MesDataExd.MesData.Mes20kVCourNeutCuveGazDischarge			:= DI_List_1[441]   ;
+MesDataExd.MesData.Mes20kVCourNeutCuvePressure           		:= DI_List_1[442]   ;
+
+MesDataExd.MesData.Mes20kVGeneralSepamDefaultPhase1			:= DI_List_1[457]	;
+MesDataExd.MesData.Mes20kVGeneralSepamDefaultPhase2			:= DI_List_1[459]   ;
+MesDataExd.MesData.Mes20kVGeneralHVCellDefaultCircuitBreaker	:= DI_List_1[495]   ;
+MesDataExd.MesData.Mes20kVGeneralHVCellProtectCircuitBreaker	:= DI_List_1[586]   ;
+MesDataExd.MesData.Mes20kVGeneralHVCellDefaultFrom225kV		:= DI_List_1[592]   ;
+
+MesDataExd.MesData.Mes20kVMidiSepamDefaultShortCircuit		:=	DI_List_1[609]	;
+MesDataExd.MesData.Mes20kVMidiSepamDefaultOvercharge			:=	DI_List_1[611]  ;
+MesDataExd.MesData.Mes20kVMidiSepamDefaultGround				:=	DI_List_1[613]  ;
+MesDataExd.MesData.Mes20kVMidiSepamDefaultCablesOvercharge	:=	DI_List_1[641]  ;
+MesDataExd.MesData.Mes20kVMidiHVCellDefaultFrom225kV			:=	DI_List_1[647]  ;
+MesDataExd.MesData.Mes20kVMidiHVCellProtectCircuitBreaker		:=	DI_List_1[738]  ;
+
+MesDataExd.MesData.Mes20kVPlatSepamDefaultShortCircuit		:=	 DI_List_1[761] ;
+MesDataExd.MesData.Mes20kVPlatSepamDefaultOvercharge		 	:=   DI_List_1[763] ;
+MesDataExd.MesData.Mes20kVPlatSepamDefaultGround			 	:=   DI_List_1[765] ;  
+MesDataExd.MesData.Mes20kVPlatSepamDefaultCablesOvercharge	:=   DI_List_1[793] ;
+MesDataExd.MesData.Mes20kVPlatHVCellDefaultFrom225kV		 	:=   DI_List_1[799] ;
+MesDataExd.MesData.Mes20kVPlatHVCellProtectCircuitBreaker     :=   DI_List_1[890] ;
+
+MesDataExd.MesData.Mes225kVRegleurDefault := DI_List_1[1065] ;
+
+MesDataExd.MesData.MesAuxHTSect225kV							:=	DI_List_1[1217]	 ;
+MesDataExd.MesData.MesAuxHtSmaltHTBOpen						:=	DI_List_1[1219]	 ;
+MesDataExd.MesData.MesAuxHtFusionFuseMeasures225kV			:=	DI_List_1[1225]	 ;
+MesDataExd.MesData.MesAuxHtFusionFuseProtect225kV				:=	DI_List_1[1226]	 ;
+MesDataExd.MesData.MesAuxHtFusionFuseCountRte225kV			:=	DI_List_1[1227]	 ;
+MesDataExd.MesData.MesAuxHtShortCircuitCurrentProtectCcp2		:=	DI_List_1[1228]	 ;
+MesDataExd.MesData.MesAuxHtDisjCount20kVOpen					:=	DI_List_1[1230]	 ;
+MesDataExd.MesData.MesAuxHtDisjRefVoltage20kVOpen				:=	DI_List_1[1231]	 ;
+MesDataExd.MesData.MesAuxHtShortCircuitCurrentProtectCcp3		:=	DI_List_1[1232]	 ;
+MesDataExd.MesData.MesAuxBtTriggerGeneralDisj					:=	DI_List_1[1372]	 ;
+MesDataExd.MesData.MesAuxBt400VManqueAC						:=	DI_List_1[1373]	 ;
+MesDataExd.MesData.MesAuxBt400VDecltAntenneScada				:=	DI_List_1[1374]  ;
+MesDataExd.MesData.MesAuxBt400VDecltAntennePrio				:=	DI_List_1[1375]	 ;
+MesDataExd.MesData.MesAuxBt400VPermutAutoStopMode				:=	DI_List_1[1377]	 ;
+MesDataExd.MesData.MesAuxBt400VPermutAutoNormalMode			:=	DI_List_1[1378]	 ;
+MesDataExd.MesData.MesAuxBt400VPermutAutoSecoursMode			:=	DI_List_1[1379]	 ;
+MesDataExd.MesData.MesAuxBt400VPermutModeAuto					:=	DI_List_1[1380]	 ;
+MesDataExd.MesData.MesAuxBt400VVoltageLossNormalAlim			:=	DI_List_1[1381]	 ;
+MesDataExd.MesData.MesAuxBt400VVoltageLossSecoursAlim			:=	DI_List_1[1382]	 ;
+MesDataExd.MesData.MesAuxBt400VDefaultPermut					:=	DI_List_1[1383]	 ;
+MesDataExd.MesData.MesAuxBt48VCeDefaultBatt					:=	DI_List_1[1384]	 ;
+MesDataExd.MesData.MesAuxBt48VCeDefaultRedress				:=	DI_List_1[1385]	 ;
+MesDataExd.MesData.MesAuxBt48VCeDefaultIsolBatt				:=	DI_List_1[1386]	 ;
+MesDataExd.MesData.MesAuxBt48VCeDecltDisjRedress				:=	DI_List_1[1387]	 ;
+MesDataExd.MesData.MesAuxBt48VCeDecltDisjBatt					:=	DI_List_1[1388]	 ;
+MesDataExd.MesData.MesAuxBt48VCeDecltAntenne					:=	DI_List_1[1389]	 ;
+MesDataExd.MesData.MesAuxBt48VTcmDefaultBatt					:=	DI_List_1[1390]	 ;
+MesDataExd.MesData.MesAuxBt48VTcmDefaultRedress				:=	DI_List_1[1391]	 ;
+MesDataExd.MesData.MesAuxBt48VTcmDecltDisjRedress				:=	DI_List_1[1392]	 ;
+MesDataExd.MesData.MesAuxBt48VTcmDecltDisjBatt				:=	DI_List_1[1393]	 ;
+MesDataExd.MesData.MesAuxBt48VTcmDecltAntenne					:=	DI_List_1[1394]	 ;
+MesDataExd.MesData.MesAuxBtDefaultInverter					:=	DI_List_1[1395]	 ;
+MesDataExd.MesData.MesAuxBtSyntDefaultDistrib48VccJdb			:=	DI_List_1[1397]	 ;
+MesDataExd.MesData.MesAuxBtSyntOpenDistrib48VccJdb			:=	DI_List_1[1398]	 ;
+MesDataExd.MesData.MesAuxBtSyntDefaultDistrib48VccLocker		:=	DI_List_1[1403]	 ;
+MesDataExd.MesData.MesAuxBtSyntOpenDistrib48VccLocker			:=	DI_List_1[1404]	 ;
+MesDataExd.MesData.MesAuxTransfoTempTrigger					:=	DI_List_1[1522]	 ;
+MesDataExd.MesData.MesAuxTransfoGazDischarge					:=	DI_List_1[1523]	 ;
+MesDataExd.MesData.MesAuxTransfoPressure						:=	DI_List_1[1524]	 ;
+MesDataExd.MesData.MesAuxTransfoMeltingFusesContact			:=	DI_List_1[1525]	 ;                             
+MesDataExd.MesData.MesAuxTransfoSwitchGear	            	:=	DI_List_1[1526]  ;
+
+MesDataExd.MesData.MesPDLDoorsOpen         	  	:=	DI_List_1[1673]	;
+MesDataExd.MesData.MesPDLFireDetectorSystem    	:=	DI_List_1[1674]	;
+MesDataExd.MesData.MesPDLLocalRemoteOperation  	:=	DI_List_1[1682]	;
+MesDataExd.MesData.MesPDLEmergencyStop         	:=	DI_List_1[1683]	;
+					
+MesDataExd.MesData.Mes225kVCombiWatchdog		 := DI_List_2[1]	; 
+MesDataExd.MesData.Mes225kVCombiDefaultMajor   := DI_List_2[12]	;
+
+MesDataExd.MesData.Mes225kVTransfoSepamMajorDefault	 := DI_List_2[39] ;
+MesDataExd.MesData.Mes225kVTransfoDefaultInternDisjCde := DI_List_2[46] ;
+
+MesDataExd.MesData.Mes20kVGeneralSepamWatchdog	   :=   DI_List_2[97]	; 
+MesDataExd.MesData.Mes20kVGeneralSepamDefaultMajor   := 	DI_List_2[108]	;
+
+MesDataExd.MesData.Mes20kVMidiSepamWatchdog		:=   DI_List_2[129] ;
+MesDataExd.MesData.Mes20kVMidiSepamDefaultMajor   := 	 DI_List_2[140] ;
+
+MesDataExd.MesData.Mes20kVPlatSepamWatchdog		:=   DI_List_2[161]  ; 
+MesDataExd.MesData.Mes20kVPlatSepamDefaultMajor   := 	 DI_List_2[172]  ;
+
+MesDataExd.MesData.Mes225kVRegleurDefaultDiscordance	:=  DI_List_2[225]	;
+MesDataExd.MesData.Mes225kVRegleurNoOutletDetected	:=	DI_List_2[226]	;          
+MesDataExd.MesData.Mes225kVRegleurRegleurModeAuto		:=	DI_List_2[227]	;
+MesDataExd.MesData.Mes225kVRegleurRegleurModeManuel	:=  DI_List_2[228]	;
+MesDataExd.MesData.Mes225kVRegleurManoeuverAuthorized :=  DI_List_2[230]	;
+
+MesDataExd.MesData.Mes225kVCombiOrderOpenCircuitBreaker 	:=  DI_List_2[990] ;
+MesDataExd.MesData.Mes225kVCombiOrderCloseCircuitBreaker  :=  DI_List_2[991] ;
+
+MesDataExd.MesData.Mes225kVTransfoDeclenchOpen	 := DI_List_2[1019] ;
+MesDataExd.MesData.Mes225kVTransfoEnclenchClose    := DI_List_2[1020] ;
+
+MesDataExd.MesData.Mes20kVGeneralHVCellProtectOrderOpenCircuitBreaker	 :=  DI_List_2[1077] ;
+MesDataExd.MesData.Mes20kVGeneralHVCellProtectOrderCloseCircuitBreaker :=  DI_List_2[1078] ;
+
+MesDataExd.MesData.Mes20kVMidiHVCellProtectOrderOpenCircuitBreaker	:=	DI_List_2[1106]  ;
+MesDataExd.MesData.Mes20kVMidiHVCellProtectOrderCloseCircuitBreaker   :=  DI_List_2[1107]  ;
+
+MesDataExd.MesData.Mes20kVPlatHVCellProtectOrderOpenCircuitBreaker   :=  DI_List_2[1135]	;
+MesDataExd.MesData.Mes20kVPlatHVCellProtectOrderCloseCircuitBreaker  :=  DI_List_2[1136]  ;
+
+MesDataExd.MesData.Mes225kVRegleurCdeMontee	:=  DI_List_2[1193] ;
+MesDataExd.MesData.Mes225kVRegleurCdeDescente :=	DI_List_2[1194] ;           
+MesDataExd.MesData.Mes225kVRegleurModeManuel	:=  DI_List_2[1195]	;
+MesDataExd.MesData.Mes225kVRegleurModeAuto    :=  DI_List_2[1196] ;
+
+MesDataExd.MesData.MesAuxHtOpenSectLine225kV		  :=  DI_List_1[1242]  	;
+MesDataExd.MesData.MesAuxHtCloseSectLine225kV		  :=  DI_List_1[1243] 	;
+MesDataExd.MesData.MesAuxHtOpenSectMalt			  :=  DI_List_1[1244]   ;  
+MesDataExd.MesData.MesAuxHtCloseSectMalt			  :=  DI_List_1[1245]   ; 	
+MesDataExd.MesData.MesAuxHtTeleCondamnSl225kV		  :=  DI_List_1[1246] 	;
+MesDataExd.MesData.MesAuxHtDeTeleCondamnSl225kV	  :=  DI_List_1[1247]   ;                          
+MesDataExd.MesData.MesAuxHtTelecommandeRelestActif  :=  DI_List_1[1248]   ;
+MesDataExd.MesData.MesAuxHtTelecommandeRelestPassif :=  DI_List_1[1249]   ;
+
+//  MesDataExd.MesData.Filling Analogic Data			           
+				                                
+MW(WORD_STRONG :=  AI_List_1[1  ],	WORD_WEAK := AI_List_1[1  ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.Mes225kVCombiI1);
+MW(WORD_STRONG :=  AI_List_1[2  ],	WORD_WEAK := AI_List_1[2  ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.Mes225kVCombiI2);
+MW(WORD_STRONG :=  AI_List_1[3  ],	WORD_WEAK := AI_List_1[3  ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.Mes225kVCombiI3);
+MW(WORD_STRONG :=  AI_List_1[12 ],	WORD_WEAK := AI_List_1[12 ], SIZE := 1, FIX := 3, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.Mes225kVCombiU21);
+MW(WORD_STRONG :=  AI_List_1[13 ],	WORD_WEAK := AI_List_1[13 ], SIZE := 1, FIX := 3, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.Mes225kVCombiU32);
+MW(WORD_STRONG :=  AI_List_1[14 ],	WORD_WEAK := AI_List_1[14 ], SIZE := 1, FIX := 3, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.Mes225kVCombiU13);
+MW(WORD_STRONG :=  AI_List_1[18 ],	WORD_WEAK := AI_List_1[18 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.Mes225kVCombiResidualU);
+MW(WORD_STRONG :=  AI_List_1[21 ],	WORD_WEAK := AI_List_1[21 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.Mes225kVCombiFrequency);
+MW(WORD_STRONG :=  AI_List_1[22 ],	WORD_WEAK := AI_List_1[22 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.Mes225kVCombiP);
+MW(WORD_STRONG :=  AI_List_1[23 ],	WORD_WEAK := AI_List_1[23 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.Mes225kVCombiQ);
+MW(WORD_STRONG :=  AI_List_1[27 ],	WORD_WEAK := AI_List_1[27 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.Mes225kVCombiCosPhi);
+                               
+MW(WORD_STRONG :=  AI_List_1[33 ],	WORD_WEAK := AI_List_1[33 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.Mes225kVTransfoI1);
+MW(WORD_STRONG :=  AI_List_1[34 ],	WORD_WEAK := AI_List_1[34 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.Mes225kVTransfoI2);
+MW(WORD_STRONG :=  AI_List_1[35 ],	WORD_WEAK := AI_List_1[35 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.Mes225kVTransfoI3);
+MW(WORD_STRONG :=  AI_List_1[44 ],	WORD_WEAK := AI_List_1[44 ], SIZE := 1, FIX := 3, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.Mes225kVTransfoU21);
+MW(WORD_STRONG :=  AI_List_1[45 ],	WORD_WEAK := AI_List_1[45 ], SIZE := 1, FIX := 3, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.Mes225kVTransfoU32);
+MW(WORD_STRONG :=  AI_List_1[46 ],	WORD_WEAK := AI_List_1[46 ], SIZE := 1, FIX := 3, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.Mes225kVTransfoU13);
+MW(WORD_STRONG :=  AI_List_1[54 ],	WORD_WEAK := AI_List_1[54 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.Mes225kVTransfoP);
+MW(WORD_STRONG :=  AI_List_1[55 ],	WORD_WEAK := AI_List_1[55 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.Mes225kVTransfoQ);
+
+MW(WORD_STRONG :=  AI_List_1[65 ],	WORD_WEAK := AI_List_1[65 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.Mes20kVCourNeutCuveI1);
+MW(WORD_STRONG :=  AI_List_1[69 ],	WORD_WEAK := AI_List_1[69 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.Mes20kVCourNeutCuveResidualI);
+MW(WORD_STRONG :=  AI_List_1[92 ],	WORD_WEAK := AI_List_1[92 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.Mes20kVCourNeutCuveDecltI1);
+MW(WORD_STRONG :=  AI_List_1[95 ],	WORD_WEAK := AI_List_1[95 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.Mes20kVCourNeutCuveDecltI2);
+
+MW(WORD_STRONG :=  AI_List_1[97  ],	WORD_WEAK := AI_List_1[97  ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.Mes20kVGeneralSepamI1);
+MW(WORD_STRONG :=  AI_List_1[98  ],	WORD_WEAK := AI_List_1[98  ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.Mes20kVGeneralSepamI2);
+MW(WORD_STRONG :=  AI_List_1[99  ],	WORD_WEAK := AI_List_1[99  ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.Mes20kVGeneralSepamI3);
+MW(WORD_STRONG :=  AI_List_1[108 ],	WORD_WEAK := AI_List_1[108 ], SIZE := 1, FIX := 3, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.Mes20kVGeneralSepamU21);
+MW(WORD_STRONG :=  AI_List_1[109 ],	WORD_WEAK := AI_List_1[109 ], SIZE := 1, FIX := 3, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.Mes20kVGeneralSepamU32);
+MW(WORD_STRONG :=  AI_List_1[110 ],	WORD_WEAK := AI_List_1[110 ], SIZE := 1, FIX := 3, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.Mes20kVGeneralSepamU13);
+MW(WORD_STRONG :=  AI_List_1[114 ],	WORD_WEAK := AI_List_1[114 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.Mes20kVGeneralSepamResidualU);
+MW(WORD_STRONG :=  AI_List_1[117 ],	WORD_WEAK := AI_List_1[117 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.Mes20kVGeneralSepamFrequency);
+MW(WORD_STRONG :=  AI_List_1[119 ],	WORD_WEAK := AI_List_1[119 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.Mes20kVGeneralSepamP);
+MW(WORD_STRONG :=  AI_List_1[120 ],	WORD_WEAK := AI_List_1[120 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.Mes20kVGeneralSepamQ);
+MW(WORD_STRONG :=  AI_List_1[123 ],	WORD_WEAK := AI_List_1[123 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.Mes20kVGeneralSepamCosPhi);
+
+MW(WORD_STRONG :=  AI_List_2[1 	 ], WORD_WEAK := AI_List_2[1 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.Mes20kVMidiSepamI1);
+MW(WORD_STRONG :=  AI_List_2[2   ], WORD_WEAK := AI_List_2[2 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.Mes20kVMidiSepamI2);
+MW(WORD_STRONG :=  AI_List_2[3   ], WORD_WEAK := AI_List_2[3 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.Mes20kVMidiSepamI3);
+MW(WORD_STRONG :=  AI_List_2[22  ], WORD_WEAK := AI_List_2[22 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.Mes20kVMidiSepamP);
+MW(WORD_STRONG :=  AI_List_2[23  ], WORD_WEAK := AI_List_2[23 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.Mes20kVMidiSepamQ);
+                                                        
+MW(WORD_STRONG :=  AI_List_2[33 ], WORD_WEAK := AI_List_2[33 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.Mes20kVPlatSepamI1);
+MW(WORD_STRONG :=  AI_List_2[34 ], WORD_WEAK := AI_List_2[34 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.Mes20kVPlatSepamI2);
+MW(WORD_STRONG :=  AI_List_2[35 ], WORD_WEAK := AI_List_2[35 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.Mes20kVPlatSepamI3);
+MW(WORD_STRONG :=  AI_List_2[54 ], WORD_WEAK := AI_List_2[54 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.Mes20kVPlatSepamP);
+MW(WORD_STRONG :=  AI_List_2[55 ], WORD_WEAK := AI_List_2[55 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.Mes20kVPlatSepamQ);
+
+MW(WORD_STRONG :=  AI_List_2[97 ], WORD_WEAK := AI_List_2[97 ], SIZE := 1, FIX := 0, SIGNED := 0, VAR_OUT	:= MesDataExd.MesData.Mes20kVPlatSepamQ);
+
+
+*)]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_Datalogger_PPCVerrerie">
+      <LineId Id="26" Count="0" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="17" Count="0" />
+      <LineId Id="10" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Datalogger_PPCVerrerie.M_AlarmManagement">
+      <LineId Id="1242" Count="26" />
+      <LineId Id="1394" Count="0" />
+      <LineId Id="1269" Count="0" />
+      <LineId Id="1395" Count="15" />
+      <LineId Id="1414" Count="17" />
+      <LineId Id="1411" Count="2" />
+      <LineId Id="1270" Count="71" />
+      <LineId Id="1432" Count="0" />
+      <LineId Id="1448" Count="15" />
+      <LineId Id="1433" Count="3" />
+      <LineId Id="1464" Count="4" />
+      <LineId Id="1437" Count="10" />
+      <LineId Id="1342" Count="19" />
+      <LineId Id="1487" Count="0" />
+      <LineId Id="1469" Count="17" />
+      <LineId Id="1362" Count="17" />
+      <LineId Id="689" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Datalogger_PPCVerrerie.M_CP">
+      <LineId Id="165" Count="19" />
+      <LineId Id="49" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Datalogger_PPCVerrerie.M_Execute">
+      <LineId Id="6" Count="2" />
+      <LineId Id="12" Count="3" />
+      <LineId Id="42" Count="0" />
+      <LineId Id="16" Count="2" />
+      <LineId Id="31" Count="0" />
+      <LineId Id="19" Count="1" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Datalogger_PPCVerrerie.M_Read">
+      <LineId Id="1166" Count="0" />
+      <LineId Id="1169" Count="1" />
+      <LineId Id="1156" Count="0" />
+      <LineId Id="1158" Count="0" />
+      <LineId Id="596" Count="69" />
+      <LineId Id="667" Count="87" />
+      <LineId Id="1135" Count="2" />
+      <LineId Id="755" Count="10" />
+      <LineId Id="1144" Count="0" />
+      <LineId Id="766" Count="4" />
+      <LineId Id="1145" Count="0" />
+      <LineId Id="771" Count="2" />
+      <LineId Id="1146" Count="0" />
+      <LineId Id="774" Count="4" />
+      <LineId Id="1149" Count="0" />
+      <LineId Id="780" Count="0" />
+      <LineId Id="1147" Count="1" />
+      <LineId Id="781" Count="101" />
+      <LineId Id="1159" Count="0" />
+      <LineId Id="883" Count="245" />
+      <LineId Id="353" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

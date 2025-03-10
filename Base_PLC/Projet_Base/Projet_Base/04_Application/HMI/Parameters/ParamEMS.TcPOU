@@ -1,0 +1,93 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="ParamEMS" Id="{128a9153-52c1-475c-80d0-f3baaeb0ce68}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM ParamEMS
+VAR CONSTANT
+	MaxNumberBess 	: UINT := 5;
+	MaxNumberGen 	: UINT := 20;
+	MaxNumberLoad 	: UINT := 1;
+	MaxNumberRen	: UINT := 20;
+END_VAR
+
+VAR
+	
+	bChangeBess				: BOOL;
+	bChangeGen				: BOOL;
+	bChangeLoad				: BOOL;
+	bChangeRen				: BOOL;
+	
+	TRIG_ChangeBess			: R_TRIG;
+	TRIG_ChangeGen			: R_TRIG;
+	TRIG_ChangeLoad			: R_TRIG;
+	TRIG_ChangeRen			: R_TRIG;
+	
+	NumBessDisplayed 		: UINT:= 1;
+	NumGenDisplayed 		: UINT:= 1;
+	NumLoadDisplayed 		: UINT:= 1;
+	NumRenDisplayed 		: UINT:= 1;
+	
+	NumBessDisplayed_Old	: UINT:= 1;
+	NumGenDisplayed_Old		: UINT:= 1;
+	NumLoadDisplayed_Old	: UINT:= 1;
+	NumRenDisplayed_Old		: UINT:= 1;
+	
+	NameBessDisplayed		: STRING;
+	NameGenDisplayed		: STRING;
+	NameLoadDisplayed		: STRING;
+	NameRenDisplayed		: STRING;
+	
+	BessNames 				: ARRAY[1.. MaxNumberBess] OF STRING;
+	GenNames 				: ARRAY[1..MaxNumberGen] OF STRING;
+	LoadNames 				: ARRAY[1..MaxNumberLoad] OF STRING;
+	RenNames				: ARRAY[1..MaxNumberRen] OF STRING;
+	
+	// INPUTS 
+		// LOAD
+			Load_IN_P	 			: REAL;
+			Load_IN_Q				: REAL;
+		// BESS
+			Bess_IN_MesS			: REAL;
+			Bess_IN_MesP			: REAL;
+			Bess_IN_MesQ			: REAL;
+			Bess_IN_MesSoC			: REAL;
+			Bess_IN_MesPmax			: REAL;
+			Bess_IN_MesPmin			: REAL;
+			Bess_IN_MesQmax			: REAL;
+			Bess_IN_MesQmin			: REAL;
+		// GEN
+			Gen_IN_Mode				: WORD;
+			Gen_IN_Prio				: UINT;
+			Gen_IN_RunHour			: REAL;
+			Gen_IN_P				: REAL;
+			Gen_IN_Q				: REAL;
+		// REN	
+			Ren_IN_MesP				: REAL;
+			Ren_IN_MesQ				: REAL;
+			Ren_IN_Prio				: UINT;
+
+	// OUTPUTS 	
+		// BESS
+			Bess_OUT_SetptP			: REAL;
+			Bess_OUT_SetptQ			: REAL;
+		// GEN	
+			Gen_OUT_setptP			: REAL;
+			Gen_OUT_setptQ			: REAL;
+		// REN
+			Ren_Out_SetptP			: REAL;
+	
+	KK: UINT;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[TRIG_ChangeBess(CLK := bChangeBess);
+TRIG_ChangeGen(CLK := bChangeGen);
+TRIG_ChangeLoad(CLK := bChangeLoad);
+TRIG_ChangeRen(CLK := bChangeRen);
+]]></ST>
+    </Implementation>
+    <LineIds Name="ParamEMS">
+      <LineId Id="322" Count="0" />
+      <LineId Id="327" Count="2" />
+      <LineId Id="210" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

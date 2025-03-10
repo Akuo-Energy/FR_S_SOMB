@@ -1,0 +1,40 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="PPC" Id="{d91ee4d3-aa0e-4b20-b5e9-31f2d9065ee2}">
+    <Declaration><![CDATA[///////////
+// Structure For Inverter. Main Operating Data to be saved ( ex: OPC ) .  
+//////////
+TYPE PPC :
+STRUCT
+	
+		// INV Measures
+		
+		MesAlarmCom					: BOOL; 		(* (NA) PPC  Communication fault*)
+		
+
+		
+		MesSetptP			: REAL;
+		MesSetptQ			: REAL;		
+		MesP				: REAL;
+		MesQ				: REAL;
+
+		MesNbInvAvail		: REAL;
+
+
+		
+		MesWatchdog			: REAl;
+		CalState			: BYTE;
+		
+		MesCP_Read			: BOOL := TRUE;	(* (NA) Cal : Permanent Condition for Read			  *)
+		MesCP_Write			: BOOL := FALSE;(* (NA) Cal : Permanenent Condition for Write	  	  *)
+		   
+		MesAlarmCode		: WORD ;    (* (NA) Internal Akuo AlarmCode*)
+		MesWarningCode		: WORD ;    (* (NA) Internal Akuo WarningCode*)
+		MesEventCode		: WORD ;    (* (NA) Internal Akuo EventCode*)
+		
+END_STRUCT
+END_TYPE
+
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

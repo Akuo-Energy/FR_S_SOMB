@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="ST_Journal" Id="{666f9b04-d841-4df6-963b-8f98f1e7f779}">
+    <Declaration><![CDATA[TYPE ST_Journal :
+STRUCT
+	Message			: STRING(150); //Message texte à envoyer aux utilisateurs
+	Groupe			: (Sans_Operation,Avec_Operation_Act,Avec_Operation_Act_Des):=1; // 0:sans action,1:Envois sms sur acttivation,2:Envois sms sur activation et desactivation
+	Ax_ParamB		: ARRAY [1..4] OF POINTER TO BOOL; //Tableau boolean permettant d'envoyer un message dynamique.
+	Ax_ParamI		: ARRAY [1..4] OF POINTER TO SINT; //Tableau Sint permettant d'envoyer un message dynamique.
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,66 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_MessageDynamique" Id="{f24eb1fd-bfef-4258-b79c-c2325ca429f8}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_MessageDynamique
+// Allows to create dynamic messages in order to add variable to a string
+VAR_INPUT
+	
+	InMessage	: ST_ValuesAlarms;
+	InNbparam	: SINT;
+END_VAR
+VAR_OUTPUT
+	OutMessage	: STRING(150);
+END_VAR
+VAR
+	Valeur  	: STRING(10); // Nom de la balise a tester
+	P	    	: INT;		 // Pos de la balise dans une chaine de caractere 
+	i,j			: SINT;		// Compteur incrémental
+	Temp		: String(150);
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[Temp:=InMessage.Message;
+FOR i:=1 TO InNbparam DO
+	IF InMessage.Ax_ParamB[i]<>0 THEN
+		Valeur := BOOL_TO_STRING(InMessage.Ax_ParamB[i]^);
+		P      := FIND(Temp,concat('<Balise_B',INT_TO_STRING(i)));
+		IF P >0 THEN
+			Temp:=Replace(Temp,Valeur,10,P);
+		ELSE
+			EXIT;
+		END_IF
+	END_IF
+END_FOR
+
+FOR j:=1 TO InNbparam DO
+	IF InMessage.Ax_ParamI[j]<>0 THEN
+		Valeur := SINT_TO_STRING(InMessage.Ax_ParamI[j]^);
+		P      := FIND(temp,concat('<Balise_I',INT_TO_STRING(j)));
+		IF P >0 THEN
+			Temp:=Replace(temp,Valeur,10,P);
+		ELSE
+			EXIT;
+		END_IF
+	END_IF
+END_FOR
+OutMessage:=Temp;]]></ST>
+    </Implementation>
+    <LineIds Name="FB_MessageDynamique">
+      <LineId Id="87" Count="0" />
+      <LineId Id="19" Count="5" />
+      <LineId Id="45" Count="0" />
+      <LineId Id="49" Count="0" />
+      <LineId Id="25" Count="0" />
+      <LineId Id="67" Count="0" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="44" Count="0" />
+      <LineId Id="36" Count="5" />
+      <LineId Id="47" Count="0" />
+      <LineId Id="50" Count="0" />
+      <LineId Id="42" Count="0" />
+      <LineId Id="69" Count="0" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="88" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

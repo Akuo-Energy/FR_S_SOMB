@@ -1,0 +1,271 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_ReadSMS" Id="{f0bb7319-c0a9-407f-bd3a-ec8a46ac9c4a}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_ReadSMS
+
+VAR_INPUT PERSISTENT 
+	ParamTimeoutReadSMS		: TIME := T#3S ; // Tiemout pour lire les sms.  Attention , ce parametre est très important . Si pas assez grand, risque de données tronquées. 
+	
+	
+	
+END_VAR
+
+VAR_INPUT
+	bStart					: BOOL;
+	nIndex					: USINT;
+	
+END_VAR
+VAR_OUTPUT
+	sMessageText			: STRING(240);
+	bBusy					: BOOL;
+	bError					: BOOL;
+	nErrorID				: UINT;
+	
+END_VAR
+
+VAR_IN_OUT
+	stTxBuffer				: ComBuffer;
+	stRxBuffer				: ComBuffer;
+END_VAR
+
+VAR
+	rtrigStart				: R_TRIG;
+
+	fbSendData				: SendData;
+	fbReceiveData			: ReceiveData;
+	fbClearComBuffer		: ClearComBuffer;
+
+	i,iSavedIndex			: INT;
+	uiAnalyzeAnswer			: UINT;
+	nStep					: UINT; (* sequence state *)
+	tonWaitTime				: TON;
+	tonTimeOut				: TON;
+	tTimeout				: TIME:=T#30S;
+
+
+	arAnswerOK				: ARRAY[1..2] OF BYTE:=[16#4F,16#4B];
+	arAnswerErr				: ARRAY[1..5] OF BYTE:=[16#45,16#52,16#52,16#4F,16#52];
+
+	sReadSMS				: STRING(15);			(*Command-String*)
+	arReadSMS				: ARRAY[1..15] OF BYTE; (*Command-ARRAY*)
+	arReadSMSAnswerRcv		: ARRAY[1..300] OF BYTE;(*Received answer of the command*)
+	arReadSMSAnswerClr		: ARRAY[1..300] OF BYTE;(*Empty-ARRAY to clear the answer for debugging*)
+END_VAR
+
+
+
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+	rtrigStart(CLK:=bStart);
+
+	tonTimeout();
+	IF (tonTimeout.Q) THEN
+		tonTimeout(IN := FALSE);
+		nStep := 900;
+	END_IF
+
+
+	CASE nStep OF
+
+	0: 	(*Idle Step*);
+		MEMSET(ADR(sMessageText),0,SIZEOF(sMessageText));
+		tonTimeout(IN:=FALSE);
+		IF (rtrigStart.Q AND NOT bBusy) THEN
+			nStep := 5;
+			bBusy := TRUE;
+			
+		ELSE
+			bBusy := FALSE;
+		END_IF
+
+
+	5:
+		bError					:= FALSE;
+		nErrorId				:= 0;
+		tonWaitTime				(IN := FALSE);
+		tonTimeout				(IN := TRUE, PT := tTimeout);
+		fbClearComBuffer		(buffer:=stRxBuffer);
+		fbClearComBuffer		(buffer:=stTxBuffer);
+		sMessageText			:= '';
+		MEMSET(ADR(sMessageText),0,SIZEOF(sMessageText));
+		nStep := 50;
+
+
+	50:(*Create command-Arrays*)
+		(*Read SMS*)
+		sReadSMS:='AT+CMGR="';
+		sReadSMS:=CONCAT(sReadSMS,USINT_TO_STRING(nIndex));
+		sReadSMS:=CONCAT(sReadSMS,'"X');	(*The "X" is a placeholder in the send-string
+											for the "CR" (Hex 0D) in the send-Array*)
+		MEMCPY(ADR(arReadSMS),ADR(sReadSMS),LEN(sReadSMS)); (*Copy String to ARRAY*)
+		arReadSMS[LEN(sReadSMS)]:=16#0D;	(*Place the "CR" in the array*)
+
+		nStep	:= 100;
+
+
+	100:(*Send read-command*)
+		fbSendData(
+		pSendData:=ADR(arReadSMS),
+		Length:= LEN(sReadSMS),
+		TXbuffer:= stTxBuffer);
+
+		IF NOT fbSendData.Busy THEN
+			nStep:=110;
+		END_IF
+
+		IF  fbSendData.Error<>0 THEN
+			bError:= TRUE;
+			nErrorID:= fbSendData.Error;
+			nStep:=1000;
+		END_IF
+
+
+	110:(*The beginning and the contents of the answer can vary. If the message-slot contains
+		a valid message	it begins with "+CMGR" and ends with "OK". 
+		An answer of an empty slot is only "OK". In case of an error the answer is only "ERROR"
+		So there is no proper prefix to wait fOR *)
+		fbReceiveData(
+		pPrefix:= 0,
+		LenPrefix:= 0,
+		pReceiveData:= ADR(arReadSMSAnswerRcv),
+		SizeReceiveData:= SIZEOF(arReadSMSAnswerRcv),
+		Timeout:= ParamTimeoutReadSMS ,		
+		RXbuffer:= stRxBuffer);
+
+		(*Telegram is received*)
+		IF 			fbReceiveData.DataReceived
+			AND NOT fbReceiveData.busy	THEN
+						nStep:=120;
+		END_IF
+
+
+	120:(* NEW VERSION  : ON recupère la commande si elle est non vide ou non pleine. on analyze les champs ensuite.*)
+
+		(* OLD VERSION  : Find an "OK" or an "ERROR"-Part in the answer
+		Search from the end of the received string to the top and take the first match
+		not to get a SMS-written "ok" or "error"*)
+		uiAnalyzeAnswer	:=0;
+		iSavedIndex		:=0;
+		IF arReadSMSAnswerRcv[SIZEOF(arReadSMSAnswerRcv)]<> 0 THEN		
+			nErrorID := 16#FFFF; // La taille du message dépasse ce que l'on peut récupérer
+		ELSIF arReadSMSAnswerRcv[1]= 0 THEN 
+			nErrorID := 16#800E; // Le message est vide 
+		ELSE
+			
+			FOR i:= UINT_TO_INT(SIZEOF(arReadSMSAnswerRcv)) TO 1 BY -1 DO		// i:= uint_to_int(SIZEOF(arReadSMSAnswerRcv)-5) TO 1 BY -1 DO	
+				IF 		arReadSMSAnswerRcv[i]	<> 0 THEN 	//= arAnswerOK[1] AND arReadSMSAnswerRcv[i+1] 	= arAnswerOK[2]		THEN
+						
+						iSavedIndex:=i;// iSavedIndex:=i-1;
+						
+						IF iSavedIndex > 2 THEN 
+							uiAnalyzeAnswer:=1;		(*Read SMS successfully executed*)
+						ELSE
+							uiAnalyzeAnswer:=0;		(*Read SMS successfully executed*)
+							nErrorID := 16#FFFF; // La taille du message est inférieru à deux word , on ne peut pas le copier dans un string
+						END_IF
+						
+					EXIT;
+	(*
+				ELSIF	arReadSMSAnswerRcv[i]		= arAnswerErr[1]
+					AND arReadSMSAnswerRcv[i+1] 	= arAnswerErr[2]
+					AND arReadSMSAnswerRcv[i+2] 	= arAnswerErr[3]
+					AND arReadSMSAnswerRcv[i+3] 	= arAnswerErr[4]
+					AND arReadSMSAnswerRcv[i+4] 	= arAnswerErr[5]	THEN
+						uiAnalyzeAnswer:=2;		(*Read SMS failed*)
+					EXIT;
+					*)
+				END_IF
+			END_FOR
+			
+		END_IF
+		CASE uiAnalyzeAnswer OF
+			0:(*Undefined Answer*)
+				bError:= TRUE;
+				//nErrorID:= 16#800E;
+				nStep:=1000;
+				//nStep:=1000;
+
+			1:(*Read SMS successfully executed*)
+				nStep:=130;
+
+			2:(*Read SMS failed*)
+				bError:= TRUE;
+				nErrorID:= 16#800D;
+				nStep:=1000;
+		END_CASE
+
+
+	130:(*Copy message-Array to String*)
+		MEMCPY(ADR(sMessageText),(ADR(arReadSMSAnswerRcv)+2),(iSavedIndex)); (*"2" : Do not read the first two digits of the answer. It always begins with "0D,0A"*)
+
+		IF (FIND(sMessageText,'ERROR')>0) THEN 
+			// Il y a une erreru dans la lecture du message. 
+			bError := TRUE ; 
+			nErrorID:= 16#800D;
+			nStep:=1000;
+		ELSE 
+			nStep:=1000;
+		END_IF
+
+
+
+	900:(*Timeout*)
+		bError:= TRUE;
+		nErrorID:= 16#8001;
+		nStep:=1000;
+
+
+	1000:(*Reset Receive-FB*)
+		fbReceiveData(	Reset:=TRUE,RXbuffer:= stRxBuffer);
+		tonWaitTime(IN:=TRUE, PT:=t#500ms);
+		IF	tonWaitTime.Q	THEN
+			fbReceiveData(	Reset:=FALSE,RXbuffer:= stRxBuffer);
+			nStep:=1010;
+		END_IF
+
+
+	1010:(*Send/Receive successful -> Reset FBs*)
+		fbClearComBuffer(buffer:=stRxBuffer);
+		fbClearComBuffer(buffer:=stTxBuffer);
+		arReadSMSAnswerRcv	:= arReadSMSAnswerClr;
+		nStep:=0;
+		bBusy:=FALSE;
+
+	END_CASE;
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_ReadSMS">
+      <LineId Id="383" Count="84" />
+      <LineId Id="632" Count="0" />
+      <LineId Id="631" Count="0" />
+      <LineId Id="468" Count="5" />
+      <LineId Id="581" Count="1" />
+      <LineId Id="474" Count="0" />
+      <LineId Id="583" Count="0" />
+      <LineId Id="475" Count="1" />
+      <LineId Id="478" Count="1" />
+      <LineId Id="646" Count="1" />
+      <LineId Id="649" Count="0" />
+      <LineId Id="651" Count="2" />
+      <LineId Id="650" Count="0" />
+      <LineId Id="648" Count="0" />
+      <LineId Id="480" Count="8" />
+      <LineId Id="630" Count="0" />
+      <LineId Id="489" Count="1" />
+      <LineId Id="584" Count="0" />
+      <LineId Id="491" Count="4" />
+      <LineId Id="580" Count="0" />
+      <LineId Id="496" Count="13" />
+      <LineId Id="635" Count="0" />
+      <LineId Id="639" Count="2" />
+      <LineId Id="636" Count="0" />
+      <LineId Id="644" Count="0" />
+      <LineId Id="642" Count="1" />
+      <LineId Id="637" Count="1" />
+      <LineId Id="510" Count="24" />
+      <LineId Id="285" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

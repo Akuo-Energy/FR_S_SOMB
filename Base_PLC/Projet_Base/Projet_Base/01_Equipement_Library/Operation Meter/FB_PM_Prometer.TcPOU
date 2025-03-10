@@ -1,0 +1,510 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_PM_Prometer" Id="{076268ee-19a2-4cd4-9dfd-635d5d454f66}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_PM_Prometer EXTENDS FB_PM_Base
+//////////////////
+// Measurement Solution based on Digiware, but access through PMS Socomec
+//////////////////
+VAR CONSTANT
+	// Characteristics of the object (Same for all instances)
+			
+END_VAR
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance specific) 
+	ParamUnitID					: BYTE 		:= 1 ;								// (NA)unit ID
+	ParamInInterfaceSub			: BOOL 		:= TRUE; 							// Serial interface RS422/RS485 TYPE (0:EL6021,1:SUB9)
+	ParamIPAddress		   		: STRING 	:= '192.168.20.15'; 				// (NA) IP Adress of ION7650 .
+	ParamTcpPort				: UINT 		:= 502;					
+	
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	
+END_VAR
+
+
+VAR_INPUT 
+			MesDataExd AT %Q*				: PM_Prometer ;	
+END_VAR
+
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//
+	                                                    								
+                                  								
+
+	//M_READ VARIABLES//
+		ModbusRead					: ARRAY[1..4] OF FB_ModbusRead ; 		// (NA) FB for Modbus Reading
+		ModbusAlarm					: ARRAY[1..4] OF BOOL;					// (NA) Read alarm
+		ModbusAlarmsID				: ARRAY[1..4] OF UDINT;					// (NA) Read alarm ID
+		MesBlock1_Temp 				: ARRAY[1..4] OF ARRAY[1..125] OF WORD;	// (NA) Temporary Block with multiple modbus reading (U30 + I35)
+	
+		ObjectCom					: INT;									// (NA) Sequence index
+		MesModbusAlarmCode			: UDINT;								// (NA) Modbus Read Alarm Code	
+		Busy						: BOOL;
+		Error						: BOOL;
+		
+		
+	//M_INIT VARIABLES //
+		OutFBCompleteted			: BOOL;
+	// M_EXECUTE VARIABLES //
+
+                              
+
+ 
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{10cb6dd6-f689-4079-9dd3-3d5f27605c20}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Digiware measurement tool alarm and warning management
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager			: FB_AlarmCodeManager ; 
+	
+	KK							: BYTE ;		// For loop
+	
+	CMWarning					: BOOL;			// At least one Digiware device in Alarm
+	CMAlarm						: BOOL;			// At least one Digiware device in Alarm
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[CMAlarm := ModbusAlarm[1] AND ModbusAlarm[2];
+CMWarning := ModbusAlarm[1] OR ModbusAlarm[2];
+	
+TON_ComAlarm(IN:= CMAlarm, PT:= ParamTempoComAlarm, Q=>MesComAlarm) ;	
+TON_ComWarning(IN:= CMWarning, PT:= ParamTempoComAlarm, Q=>MesComWarning) ;	
+//					General com alarm : All the read FB fucked up
+
+
+// ALARM CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= MesComAlarm  , 					// Communication Error with D50 (= all modules) 
+		bAlarm2			:= MesComWarning, 		// 
+		bAlarm3			:=FALSE, 		// 
+		bAlarm4			:=FALSE, 		// 
+		bAlarm5			:=FALSE, 
+		bAlarm6			:=FALSE, 
+		bAlarm7			:=FALSE, 
+		bAlarm8			:=FALSE, 
+		bAlarm9			:=FALSE, 
+		bAlarm10		:=FALSE, 
+		bAlarm11		:=FALSE, 
+		bAlarm12		:=FALSE, 
+		bAlarm13		:=FALSE, 
+		bAlarm14		:=FALSE, 
+		bAlarm15		:= FALSE , 			// Command Alarm in case of intervention 							 
+		wAlarmCode		=> MesAlarmCode);
+
+
+
+// EVENT CODE //
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_CP" Id="{0d1f46d0-f9d6-43bd-901c-14f63dfe4666}">
+      <Declaration><![CDATA[METHOD M_CP
+//////////////////
+//  Emulator
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+SUPER^.M_CP() ; 
+
+
+
+
+Trig_Cmd_Read(CLK:=IN_CmdToggleRead);
+	
+IF Trig_Cmd_Read.Q THEN
+	IN_CmdToggleRead := FALSE;
+	MesDataExd.MesData.MesCP_Read := NOT MesDataExd.MesData.MesCP_Read;
+END_IF
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Evaluate" Id="{9029a536-dd25-4d55-a939-a0b1be56611f}">
+      <Declaration><![CDATA[METHOD M_Evaluate : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[MesDataF11.MesAlarmCode 	:= MesAlarmCode;
+MesDataF15.MesAlarmCode 	:= MesAlarmCode;
+MesDataF21.MesAlarmCode 	:= MesAlarmCode;
+MesDataF22.MesAlarmCode 	:= MesAlarmCode;
+MesDataT1.MesAlarmCode  	:= MesAlarmCode;
+MesDataT2.MesAlarmCode  	:= MesAlarmCode;
+MesDataF11.MesWarningCode 	:= MesWarningCode;
+MesDataF15.MesWarningCode 	:= MesWarningCode;
+MesDataF21.MesWarningCode 	:= MesWarningCode;
+MesDataF22.MesWarningCode 	:= MesWarningCode;
+MesDataT1.MesWarningCode  	:= MesWarningCode;
+MesDataT2.MesWarningCode  	:= MesWarningCode;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{6f9e30bc-f349-439a-b1f8-5b2bd1971c18}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	// EMULATOR
+		Psoltot		: REAL;		// Total Solar Power . 
+		KK			: BYTE;		// For Loop
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// READING AND WRITING CLOCK //
+	TP1(IN:=NOT TP1.Q , PT:= ParamClockReadTime);
+	ClockRead 		:= TP1.Q;
+
+// PERMANENT CONDITIONS //
+	CalCP_Read 					:= TRUE  ; 
+	
+// METHODS CALLS //
+	IF bInit THEN
+		M_Init() ; 
+		bInit					:= FALSE ; 
+		
+	END_IF
+
+	M_Read() ; 
+	M_Evaluate();
+// EMULATOR COM READ  /////////////
+	
+	
+	////////////////////
+	M_AlarmManagement(); 
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Read" Id="{0488027e-1b7b-4e8f-933c-146936055628}">
+      <Declaration><![CDATA[METHOD M_Read
+//////////////////
+//  Read Modbus Variable for PCS . 
+/////////////////
+VAR 
+	MW 					: FB_MergeWordsToFloat; 
+	KK					: BYTE;  						// FOR Loop 
+
+	AX_Adr				: ARRAY[1..4] OF WORD 		:= [1100,	1200	,250	,260];
+	AX_Qty				: ARRAY[1..4] OF WORD		:= [100,	88		,6		,6	];
+	AX_UnitID			: ARRAY[1..4] OF BYTE 		:= [1,		1		,1		,1	];
+
+	
+	
+	mesH: REAL;
+END_VAR
+
+
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+// MODBUS REQUEST TCP-IP //
+	 
+	ModbusRead[1]
+	(
+		nTcpPort := ParamTcpPort,
+		pDestAddr := ADR(MesBlock1_Temp[1]),
+		cbLength := SIZEOF(MesBlock1_Temp[1]),
+		sIPAddr := ParamIPAddress,
+		tTimeout := ParamTimeout,
+		nQuantity := AX_Qty[1],
+		nMBAddr := AX_Adr[1],
+		nUnitID := AX_UnitID[1],
+		ClockRead := ClockRead,
+		ErrorId => ModbusAlarmsID[1],
+		ModbusReadAlarm => ModbusAlarm[1]
+	);
+	
+	ModbusRead[2]
+	(
+		nTcpPort := ParamTcpPort,
+		pDestAddr := ADR(MesBlock1_Temp[2]),
+		cbLength := SIZEOF(MesBlock1_Temp[2]),
+		sIPAddr := ParamIPAddress,
+		tTimeout := ParamTimeout,
+		nQuantity := AX_Qty[2],
+		nMBAddr := AX_Adr[2],
+		nUnitID := AX_UnitID[2],
+		ClockRead := ClockRead,
+		ErrorId => ModbusAlarmsID[2],
+		ModbusReadAlarm => ModbusAlarm[2]
+	);
+	
+	
+	ModbusRead[3]
+	(
+		nTcpPort := ParamTcpPort,
+		pDestAddr := ADR(MesBlock1_Temp[3]),
+		cbLength := SIZEOF(MesBlock1_Temp[3]),
+		sIPAddr := ParamIPAddress,
+		tTimeout := ParamTimeout,
+		nQuantity := AX_Qty[3],
+		nMBAddr := AX_Adr[3],
+		nUnitID := AX_UnitID[3],
+		ClockRead := ClockRead,
+		ErrorId => ModbusAlarmsID[3],
+		ModbusReadAlarm => ModbusAlarm[3]
+	);				
+	ModbusRead[4]
+	(
+		nTcpPort := ParamTcpPort,
+		pDestAddr := ADR(MesBlock1_Temp[4]),
+		cbLength := SIZEOF(MesBlock1_Temp[4]),
+		sIPAddr := ParamIPAddress,
+		tTimeout := ParamTimeout,
+		nQuantity := AX_Qty[4],
+		nMBAddr := AX_Adr[4],
+		nUnitID := AX_UnitID[4],
+		ClockRead := ClockRead,
+		ErrorId => ModbusAlarmsID[4],
+		ModbusReadAlarm => ModbusAlarm[4]
+	);	
+	// Block 1
+	MW(WORD_STRONG := MesBlock1_Temp[1][  2], WORD_WEAK := MesBlock1_Temp[1][  1], VAR_OUT := MesDataExd.T1.MesI1);	
+					
+	MW(WORD_STRONG := MesBlock1_Temp[1][  4], WORD_WEAK := MesBlock1_Temp[1][  3], VAR_OUT := MesDataExd.T1.MesI2);                       
+	MW(WORD_STRONG := MesBlock1_Temp[1][  6], WORD_WEAK := MesBlock1_Temp[1][  5], VAR_OUT := MesDataExd.T1.MesI3);                       
+	MW(WORD_STRONG := MesBlock1_Temp[1][  8], WORD_WEAK := MesBlock1_Temp[1][  7], VAR_OUT := MesDataExd.T1.MesU12);                      
+	MW(WORD_STRONG := MesBlock1_Temp[1][ 10], WORD_WEAK := MesBlock1_Temp[1][  9], VAR_OUT := MesDataExd.T1.MesU23);                      
+	MW(WORD_STRONG := MesBlock1_Temp[1][ 12], WORD_WEAK := MesBlock1_Temp[1][ 11], VAR_OUT := MesDataExd.T1.MesU31);                      
+	MW(WORD_STRONG := MesBlock1_Temp[1][ 14], WORD_WEAK := MesBlock1_Temp[1][ 13], VAR_OUT := MesDataExd.T2.MesI1);                       
+	MW(WORD_STRONG := MesBlock1_Temp[1][ 16], WORD_WEAK := MesBlock1_Temp[1][ 15], VAR_OUT := MesDataExd.T2.MesI2);                       
+	MW(WORD_STRONG := MesBlock1_Temp[1][ 18], WORD_WEAK := MesBlock1_Temp[1][ 17], VAR_OUT := MesDataExd.T2.MesI3);                       
+	MW(WORD_STRONG := MesBlock1_Temp[1][ 20], WORD_WEAK := MesBlock1_Temp[1][ 19], VAR_OUT := MesDataExd.T2.MesU12);                      
+	MW(WORD_STRONG := MesBlock1_Temp[1][ 22], WORD_WEAK := MesBlock1_Temp[1][ 21], VAR_OUT := MesDataExd.T2.MesU23);                      
+	MW(WORD_STRONG := MesBlock1_Temp[1][ 24], WORD_WEAK := MesBlock1_Temp[1][ 23], VAR_OUT := MesDataExd.T2.MesU31);                      
+	MW(WORD_STRONG := MesBlock1_Temp[1][ 26], WORD_WEAK := MesBlock1_Temp[1][ 25], VAR_OUT := MesDataExd.T2.MesFreq );                             
+	MW(WORD_STRONG := MesBlock1_Temp[1][ 28], WORD_WEAK := MesBlock1_Temp[1][ 27], VAR_OUT := MesDataExd.F11.MesEActProd);                                 
+	MW(WORD_STRONG := MesBlock1_Temp[1][ 30], WORD_WEAK := MesBlock1_Temp[1][ 29], VAR_OUT := MesDataExd.F11.MesEActCons);                                 
+	MW(WORD_STRONG := MesBlock1_Temp[1][ 32], WORD_WEAK := MesBlock1_Temp[1][ 31], VAR_OUT := MesDataExd.F11.MesEReactProd);               
+	MW(WORD_STRONG := MesBlock1_Temp[1][ 34], WORD_WEAK := MesBlock1_Temp[1][ 33], VAR_OUT := MesDataExd.F11.MesEReactCons);                    
+	MW(WORD_STRONG := MesBlock1_Temp[1][ 36], WORD_WEAK := MesBlock1_Temp[1][ 35], VAR_OUT := MesDataExd.F11.MesP);                       
+	MW(WORD_STRONG := MesBlock1_Temp[1][ 38], WORD_WEAK := MesBlock1_Temp[1][ 37], VAR_OUT := MesDataExd.F11.MesQ);                       
+	MW(WORD_STRONG := MesBlock1_Temp[1][ 40], WORD_WEAK := MesBlock1_Temp[1][ 39], VAR_OUT := MesDataExd.F11.MesU12);                     
+	MW(WORD_STRONG := MesBlock1_Temp[1][ 42], WORD_WEAK := MesBlock1_Temp[1][ 41], VAR_OUT := MesDataExd.F11.MesU23);                     
+	MW(WORD_STRONG := MesBlock1_Temp[1][ 44], WORD_WEAK := MesBlock1_Temp[1][ 43], VAR_OUT := MesDataExd.F11.MesU31);                     
+	MW(WORD_STRONG := MesBlock1_Temp[1][ 46], WORD_WEAK := MesBlock1_Temp[1][ 45], VAR_OUT := MesDataExd.F11.MesV1);                      
+	MW(WORD_STRONG := MesBlock1_Temp[1][ 48], WORD_WEAK := MesBlock1_Temp[1][ 47], VAR_OUT := MesDataExd.F11.MesV2);                      
+	MW(WORD_STRONG := MesBlock1_Temp[1][ 50], WORD_WEAK := MesBlock1_Temp[1][ 49], VAR_OUT := MesDataExd.F11.MesV3);                      
+	MW(WORD_STRONG := MesBlock1_Temp[1][ 52], WORD_WEAK := MesBlock1_Temp[1][ 51], VAR_OUT := MesDataExd.F11.MesI1);                      
+	MW(WORD_STRONG := MesBlock1_Temp[1][ 54], WORD_WEAK := MesBlock1_Temp[1][ 53], VAR_OUT := MesDataExd.F11.MesI2);                      
+	MW(WORD_STRONG := MesBlock1_Temp[1][ 56], WORD_WEAK := MesBlock1_Temp[1][ 55], VAR_OUT := MesDataExd.F11.MesI3);                   
+	MW(WORD_STRONG := MesBlock1_Temp[1][ 58], WORD_WEAK := MesBlock1_Temp[1][ 57], VAR_OUT := MesDataExd.F11.MesFreq);                    
+	MW(WORD_STRONG := MesBlock1_Temp[1][ 60], WORD_WEAK := MesBlock1_Temp[1][ 59], VAR_OUT := MesDataExd.F11.MesCosPhi);                
+	MW(WORD_STRONG := MesBlock1_Temp[1][ 62], WORD_WEAK := MesBlock1_Temp[1][ 61], VAR_OUT := MesDataExd.F15.MesP);                 
+	MW(WORD_STRONG := MesBlock1_Temp[1][ 64], WORD_WEAK := MesBlock1_Temp[1][ 63], VAR_OUT := MesDataExd.F15.MesQ);                 
+	MW(WORD_STRONG := MesBlock1_Temp[1][ 66], WORD_WEAK := MesBlock1_Temp[1][ 65],  VAR_OUT :=MesDataExd.F15.MesI1);                     
+	MW(WORD_STRONG := MesBlock1_Temp[1][ 68], WORD_WEAK := MesBlock1_Temp[1][ 67],  VAR_OUT :=MesDataExd.F15.MesI2);                  
+	MW(WORD_STRONG := MesBlock1_Temp[1][ 70], WORD_WEAK := MesBlock1_Temp[1][ 69],  VAR_OUT :=MesDataExd.F15.MesI3);                  
+	MW(WORD_STRONG := MesBlock1_Temp[1][ 72], WORD_WEAK := MesBlock1_Temp[1][ 71],  VAR_OUT :=MesDataExd.F15.MesU12);                 
+	MW(WORD_STRONG := MesBlock1_Temp[1][ 74], WORD_WEAK := MesBlock1_Temp[1][ 73],  VAR_OUT :=MesDataExd.F15.MesU23);          
+	MW(WORD_STRONG := MesBlock1_Temp[1][ 76], WORD_WEAK := MesBlock1_Temp[1][ 75],  VAR_OUT :=MesDataExd.F15.MesU31);    
+	MW(WORD_STRONG := MesBlock1_Temp[1][ 78], WORD_WEAK := MesBlock1_Temp[1][ 77],  VAR_OUT :=MesDataExd.F15.MesV1);       
+	MW(WORD_STRONG := MesBlock1_Temp[1][ 78], WORD_WEAK := MesBlock1_Temp[1][ 79],  VAR_OUT :=MesDataExd.F15.MesV2);       
+	MW(WORD_STRONG := MesBlock1_Temp[1][ 80], WORD_WEAK := MesBlock1_Temp[1][ 81],  VAR_OUT :=MesDataExd.F15.MesV3);                
+	MW(WORD_STRONG := MesBlock1_Temp[1][ 84], WORD_WEAK := MesBlock1_Temp[1][ 85],  VAR_OUT :=MesDataExd.F15.MesFreq);   
+
+                    
+	MW(WORD_STRONG := MesBlock1_Temp[2][ 22], WORD_WEAK := MesBlock1_Temp[2][21], VAR_OUT := MesDataExd.F21.MesEActProd);                      
+	MW(WORD_STRONG := MesBlock1_Temp[2][ 24], WORD_WEAK := MesBlock1_Temp[2][23], VAR_OUT := MesDataExd.F21.MesEActCons);                      
+	MW(WORD_STRONG := MesBlock1_Temp[2][ 26], WORD_WEAK := MesBlock1_Temp[2][25], VAR_OUT := MesDataExd.F21.MesEReactProd);                    
+	MW(WORD_STRONG := MesBlock1_Temp[2][ 28], WORD_WEAK := MesBlock1_Temp[2][27], VAR_OUT := MesDataExd.F21.MesEReactCons);                    
+	MW(WORD_STRONG := MesBlock1_Temp[2][ 30], WORD_WEAK := MesBlock1_Temp[2][29], VAR_OUT := MesDataExd.F21.MesP);                            
+	MW(WORD_STRONG := MesBlock1_Temp[2][ 32], WORD_WEAK := MesBlock1_Temp[2][31], VAR_OUT := MesDataExd.F21.MesQ);                            
+	MW(WORD_STRONG := MesBlock1_Temp[2][ 34], WORD_WEAK := MesBlock1_Temp[2][33], VAR_OUT := MesDataExd.F21.MesU12);                          
+	MW(WORD_STRONG := MesBlock1_Temp[2][ 36], WORD_WEAK := MesBlock1_Temp[2][35], VAR_OUT := MesDataExd.F21.MesU23);                          
+	MW(WORD_STRONG := MesBlock1_Temp[2][ 38], WORD_WEAK := MesBlock1_Temp[2][37], VAR_OUT := MesDataExd.F21.MesU31);                          
+	MW(WORD_STRONG := MesBlock1_Temp[2][ 40], WORD_WEAK := MesBlock1_Temp[2][39], VAR_OUT := MesDataExd.F21.MesV1);                           
+	MW(WORD_STRONG := MesBlock1_Temp[2][ 42], WORD_WEAK := MesBlock1_Temp[2][41], VAR_OUT := MesDataExd.F21.MesV2);                           
+	MW(WORD_STRONG := MesBlock1_Temp[2][ 44], WORD_WEAK := MesBlock1_Temp[2][43], VAR_OUT := MesDataExd.F21.MesV3);                           
+	MW(WORD_STRONG := MesBlock1_Temp[2][ 46], WORD_WEAK := MesBlock1_Temp[2][45], VAR_OUT := MesDataExd.F21.MesI1);                           
+	MW(WORD_STRONG := MesBlock1_Temp[2][ 48], WORD_WEAK := MesBlock1_Temp[2][47], VAR_OUT := MesDataExd.F21.MesI2);                           
+	MW(WORD_STRONG := MesBlock1_Temp[2][ 50], WORD_WEAK := MesBlock1_Temp[2][49], VAR_OUT := MesDataExd.F21.MesI3);                           
+	MW(WORD_STRONG := MesBlock1_Temp[2][ 52], WORD_WEAK := MesBlock1_Temp[2][51], VAR_OUT := MesDataExd.F21.MesFreq);                         
+	MW(WORD_STRONG := MesBlock1_Temp[2][ 54], WORD_WEAK := MesBlock1_Temp[2][53], VAR_OUT := MesDataExd.F21.MesCosPhi);                       
+	MW(WORD_STRONG := MesBlock1_Temp[2][ 56], WORD_WEAK := MesBlock1_Temp[2][55], VAR_OUT := MesDataExd.F22.MesEActProd);                      
+	MW(WORD_STRONG := MesBlock1_Temp[2][ 58], WORD_WEAK := MesBlock1_Temp[2][57], VAR_OUT := MesDataExd.F22.MesEActCons);                      
+	MW(WORD_STRONG := MesBlock1_Temp[2][ 60], WORD_WEAK := MesBlock1_Temp[2][59], VAR_OUT := MesDataExd.F22.MesEReactProd);                    
+	MW(WORD_STRONG := MesBlock1_Temp[2][ 62], WORD_WEAK := MesBlock1_Temp[2][61], VAR_OUT := MesDataExd.F22.MesEReactCons);                    
+	MW(WORD_STRONG := MesBlock1_Temp[2][ 64], WORD_WEAK := MesBlock1_Temp[2][63], VAR_OUT := MesDataExd.F22.MesP);                            
+	MW(WORD_STRONG := MesBlock1_Temp[2][ 66], WORD_WEAK := MesBlock1_Temp[2][65], VAR_OUT := MesDataExd.F22.MesQ);                            
+	MW(WORD_STRONG := MesBlock1_Temp[2][ 68], WORD_WEAK := MesBlock1_Temp[2][67], VAR_OUT := MesDataExd.F22.MesU12);                          
+	MW(WORD_STRONG := MesBlock1_Temp[2][ 70], WORD_WEAK := MesBlock1_Temp[2][69], VAR_OUT := MesDataExd.F22.MesU23);                          
+	MW(WORD_STRONG := MesBlock1_Temp[2][ 72], WORD_WEAK := MesBlock1_Temp[2][71], VAR_OUT := MesDataExd.F22.MesU31);                          
+	MW(WORD_STRONG := MesBlock1_Temp[2][ 74], WORD_WEAK := MesBlock1_Temp[2][73], VAR_OUT := MesDataExd.F22.MesV1);                           
+	MW(WORD_STRONG := MesBlock1_Temp[2][ 76], WORD_WEAK := MesBlock1_Temp[2][75], VAR_OUT := MesDataExd.F22.MesV2);                           
+	MW(WORD_STRONG := MesBlock1_Temp[2][ 78], WORD_WEAK := MesBlock1_Temp[2][77], VAR_OUT := MesDataExd.F22.MesV3);                           
+	MW(WORD_STRONG := MesBlock1_Temp[2][ 80], WORD_WEAK := MesBlock1_Temp[2][79], VAR_OUT := MesDataExd.F22.MesI1);                           
+	MW(WORD_STRONG := MesBlock1_Temp[2][ 82], WORD_WEAK := MesBlock1_Temp[2][81], VAR_OUT := MesDataExd.F22.MesI2);                           
+	MW(WORD_STRONG := MesBlock1_Temp[2][ 84], WORD_WEAK := MesBlock1_Temp[2][83], VAR_OUT := MesDataExd.F22.MesI3);                           
+	MW(WORD_STRONG := MesBlock1_Temp[2][ 86], WORD_WEAK := MesBlock1_Temp[2][85], VAR_OUT := MesDataExd.F22.MesFreq);                         
+	MW(WORD_STRONG := MesBlock1_Temp[2][ 88], WORD_WEAK := MesBlock1_Temp[2][87], VAR_OUT := MesDataExd.F22.MesCosPhi); 
+
+	MW(WORD_WEAK := MesBlock1_Temp[3][ 1], WORD_STRONG := MesBlock1_Temp[3][ 2], VAR_OUT := MesDataExd.T4.MesU12);
+	MW(WORD_WEAK := MesBlock1_Temp[3][ 3], WORD_STRONG := MesBlock1_Temp[3][ 4], VAR_OUT := MesDataExd.T4.MesU23);
+	MW(WORD_WEAK := MesBlock1_Temp[3][ 5], WORD_STRONG := MesBlock1_Temp[3][ 6], VAR_OUT := MesDataExd.T4.MesU31);
+	                                                                              
+	MW(WORD_WEAK := MesBlock1_Temp[4][ 1], WORD_STRONG := MesBlock1_Temp[4][ 2], VAR_OUT := MesDataExd.T5.MesU12);
+	MW(WORD_WEAK := MesBlock1_Temp[4][ 3], WORD_STRONG := MesBlock1_Temp[4][ 4], VAR_OUT := MesDataExd.T5.MesU23);
+	MW(WORD_WEAK := MesBlock1_Temp[4][ 5], WORD_STRONG := MesBlock1_Temp[4][ 6], VAR_OUT := MesDataExd.T5.MesU31);
+	
+MesDataExd.F11.MesU := (MesDataExd.F11.MesU12 + MesDataExd.F11.MesU23 + MesDataExd.F11.MesU31)/3 ;
+MesDataExd.F11.MesI := (MesDataExd.F11.MesI1 + MesDataExd.F11.MesI2 + MesDataExd.F11.MesI3)/3 ;
+MesDataExd.F11.MesV := (MesDataExd.F11.MesV1 + MesDataExd.F11.MesV2 + MesDataExd.F11.MesV3)/3 ;
+
+MesDataExd.F15.MesU := (MesDataExd.F15.MesU12 + MesDataExd.F15.MesU23 + MesDataExd.F15.MesU31)/3 ;
+MesDataExd.F15.MesI := (MesDataExd.F15.MesI1 + 	MesDataExd.F15.MesI2 + 	MesDataExd.F15.MesI3)/3 ;
+MesDataExd.F15.MesV := (MesDataExd.F15.MesV1 + 	MesDataExd.F15.MesV2 + 	MesDataExd.F15.MesV3)/3 ;
+
+MesDataExd.F21.MesU := (MesDataExd.F21.MesU12 + MesDataExd.F21.MesU23 + MesDataExd.F21.MesU31)/3 ;
+MesDataExd.F21.MesI := (MesDataExd.F21.MesI1 + 	MesDataExd.F21.MesI2 + 	MesDataExd.F21.MesI3)/3 ;
+MesDataExd.F21.MesV := (MesDataExd.F21.MesV1 + 	MesDataExd.F21.MesV2 + 	MesDataExd.F21.MesV3)/3 ;
+
+MesDataExd.F22.MesU := (MesDataExd.F22.MesU12 + MesDataExd.F22.MesU23 + MesDataExd.F22.MesU31)/3 ;
+MesDataExd.F22.MesI := (MesDataExd.F22.MesI1 + 	MesDataExd.F22.MesI2 + 	MesDataExd.F22.MesI3)/3 ;
+MesDataExd.F22.MesV := (MesDataExd.F22.MesV1 + 	MesDataExd.F22.MesV2 + 	MesDataExd.F22.MesV3)/3 ;
+
+MesDataExd.T1.MesU := (MesDataExd.T1.MesU12 + 	MesDataExd.T1.MesU23 + 	MesDataExd.T1.MesU31)/3 ;
+MesDataExd.T1.MesI := (MesDataExd.T1.MesI1 + 	MesDataExd.T1.MesI2 + 	MesDataExd.T1.MesI3)/3 ;
+MesDataExd.T1.MesV := (MesDataExd.T1.MesV1 + 	MesDataExd.T1.MesV2 + 	MesDataExd.T1.MesV3)/3 ;
+
+MesDataExd.T2.MesU := (MesDataExd.T2.MesU12 + 	MesDataExd.T2.MesU23 + 	MesDataExd.T2.MesU31)/3 ;
+MesDataExd.T2.MesI := (MesDataExd.T2.MesI1 + 	MesDataExd.T2.MesI2 + 	MesDataExd.T2.MesI3)/3 ;
+MesDataExd.T2.MesV := (MesDataExd.T2.MesV1 + 	MesDataExd.T2.MesV2 + 	MesDataExd.T2.MesV3)/3 ;
+
+MesDataExd.T4.MesU := (MesDataExd.T4.MesU12 + 	MesDataExd.T4.MesU23 + 	MesDataExd.T4.MesU31)/3 ;
+MesDataExd.T5.MesU := (MesDataExd.T5.MesU12 + 	MesDataExd.T5.MesU23 + 	MesDataExd.T5.MesU31)/3 ;
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_PM_Prometer">
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PM_Prometer.M_AlarmManagement">
+      <LineId Id="177" Count="0" />
+      <LineId Id="195" Count="0" />
+      <LineId Id="178" Count="1" />
+      <LineId Id="196" Count="0" />
+      <LineId Id="180" Count="0" />
+      <LineId Id="79" Count="0" />
+      <LineId Id="5" Count="2" />
+      <LineId Id="65" Count="0" />
+      <LineId Id="119" Count="11" />
+      <LineId Id="118" Count="0" />
+      <LineId Id="9" Count="2" />
+      <LineId Id="26" Count="1" />
+      <LineId Id="29" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PM_Prometer.M_CP">
+      <LineId Id="112" Count="13" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PM_Prometer.M_Evaluate">
+      <LineId Id="5" Count="0" />
+      <LineId Id="10" Count="9" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PM_Prometer.M_Execute">
+      <LineId Id="530" Count="1" />
+      <LineId Id="529" Count="0" />
+      <LineId Id="414" Count="0" />
+      <LineId Id="416" Count="0" />
+      <LineId Id="547" Count="0" />
+      <LineId Id="419" Count="0" />
+      <LineId Id="421" Count="2" />
+      <LineId Id="548" Count="0" />
+      <LineId Id="424" Count="5" />
+      <LineId Id="508" Count="1" />
+      <LineId Id="512" Count="1" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PM_Prometer.M_Read">
+      <LineId Id="237" Count="1" />
+      <LineId Id="946" Count="0" />
+      <LineId Id="442" Count="0" />
+      <LineId Id="368" Count="0" />
+      <LineId Id="663" Count="0" />
+      <LineId Id="367" Count="0" />
+      <LineId Id="503" Count="0" />
+      <LineId Id="369" Count="1" />
+      <LineId Id="372" Count="1" />
+      <LineId Id="375" Count="3" />
+      <LineId Id="366" Count="0" />
+      <LineId Id="486" Count="0" />
+      <LineId Id="637" Count="2" />
+      <LineId Id="664" Count="0" />
+      <LineId Id="640" Count="8" />
+      <LineId Id="501" Count="0" />
+      <LineId Id="925" Count="0" />
+      <LineId Id="883" Count="0" />
+      <LineId Id="870" Count="12" />
+      <LineId Id="452" Count="0" />
+      <LineId Id="891" Count="12" />
+      <LineId Id="275" Count="0" />
+      <LineId Id="298" Count="0" />
+      <LineId Id="306" Count="0" />
+      <LineId Id="924" Count="0" />
+      <LineId Id="520" Count="0" />
+      <LineId Id="526" Count="3" />
+      <LineId Id="531" Count="2" />
+      <LineId Id="685" Count="1" />
+      <LineId Id="684" Count="0" />
+      <LineId Id="534" Count="2" />
+      <LineId Id="575" Count="0" />
+      <LineId Id="598" Count="15" />
+      <LineId Id="689" Count="3" />
+      <LineId Id="618" Count="0" />
+      <LineId Id="693" Count="1" />
+      <LineId Id="785" Count="1" />
+      <LineId Id="803" Count="0" />
+      <LineId Id="784" Count="0" />
+      <LineId Id="721" Count="21" />
+      <LineId Id="706" Count="0" />
+      <LineId Id="743" Count="1" />
+      <LineId Id="709" Count="0" />
+      <LineId Id="745" Count="3" />
+      <LineId Id="710" Count="0" />
+      <LineId Id="756" Count="3" />
+      <LineId Id="824" Count="1" />
+      <LineId Id="884" Count="1" />
+      <LineId Id="904" Count="0" />
+      <LineId Id="826" Count="0" />
+      <LineId Id="887" Count="0" />
+      <LineId Id="886" Count="0" />
+      <LineId Id="888" Count="0" />
+      <LineId Id="823" Count="0" />
+      <LineId Id="827" Count="0" />
+      <LineId Id="829" Count="3" />
+      <LineId Id="828" Count="0" />
+      <LineId Id="834" Count="6" />
+      <LineId Id="833" Count="0" />
+      <LineId Id="842" Count="2" />
+      <LineId Id="841" Count="0" />
+      <LineId Id="846" Count="2" />
+      <LineId Id="845" Count="0" />
+      <LineId Id="850" Count="0" />
+      <LineId Id="889" Count="1" />
+      <LineId Id="849" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

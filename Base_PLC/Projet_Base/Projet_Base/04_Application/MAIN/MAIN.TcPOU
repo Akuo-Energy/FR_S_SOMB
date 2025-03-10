@@ -1,0 +1,215 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="MAIN" Id="{eeba2573-cffd-457b-9bbc-bd457f1028eb}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM MAIN
+
+VAR_INPUT PERSISTENT 
+	ParamDisablePLCMaster			: BOOL ;  				(* If true  Force the Redundancy to be on the Slave PLC therefore, no read and write on FB and IO*)
+	ParamForceRun					: BOOL ; 				(* Force the PLC to be in run mode .                                *)
+	ParamInhibateGridLOC			: BOOL:= FALSE ;			(* Do not switch to slave PLC in case of GRID communication fault   *)
+	ParamTest						: BOOL := TRUE ; 		(* If on , do not allow write commands at start up .                *)
+	ParamStableOP					: TIME := T#5S ; 
+END_VAR
+
+VAR_OUTPUT
+	OUT_CalRunningPLC_IO			: BOOL ; 
+END_VAR
+
+VAR
+
+	// REDUNDANCY
+
+		TON_Stable 				: TON ;
+		FB_MasterBackup			: FB_HeartBeatMasterBackup ;  
+ 		PLC_ReadSymInfoByName1  : PLC_ReadSymInfoByName	;
+		
+		CalStableOp_G			: BOOL  ; 
+
+		
+	// DATETIME //	
+		FB_LocalSystTime      	: FB_LOCALSYSTEMTIME;	// Get time function
+		FB_ToGMT : FB_TzSpecificLocalTimeToSystemTime;	// Local to UTC Time function
+		TON_Time				: TON;
+		CalLocalTimeStruct_Temp: TIMESTRUCT;
+		//init
+		FB_GetSystemTime        : GETSYSTEMTIME;						// GEt time function
+		
+		FB_ToLocal 				: FB_FileTimeToTzSpecificLocalTime;		// UTC to local Time function
+		fileTime        		: T_FILETIME;							// Filetime format for UTC Time 
+		FileTimeLocal			: T_FILETIME;							// Filetime format for local time	
+
+		
+	//M_INIT VARIABLE //
+		bInit					: BOOL := TRUE ;						// Initialization variable
+
+	R_TRIG_Run: R_TRIG;
+	F_TRIG_Run: F_TRIG;
+
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// REDUNDANCY 
+	// Heartbit Check
+	// Check for ADS variable name every minute. 
+	PLC_ReadSymInfoByName1(NETid := CstNetAmsId_Slave, Port:=851,Symname:='MAIN.FB_MasterBackup.nCounter', Start:= CalLocalTimeStruct.wSecond=0 OR bInit,TMOUT:= T#5S) ; 
+	FB_MasterBAckup(sNetId:=GVL_CFG.CstNetAmsId_Slave, IdxGroup:=PLC_ReadSymInfoByName1.SYMINFO.idxGroup , IdxOff:=PLC_ReadSymInfoByName1.SYMINFO.idxOffset );
+
+		FB_MasterBAckup.M_Backup() ; 
+		FB_MasterBAckup.M_Master() ; 
+
+// INITIALIZATION//
+	IF bInit OR CmdInit_G THEN
+		M_Init() ; 
+		bInit := FALSE; 
+	END_IF
+	
+//GLOBAL VARIABLE UPDATE //
+// DateTime 
+// Takes some time to query local system time and update the timestamp. 
+
+	TON_Time(IN:= TRUE, PT:=T#1200MS ) ; 
+	FB_LocalSystTime(
+		bEnable := TRUE,
+		dwCycle := 1,
+		systemTime => CalLocalTimeStruct_Temp);
+
+	IF TON_Time.Q THEN 
+		CalLocalTimeStruct:= CalLocalTimeStruct_Temp ; 
+	END_IF
+	
+	FB_ToGMT(
+		in	:= CalLocalTimeStruct,
+		tzInfo := CstTimeZone_G,
+		out	=> CalGMTTimeStruct);
+	
+	sTimeGMT_G	:= SYSTEMTIME_TO_STRING(CalGMTTimeStruct);
+	sTimeLocal_G	:= SYSTEMTIME_TO_STRING(CalLocalTimeStruct);	
+
+////////// 
+// The Master PLC takes cpontrol of the power plant , if it is working and has IEC 104 connection working 
+// The Slave PLC takles control if PLC master is not responding or if PLC master does not have IEC 104 working . 
+////////// 
+
+TON_Stable( IN:= NOT ParamDisablePLCMaster , PT:= ParamStableOP ) ; // Allow time for the master to read slave data after restart
+CalStableOp_G :=  TON_Stable.Q ; 
+
+
+////////////////////// CODE //////////////////////////////////
+
+// INPUTS //
+	PRG_IO.M_Inputs() ;  // Refresh DI and AI 
+//	ModbusTcp();	// Update modbus TCP server 
+
+HMI();
+	
+IF (CstPLCBackup AND (NOT FB_MasterBAckup.bHeartBeat )AND CalStableOp_G) OR (NOT CstPLCBackup AND CalStableOp_G ) OR ParamForceRun  THEN 
+// Allow commands, setpoint and orders . 
+	OUT_CalRunningPLC_IO := TRUE ; 
+// Update redundancy data 
+//	Redundancy.M_GetRedundancyData() ; 
+
+ELSIF FB_MasterBAckup.bHeartBeat THEN 
+	// Inhib Setpoints and order
+	// GET REDUNDANCY DATA FROM DATA 
+//	Redundancy.M_ReadRedundancyData() ; 
+	OUT_CalRunningPLC_IO := FALSE ; 
+ELSE
+	
+	OUT_CalRunningPLC_IO := FALSE ; 
+END_IF 
+
+	A1_PP();
+
+	//PRG_AnnexesFunctions() ; 		// PENSER A DESACTIVER LES ENVOIS DE EMAILS SI REDONDANCE
+	//OPC UA 
+		OpcUa();
+		
+// ANALYSIS
+	//Analysis();
+	
+// IO 
+	PRG_IO() ; 
+
+// OUTPUTS // 
+	PRG_IO.M_Outputs() ;  // Assign DO and AO 
+
+// Database //
+	SavePersistent() ;  
+
+//  Au besoin pour inhiber les commandes digitales et les commandes com . 
+	R_TRIG_Run(CLK:= OUT_CalRunningPLC_IO) ; 
+	F_TRIG_Run(CLK:= OUT_CalRunningPLC_IO) ; 
+
+IF F_TRIG_Run.Q THEN 
+	OpcUA.AllDataWPulse.CmdInhibAllWrite 	:= TRUE ; 	// 
+	OpcUA.AllDataWPulse.CmdInhibAllRead 	:= TRUE ; 	
+
+
+ELSIF R_TRIG_Run.Q   THEN 
+	IF NOT ParamTest THEN 
+		OpcUA.AllDataWPulse.CmdAllowAllWrite	:= TRUE ; 	// Peux ton limiter la réautorization de toutes les ecritures meme si cela avait été forcé à la main auparavant ? 
+	END_IF
+	OpcUA.AllDataWPulse.CmdAllowAllRead 	:= TRUE ; 	
+END_IF]]></ST>
+    </Implementation>
+    <Method Name="M_Init" Id="{2e380c7c-8882-4d24-b4f5-8b52b20fbd47}">
+      <Declaration><![CDATA[METHOD M_Init : BOOL
+VAR_INPUT
+END_VAR
+
+VAR 
+	Year : STRING ; 
+	Month: STRING ; 
+	Day : STRING ; 
+	Hour: STRING ; 
+	Str_Temp: STRING;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//CstCycleTime_G 		:= 50 ;							// Cycle Time
+CstTimeZone_G 		:= WEST_EUROPE_TZI ; 		// Local Time Zone 
+//Redundancy.M_Init();	
+
+
+
+// Get the Windows time ( not accurate ) at startup before updating the system time. 
+	// DateTime 
+	
+	
+	FB_GetSystemTime(
+		timeLoDW	=> fileTime.dwLowDateTime, 
+		timeHiDW	=> fileTime.dwHighDateTime);
+		
+	FB_ToLocal(
+		in			:=fileTime,
+		tzInfo 		:= CstTimeZone_G,
+		out		 	=> FileTimeLocal);
+		
+CalLocalTimeStruct := FILETIME_TO_SYSTEMTIME(FileTimelocal) ; 
+
+
+Year := CONCAT(STR1:= WORD_TO_STRING(CalLocalTimeStruct.wYear), STR2:= '_') ; 
+Month := CONCAT(STR1:= WORD_TO_STRING(CalLocalTimeStruct.wMonth), STR2:= '_') ;
+Day := CONCAT(STR1:=WORD_TO_STRING(CalLocalTimeStruct.wDay), STR2:= ' ') ;
+Hour := CONCAT(STR1:=WORD_TO_STRING(CalLocalTimeStruct.wHour), STR2:= 'h') ;
+
+Str_Temp := Year ; 
+Str_Temp := CONCAT(STR1:=Str_Temp , STR2:= Month )  ; 
+Str_Temp := CONCAT(STR1:=Str_Temp , STR2:= Day )  ; 	
+Str_Temp := CONCAT(STR1:=Str_Temp , STR2:= Hour )  ; 
+
+A1_PP.MesData.MesStartTime 		:= Str_Temp  ; 	// Jour du dernier update de code . 
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="MAIN">
+      <LineId Id="2815" Count="101" />
+      <LineId Id="2030" Count="0" />
+    </LineIds>
+    <LineIds Name="MAIN.M_Init">
+      <LineId Id="160" Count="33" />
+      <LineId Id="10" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

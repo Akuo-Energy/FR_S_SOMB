@@ -1,0 +1,1128 @@
+﻿<div id="Desktop_1" data-tchmi-type="TcHmi.Controls.System.TcHmiView" data-tchmi-left="0" data-tchmi-width-mode="Value" data-tchmi-height-mode="Value" data-tchmi-background-image-height="100" data-tchmi-background-image-width="100" data-tchmi-background-image-height-unit="%" data-tchmi-background-image-width-unit="%" data-tchmi-creator-viewport-width="1680" data-tchmi-zindex="1" data-tchmi-creator-viewport-height="1080" data-tchmi-width-unit="%" data-tchmi-width="100" data-tchmi-height="1197" data-tchmi-height-unit="px" data-tchmi-min-width="2180" data-tchmi-min-height="1080" data-tchmi-left-unit="px" data-tchmi-top-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px" data-tchmi-top="0">
+
+    <div id="RegMain" data-tchmi-type="TcHmi.Controls.System.TcHmiRegion" data-tchmi-height-mode="Parent" 176""0""="" data-tchmi-left-unit="px" data-tchmi-left="14" data-tchmi-target-content="HMI/MainContent/TechnoPays/I_TO.content" data-tchmi-zindex="1" data-tchmi-right-unit="px" data-tchmi-max-height-unit="px" data-tchmi-top="106" data-tchmi-width-mode="Parent" data-tchmi-width-unit="%" data-tchmi-width="100" data-tchmi-right="-14" data-tchmi-min-width="1100" data-tchmi-bottom="-35" data-tchmi-height-unit="%" data-tchmi-height="100" data-tchmi-min-height="8000" data-tchmi-top-unit="px" data-tchmi-bottom-unit="px" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px">
+
+
+        <script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
+            {
+            "color": "None"
+            }
+        </script>
+
+        <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">[
+  {
+    "event": "RegMain.onPressed",
+    "actions": [
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%TcHmiContainer_30::Visibility%/ctrl%",
+        "valueType": "tchmi:framework#/definitions/Visibility",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:framework#/definitions/Visibility",
+          "value": "Collapsed"
+        },
+        "asyncWait": true
+      }
+    ]
+  }
+]</script>
+    </div>
+    <div id="Image_TechnoPays" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="70" data-tchmi-height-unit="px" data-tchmi-left="240" data-tchmi-left-unit="px" data-tchmi-src="Imports/Images/2210-leaf-inside-lightbulb3.png" data-tchmi-top="5" data-tchmi-top-unit="px" data-tchmi-width="70" data-tchmi-width-unit="px" data-tchmi-visibility="Visible" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px" data-tchmi-zindex="15">
+
+
+
+
+        <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">[
+  {
+    "event": "Image_TechnoPays.onMouseClick",
+    "actions": [
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%Image_Centrale::Visibility%/ctrl%",
+        "valueType": "tchmi:framework#/definitions/Visibility",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:framework#/definitions/Visibility",
+          "value": "Hidden"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%Image_PT::Visibility%/ctrl%",
+        "valueType": "tchmi:framework#/definitions/Visibility",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:framework#/definitions/Visibility",
+          "value": "Hidden"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%Image_Onduleur::Visibility%/ctrl%",
+        "valueType": "tchmi:framework#/definitions/Visibility",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:framework#/definitions/Visibility",
+          "value": "Hidden"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%RegMain::TargetContent%/ctrl%",
+        "valueType": "tchmi:framework#/definitions/ContentPath",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:framework#/definitions/ContentPath",
+          "value": "HMI/MainContent/TechnoPays/I_TO.content"
+        },
+        "asyncWait": true
+      }
+    ]
+  },
+  {
+    "event": "Image_TechnoPays.onMouseEnter",
+    "actions": [
+      {
+        "objectType": "Function",
+        "active": true,
+        "fn": "SetCursor",
+        "fnParams": [
+          {
+            "objectType": "StaticValue",
+            "valueType": "tchmi:general#/definitions/String",
+            "value": "Image_TechnoPays"
+          }
+        ],
+        "asyncWait": true
+      }
+    ]
+  }
+]</script>
+    </div>
+    <div id="TextBlock_TechnoPays" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="310" data-tchmi-left-unit="px" data-tchmi-text="Madi - Storage" data-tchmi-top="%f%%ctrl%Image_TechnoPays::Top%/ctrl%+%ctrl%Image_TechnoPays::Height%/ctrl%/2-%ctrl%TextBlock_TechnoPays::Height%/ctrl%/2%/f%" data-tchmi-top-unit="px" data-tchmi-width="136" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-font-size="18" data-tchmi-text-horizontal-alignment="Center" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-font-family="Arial" data-tchmi-visibility="%f%if(%ctrl%Image_TechnoPays::Visibility%/ctrl%=='Visible'){'Visible'}else{'Hidden'}%/f%" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px" cursor:pointer;="" data-tchmi-zindex="16" data-tchmi-text-font-size-unit="px" data-tchmi-text-font-style="Normal" data-tchmi-text-font-weight="Bold" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px">
+
+        <script data-tchmi-target-attribute="data-tchmi-text-color" type="application/json">
+{
+  "color": "rgba(255, 255, 255, 1)"
+}
+</script>
+
+        <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">[
+  {
+    "event": "TextBlock_TechnoPays.onMouseClick",
+    "actions": [
+      {
+        "objectType": "Function",
+        "active": false,
+        "fn": "SetCursor",
+        "fnParams": [
+          {
+            "objectType": "StaticValue",
+            "valueType": "tchmi:general#/definitions/String",
+            "value": "%ctrl%TextBlock_TechnoPays::id%/ctrl%"
+          }
+        ],
+        "asyncWait": true
+      },
+      {
+        "objectType": "Function",
+        "active": true,
+        "fn": "SetCursorTextBlock",
+        "fnParams": [
+          {
+            "objectType": "StaticValue",
+            "valueType": "tchmi:general#/definitions/String",
+            "value": "tchmi-textblock-template tchmi-box"
+          }
+        ],
+        "asyncWait": true
+      }
+    ]
+  }
+]</script>
+    </div>
+    <div id="Container_TechnoPays" data-tchmi-type="TcHmi.Controls.System.TcHmiContainer" data-tchmi-height-unit="px" data-tchmi-left="862" data-tchmi-left-unit="px" data-tchmi-top="%ctrl%TextBlock_TechnoPays::Top%/ctrl%" data-tchmi-top-unit="px" data-tchmi-width="%ctrl%TextBlock_TechnoPays::Width%/ctrl%" data-tchmi-width-unit="px" data-tchmi-zindex="17" data-tchmi-height="%ctrl%TextBlock_TechnoPays::Height%/ctrl%" data-tchmi-visibility="%f%if(%ctrl%Image_TechnoPays::Visibility%/ctrl%=='Visible'){'Visible'}else{'Hidden'}%/f%" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px">
+
+
+        <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">[
+  {
+    "event": "Container_TechnoPays.onMouseEnter",
+    "actions": [
+      {
+        "objectType": "Function",
+        "active": true,
+        "fn": "SetCursor",
+        "fnParams": [
+          {
+            "objectType": "StaticValue",
+            "valueType": "tchmi:general#/definitions/String",
+            "value": "Container_TechnoPays"
+          }
+        ],
+        "asyncWait": true
+      }
+    ]
+  },
+  {
+    "event": "Container_TechnoPays.onMouseClick",
+    "actions": [
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%RegMain::TargetContent%/ctrl%",
+        "valueType": "tchmi:framework#/definitions/ContentPath",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:framework#/definitions/ContentPath",
+          "value": "HMI/MainContent/TechnoPays/I_TO.content"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%Image_Centrale::Visibility%/ctrl%",
+        "valueType": "tchmi:framework#/definitions/Visibility",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:framework#/definitions/Visibility",
+          "value": "Hidden"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%Image_PT::Visibility%/ctrl%",
+        "valueType": "tchmi:framework#/definitions/Visibility",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:framework#/definitions/Visibility",
+          "value": "Hidden"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%Image_Onduleur::Visibility%/ctrl%",
+        "valueType": "tchmi:framework#/definitions/Visibility",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:framework#/definitions/Visibility",
+          "value": "Hidden"
+        },
+        "asyncWait": true
+      }
+    ]
+  }
+]</script>
+
+    </div>
+
+    
+
+    <div id="TcHmiImage_1" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-left="129" data-tchmi-left-unit="px" data-tchmi-top="5" data-tchmi-top-unit="px" data-tchmi-src="Imports/Images/Logo_Akuo_B&W.png" data-tchmi-height="70" data-tchmi-width="70" data-tchmi-width-unit="px" data-tchmi-height-unit="px" data-tchmi-zindex="1" data-tchmi-right-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px" data-tchmi-tooltip="HOME Page">
+
+
+        <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">[
+  {
+    "event": "TcHmiImage_1.onMouseEnter",
+    "actions": [
+      {
+        "objectType": "Function",
+        "active": true,
+        "fn": "SetCursor",
+        "fnParams": [
+          {
+            "objectType": "Symbol",
+            "symbolExpression": "%ctrl%TcHmiImage_1::id%/ctrl%"
+          }
+        ],
+        "asyncWait": true
+      }
+    ]
+  },
+  {
+    "event": "TcHmiImage_1.onMouseClick",
+    "actions": [
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%Image_Centrale::Visibility%/ctrl%",
+        "valueType": "tchmi:framework#/definitions/Visibility",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:framework#/definitions/Visibility",
+          "value": "Hidden"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%Image_PT::Visibility%/ctrl%",
+        "valueType": "tchmi:framework#/definitions/Visibility",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:framework#/definitions/Visibility",
+          "value": "Hidden"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%Image_Onduleur::Visibility%/ctrl%",
+        "valueType": "tchmi:framework#/definitions/Visibility",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:framework#/definitions/Visibility",
+          "value": "Hidden"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%RegMain::TargetContent%/ctrl%",
+        "valueType": "tchmi:framework#/definitions/ContentPath",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:framework#/definitions/ContentPath",
+          "value": "HMI/MainContent/TechnoPays/I_TO.content"
+        },
+        "asyncWait": true
+      }
+    ]
+  }
+]</script>
+    </div>
+
+    <div class="pointer" id="TcHmiImage_2" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="80" data-tchmi-height-unit="px" data-tchmi-src="Imports/Images/logout_active.svg" data-tchmi-top-unit="px" data-tchmi-width="80" data-tchmi-width-unit="px" data-tchmi-zindex="1" data-tchmi-right="1" data-tchmi-right-unit="px" data-tchmi-top="0" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px" data-tchmi-left-unit="px" data-tchmi-tooltip="LogOut">
+
+
+        <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">[
+  {
+    "event": "TcHmiImage_2.onPressed",
+    "actions": [
+      {
+        "objectType": "Function",
+        "active": true,
+        "fn": "Logout",
+        "fnParams": [],
+        "asyncWait": true
+      },
+      {
+        "objectType": "Function",
+        "active": true,
+        "fn": "GoToLoginPage",
+        "fnParams": [],
+        "asyncWait": true
+      }
+    ]
+  }
+]</script>
+    </div>
+
+    <div class="pointer" id="TcHmiImage_4" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="80" data-tchmi-height-unit="px" data-tchmi-src="Imports/Images/warning_active.svg" data-tchmi-width="80" data-tchmi-width-unit="px" data-tchmi-zindex="1" data-tchmi-right-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px" data-tchmi-right="%f%%ctrl%TcHmiImage_2::Width%/ctrl%+%ctrl%TcHmiImage_2::Right%/ctrl%+30%/f%" data-tchmi-top="%f%%ctrl%Image_TechnoPays::Top%/ctrl%+%ctrl%Image_TechnoPays::Height%/ctrl%/2-%ctrl%TcHmiImage_4::Height%/ctrl%/2%/f%" data-tchmi-top-unit="px" data-tchmi-left-unit="px" data-tchmi-tooltip="Alarms">
+
+
+        <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">[
+  {
+    "event": "TcHmiImage_4.onPressed",
+    "actions": [
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%RegMain::TargetContent%/ctrl%",
+        "valueType": "tchmi:framework#/definitions/ContentPath",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:framework#/definitions/ContentPath",
+          "value": "HMI/MainContent/Alarms/Alarms.content"
+        },
+        "asyncWait": true
+      }
+    ]
+  }
+]</script>
+    </div>
+
+    <div id="NavTopPan" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiRectangle" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-zindex="0" data-tchmi-max-height="110" data-tchmi-max-height-unit="px" data-tchmi-right-unit="px" data-tchmi-height="80" data-tchmi-height-unit="px" data-tchmi-width-mode="Parent" data-tchmi-height-mode="Value" data-tchmi-right="0" data-tchmi-width-unit="px">
+
+
+        <script data-tchmi-target-attribute="data-tchmi-border-color" type="application/json">
+            {
+            "color": "None"
+            }
+        </script>
+
+        <script data-tchmi-target-attribute="data-tchmi-stroke-color" type="application/json">
+            {
+            "color": "None"
+            }
+        </script>
+
+        <script data-tchmi-target-attribute="data-tchmi-fill-color" type="application/json">
+            {
+            "color": "rgba(153, 204, 51, 1)"
+            }
+        </script>
+    </div>
+
+    <div id="TcHmiLine_22" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiLine" data-tchmi-height="100" data-tchmi-height-unit="px" data-tchmi-left="101" data-tchmi-left-unit="px" data-tchmi-top="5" data-tchmi-top-unit="px" data-tchmi-width="28" data-tchmi-width-unit="px" data-tchmi-x1="0" data-tchmi-y1="0" data-tchmi-y2="60" data-tchmi-stroke-thickness="2" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px" data-tchmi-right-unit="px">
+
+
+        <script data-tchmi-target-attribute="data-tchmi-stroke-color" type="application/json">
+            {
+            "color": "rgba(255, 255, 255, 1)"
+            }
+        </script>
+    </div>
+
+    <div id="TcHmiImage_8" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="80" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-top="-5" data-tchmi-top-unit="px" data-tchmi-width="80" data-tchmi-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px" data-tchmi-right-unit="px">
+
+
+
+
+        <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">[
+  {
+    "event": "TcHmiImage_8.onMouseEnter",
+    "actions": [
+      {
+        "objectType": "Function",
+        "active": true,
+        "fn": "SetCursor",
+        "fnParams": [
+          {
+            "objectType": "Symbol",
+            "symbolExpression": "%ctrl%TcHmiImage_1::id%/ctrl%"
+          }
+        ],
+        "asyncWait": true
+      }
+    ]
+  }
+]</script>
+    </div>
+
+
+    <script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
+        {
+        "color": "rgba(242, 242, 242, 1)"
+        }
+    </script>
+
+    <div id="Image_Centrale" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="60" data-tchmi-height-unit="px" data-tchmi-left="449" data-tchmi-left-unit="px" data-tchmi-src="Imports/Images/test1.png" data-tchmi-top="%f%%ctrl%Image_TechnoPays::Top%/ctrl%+%ctrl%Image_TechnoPays::Height%/ctrl%/2-%ctrl%Image_Centrale::Height%/ctrl%/2%/f%" data-tchmi-top-unit="px" data-tchmi-width="80" data-tchmi-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px" data-tchmi-visibility="Hidden">
+
+
+        <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">[
+  {
+    "event": "Image_Centrale.onMouseEnter",
+    "actions": [
+      {
+        "objectType": "Function",
+        "active": true,
+        "fn": "SetCursor",
+        "fnParams": [
+          {
+            "objectType": "StaticValue",
+            "valueType": "tchmi:general#/definitions/String",
+            "value": "Image_Centrale"
+          }
+        ],
+        "asyncWait": true
+      }
+    ]
+  },
+  {
+    "event": "Image_Centrale.onMouseClick",
+    "actions": [
+      {
+        "objectType": "WriteToSymbol",
+        "active": false,
+        "symbolExpression": "%ctrl%RegMain::TargetContent%/ctrl%",
+        "valueType": "tchmi:framework#/definitions/ContentPath",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:framework#/definitions/ContentPath",
+          "value": "HMI/MainContent/Centrale/FR_S_KITA.content"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%Image_PT::Visibility%/ctrl%",
+        "valueType": "tchmi:framework#/definitions/Visibility",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:framework#/definitions/Visibility",
+          "value": "Hidden"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%Image_Onduleur::Visibility%/ctrl%",
+        "valueType": "tchmi:framework#/definitions/Visibility",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:framework#/definitions/Visibility",
+          "value": "Hidden"
+        },
+        "asyncWait": true
+      }
+    ]
+  }
+]</script>
+    </div>
+    <div id="TextBlock_Centrale" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="%f%%ctrl%Image_Centrale::Left%/ctrl%+%ctrl%Image_Centrale::Width%/ctrl%+10%/f%" data-tchmi-left-unit="px" data-tchmi-text="Kita" data-tchmi-top="%f%%ctrl%Image_Centrale::Top%/ctrl%+%ctrl%Image_Centrale::Height%/ctrl%/2-%ctrl%TextBlock_Centrale::Height%/ctrl%/2%/f%" data-tchmi-top-unit="px" data-tchmi-width="50" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-font-size="14" data-tchmi-text-horizontal-alignment="Left" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-font-family="Arial" data-tchmi-visibility="%f%if(%ctrl%Image_Centrale::Visibility%/ctrl%=='Visible'){'Visible'}else{'Hidden'}%/f%" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px">
+
+
+        <script data-tchmi-target-attribute="data-tchmi-text-color" type="application/json">
+            {
+            "color": "rgba(255, 255, 255, 1)"
+            }
+        </script>
+
+        <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">[
+  {
+    "event": "TextBlock_Centrale.onMouseEnter",
+    "actions": [
+      {
+        "objectType": "Function",
+        "active": true,
+        "fn": "SetCursor",
+        "fnParams": [
+          {
+            "objectType": "StaticValue",
+            "valueType": "tchmi:general#/definitions/String",
+            "value": "TextBlock_Centrale"
+          }
+        ],
+        "asyncWait": true
+      }
+    ]
+  }
+]</script>
+    </div>
+    <div id="Container_Centrale" data-tchmi-type="TcHmi.Controls.System.TcHmiContainer" data-tchmi-height="%ctrl%TextBlock_Centrale::Height%/ctrl%" data-tchmi-height-unit="px" data-tchmi-left="%ctrl%TextBlock_Centrale::Left%/ctrl%" data-tchmi-left-unit="px" data-tchmi-top="%ctrl%TextBlock_Centrale::Top%/ctrl%" data-tchmi-top-unit="px" data-tchmi-width="%ctrl%TextBlock_Centrale::Width%/ctrl%" data-tchmi-width-unit="px" data-tchmi-zindex="12" data-tchmi-visibility="%f%if(%ctrl%Image_Centrale::Visibility%/ctrl%=='Visible'){'Visible'}else{'Hidden'}%/f%">
+
+
+        <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">[
+  {
+    "event": "Container_Centrale.onMouseEnter",
+    "actions": [
+      {
+        "objectType": "Function",
+        "active": true,
+        "fn": "SetCursor",
+        "fnParams": [
+          {
+            "objectType": "StaticValue",
+            "valueType": "tchmi:general#/definitions/String",
+            "value": "Container_Centrale"
+          }
+        ],
+        "asyncWait": true
+      }
+    ]
+  },
+  {
+    "event": "Container_Centrale.onMouseClick",
+    "actions": [
+      {
+        "objectType": "WriteToSymbol",
+        "active": false,
+        "symbolExpression": "%ctrl%RegMain::TargetContent%/ctrl%",
+        "valueType": "tchmi:framework#/definitions/ContentPath",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:framework#/definitions/ContentPath",
+          "value": "HMI/MainContent/Centrale/FR_S_KITA.content"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%Image_PT::Visibility%/ctrl%",
+        "valueType": "tchmi:framework#/definitions/Visibility",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:framework#/definitions/Visibility",
+          "value": "Hidden"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%Image_Onduleur::Visibility%/ctrl%",
+        "valueType": "tchmi:framework#/definitions/Visibility",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:framework#/definitions/Visibility",
+          "value": "Hidden"
+        },
+        "asyncWait": true
+      }
+    ]
+  }
+]</script>
+
+    </div>
+    <div id="Image_PT" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="75" data-tchmi-height-unit="px" data-tchmi-left="%f%%ctrl%TextBlock_Centrale::Left%/ctrl%+%ctrl%TextBlock_Centrale::Width%/ctrl%+10%/f%" data-tchmi-left-unit="px" data-tchmi-src="Imports/Images/PosteDeTransformation.png" data-tchmi-top="%f%%ctrl%Image_TechnoPays::Top%/ctrl%+%ctrl%Image_TechnoPays::Height%/ctrl%/2-%ctrl%Image_PT::Height%/ctrl%/2%/f%" data-tchmi-top-unit="px" data-tchmi-width="75" data-tchmi-width-unit="px" data-tchmi-visibility="Hidden">
+
+
+        <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">[
+  {
+    "event": "Image_PT.onMouseEnter",
+    "actions": [
+      {
+        "objectType": "Function",
+        "active": true,
+        "fn": "SetCursor",
+        "fnParams": [
+          {
+            "objectType": "StaticValue",
+            "valueType": "tchmi:general#/definitions/String",
+            "value": "Image_PT"
+          }
+        ],
+        "asyncWait": true
+      }
+    ]
+  }
+]</script>
+    </div>
+    <div id="TextBlock_PT" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="%f%%ctrl%Image_PT::Left%/ctrl%+%ctrl%Image_PT::Width%/ctrl%+10%/f%" data-tchmi-left-unit="px" data-tchmi-text="" data-tchmi-top="%f%%ctrl%Image_PT::Top%/ctrl%+%ctrl%Image_PT::Height%/ctrl%/2-%ctrl%TextBlock_PT::Height%/ctrl%/2%/f%" data-tchmi-top-unit="px" data-tchmi-width="75" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-font-size="14" data-tchmi-text-horizontal-alignment="Left" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-font-family="Arial" data-tchmi-visibility="%f%if(%ctrl%Image_PT::Visibility%/ctrl%=='Visible'){'Visible'}else{'Hidden'}%/f%" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px">
+
+
+        <script data-tchmi-target-attribute="data-tchmi-text-color" type="application/json">
+            {
+            "color": "rgba(255, 255, 255, 1)"
+            }
+        </script>
+
+        <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">[
+  {
+    "event": "TextBlock_PT.onMouseEnter",
+    "actions": [
+      {
+        "objectType": "Function",
+        "active": true,
+        "fn": "SetCursor",
+        "fnParams": [
+          {
+            "objectType": "StaticValue",
+            "valueType": "tchmi:general#/definitions/String",
+            "value": "TextBlock_PT"
+          }
+        ],
+        "asyncWait": true
+      }
+    ]
+  }
+]</script>
+    </div>
+    <div id="Container_PT" data-tchmi-type="TcHmi.Controls.System.TcHmiContainer" data-tchmi-height="%ctrl%TextBlock_PT::Height%/ctrl%" data-tchmi-height-unit="px" data-tchmi-left="684" data-tchmi-left-unit="px" data-tchmi-top="%ctrl%TextBlock_PT::Top%/ctrl%" data-tchmi-top-unit="px" data-tchmi-width="%ctrl%TextBlock_PT::Width%/ctrl%" data-tchmi-width-unit="px" data-tchmi-zindex="12" data-tchmi-visibility="%f%if(%ctrl%Image_PT::Visibility%/ctrl%=='Visible'){'Visible'}else{'Hidden'}%/f%" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px">
+
+
+        <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">[
+  {
+    "event": "Container_PT.onMouseEnter",
+    "actions": [
+      {
+        "objectType": "Function",
+        "active": true,
+        "fn": "SetCursor",
+        "fnParams": [
+          {
+            "objectType": "StaticValue",
+            "valueType": "tchmi:general#/definitions/String",
+            "value": "Container_PT"
+          }
+        ],
+        "asyncWait": true
+      }
+    ]
+  }
+]</script>
+
+</div>
+    <div id="Image_Onduleur" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="70" data-tchmi-height-unit="px" data-tchmi-left="%f%%ctrl%TextBlock_PT::Left%/ctrl%+%ctrl%TextBlock_PT::Width%/ctrl%+10%/f%" data-tchmi-left-unit="px" data-tchmi-src="Imports/Images/test2-0-0.png" data-tchmi-top="%f%%ctrl%Image_TechnoPays::Top%/ctrl%+%ctrl%Image_TechnoPays::Height%/ctrl%/2-%ctrl%Image_Onduleur::Height%/ctrl%/2%/f%" data-tchmi-top-unit="px" data-tchmi-width="70" data-tchmi-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px" data-tchmi-zindex="13" data-tchmi-visibility="Hidden">
+
+
+        <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">[
+  {
+    "event": "Image_Onduleur.onMouseEnter",
+    "actions": [
+      {
+        "objectType": "Function",
+        "active": true,
+        "fn": "SetCursor",
+        "fnParams": [
+          {
+            "objectType": "StaticValue",
+            "valueType": "tchmi:general#/definitions/String",
+            "value": "Image_Onduleur"
+          }
+        ],
+        "asyncWait": true
+      }
+    ]
+  }
+]</script>
+    </div>
+    <div id="TextBlock_Onduleur" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="%f%%ctrl%Image_Onduleur::Left%/ctrl%+%ctrl%Image_Onduleur::Width%/ctrl%+10%/f%" data-tchmi-left-unit="px" data-tchmi-text="%f%Concatenate('O', %i%NumInv%/i%)%/f%" data-tchmi-top="%f%%ctrl%Image_Onduleur::Top%/ctrl%+%ctrl%Image_Onduleur::Height%/ctrl%/2-%ctrl%TextBlock_Onduleur::Height%/ctrl%/2%/f%" data-tchmi-top-unit="px" data-tchmi-width="92" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-font-size="14" data-tchmi-text-horizontal-alignment="Left" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-font-family="Arial" data-tchmi-visibility="%f%if(%ctrl%Image_Onduleur::Visibility%/ctrl%=='Visible'){'Visible'}else{'Hidden'}%/f%" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px" data-tchmi-zindex="14">
+
+
+        <script data-tchmi-target-attribute="data-tchmi-text-color" type="application/json">
+            {
+            "color": "rgba(255, 255, 255, 1)"
+            }
+        </script>
+
+        <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">[
+  {
+    "event": "TextBlock_Onduleur.onMouseEnter",
+    "actions": [
+      {
+        "objectType": "Function",
+        "active": true,
+        "fn": "SetCursor",
+        "fnParams": [
+          {
+            "objectType": "StaticValue",
+            "valueType": "tchmi:general#/definitions/String",
+            "value": "TextBlock_Onduleur"
+          }
+        ],
+        "asyncWait": true
+      }
+    ]
+  }
+]</script>
+    </div>
+    <div id="Container_Onduleur" data-tchmi-type="TcHmi.Controls.System.TcHmiContainer" data-tchmi-height="%ctrl%TextBlock_Onduleur::Height%/ctrl%" data-tchmi-height-unit="px" data-tchmi-left="%ctrl%TextBlock_Onduleur::Left%/ctrl%" data-tchmi-left-unit="px" data-tchmi-top="%ctrl%TextBlock_Onduleur::Top%/ctrl%" data-tchmi-top-unit="px" data-tchmi-width="%ctrl%TextBlock_Onduleur::Width%/ctrl%" data-tchmi-width-unit="px" data-tchmi-zindex="12" data-tchmi-visibility="%f%if(%ctrl%Image_Onduleur::Visibility%/ctrl%=='Visible'){'Visible'}else{'Hidden'}%/f%">
+
+
+        <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">[
+  {
+    "event": "Container_Onduleur.onMouseEnter",
+    "actions": [
+      {
+        "objectType": "Function",
+        "active": true,
+        "fn": "SetCursor",
+        "fnParams": [
+          {
+            "objectType": "StaticValue",
+            "valueType": "tchmi:general#/definitions/String",
+            "value": "Container_PT"
+          }
+        ],
+        "asyncWait": true
+      }
+    ]
+  }
+]</script>
+
+    </div>
+
+    <div id="TcHmiImage_13" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="70" data-tchmi-height-unit="px" data-tchmi-left="1008" data-tchmi-left-unit="px" data-tchmi-src="Imports/Images/info_w.png" data-tchmi-top="5" data-tchmi-top-unit="px" data-tchmi-width="70" data-tchmi-width-unit="px" data-tchmi-tooltip="Information" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px">
+
+
+        <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">[
+  {
+    "event": "TcHmiImage_13.onPressed",
+    "actions": [
+      {
+        "objectType": "Condition",
+        "active": true,
+        "asyncWait": true,
+        "parts": [
+          {
+            "if": [
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "symbolExpression": "%ctrl%TcHmiContainer_30::Visibility%/ctrl%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:framework#/definitions/Visibility",
+                  "value": "Visible"
+                },
+                "compareOperator": "==",
+                "logic": null
+              }
+            ],
+            "then": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TcHmiContainer_30::Visibility%/ctrl%",
+                "valueType": "tchmi:framework#/definitions/Visibility",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:framework#/definitions/Visibility",
+                  "value": "Collapsed"
+                },
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "else": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TcHmiContainer_30::Visibility%/ctrl%",
+                "valueType": "tchmi:framework#/definitions/Visibility",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:framework#/definitions/Visibility",
+                  "value": "Visible"
+                },
+                "asyncWait": true
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "event": "TcHmiImage_13.onMouseEnter",
+    "actions": [
+      {
+        "objectType": "Function",
+        "active": true,
+        "fn": "SetCursor",
+        "fnParams": [
+          {
+            "objectType": "Symbol",
+            "symbolExpression": "%ctrl%TcHmiImage_13::id%/ctrl%"
+          }
+        ],
+        "asyncWait": true
+      }
+    ]
+  }
+]</script>
+    </div>
+
+    <div class="pointer" id="TcHmiImage_14" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="60" data-tchmi-height-unit="px" data-tchmi-left="1109" data-tchmi-left-unit="px" data-tchmi-src="Imports/Images/maintenance1.png" data-tchmi-top="%f%%ctrl%Image_TechnoPays::Top%/ctrl%+%ctrl%Image_TechnoPays::Height%/ctrl%/2-%ctrl%Image_Centrale::Height%/ctrl%/2%/f%" data-tchmi-top-unit="px" data-tchmi-width="60" data-tchmi-width-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-tooltip="Settings">
+
+
+        <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">[
+  {
+    "event": "TcHmiImage_14.onMouseClick",
+    "actions": [
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%RegMain::TargetContent%/ctrl%",
+        "valueType": "tchmi:framework#/definitions/ContentPath",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:framework#/definitions/ContentPath",
+          "value": "HMI/MainContent/Parametres/Parametres.content"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%Image_PT::Visibility%/ctrl%",
+        "valueType": "tchmi:framework#/definitions/Visibility",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:framework#/definitions/Visibility",
+          "value": "Hidden"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%Image_Onduleur::Visibility%/ctrl%",
+        "valueType": "tchmi:framework#/definitions/Visibility",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:framework#/definitions/Visibility",
+          "value": "Hidden"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%Image_Centrale::Visibility%/ctrl%",
+        "valueType": "tchmi:framework#/definitions/Visibility",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:framework#/definitions/Visibility",
+          "value": "Hidden"
+        },
+        "asyncWait": true
+      }
+    ]
+  }
+]</script>
+
+        <script data-tchmi-target-attribute="data-tchmi-virtual-control-right-mappings" type="application/json">
+            []
+        </script>
+
+        <script data-tchmi-target-attribute="data-tchmi-access-config" type="application/json">
+            [
+            {
+            "accessright": "operate",
+            "group": "NoLogin",
+            "permission": "Deny"
+            },
+            {
+            "accessright": "observe",
+            "group": "NoLogin",
+            "permission": "Deny"
+            },
+            {
+            "accessright": "operate",
+            "group": "Operator",
+            "permission": "Deny"
+            },
+            {
+            "accessright": "observe",
+            "group": "Operator",
+            "permission": "Deny"
+            }
+            ]
+        </script>
+    </div>
+<div id="TextBlock_TechnoPays_1" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="40" data-tchmi-height-unit="px" data-tchmi-left="1331" data-tchmi-left-unit="px" data-tchmi-text="%f%FormatString('{0|02d}/{1|02d}/{2|4d} {3|02d}:{4|02d}:{5|02d} ', %s%PLC1.GVL_BASE.CalLocalTimeStruct.wDay%/s%, %s%PLC1.GVL_BASE.CalLocalTimeStruct.wMonth%/s%, %s%PLC1.GVL_BASE.CalLocalTimeStruct.wYear%/s%, %s%PLC1.GVL_BASE.CalLocalTimeStruct.wHour%/s%, %s%PLC1.GVL_BASE.CalLocalTimeStruct.wMinute%/s%, %s%PLC1.GVL_BASE.CalLocalTimeStruct.wSecond%/s%)%/f%" data-tchmi-top="19" data-tchmi-top-unit="px" data-tchmi-width="142" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-font-size="20" data-tchmi-text-horizontal-alignment="Center" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-font-family="Arial" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px" data-tchmi-zindex="0" data-tchmi-visibility="Visible" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-text-font-size-unit="px" data-tchmi-text-font-style="Normal" data-tchmi-text-font-weight="Bold">
+
+        <script data-tchmi-target-attribute="data-tchmi-text-color" type="application/json">
+{
+  "color": "rgba(255, 255, 255, 1)"
+}
+</script>
+
+
+    </div>
+
+<div id="TcHmiContainer_30" data-tchmi-type="TcHmi.Controls.System.TcHmiContainer" data-tchmi-height="%f%%ctrl%TcHmiRectangle_14::Height%/ctrl%+%ctrl%TcHmiPolygon::Height%/ctrl%%/f%" data-tchmi-height-unit="px" data-tchmi-left="%f%%ctrl%TcHmiImage_13::Left%/ctrl%+%ctrl%TcHmiImage_13::Width%/ctrl%/2-%ctrl%TcHmiContainer_30::Width%/ctrl%/2%/f%" data-tchmi-left-unit="px" data-tchmi-top="80" data-tchmi-top-unit="px" data-tchmi-width="%ctrl%TcHmiRectangle_14::Width%/ctrl%" data-tchmi-width-unit="px" data-tchmi-zindex="6" data-tchmi-creator-visibility="Visible" data-tchmi-visibility="Collapsed">
+
+        <div id="TcHmiRectangle_14" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiRectangle" data-tchmi-height="220" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-top-unit="px" data-tchmi-width="250" data-tchmi-width-unit="px" data-tchmi-radius-x="10" data-tchmi-radius-y="10" data-tchmi-stroke-thickness="3" data-tchmi-zindex="4" data-tchmi-stroke-thickness-unit="px" data-tchmi-top="%ctrl%TcHmiPolygon::Height%/ctrl%" data-tchmi-visibility="Visible">
+
+
+            <script data-tchmi-target-attribute="data-tchmi-fill-color" type="application/json">
+                {
+                "color": "rgba(153, 204, 51, 1)"
+                }
+            </script>
+
+            <script data-tchmi-target-attribute="data-tchmi-stroke-color" type="application/json">
+                {
+                "color": "rgba(0, 0, 0, 1)"
+                }
+            </script>
+
+            <script data-tchmi-target-attribute="data-tchmi-border-style" type="application/json">
+                {
+                "left": "Dashed",
+                "right": "None",
+                "top": "None",
+                "bottom": "None"
+                }
+            </script>
+        </div>
+
+        <div id="TcHmiPolygon" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiPolygon" data-tchmi-height="30" data-tchmi-height-unit="px" data-tchmi-left="%f%%ctrl%TcHmiRectangle_14::Width%/ctrl%/2-%ctrl%TcHmiPolygon::Width%/ctrl%/2%/f%" data-tchmi-left-unit="px" data-tchmi-points="0,100 50,50 100,100" data-tchmi-scale-mode="ScaleToFill" data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-width="34" data-tchmi-width-unit="px" data-tchmi-zindex="5" data-tchmi-stroke-thickness-unit="px">
+
+
+            <script data-tchmi-target-attribute="data-tchmi-fill-color" type="application/json">
+                {
+                "color": "rgba(0, 0, 0, 1)"
+                }
+            </script>
+        </div>
+
+        <div class="pointer" id="TcHmiImage_16" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="%ctrl%TcHmiImage_16::Width%/ctrl%" data-tchmi-height-unit="px" data-tchmi-left="15" data-tchmi-left-unit="px" data-tchmi-src="Imports/Images/lan-0.png" data-tchmi-top="%f%%ctrl%TcHmiRectangle_14::Top%/ctrl%+5%/f%" data-tchmi-top-unit="px" data-tchmi-width="%f%%ctrl%TcHmiRectangle_14::Width%/ctrl%/2-40%/f%" data-tchmi-width-unit="px" data-tchmi-zindex="7" data-tchmi-tooltip="Infos LAN">
+
+
+            <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
+[
+  {
+    "event": "TcHmiImage_16.onPressed",
+    "actions": [
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%RegMain::TargetContent%/ctrl%",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:framework#/definitions/ContentPath",
+          "value": "HMI/MainContent/Infos/COM/InfosCOM.content"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%TcHmiContainer_30::Visibility%/ctrl%",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:framework#/definitions/Visibility",
+          "value": "Collapsed"
+        },
+        "asyncWait": true
+      }
+    ]
+  }
+]
+</script>
+        </div>
+
+        <div class="pointer" id="TcHmiImage_17" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="%f%%ctrl%TcHmiRectangle_14::Width%/ctrl%/2-30%/f%" data-tchmi-height-unit="px" data-tchmi-left-unit="px" data-tchmi-src="Imports/Images/plc-0.png" data-tchmi-top-unit="px" data-tchmi-width="%f%%ctrl%TcHmiRectangle_14::Width%/ctrl%/2-30%/f%" data-tchmi-width-unit="px" data-tchmi-zindex="8" data-tchmi-right="15" data-tchmi-top="%f%%ctrl%TcHmiRectangle_14::Top%/ctrl%+5%/f%" data-tchmi-tooltip="Infos I/O">
+
+
+            <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">[
+  {
+    "event": "TcHmiImage_17.onMouseClick",
+    "actions": [
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%RegMain::TargetContent%/ctrl%",
+        "valueType": "tchmi:framework#/definitions/ContentPath",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:framework#/definitions/ContentPath",
+          "value": "HMI/MainContent/Infos/IO/InfosIO.content"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%TcHmiContainer_30::Visibility%/ctrl%",
+        "valueType": "tchmi:framework#/definitions/Visibility",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:framework#/definitions/Visibility",
+          "value": "Collapsed"
+        },
+        "asyncWait": true
+      }
+    ]
+  }
+]</script>
+        </div>
+
+        <div class="pointer" id="TcHmiImage_20" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="%f%%ctrl%TcHmiRectangle_14::Width%/ctrl%/2-60%/f%" data-tchmi-height-unit="px" data-tchmi-left-unit="px" data-tchmi-src="Imports/Images/mail.png" data-tchmi-top-unit="px" data-tchmi-width="%f%%ctrl%TcHmiRectangle_14::Width%/ctrl%/2-30%/f%" data-tchmi-width-unit="px" data-tchmi-zindex="10" data-tchmi-right="15" data-tchmi-bottom="25" data-tchmi-tooltip="Infos Messaging">
+
+
+            <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">[
+  {
+    "event": "TcHmiImage_20.onPressed",
+    "actions": [
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%RegMain::TargetContent%/ctrl%",
+        "valueType": "tchmi:framework#/definitions/ContentPath",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:framework#/definitions/ContentPath",
+          "value": "HMI/MainContent/Infos/Messaging/InfosMessaging.content"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%TcHmiContainer_30::Visibility%/ctrl%",
+        "valueType": "tchmi:framework#/definitions/Visibility",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:framework#/definitions/Visibility",
+          "value": "Collapsed"
+        },
+        "asyncWait": true
+      }
+    ]
+  }
+]</script>
+        </div>
+
+        <div class="pointer" id="TcHmiTextblock_13520" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="%f%%ctrl%TcHmiRectangle_14::Width%/ctrl%/2-30%/f%" data-tchmi-height-unit="px" data-tchmi-left="15" data-tchmi-left-unit="px" data-tchmi-text="EMS" data-tchmi-top="145" data-tchmi-top-unit="px" data-tchmi-width="%f%%ctrl%TcHmiRectangle_14::Width%/ctrl%/2-30%/f%" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-zindex="18" data-tchmi-text-horizontal-alignment="Center" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-font-size="40" data-tchmi-text-font-weight="Bold" data-tchmi-text-font-family="Arial">
+
+
+            <script data-tchmi-target-attribute="data-tchmi-text-color" type="application/json">
+                {
+                "color": "rgba(255, 255, 255, 1)"
+                }
+            </script>
+
+
+            
+
+        </div>
+
+
+
+        <div class="pointer" id="TcHmiContainer_121" data-tchmi-type="TcHmi.Controls.System.TcHmiContainer" data-tchmi-height="%f%%ctrl%TcHmiRectangle_14::Width%/ctrl%/2-30%/f%" data-tchmi-height-unit="px" data-tchmi-left="15" data-tchmi-left-unit="px" data-tchmi-top="140" data-tchmi-top-unit="px" data-tchmi-width="%f%%ctrl%TcHmiRectangle_14::Width%/ctrl%/2-30%/f%" data-tchmi-width-unit="px" data-tchmi-zindex="19">
+
+
+            <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">[
+  {
+    "event": "TcHmiContainer_121.onMouseClick",
+    "actions": [
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%RegMain::TargetContent%/ctrl%",
+        "valueType": "tchmi:framework#/definitions/ContentPath",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:framework#/definitions/ContentPath",
+          "value": "HMI/MainContent/Infos/EMS/EMS.content"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%TcHmiContainer_30::Visibility%/ctrl%",
+        "valueType": "tchmi:framework#/definitions/Visibility",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:framework#/definitions/Visibility",
+          "value": "Collapsed"
+        },
+        "asyncWait": true
+      }
+    ]
+  }
+]</script>
+        </div>
+
+
+    </div>
+
+</div>

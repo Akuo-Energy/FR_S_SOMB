@@ -1,0 +1,611 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_GRID_MADI" Id="{f22296f8-19f9-4f97-abb2-ac211933b69f}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_GRID_MADI EXTENDS FB_GRID_Base
+//////////////////
+// Grid Operator interface . Base FB
+//////////////////
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance specific) 
+
+		ParamTONFiltering						: TIME:=T#500MS; 	(* Filtre tempo minimum avant validation de la commande (Filtrage du bruit)	*)
+		ParamTONPulse							: TIME:=T#1S; 		(* Tempo to transform command to impulse .                                  *)
+		{attribute 'OPC.UA.DA' := '1'}                                                                                                       
+		ParamPmaxPark							: REAL;				(* Puissance max du park (Kw)                                               *)
+		{attribute 'OPC.UA.DA' := '1'}                              
+		ParamPminPark							: REAL ; 			(* puissance minimal du park                                                *)
+		{attribute 'OPC.UA.DA' := '1'}                              
+		ParamEmax								: REAL ; 			(* Maximal Contractual Energy .                                             *)
+		                                                            
+		ParamTempoComAlarm			: TIME 		:= T#10S;			(* Time before communication alarm	                                        *)
+		
+		
+		
+		MesDataExd				: GRID_MADI ; 
+END_VAR
+
+
+VAR_INPUT
+	// I/O Inputs 
+		//FROM AKSES
+		IN_CmdAut_Cpl_other				: BOOL;
+		IN_CmdDisconnect_other			: BOOL;	
+		//IN_CmdConnect_other			: BOOL;	
+		IN_CmdSoutirage_other			: BOOL;	
+		IN_CmdInjection_other			: BOOL;			
+		IN_CmdTest_other				: BOOL;	
+		IN_CmdManualMode_other			: BOOL;
+		IN_CmdManualModeOff_other		: BOOL;
+	    IN_CmdToggleRead				: BOOL;	
+		IN_ConnectAuthorizationLost		: BOOL; 
+
+END_VAR 
+VAR_OUTPUT
+	//Child objects 17 OUtput
+END_VAR
+
+
+
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//                                                    								
+		TON_ComAlarm							: TON;
+		RS_ChargingAlarm						: RS;
+	//M_EVALUATE VARIABLES//					
+		//TON                       			
+		TONConnectAuthorization					: TON;
+		TONDisconnectOrder	        			: TON;
+	    TONSoutirage	            			: TON;
+	    TONTest	                				: TON;
+	    TONModeManu				    			: TON;
+		TONModeManuOff							: TON;
+		TOF_ToS									: TOF;
+                                                
+                                                
+		TONConnectAuthorizationPulse			: TON;
+		TONDisconnectOrderPulse               	: TON;
+	    TONModeManuPulse				        : TON;
+		
+		CheckCommand							: ARRAY[1..5] OF  FB_CheckCommand ;
+		TON_CheckCommand						: ARRAY[1..5] OF TON ;
+		
+		OUT_MesEconnected						: REAL;// To be used for HMI only
+		OUT_MesEmaxconnected					: REAL;
+		OUT_MesIECServerFault					: BOOL;		
+		
+		RS_Soutirage_other						: RS;
+		
+	//M_Evaluate
+		SetptP_old								: REAL;
+		ParamPmax_old							: REAL ;
+		ParamPmin_old							: REAL;		
+                                        		
+	// IEC 104                          		
+	 	MesDataIEC								: IEC104_MADI;
+		AODB 									: ARRAY[0..GVL_Cst.CstNbAOEntries] OF ST_IEC870_5_101AODBEntry ;
+		memory 			AT%MB0					: ARRAY[0..79] OF BYTE;
+		FB_IEC									: FB_IEC104ServerAkuo;(* Controlled station function block instance *)
+
+	
+	//M_INIT VARIABLES //
+	//	bInit									: BOOL:= TRUE;	
+		initError								: UDINT;
+		bBoot									: BOOL := TRUE ; // Boolean that indicates a restart of the PLC .
+	// M_EXECUTE VARIABLES //
+        Trig_Cmd_Read							: R_TRIG;                                                                                        
+		
+		   		                    		
+                     
+				
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{6ef4a14e-3579-49fb-9da0-1df819768a4f}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// alarm and warning management
+/////////////////
+
+VAR 
+	FB_AlarmCodeManager			: FB_AlarmCodeManager ; 
+	
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[	TON_ComAlarm	(IN:= NOT( FB_IEC.eDTState =1 ) , PT:= ParamTempoComAlarm, 	Q=> MesDataExd.MesData.MesAlarmCom) ;	
+
+	RS_ChargingAlarm(SET:= MesDataIEC.OUT_MesCharging , RESET1:= MesDataIEC.OUT_MesDischarging ) ; 
+	
+// ALARM CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:=MesDataIEC.IN_SetptP >MesDataIEC.IN_ParamPmax OR MesDataIEC.IN_SetptP < MesDataIEC.IN_ParamPmin, 	// Setpoint received outside of limits 
+		bAlarm2			:=MesDataIEC.IN_Cmddouble.0 = MesDataIEC.IN_Cmddouble.1 , 												// Uncohetent not defined signal 
+		bAlarm3			:=MesDataIEC.IN_Cmddouble.2 = MesDataIEC.IN_Cmddouble.3, 												// Uncoherent Start signal 
+		bAlarm4			:=MesDataIEC.IN_Cmddouble.4 = MesDataIEC.IN_Cmddouble.5, 												// Uncoherent test signal
+		bAlarm5			:=FALSE, 																								//
+		bAlarm6			:=FALSE,                                                                                                //
+		bAlarm7			:=FALSE,                                                                                                //
+		bAlarm8			:=FALSE,                                                                                                //
+		bAlarm9			:=FALSE, 																								//
+		bAlarm10		:=FALSE,                                                                                                //
+		bAlarm11		:=FALSE,                                                                                                //
+		bAlarm12		:=FALSE,                                                                                                //
+		bAlarm13		:=FALSE, 																								//
+		bAlarm14		:=NOT MesDataExd.MesData.MesCP_Read,																				// IEC 104 Disabled.  
+		bAlarm15		:= MesDataExd.MesData.MesAlarmCom, 						 															// Communication alarm with IEC 104 #COM
+		wAlarmCode		=>MesDataExd.MesData.MesAlarmCode);
+
+// WARNING CODE //
+	FB_AlarmCodeManager(		
+		bAlarm1			:=RS_ChargingAlarm.Q1 , 														//Monitoring direction : PP is charging
+		bAlarm2			:=NOT RS_ChargingAlarm.Q1, 														//Monitoring direction : PP is discharging
+		bAlarm3			:= MesDataIEC.OUT_MesEs, 														//Monitoring direction : Emergency stop     
+		bAlarm4			:= MesDataIEC.OUT_MesLocal, 														//Monitoring direction : Local Mode
+		bAlarm5			:= MesDataIEC.OUT_MesModeAuto_on, 												//Monitoring direction : Frequency regulation in progress
+		bAlarm6			:= MesDataIEC.OUT_MesModeManuel_on, 												//Monitoring direction : Manual Mode is active
+		bAlarm7			:= MesDataIEC.OUT_MesToS, 														//Monitoring direction : Techician on site
+		bAlarm8			:= MesDataIEC.MesCentrale_Cpl, 													//Monitoring direction : PP is connected to the grid
+		bAlarm9			:= MesDataIEC.MesCentrale_indispo, 												//Monitoring direction : PP is unavailable
+		bAlarm10		:= MesDataIEC.MesSoutirage_on, 														//Monitoring direction : PP is started
+		bAlarm11		:= MesDataIEC.OUT_MesIECServerFault, 											//Monitoring direction : IEC server fault   
+		bAlarm12		:= MesDataIEC.OUT_MesFaultTeleCmd, 												//Monitoring direction : TC server fault
+		bAlarm13		:= MesDataIEC.OUT_MesFaultTeleSgnl, 												//Monitoring direction : TS server fault             
+		bAlarm14		:= MesDataIEC.OUT_MesFaultTeleMes, 												//Monitoring direction : TM server fault               
+		bAlarm15		:= MesDataIEC.OUT_MesIncident       ,       										//Monitoring direction : Incident       
+		wAlarmCode		=>MesDataExd.MesData.MesWarningCode);		
+
+// EVENT CODE 1//
+
+	FB_AlarmCodeManager(
+		bAlarm1			:= MesDataIEC.IN_CmdAut_Cpl	, 					// Control direction : Coupling autorization request
+		bAlarm2			:=FALSE	, 							            //
+		bAlarm3			:= MesDataIEC.IN_CmdModeManuel	, 	            // Control direction : Manual Mode activation request 
+		bAlarm4			:= MesDataIEC.IN_CmdDisconnect    , 	            // Control direction : PP disconnection request 
+		bAlarm5			:= MesDataIEC.CmdSoutirage    , 	                    // Control direction : PP soutirage request  
+		bAlarm6			:=FALSE, 	                                    //
+		bAlarm7			:=FALSE, 	                                    //
+		bAlarm8			:=FALSE, 	                                    //
+		bAlarm9			:=FALSE   , 	                                //
+		bAlarm10		:=FALSE, 	                                    //
+		bAlarm11		:=FALSE, 	                                    //
+		bAlarm12		:=FALSE   , 	                                //
+		bAlarm13		:=FALSE   , 	                                //
+		bAlarm14		:=FALSE, 	                                    //
+		bAlarm15		:=FALSE, 	                                    //
+		wAlarmCode		=>MesDataExd.MesData.MesEventCode);                             	
+
+	]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_CP" Id="{e64e27e8-655a-459e-8d3f-e4bab856c314}">
+      <Declaration><![CDATA[METHOD M_CP
+VAR 
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+SUPER^.M_CP() ; 
+
+
+
+
+Trig_Cmd_Read(CLK:=IN_CmdToggleRead);
+	
+IF Trig_Cmd_Read.Q THEN
+	IN_CmdToggleRead := FALSE;
+	MesDataExd.MesData.MesCP_Read := NOT MesDataExd.MesData.MesCP_Read;
+END_IF
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Evaluate" Id="{b7f948db-f52f-43fa-ad60-646006b6de5a}">
+      <Declaration><![CDATA[METHOD M_Evaluate
+//////////////////
+//  Read Modbus Variable for PCS . 
+/////////////////
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	KK: INT;
+	CalTos: BOOL;
+	CalEs: BOOL;
+
+	CalComEss: BOOL;
+
+
+
+	
+
+END_VAR
+
+
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[	// Update values to be sent through IEC 104 . 
+
+	//MesDataIEC.MesStart_on := A1_PP.MesDataExd.MesData.MesState.2 ; 		// Ecrit par le protocole comme un acquittement
+	//MesDataIEC.MesComTest_on := ; 								// ecrit par le protocole comme un acquittement .
+	
+MesDataIEC.MesCentrale_Cpl :=  A1_PP.MesData.MesState.2  ;									
+MesDataIEC.MesCentrale_indispo := A1_PP.MesData.MesPP_Unavailable ; // Alarmes feu, arret urgence, mode local , UPS en decharge , Puissance dispo trop faible , 
+MesDataIEC.MesDJOpen  :=  A1_SUBMV.A1_MainMVCB.MesDataExd.MesData.MesOpened; // DJ open
+	
+	
+	
+(*.MesDataIEC.OUT_MesDouble.0 := NOT MesDataIEC.MesStart_on ; 
+.MesDataIEC.OUT_MesDouble.1 := MesDataIEC.MesStart_on ; *)
+(*.MesDataIEC.OUT_MesDouble.2 := MesDataIEC.MesComTest_on ; 
+.MesDataIEC.OUT_MesDouble.3 := NOT MesDataIEC.MesComTest_on ; *) 
+MesDataIEC.OUT_MesDouble.4 := MesDataIEC.MesCentrale_Cpl ; 
+MesDataIEC.OUT_MesDouble.5 := NOT MesDataIEC.MesCentrale_Cpl ;
+MesDataIEC.OUT_MesDouble.6 := MesDataIEC.MesCentrale_indispo ; 
+MesDataIEC.OUT_MesDouble.7 := NOT MesDataIEC.MesCentrale_indispo ;
+
+MesDataIEC.OUT_MesDouble.0 := NOT MesDataIEC.MesDJOpen ; 
+MesDataIEC.OUT_MesDouble.1 := MesDataIEC.MesDJOpen ; 	
+	
+	(*
+	CalEs	:= FALSE ;
+	CalTos	:= FALSE ;
+	CalComEss := FALSE;
+	
+	FOR KK:= 1 TO CstNbEss DO 
+		CalTos := CalTos OR AX_ESS[KK].A1_ToS.MesDataExd.MesData.MesAlarmState OR AX_ESS[KK].A1_DS_Bat.MesDataExd.MesData.MesAlarmState OR AX_ESS[KK].A1_Ds_Pcs.MesDataExd.MesData.MesAlarmState ;
+		CalEs	:= CalEs OR AX_ESS[KK].A1_ES.MesDataExd.MesData.MesAlarmState ;
+		CalComEss := CalComESS OR AX_ESS[KK].AX_Bat[1].MesDataExd.MesData.MesAlarmCom OR AX_ESS[KK].AX_Bat[1].MesDataExd.MesData.MesAlarmCom ;
+	END_FOR
+	
+.MesDataIEC.OUT_MesLocal			:= A1_PP.ParamLocalMode ; 
+.MesDataIEC.OUT_MesModeManuel_on := A1_PP.MesDataExd.MesData.CalManualMode  ;
+.MesDataIEC.OUT_MesModeAuto_on	:= A1_PP.MesDataExd.MesData.CalFreqMode  ;
+.MesDataIEC.OUT_MesCharging		:= A1_PP.MesDataExd.MesData.MesPbat < - A1_SUBMV.A1_PM_Aux.MesDataExd.MesData.MesP - 500 ;   // Charging more than the auxiliaries  ( keep some margin  ). 
+.MesDataIEC.OUT_MesDischarging	:= A1_PP.MesDataExd.MesData.MesPbat > 500 ;
+.MesDataIEC.OUT_MesEs			:= A1_SUBMV.A1_TOR_Es.MesDataExd.MesData.MesAlarmState OR CalEs ; 
+	TOF_ToS(IN:= A1_SUBMV.A1_DS_LV.MesDataExd.MesData.MesAlarmState OR 	A1_SUBMV.A1_TOR_DsHT.MesDataExd.MesData.MesAlarmState OR CalTos , PT:= T#1H , Q =>MesDataIEC.OUT_MesToS	)  ; 	
+.MesDataIEC.OUT_MesIncident		:=  (*A1_PP.MesDataExd.MesData.MesAlarmCode.0 OR*) A1_SUBMV.MesDataExd.MesData.MesAlarmCode.0 ; // Alarm on the PP or SUB_MV . 	
+.MesDataIEC.OUT_MesFaultTeleMes	:= A1_SUBMV. AX_PM[1].MesDataExd.MesData.MesAlarmCom AND A1_SUBMV.AX_PM[2].MesDataExd.MesData.MesAlarmCom OR CalComEss; // Si defaut de com sur un des signaux de la telemesure . 	
+.MesDataIEC.OUT_MesFaultTeleCmd	:= CheckCommand[1].bWarning OR CheckCommand[2].bWarning OR CheckCommand[3].bWarning OR CheckCommand[4].bWarning OR CheckCommand[5].bWarning  ; // Si defaut d	
+	/.MesDataIEC.OUT_MesFaultTeleSgnl	:=   ; // Si defaut d ecriture modbus des setpoint de P . 
+	OUT_MesIECServerFault				:= SEL(CstPLCBackup ,NOT MAIN.OUT_CalRunningPLC_IO  ,MAIN.OUT_CalRunningPLC_IO ) ; // NOT MesDataExd.MesData.MesCP_Read  ; // Define nwhich PA is active ( False  = PA 1  , else PA 2 )  
+.MesDataIEC.OUT_MesIECServerFault	:= OUT_MesIECServerFault ;
+
+
+	OUT_MesEconnected					:= A1_PP.MesDataExd.MesData.OUT_Econnected / 1000 ;	
+.MesDataIEC.OUT_MesEconnected 		:= OUT_MesEconnected ;
+	OUT_MesEmaxconnected 				:= A1_PP.MesDataExd.MesData.OUT_Enomconnected / 1000 ;			// MWh . Capacité maximale connectée ( taking account 12MWh max , and soc security .  
+.MesDataIEC.OUT_MesEmaxconnected 	:= OUT_MesEmaxconnected; 
+	
+.MesDataIEC.OUT_MesP 			:= 	 A1_PP.MesDataExd.MesData.MesPbat /1000 ;		// MW
+.MesDataIEC.OUT_MesQ 			:= 	 A1_PP.MesDataExd.MesData.MesQbat/1000 ;	// MVAr
+.MesDataIEC.OUT_MesU_HTA 		:=	 A1_PP.MesDataExd.MesData.MesU/1000;		// kV
+.MesDataIEC.OUT_MesFreq 			:= 	 A1_SUBMV.MesDataExd.MesData.MesFreq;		// Hz
+.MesDataIEC.OUT_MesPdispo_inj 	:=  A1_PP.MesDataExd.MesData.OUT_SetptPmax  /1000 ; // MW
+.MesDataIEC.OUT_MesPdispo_abs 	:=   A1_PP.MesDataExd.MesData.OUT_SetptPmin /1000 ; // MW 
+*)
+	// TREAT COMMANDS 
+	// FAIRE DES IMPULSIONS SUR LES COMMANDES . 
+
+	// Double point commands. 
+MesDataIEC.CmdSoutirage := MesDataIEC.IN_Cmddouble.3 ;
+MesDataIEC.CmdTest := MesDataIEC.IN_Cmddouble.4 ; 
+	
+	//Filtering Input
+		TONConnectAuthorization	(IN:= MesDataIEC.IN_CmdAut_Cpl,PT:=ParamTONFiltering);
+		TONDisconnectOrder		(IN:= MesDataIEC.IN_CmdDisconnect,PT:=ParamTONFiltering);		
+		TONSoutirage	(IN:= MesDataIEC.CmdSoutirage,PT:=ParamTONFiltering);	
+		TONTest	(IN:= MesDataIEC.CmdTest,PT:=ParamTONFiltering);	
+		TONModeManu			(IN:= MesDataIEC.IN_CmdModeManuel,PT:=ParamTONFiltering);
+		TONModeManuOff			(IN:= MesDataIEC.IN_CmdModeManuelOff,PT:=ParamTONFiltering);			
+
+
+
+	// Impulsions
+		TONConnectAuthorizationPulse	(IN:=TONConnectAuthorization.Q,PT:=ParamTONPulse);
+		TONDisconnectOrderPulse		(IN:=TONDisconnectOrder.Q	,PT:=ParamTONPulse);		
+		TONModeManuPulse		(IN:=TONModeManu.Q,PT:=ParamTONPulse);	
+
+	RS_Soutirage_other(SET:=IN_CmdSoutirage_other , RESET1:=IN_CmdInjection_other (*OR MesDataExd.MesData.OUT_CmdDisconnect*)) ; 
+	
+	(*Autorisation de couplage*)
+	IF TONConnectAuthorization.Q AND NOT A1_PP.ParamLocalMode OR A1_PP.ParamLocalMode AND IN_CmdAut_Cpl_other THEN
+	MesDataExd.MesData.OUT_CmdAutCpl := TRUE ;
+	MesDataExd.MesData.OUT_CmdDisconnect := FALSE ; 
+		IF TONConnectAuthorizationPulse.Q THEN 
+		MesDataIEC.IN_CmdAut_Cpl := FALSE ; // Reinitialize to false the input to get an impulse. 
+		END_IF
+	END_IF
+	IF IN_ConnectAuthorizationLost THEN  //IN_Long_GTE_Fault OR IN_C13_100_Fault OR IN_UnknownFault OR IN_3GTE_Fault  OR CmdDecouplage 
+	MesDataExd.MesData.OUT_CmdAutCpl := FALSE ;
+	END_IF
+	
+	IF TONDisconnectOrder.Q AND NOT A1_PP.ParamLocalMode OR A1_PP.ParamLocalMode AND IN_CmdDisconnect_other THEN 
+	MesDataExd.MesData.OUT_CmdDisconnect := TRUE ; 
+	MesDataExd.MesData.OUT_CmdAutCpl := FALSE ;
+		IF TONDisconnectOrderPulse.Q THEN 
+		MesDataIEC.IN_CmdDisconnect := FALSE ; // Reinitialize to false the input to get an impulse.
+		END_IF
+	END_IF
+	//  MesDataExd.MesData.OUT_CmdAut_Cpl := TONConnectAuthorization.Q OR A1_PP.ParamLocalMode AND IN_CmdAut_Cpl_other ; 	// Impulse // ADD LOCAL ONLY 
+
+	IF 	TONModeManuPulse.Q 	AND NOT A1_PP.ParamLocalMode THEN 
+	MesDataIEC.IN_CmdModeManuel := FALSE ; // Reinitialize to false the input to get an impulse.
+	END_IF
+	
+	//  MesDataExd.MesData.OUT_CmdDisconnect := TONDisconnectOrder.Q 	OR A1_PP.ParamLocalMode AND IN_CmdDisconnect_other		; 
+(*
+MesDataExd.MesData.OUT_CmdModeManuel := TONModeManu.Q 	AND NOT A1_PP.ParamLocalMode		OR A1_PP.ParamLocalMode AND IN_CmdManualMode_other	; 	// Impulse
+MesDataExd.MesData.OUT_CmdModeManuelOff := TONModeManuOff.Q 	AND NOT A1_PP.ParamLocalMode		OR A1_PP.ParamLocalMode AND IN_CmdManualModeOff_other	; 	// Impulse
+MesDataExd.MesData.OUT_CmdSoutirage := (TONSoutirage.Q 		AND NOT A1_PP.ParamLocalMode 		OR  A1_PP.ParamLocalMode AND	RS_Soutirage_other.Q1) AND NOT MesDataExd.MesData.OUT_CmdDisconnect ;	// True / False . 
+MesDataExd.MesData.OUT_CmdTest := TONTest.Q 		AND NOT A1_PP.ParamLocalMode			OR A1_PP.ParamLocalMode AND IN_CmdTest_other		; 
+	*)
+	// Write value only on change . 
+	IF MesDataIEC.IN_SetptP <> SetptP_old THEN 
+	MesDataExd.MesData.OUT_SetptP 				:= MesDataIEC.IN_SetptP *1000  ;  
+		SetptP_old := MesDataIEC.IN_SetptP ; 
+	END_IF
+
+(*	IF MesDataIEC.IN_ParamPmax <> ParamPmax_old THEN 
+	MesDataExd.MesData.OUT_ParamPmax			:=	MIN(MesDataIEC.IN_ParamPmax*1000 , ParamPmaxPark)  ;  
+		ParamPmax_old := MesDataIEC.IN_ParamPmax   ; 
+	END_IF	
+	IF MesDataIEC.IN_ParamPmin <> ParamPmin_old THEN 
+	MesDataExd.MesData.OUT_ParamPmin				:=	MAX( MesDataIEC.IN_ParamPmin*1000, ParamPminPark)   ;  
+		ParamPmin_old := MesDataIEC.IN_ParamPmin ; 
+	END_IF	
+*)
+
+	// Detect if command is not applied  
+	// Start 
+	TON_CheckCommand[1](IN:= CheckCommand[1].bWarning , PT:= T#2S ) ; 
+	CheckCommand[1](
+		bCmd		:= MesDataExd.MesData.OUT_CmdAutCpl  ,
+		bMes		:= A1_PP.MesData.MesState.2 , 		// Compare with the modbus feedback on equipement . 
+		bReset		:= TON_CheckCommand[1].Q,		// Reset after 2 se
+		bImpulsion	:= TRUE , 
+		T			:= T#120S ) ;
+(*		
+	// Stop Mode 
+	TON_CheckCommand[2](IN:= CheckCommand[2].bWarning , PT:= T#2S ) ; 
+	CheckCommand[2](
+		bCmd		:=  NOT MesDataExd.MesData.OUT_CmdSoutirage ,
+		bMes		:= A1_PP.MesDataExd.MesData.MesState.0 , 		// Compare with the modbus feedback on equipement . 
+		bReset		:=TON_CheckCommand[2].Q ,
+		bImpulsion	:= TRUE , 
+		T			:= T#5S ) ;	
+	*)
+	// Disconnect 
+	TON_CheckCommand[3](IN:= CheckCommand[3].bWarning , PT:= T#2S ) ; 
+	CheckCommand[3](
+		bCmd		:= MesDataExd.MesData.OUT_CmdDisconnect,
+		bMes		:= A1_PP.MesData.MesState.0 , 		// Compare with the modbus feedback on equipement . 
+		bReset		:= TON_CheckCommand[3].Q,
+		bImpulsion	:= TRUE , 
+		T			:= T#5S ) ;	
+	
+	// Autorization couplage 
+	TON_CheckCommand[4](IN:= CheckCommand[4].bWarning , PT:= T#2S ) ; 
+	CheckCommand[4](
+		bCmd		:= MesDataExd.MesData.OUT_CmdAutCpl ,
+		bMes		:= A1_SUBMV.MesDataExd.MesData.MesClosed_ALOFeederMVCB AND A1_SUBMV.MesDataExd.MesData.MesClosed_ALOFeederMVCB , 		// Compare with the modbus feedback on equipement . 
+		bReset		:= TON_CheckCommand[4].Q,
+		bImpulsion	:= TRUE , 
+		T			:= T#5S ) ;
+		
+		(*
+	// Manual Mode 
+	TON_CheckCommand[5](IN:= CheckCommand[5].bWarning , PT:= T#2S ) ; 
+	CheckCommand[5](
+		bCmd		:= MesDataExd.MesData.OUT_CmdModeManuel ,
+		bMes		:= A1_PP.MesDataExd.MesData.CalManualMode , 		// Compare with the modbus feedback on equipement . 
+		bReset		:=TON_CheckCommand[5].Q ,
+		bImpulsion	:= TRUE , 
+		T			:= T#1S ) ;	
+		
+		*)]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{480ba504-03c0-4f11-8c4c-c20d26aa9e1c}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	// EMULATOR
+
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// READING AND WRITING CLOCK //
+
+// PERMANENT CONDITIONS //
+	M_CP() ; 
+	
+// METHODS CALLS //
+	IF bInit THEN
+		M_Init() ; 
+		bInit:= FALSE ; 
+	ELSIF CmdInit_G THEN 
+		bInit:= TRUE ;
+	END_IF
+
+	M_IEC104(); 
+	M_Evaluate() ; 
+	
+	////////////////////
+	M_AlarmManagement(); 
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_IEC104" Id="{bb6f2a00-1080-4929-a72d-7bb89b1545e2}">
+      <Declaration><![CDATA[METHOD M_IEC104
+//////////////////
+//  Read Modbus Variable for PCS . 
+/////////////////
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+	bTest: BOOL;
+	KK: BYTE;
+END_VAR
+
+
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[	
+FB_IEC(
+	IN_bEnable := TRUE , //MesCP_Read , 
+	AODB := AODB , 
+	memory := ADR(memory) , 
+	IN_Local := MesDataIEC.OUT_MesLocal ) ;
+
+	
+
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{2ded53be-b41c-47d2-898f-6a055cc5a0ba}">
+      <Declaration><![CDATA[METHOD M_Init
+VAR 
+
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+// Initialize autorization couplage to false
+IF bBoot AND NOT A1_SUBMV.MesDataExd.MesData.MesState.1 THEN 
+	MesDataExd.MesData.OUT_CmdAutCpl := FALSE ;  // A VOIR SI ON VEUT MEMORISER CET ETAT OU PAS AU DEMARRAGE. Le.MesDataExd.MesData.est persistent.
+	bBoot := FALSE ;
+END_IF
+
+
+///// INITIALIZE ////CstIPIEC104
+// SERVER 1
+	(* Configure protocol parameter *)
+	FB_IEC.protPara.iK 				:= 12;(* default = 12 *)
+	FB_IEC.protPara.iW 				:= 8;(* default = 8 *)
+	FB_IEC.protPara.bThrottleMode 	:= TRUE;
+
+	(* Configure system parameter *)
+	FB_IEC.sysPara.asduAddr 		:= 1;
+	FB_IEC.sysPara.bUsePCTime 		:= TRUE;
+	FB_IEC.sysPara.bSyncTime 		:= TRUE;
+	FB_IEC.sysPara.bSyncPCTime 		:= FALSE;
+	FB_IEC.sysPara.bEndOfInit 		:= TRUE;
+	FB_IEC.sysPara.bPerCyclic		:= TRUE;
+	FB_IEC.sysPara.tPerCyclicBase	:= T#3S;
+	FB_IEC.sysPara.bBackScan		:= FALSE;
+	FB_IEC.sysPara.tBackScanCycle	:= T#3S;
+	FB_IEC.sysPara.bPerFRZ			:= TRUE;
+	FB_IEC.sysPara.tPerFRZCycle		:= T#15S;
+	FB_IEC.sysPara.dbgMode 			:= (*IEC870_DEBUGMODE_ASDU OR*) IEC870_DEBUGMODE_DEVSTATE;
+
+	(* Configure akuo iec104 parameter *)
+	FB_IEC.akuoPara.iAOnb			:= 33 ; 
+	FB_IEC.akuoPara.sLocalHost		:= CstIPIEC104 ; 
+	
+	initError := F_iecInitAOEntry( M_SP_TB_1, 12, IEC870_GRP_INROGEN, 0,  MAP_AREA_MEMORY, 10, 0, AODB[0] );		//OUT_MesLocal		       
+	initError := F_iecInitAOEntry( M_SP_TB_1, 13, IEC870_GRP_INROGEN, 0,  MAP_AREA_MEMORY, 10, 1, AODB[1] );		//OUT_MesModeManuel_on
+	initError := F_iecInitAOEntry( M_SP_TB_1, 14, IEC870_GRP_INROGEN, 0,  MAP_AREA_MEMORY, 10, 2, AODB[2] );      //OUT_MesModeAuto_on	 
+	initError := F_iecInitAOEntry( M_SP_TB_1, 15, IEC870_GRP_INROGEN, 0,  MAP_AREA_MEMORY, 10, 3, AODB[3] );	    //OUT_MesCharging		   
+	initError := F_iecInitAOEntry( M_SP_TB_1, 16, IEC870_GRP_INROGEN, 0,  MAP_AREA_MEMORY, 10, 4, AODB[4] );	    //OUT_MesDischarging	 
+	initError := F_iecInitAOEntry( M_SP_TB_1, 20, IEC870_GRP_INROGEN, 0,  MAP_AREA_MEMORY, 10, 5, AODB[5] );      //OUT_MesEs			        
+	initError := F_iecInitAOEntry( M_SP_TB_1, 21, IEC870_GRP_INROGEN, 0,  MAP_AREA_MEMORY, 10, 6, AODB[6] );	    //OUT_MesToS			       
+	initError := F_iecInitAOEntry( M_SP_TB_1, 19, IEC870_GRP_INROGEN, 0,  MAP_AREA_MEMORY, 10, 7, AODB[7] );	    //OUT_MesIncident			   
+	initError := F_iecInitAOEntry( M_SP_TB_1, 37, IEC870_GRP_INROGEN, 0,  MAP_AREA_MEMORY, 11, 0, AODB[8] );	    //OUT_MesFaultTeleMes		
+	initError := F_iecInitAOEntry( M_SP_TB_1, 38, IEC870_GRP_INROGEN, 0,  MAP_AREA_MEMORY, 11, 1, AODB[9] );	    //OUT_MesFaultTeleCmd		
+	initError := F_iecInitAOEntry( M_SP_TB_1, 39, IEC870_GRP_INROGEN, 0,  MAP_AREA_MEMORY, 11, 2, AODB[10] );	    //OUT_MesFaultTeleSgnl	
+	initError := F_iecInitAOEntry( M_SP_TB_1, 41, IEC870_GRP_INROGEN, 0,  MAP_AREA_MEMORY, 11, 3, AODB[11] );	    //OUT_MesIECServerFault
+
+		(* TSD *)
+	initError := F_iecInitAOEntry( M_DP_TB_1, 43, IEC870_GRP_INROGEN, 0, MAP_AREA_MEMORY, 61, 2, AODB[12] );	//MesSoutirage_on			      	
+	initError := F_iecInitAOEntry( M_DP_TB_1, 44, IEC870_GRP_INROGEN, 0, MAP_AREA_MEMORY, 61, 4, AODB[13] );   //MesComTest_on		     
+	initError := F_iecInitAOEntry( M_DP_TB_1, 17, IEC870_GRP_INROGEN, 0, MAP_AREA_MEMORY, 12, 4, AODB[14] );   //MesCentrale_Cpl		   
+	initError := F_iecInitAOEntry( M_DP_TB_1, 22, IEC870_GRP_INROGEN, 0, MAP_AREA_MEMORY, 12, 6, AODB[15] );	//MesCentrale_indispo	
+	initError := F_iecInitAOEntry( M_DP_TB_1, 51, IEC870_GRP_INROGEN, 0, MAP_AREA_MEMORY, 12, 0, AODB[33] );   //MesDJOpen		   
+
+
+	
+	(* Measured value , short floating point value *)
+	initError := F_iecInitAOEntry( M_ME_NC_1, 5, IEC870_GRP_INROGEN OR IEC870_GRP_PERCYC , 1, MAP_AREA_MEMORY, 42, 0, AODB[16] );	// OUT_MesSoC 			    
+	initError := F_iecInitAOEntry( M_ME_NC_1, 6, IEC870_GRP_INROGEN OR IEC870_GRP_PERCYC , 1, MAP_AREA_MEMORY, 14, 0, AODB[17] );  // OUT_MesSoH 			    
+	initError := F_iecInitAOEntry( M_ME_NC_1, 1, IEC870_GRP_INROGEN OR IEC870_GRP_PERCYC , 1, MAP_AREA_MEMORY, 18, 0, AODB[18] );  // OUT_MesP 			      
+	initError := F_iecInitAOEntry( M_ME_NC_1, 2, IEC870_GRP_INROGEN OR IEC870_GRP_PERCYC , 1, MAP_AREA_MEMORY, 22, 0, AODB[19] );  // OUT_MesQ 			      
+	initError := F_iecInitAOEntry( M_ME_NC_1, 3, IEC870_GRP_INROGEN OR IEC870_GRP_PERCYC , 1, MAP_AREA_MEMORY, 26, 0, AODB[20] );  // OUT_MesU_HTA 		   
+	initError := F_iecInitAOEntry( M_ME_NC_1, 4, IEC870_GRP_INROGEN OR IEC870_GRP_PERCYC , 1, MAP_AREA_MEMORY, 30, 0, AODB[21] );	// OUT_MesFreq 		    
+	initError := F_iecInitAOEntry( M_ME_NC_1, 7, IEC870_GRP_INROGEN OR IEC870_GRP_PERCYC , 1, MAP_AREA_MEMORY, 34, 0, AODB[22] );  // OUT_MesPdispo_inj 
+	initError := F_iecInitAOEntry( M_ME_NC_1, 8, IEC870_GRP_INROGEN OR IEC870_GRP_PERCYC , 1, MAP_AREA_MEMORY, 38, 0, AODB[23] );  // OUT_MesPdispo_abs 
+
+	(* Single commands *)
+	initError := F_iecInitAOEntry( C_SC_TA_1, 30, 0, 0, MAP_AREA_MEMORY, 60, 0, AODB[24] );	//	IN_CmdModeManuel
+	initError := F_iecInitAOEntry( C_SC_TA_1, 31, 0, 0, MAP_AREA_MEMORY, 60, 1, AODB[27] );	//	IN_CmdModeManuelOff
+	initError := F_iecInitAOEntry( C_SC_TA_1, 32, 0, 0, MAP_AREA_MEMORY, 60, 2, AODB[25] );   //  IN_CmdAut_Cpl	  
+	initError := F_iecInitAOEntry( C_SC_TA_1, 33, 0, 0, MAP_AREA_MEMORY, 60, 3, AODB[26] );	//	CmdDisconnect	
+	
+	(* Double commands *)
+	initError := F_iecInitAOEntry( C_DC_TA_1, 26, 0, 0, MAP_AREA_MEMORY, 61, 2, AODB[28] );	//  CmdSoutirage		    
+	initError := F_iecInitAOEntry( C_DC_TA_1, 27, 0, 0, MAP_AREA_MEMORY, 61, 4, AODB[29] );	//  CmdTest			    
+
+	(* Set point,  short floating point values *)
+	initError := F_iecInitAOEntry( C_SE_TC_1, 36, 0, 0, MAP_AREA_MEMORY, 72, 0, AODB[30] );		//IN_SetptP 		 
+	initError := F_iecInitAOEntry( C_SE_TC_1, 34, 0, 0, MAP_AREA_MEMORY, 64, 0, AODB[31] );		//IN_ParamPmax 
+	initError := F_iecInitAOEntry( C_SE_TC_1, 35, 0, 0, MAP_AREA_MEMORY, 68, 0, AODB[32] );		//IN_ParamPmin ]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_GRID_MADI">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_GRID_MADI.M_AlarmManagement">
+      <LineId Id="233" Count="0" />
+      <LineId Id="318" Count="0" />
+      <LineId Id="309" Count="0" />
+      <LineId Id="234" Count="39" />
+      <LineId Id="300" Count="0" />
+      <LineId Id="274" Count="17" />
+      <LineId Id="194" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_GRID_MADI.M_CP">
+      <LineId Id="20" Count="7" />
+      <LineId Id="29" Count="5" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_GRID_MADI.M_Evaluate">
+      <LineId Id="1819" Count="179" />
+      <LineId Id="1798" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_GRID_MADI.M_Execute">
+      <LineId Id="736" Count="0" />
+      <LineId Id="713" Count="0" />
+      <LineId Id="680" Count="0" />
+      <LineId Id="725" Count="0" />
+      <LineId Id="682" Count="6" />
+      <LineId Id="690" Count="0" />
+      <LineId Id="724" Count="0" />
+      <LineId Id="691" Count="1" />
+      <LineId Id="698" Count="2" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_GRID_MADI.M_IEC104">
+      <LineId Id="949" Count="0" />
+      <LineId Id="1003" Count="0" />
+      <LineId Id="1231" Count="3" />
+      <LineId Id="1009" Count="0" />
+      <LineId Id="1012" Count="1" />
+      <LineId Id="1004" Count="0" />
+      <LineId Id="96" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_GRID_MADI.M_Init">
+      <LineId Id="229" Count="5" />
+      <LineId Id="236" Count="44" />
+      <LineId Id="311" Count="0" />
+      <LineId Id="309" Count="1" />
+      <LineId Id="281" Count="23" />
+      <LineId Id="116" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

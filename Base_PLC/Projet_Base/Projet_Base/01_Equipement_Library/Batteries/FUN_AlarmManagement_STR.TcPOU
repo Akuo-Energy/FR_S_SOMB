@@ -1,0 +1,128 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.9">
+  <POU Name="FUN_AlarmManagement_STR" Id="{915aeb87-066d-405c-ad7e-4b3dcbd04383}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM FUN_AlarmManagement_STR
+VAR
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{acf31f82-20ba-4c41-b671-e225981a15f4}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement : BOOL
+VAR_INPUT
+	Alarm1 		: WORD;
+	Alarm2 		: WORD;
+	Alarm3 		: WORD;
+	Alarm4 		: WORD;
+	Protection1 : WORD;
+	Protection2 : WORD;
+	Protection3 : WORD;
+	Protection4 : WORD;
+END_VAR
+VAR
+	FB_AlarmCodeManager 		: FB_AlarmCodeManager ; 
+END_VAR
+VAR_OUTPUT
+	MesProtection1 	: WORD;
+	MesProtection2 	: WORD;
+	MesAlarm1 		: WORD;
+	MesAlarm2 		: WORD;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[	FB_AlarmCodeManager(
+		bAlarm1			:= Protection4.0,			// BMS Protection4 module_pcb_ut
+		bAlarm2			:= Protection4.1,			// BMS Protection4 module_pcb_ot
+		bAlarm3			:= Protection4.2,       	// BMS Protection4 dcsw_count_fail
+		bAlarm4			:= Protection4.8,       	// BMS Protection4 fuse_or_dcsw_sensing_fail
+		bAlarm5			:= Protection3.8,       	// BMS Protection3_dcsw1_sensing_fail
+		bAlarm6			:= Protection3.9,       	// BMS Protection3_dcsw2_sensing_fail
+		bAlarm7			:= Protection3.10,      	// BMS Protection3_dcsw1_fail
+		bAlarm8			:= Protection3.11,      	// BMS Protection3_dcsw2_fail
+		bAlarm9			:= Protection3.12,      	// BMS Protection3_fan_fail_Option
+		bAlarm10		:= Protection3.13,      	// BMS Protection3_additional_protection_fail
+		bAlarm11		:= Protection3.14,      	// BMS Protection3_cell_chg_operation_limit
+		bAlarm12		:= Protection3.15,      	// BMS Protection3_cell_dchg_operation_limit
+		bAlarm13		:= Protection1.0,       	// BMS_Protection1_module_UT
+		bAlarm14		:= Protection1.1,       	// BMS_Protection1_module_OT
+		bAlarm15		:= Protection1.2,       	// BMS_Protection1_module_UV
+	wAlarmCode		=> MesProtection1);
+	
+	FB_AlarmCodeManager(
+		bAlarm1			:= Protection1.3,			// BMS_Protection1_module_OV
+		bAlarm2			:= Protection1.4,			// BMS_Protection1_module_V_imb
+		bAlarm3			:= Protection1.5,			// BMS_Protection1_module_T_imb
+		bAlarm4			:= Protection1.6,    		// BMS_Protection1_R_M_comm_fail
+		bAlarm5			:= Protection1.7,    		// BMS_Protection1_R_S_comm_fail
+		bAlarm6			:= Protection1.8,    		// BMS_Protection1_rack_ChgOC
+		bAlarm7			:= Protection1.9,    		// BMS_Protection1_rack_DchgOC
+		bAlarm8			:= Protection1.10,   		// BMS_Protection1_rack_UV
+		bAlarm9			:= Protection1.11,   		// BMS_Protection1_rack_OV
+		bAlarm10		:= Protection1.12,    		// BMS_Protection1_rack_V_sensing_diff
+		bAlarm11		:= Protection1.13,    		// BMS_Protection1_rack_I_senser_fail
+		bAlarm12		:= Protection1.14,    		// BMS_Protection1_rack_fuse_fail_Option
+		bAlarm13		:= Protection1.15,    		// BMS_Protection1_permanent_uv
+		bAlarm14		:= FALSE, // 
+		bAlarm15		:= False, // 
+	wAlarmCode		=> MesProtection2);
+
+		FB_AlarmCodeManager(
+		bAlarm1			:= Alarm4.0,			// BMS Alarm4 module_pcb_ut
+		bAlarm2			:= Alarm4.1,			// BMS Alarm4 module_pcb_ot
+		bAlarm3			:= Alarm4.2,       		// BMS Alarm4 dcsw_count_fail
+		bAlarm4			:= Alarm4.8,       		// BMS Alarm4 fuse_or_dcsw_sensing_fail
+		bAlarm5			:= Alarm3.8,       		// BMS Alarm3 dcsw1_sensing_fail
+		bAlarm6			:= Alarm3.9,       		// BMS Alarm3 dcsw2_sensing_fail
+		bAlarm7			:= Alarm3.10,      		// BMS Alarm3 dcsw1_fail
+		bAlarm8			:= Alarm3.11,      		// BMS Alarm3 dcsw2_fail
+		bAlarm9			:= Alarm3.12,      		// BMS Alarm3 fan_fail_Option
+		bAlarm10		:= Alarm3.13,      		// BMS Alarm3 additional_protection_fail
+		bAlarm11		:= Alarm3.14,      		// BMS Alarm3 cell_chg_operation_limit
+		bAlarm12		:= Alarm3.15,      		// BMS Alarm3 cell_dchg_operation_limit
+		bAlarm13		:= Alarm1.0,       		// BMS Alarm1 module_UT
+		bAlarm14		:= Alarm1.1,       		// BMS Alarm1 module_OT
+		bAlarm15		:= Alarm1.2,       		// BMS Alarm1 module_UV
+	wAlarmCode		=> MesAlarm1);
+	
+	FB_AlarmCodeManager(
+		bAlarm1			:= Alarm1.4,			// BMS Alarm1_module_OV
+		bAlarm2			:= Alarm1.4,			// BMS Alarm1_module_V_imb
+		bAlarm3			:= Alarm1.5,			// BMS Alarm1_module_T_imb
+		bAlarm4			:= Alarm1.6,    		// BMS Alarm1_R_M_comm_fail
+		bAlarm5			:= Alarm1.7,    		// BMS Alarm1_R_S_comm_fail
+		bAlarm6			:= Alarm1.8,    		// BMS Alarm1_rack_ChgOC
+		bAlarm7			:= Alarm1.9,    		// BMS Alarm1_rack_DchgOC
+		bAlarm8			:= Alarm1.10,   		// BMS Alarm1_rack_UV
+		bAlarm9			:= Alarm1.11,   		// BMS Alarm1_rack_OV
+		bAlarm10		:= Alarm1.12,    		// BMS Alarm1_rack_V_sensing_diff
+		bAlarm11		:= Alarm1.13,    		// BMS Alarm1_rack_I_senser_fail
+		bAlarm12		:= Alarm1.14,    		// BMS Alarm1_rack_fuse_fail_Option
+		bAlarm13		:= Alarm1.15,    		// BMS Alarm1_permanent_uv
+		bAlarm14		:= FALSE, // 
+		bAlarm15		:= False, // 
+	wAlarmCode		=> MesAlarm2);]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FUN_AlarmManagement_STR">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FUN_AlarmManagement_STR.M_AlarmManagement">
+      <LineId Id="91" Count="0" />
+      <LineId Id="107" Count="1" />
+      <LineId Id="94" Count="9" />
+      <LineId Id="109" Count="0" />
+      <LineId Id="105" Count="1" />
+      <LineId Id="88" Count="0" />
+      <LineId Id="162" Count="0" />
+      <LineId Id="110" Count="0" />
+      <LineId Id="126" Count="0" />
+      <LineId Id="111" Count="13" />
+      <LineId Id="89" Count="0" />
+      <LineId Id="127" Count="17" />
+      <LineId Id="161" Count="0" />
+      <LineId Id="145" Count="15" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

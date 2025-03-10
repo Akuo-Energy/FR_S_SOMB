@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <POU Name="ModbusTcp" Id="{fa9b2688-9ad5-4e00-88e3-495a92adddcc}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM ModbusTcp
+Var
+    MW  : FB_SplitRealToWords_IEEE754;
+    MW1  : FB_SplitUlintToWords;
+(*
+   mySimpleTcpServer: FbMbSimpleServerTcp :=(  xOpen           := TRUE,  wPort := 2000,bUnitId := 1,
+                                              utKeepAlive     := (xEnable      := TRUE, //  Switch keep-alive mechanism on
+                                                                       tMaxIdleTime := T#5S, //  Maximum time of inactivity
+                                                                        tInterval    := T#2S, //  Interval between two successive KA-Packets
+                                                                     udiProbes    := 5 ));    //  Number of KA retry before giving up
+*)
+END_VAR
+    ]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+(* 
+//--- Call the server --------------------------------------------- 
+mySimpleTcpServer(  awHoldingRegisters  := GVL_DataBaseStructures.AX_StructModbusTCP    ); 
+ *)
+]]></ST>
+    </Implementation>
+    <LineIds Name="ModbusTcp">
+      <LineId Id="3" Count="4" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

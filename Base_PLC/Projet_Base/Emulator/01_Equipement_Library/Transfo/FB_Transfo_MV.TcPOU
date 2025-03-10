@@ -1,0 +1,59 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.9">
+  <POU Name="FB_Transfo_MV" Id="{cd8bb067-9d3b-4979-9948-47edb681ec3c}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Transfo_MV EXTENDS FB_Transfo_Base
+//////////////////
+// High Voltage transformer with Transfo or DMCR detection . 
+//////////////////
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance/model specific) 
+
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	
+END_VAR
+
+VAR_INPUT
+		// Transfo
+	IN_MesWarningTemp_IO				: BOOL ; 		// (NA) Warning Oil Temperature IO
+	IN_MesAlarmTemp_IO					: BOOL ; 		// (NA) Alarm Oil Temperature   IO
+	IN_MesAlarmGas_IO					: BOOL ; 		// (NA) Gas Alarm               IO
+	IN_MesAlarmPressure_IO				: BOOL ; 		// (NA) Oil Pressure Alarm		IO
+	IN_MesAlarmsSynthesis_IO			: BOOL ;        // (NA) Alarms synthesis        IO 
+	
+END_VAR
+
+VAR
+MesDataExd					: Transfo_MV ; 
+	Emul_Alarm_Temp						: BOOL := FALSE;			
+	Emul_Alarm_Synthesis				: BOOL := FALSE;
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_Execute" Id="{95fbdb80-3ef5-4d14-8847-926a3ed143f5}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[ MesDataExd.MesData.MesAlarmTemp 			:= Emul_Alarm_Temp;			
+MesDataExd.MesData.MesAlarmsSynthesis 		:= Emul_Alarm_Synthesis;]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_Transfo_MV">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

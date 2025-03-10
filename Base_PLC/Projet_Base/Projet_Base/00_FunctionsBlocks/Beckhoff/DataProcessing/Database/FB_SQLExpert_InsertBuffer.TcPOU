@@ -1,0 +1,312 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_SQLExpert_InsertBuffer" Id="{2aea9ea3-ce98-4f6a-985f-26bec72bf8cd}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_SQLExpert_InsertBuffer
+// Fonctionnement : Tableau de 2000 structures en input. Dès qu'on atteint 1000 structures remplies, décalage de l'espace mémoire
+// pour en 1 temps de cycle pour ne pas perdre de données sur le transfert.
+VAR CONSTANT
+	CstNbLigneBuffer		: DINT:= 250;
+	CstNbLigneBufferMax	 	: DINT:= 5000;
+
+END_VAR
+
+VAR_INPUT
+	NomTable				: STRING := 'Table100ms';
+	hDBID					: UDINT;
+END_VAR
+
+VAR_OUTPUT
+	OUT_Error				: BOOL;
+	OUT_Busy				: BOOL;
+END_VAR
+
+VAR
+	ETAPE					: UINT;
+
+    myStruct      			: ARRAY[1..CstNbLigneBuffer] OF St_DataHisto;
+	myStructMax    			: ARRAY[1..CstNbLigneBufferMax] OF St_DataHisto;
+	StructNull				: St_DataHisto;
+
+    SQLDatabase				: FB_SQLDatabaseEvt('',T#10S);
+	SQLCommand1				: FB_SQLCommandEvt('',T#10S);
+	SQLCommandNull			: FB_SQLCommandEvt('',T#10S);
+	bConnected				: BOOL;              	        	
+
+	TrameValues				: T_MaxString := ' ([Timestamp],[Timestamp_Ms],[ParentId],[Value])';
+	pPosRequete				: DINT;                		
+	RequeteFinale			: ARRAY[1..100] OF STRING(1000);	
+	RequeteFinaleNull		: ARRAY[1..100] OF STRING(1000);	
+	sTimeStamp				: STRING(255);               	
+	RequeteEntete			: STRING(1000);
+	sInsertValue			: STRING(1000);
+	Format					: FB_FormatString;
+	                		
+	NbElemBuffer			: DINT;
+	KK						: DINT;
+	                    	
+	CmdStart				: BOOL;
+	TrigCmdExec				: R_TRIG;
+	TrigStart				: R_TRIG;
+	RsStart					: RS;
+	
+	// Insert
+		hDBID_BaseTampon	: UINT := 3;
+	// AlarmManagement      
+		bBufferMaxFull 		: BOOL;        		
+		bInStructNull		: BOOL;
+		
+		
+		
+	
+END_VAR             		
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[NbElemBuffer := M_Count();
+CmdStart := NbElemBuffer>= CstNbLigneBuffer;
+
+
+TrigStart(CLK := CmdStart);
+IF TrigStart.Q THEN
+	FOR KK := 1 TO CstNbLigneBuffer DO
+		myStruct[KK] := myStructMax[KK];
+	END_FOR
+END_IF
+
+
+// call functionblock
+
+CASE ETAPE OF
+	0://INITIALISATION  & CONNECTION
+		RequeteEntete := concat(concat('INSERT INTO ',NomTable),concat(TrameValues,' VALUES '));
+		RsStart(SET := TrigStart.Q);
+		IF RsStart.Q1 THEN
+			IF SQLDatabase.Connect(hDBID := hDBID) THEN;
+				bConnected := NOT sqldatabase.bError;
+				IF bConnected THEN
+					ETAPE := 1;
+				ELSE
+					ETAPE := 255;
+				END_IF
+			END_IF
+		END_IF
+		
+	1: // CONNECTED
+		IF SQLDatabase.CreateCmd(pSQLCommand := ADR(SQLCommand1)) THEN 
+			IF NOT SQLCommand1.bError THEN
+				ETAPE := 2;
+			ELSIF SQLCommand1.bError THEN
+				ETAPE := 255;
+			END_IF
+		END_IF
+	2:
+		MEMCPY(srcAddr:= ADR(RequeteEntete), destAddr := ADR(requeteFinale), n:= SIZEOF(RequeteEntete));
+		pPosRequete := LEN(STR := RequeteEntete);
+		FOR KK:= 1 TO CstNbLigneBuffer-1 DO
+			sTimeStamp	:= right(STR := DT_TO_STRING(myStruct[KK].Timestamp), SIZE := LEN(DT_TO_STRING(myStruct[KK].Timestamp))-3);
+			Format(sFormat := '($'%s $',%.3d,%.4d,%5.2f),', arg1 := F_STRING(sTimeStamp),arg2:=F_DINT(myStruct[KK].Timestamp_Ms), arg3:= F_DINT(myStruct[KK].ParentId), arg4:= F_LREAL(myStruct[KK].Value), sOut=>sInsertValue);
+			MEMCPY(srcAddr:= ADR(sInsertValue), destAddr := ADR(requeteFinale)+DINT_TO_DWORD(pPosRequete), n:= SIZEOF(sInsertValue));
+			pPosRequete:= pPosRequete + LEN(STR := sInsertValue);
+		END_FOR
+		sTimeStamp	:= right(STR := DT_TO_STRING(myStruct[KK].Timestamp), SIZE := LEN(DT_TO_STRING(myStruct[KK].Timestamp))-3);
+		Format(sFormat := '($'%s $',%.3d,%.4d,%5.2f)', arg1 := F_STRING(sTimeStamp),arg2:=F_DINT(myStruct[KK].Timestamp_Ms), arg3:= F_DINT(myStruct[KK].ParentId), arg4:= F_LREAL(myStruct[KK].Value), sOut=>sInsertValue);
+		MEMCPY(srcAddr:= ADR(sInsertValue), destAddr := ADR(requeteFinale)+DINT_TO_DWORD(pPosRequete), n:= SIZEOF(sInsertValue));
+	
+		IF SQLCommand1.Execute(pSQLCmd := ADR(RequeteFinale), cbSQLCmd := SIZEOF(Requetefinale))THEN
+			
+			IF  NOT SQLCommand1.bError THEN
+				ETAPE := 3;
+			ELSIF SQLCommand1.bError THEN
+				ETAPE := 255;
+			END_IF
+		END_IF
+	3:
+			IF SQLDatabase.Disconnect() THEN
+				ETAPE := 4;
+			END_IF 
+	4:
+		IF NOT SQLDatabase.bError THEN
+			RequeteFinale := RequeteFinaleNull;
+			FOR KK := CstNbLigneBuffer TO CstNbLigneBufferMax -1 DO
+				myStructMax[KK+1-CstNbLigneBuffer]:= myStructMax[KK+1];
+			END_FOR
+			
+			FOR KK := CstNbLigneBufferMax-CstNbLigneBuffer+1 TO CstNbLigneBufferMax DO
+				myStructMax[KK]:= StructNull;
+			END_FOR			
+			
+			TrigStart(CLK := FALSE);
+			RsStart(RESET1 := TRUE);
+			RsStart(RESET1 := FALSE);
+			TrigCmdExec(CLK := FALSE);
+			CmdStart := FALSE;
+			Etape := 0;
+			OUT_Error := FALSE;
+		ELSE 
+			ETAPE := 255;
+		END_IF
+	255: 
+		RequeteFinale := RequeteFinaleNull;
+		OUT_Error := TRUE;
+		Etape := 0;
+		RsStart(RESET1 := TRUE);
+		RsStart(RESET1 := FALSE);
+		TrigCmdExec(CLK := FALSE);
+		CmdStart := FALSE;
+		
+END_CASE
+]]></ST>
+    </Implementation>
+    <Method Name="M_AddLine" Id="{0001072a-37f1-4ffe-b12a-59fe431763c9}">
+      <Declaration><![CDATA[METHOD M_AddLine : BOOL
+VAR_INPUT
+	InStruct			: St_DataHisto;
+END_VAR
+
+VAR
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Check the biggest buffer isn't full
+IF MEMCMP(pBuf1 := ADR(StructNull), pBuf2 := ADR(myStructMax[CstNbLigneBufferMax]), n := SIZEOF(StructNull)) <> 0 THEN
+	bBufferMaxFull := TRUE;
+ELSE
+	//Check the input struct isn't null
+	IF MEMCMP(pBuf1 := ADR(StructNull), pBuf2 := ADR(InStruct), n := SIZEOF(StructNull)) = 0 THEN
+		bInStructNull := TRUE;
+	ELSE
+		// We parse the biggest buffer
+		FOR KK := 1 TO CstNbLigneBufferMax DO 
+			IF MEMCMP(pBuf1 := ADR(StructNull), pBuf2 := ADR(myStructMax[KK]), n := SIZEOF(StructNull)) = 0 THEN
+				myStructMax[KK] := InStruct;
+				bBufferMaxFull := FALSE;
+				EXIT;
+			END_IF
+		END_FOR
+	END_IF
+END_IF
+
+
+		
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_AlarmManager" Id="{0fed4e9b-dd33-4e01-956e-0749c41540b5}">
+      <Declaration><![CDATA[METHOD M_AlarmManager : BOOL
+VAR_INPUT
+	AlarmCode : WORD;
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+AlarmCode.0 := bBufferMaxFull;
+AlarmCode.1 := bInStructNull;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Count" Id="{8cd56351-39ff-4f8f-9b90-7cfb0b1f9406}">
+      <Declaration><![CDATA[METHOD M_Count : DINT
+VAR_INPUT
+END_VAR
+VAR
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[FOR KK := 1 TO CstNbLigneBufferMax DO 
+
+	IF MEMCMP(pBuf1 := ADR(StructNull), pBuf2 := ADR(myStructMax[KK]), n := SIZEOF(StructNull)) = 0 THEN
+		EXIT ;
+	END_IF
+END_FOR
+
+M_Count := MIN(KK, CstNbLigneBufferMax);]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_SQLExpert_InsertBuffer">
+      <LineId Id="329" Count="0" />
+      <LineId Id="257" Count="0" />
+      <LineId Id="470" Count="0" />
+      <LineId Id="288" Count="0" />
+      <LineId Id="287" Count="0" />
+      <LineId Id="289" Count="1" />
+      <LineId Id="313" Count="1" />
+      <LineId Id="291" Count="0" />
+      <LineId Id="270" Count="0" />
+      <LineId Id="233" Count="1" />
+      <LineId Id="368" Count="2" />
+      <LineId Id="751" Count="0" />
+      <LineId Id="373" Count="1" />
+      <LineId Id="376" Count="0" />
+      <LineId Id="624" Count="0" />
+      <LineId Id="627" Count="1" />
+      <LineId Id="630" Count="1" />
+      <LineId Id="629" Count="0" />
+      <LineId Id="626" Count="0" />
+      <LineId Id="377" Count="0" />
+      <LineId Id="385" Count="6" />
+      <LineId Id="393" Count="5" />
+      <LineId Id="534" Count="0" />
+      <LineId Id="467" Count="0" />
+      <LineId Id="400" Count="2" />
+      <LineId Id="536" Count="1" />
+      <LineId Id="405" Count="0" />
+      <LineId Id="538" Count="0" />
+      <LineId Id="406" Count="3" />
+      <LineId Id="411" Count="1" />
+      <LineId Id="416" Count="0" />
+      <LineId Id="632" Count="0" />
+      <LineId Id="417" Count="0" />
+      <LineId Id="420" Count="0" />
+      <LineId Id="424" Count="0" />
+      <LineId Id="633" Count="0" />
+      <LineId Id="427" Count="2" />
+      <LineId Id="540" Count="2" />
+      <LineId Id="817" Count="0" />
+      <LineId Id="815" Count="1" />
+      <LineId Id="811" Count="1" />
+      <LineId Id="625" Count="0" />
+      <LineId Id="552" Count="3" />
+      <LineId Id="544" Count="0" />
+      <LineId Id="689" Count="0" />
+      <LineId Id="436" Count="1" />
+      <LineId Id="440" Count="0" />
+      <LineId Id="545" Count="0" />
+      <LineId Id="561" Count="0" />
+      <LineId Id="546" Count="0" />
+      <LineId Id="690" Count="0" />
+      <LineId Id="556" Count="3" />
+      <LineId Id="566" Count="0" />
+      <LineId Id="441" Count="0" />
+      <LineId Id="47" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SQLExpert_InsertBuffer.M_AddLine">
+      <LineId Id="25" Count="1" />
+      <LineId Id="31" Count="4" />
+      <LineId Id="37" Count="0" />
+      <LineId Id="45" Count="0" />
+      <LineId Id="39" Count="5" />
+      <LineId Id="38" Count="0" />
+      <LineId Id="36" Count="0" />
+      <LineId Id="27" Count="1" />
+      <LineId Id="10" Count="0" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="19" Count="0" />
+      <LineId Id="18" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SQLExpert_InsertBuffer.M_AlarmManager">
+      <LineId Id="6" Count="1" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="10" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SQLExpert_InsertBuffer.M_Count">
+      <LineId Id="5" Count="0" />
+      <LineId Id="30" Count="0" />
+      <LineId Id="8" Count="2" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="14" Count="0" />
+      <LineId Id="13" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

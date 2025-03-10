@@ -1,0 +1,874 @@
+﻿<div id="InfosMessaging_3" data-tchmi-type="TcHmi.Controls.System.TcHmiContent" data-tchmi-top="0" data-tchmi-left="0" data-tchmi-width="800" data-tchmi-height="640" data-tchmi-right="0" data-tchmi-bottom="0" data-tchmi-width-mode="Parent" data-tchmi-height-mode="Parent" data-tchmi-creator-viewport-height="1024" data-tchmi-creator-viewport-width="1920" data-tchmi-left-unit="px" data-tchmi-top-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-width-unit="px" data-tchmi-height-unit="px">
+
+<div id="PCS_Case_77" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiRectangle" data-tchmi-height="590" data-tchmi-height-unit="px" data-tchmi-left="34" data-tchmi-left-unit="px" data-tchmi-top="79" data-tchmi-top-unit="px" data-tchmi-width="870" data-tchmi-width-unit="px" data-tchmi-right="836" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px">
+
+
+        <script data-tchmi-target-attribute="data-tchmi-fill-color" type="application/json">
+            {
+            "color": "rgba(243, 243, 237, 1)"
+            }
+        </script>
+
+        <script data-tchmi-target-attribute="data-tchmi-stroke-color" type="application/json">
+            {
+            "color": "None"
+            }
+        </script>
+    </div>
+
+<div id="Title_UserInfo" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="38" data-tchmi-height-unit="px" data-tchmi-left="34" data-tchmi-left-unit="px" data-tchmi-text="User informations" data-tchmi-top="79" data-tchmi-top-unit="px" data-tchmi-width="870" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-horizontal-alignment="Center" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-font-weight="Bold" data-tchmi-text-font-size="18" data-tchmi-zindex="1" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px">
+
+
+        <script data-tchmi-target-attribute="data-tchmi-text-color" type="application/json">
+{
+  "color": "rgba(0, 0, 0, 1)"
+}
+</script>
+    
+<script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
+{
+  "color": "rgba(153, 204, 51, 1)"
+}
+</script>
+</div>
+
+<div id="Table_UserName" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiDatagrid" data-tchmi-height="346" data-tchmi-height-unit="px" data-tchmi-left="48" data-tchmi-left-unit="px" data-tchmi-top="224" data-tchmi-top-unit="px" data-tchmi-width="132" data-tchmi-width-unit="px" data-tchmi-right-unit="px" data-tchmi-data-symbol="%s%PLC1.OpcUa.AllValueW.AX_NomUtili%/s%" data-tchmi-header-font-style="Normal" data-tchmi-header-font-weight="Bold" data-tchmi-header-font-size="15">
+<script data-tchmi-target-attribute="data-tchmi-src-column" type="application/json">
+{
+  "label": "User Name",
+  "control": "TextBox",
+  "width": 100,
+  "widthUnit": "%",
+  "resize": false,
+  "sortable": false,
+  "minWidth": 100,
+  "minWidthUnit": "%",
+  "cellBackground": null,
+  "textColor": null,
+  "editable": true,
+  "horizontalAlignment": "Center",
+  "verticalAlignment": "Center",
+  "format": null
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-cell-content-padding" type="application/json">
+{
+  "left": 3,
+  "leftUnit": "px",
+  "right": 3,
+  "rightUnit": "px",
+  "top": 0,
+  "topUnit": "px",
+  "bottom": 0,
+  "bottomUnit": "px"
+}
+</script>
+
+
+<script data-tchmi-target-attribute="data-tchmi-header-background-color" type="application/json">
+{
+  "color": "rgba(153, 204, 51, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-row-numbers-background-color" type="application/json">
+{
+  "color": "rgba(153, 204, 51, 1)"
+}
+</script>
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-header-text-color" type="application/json">
+{
+  "color": "rgba(0, 0, 0, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-row-numbers-text-color" type="application/json">
+{
+  "color": "rgba(2, 0, 0, 1)"
+}
+</script>
+</div>
+
+<div id="Table_Email" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiDatagrid" data-tchmi-height="346" data-tchmi-height-unit="px" data-tchmi-left="180" data-tchmi-left-unit="px" data-tchmi-top="224" data-tchmi-top-unit="px" data-tchmi-width="200" data-tchmi-width-unit="px" data-tchmi-show-row-numbers="False" data-tchmi-right-unit="px" data-tchmi-data-symbol="%s%PLC1.OpcUa.AllValueW.AX_MailAddr_OPC%/s%" data-tchmi-row-numbers-font-size="14" data-tchmi-row-numbers-font-style="Normal" data-tchmi-row-numbers-font-weight="Bold" data-tchmi-header-height-unit="px" data-tchmi-header-font-size-unit="px" data-tchmi-header-font-size="15" data-tchmi-header-font-style="Normal" data-tchmi-header-font-weight="Bold">
+<script data-tchmi-target-attribute="data-tchmi-src-column" type="application/json">
+{
+  "label": "Email Address",
+  "control": "TextBox",
+  "width": 100,
+  "widthUnit": "%",
+  "resize": false,
+  "sortable": false,
+  "minWidth": 100,
+  "minWidthUnit": "%",
+  "cellBackground": null,
+  "textColor": null,
+  "editable": true,
+  "horizontalAlignment": "Center",
+  "verticalAlignment": "Center",
+  "format": null
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-cell-content-padding" type="application/json">
+{
+  "left": 3,
+  "leftUnit": "px",
+  "right": 3,
+  "rightUnit": "px",
+  "top": 0,
+  "topUnit": "px",
+  "bottom": 0,
+  "bottomUnit": "px"
+}
+</script>
+
+
+<script data-tchmi-target-attribute="data-tchmi-header-background-color" type="application/json">
+{
+  "color": "rgba(153, 204, 51, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-row-numbers-background-color" type="application/json">
+{
+  "color": "rgba(153, 204, 51, 1)"
+}
+</script>
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-row-numbers-text-color" type="application/json">
+{
+  "color": "rgba(0, 0, 0, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-header-text-color" type="application/json">
+{
+  "color": "rgba(0, 0, 0, 1)"
+}
+</script>
+</div>
+
+<div id="Table_MailSub" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiDatagrid" data-tchmi-height="346" data-tchmi-height-unit="px" data-tchmi-left="446" data-tchmi-left-unit="px" data-tchmi-top="224" data-tchmi-top-unit="px" data-tchmi-width="116" data-tchmi-width-unit="px" data-tchmi-show-row-numbers="False" data-tchmi-right-unit="px" data-tchmi-data-symbol="%s%PLC1.OpcUa.AllValueW.AX_SubscribedMail_OPC%/s%" data-tchmi-header-font-size="14" data-tchmi-header-font-style="Normal" data-tchmi-header-font-weight="Bold" data-tchmi-header-height-unit="px" data-tchmi-header-font-size-unit="px">
+<script data-tchmi-target-attribute="data-tchmi-src-column" type="application/json">
+{
+  "label": "Mail Subscription",
+  "control": "CheckBox",
+  "width": 100,
+  "widthUnit": "%",
+  "resize": false,
+  "sortable": false,
+  "minWidth": 100,
+  "minWidthUnit": "%",
+  "cellBackground": null,
+  "textColor": null,
+  "editable": true,
+  "horizontalAlignment": "Center",
+  "verticalAlignment": "Center",
+  "format": null
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-cell-content-padding" type="application/json">
+{
+  "left": 3,
+  "leftUnit": "px",
+  "right": 3,
+  "rightUnit": "px",
+  "top": 0,
+  "topUnit": "px",
+  "bottom": 0,
+  "bottomUnit": "px"
+}
+</script>
+
+
+<script data-tchmi-target-attribute="data-tchmi-header-background-color" type="application/json">
+{
+  "color": "rgba(153, 204, 51, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-row-numbers-background-color" type="application/json">
+{
+  "color": "rgba(153, 204, 51, 1)"
+}
+</script>
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-header-text-color" type="application/json">
+{
+  "color": "rgba(0, 0, 0, 1)"
+}
+</script>
+</div>
+<div id="Container_Alarms" data-tchmi-type="TcHmi.Controls.System.TcHmiContainer" data-tchmi-height="409" data-tchmi-height-unit="px" data-tchmi-left="996" data-tchmi-left-unit="px" data-tchmi-top="79" data-tchmi-top-unit="px" data-tchmi-width="417" data-tchmi-width-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px">
+
+
+<script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
+{
+  "color": "rgba(243, 243, 237, 1)"
+}
+</script>
+<div data-tchmi-grid-row-index="0" data-tchmi-grid-column-index="0" id="Title_Alarms" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="35" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-text="Alarms" data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-width="415" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-horizontal-alignment="Center" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-font-weight="Bold" data-tchmi-text-font-size="18" data-tchmi-zindex="1" data-tchmi-right-unit="px" data-tchmi-text-font-family="18" data-tchmi-bottom-unit="px" data-tchmi-text-font-size-unit="px">
+
+
+        <script data-tchmi-target-attribute="data-tchmi-text-color" type="application/json">
+{
+  "color": "rgba(0, 0, 0, 1)"
+}
+</script>
+    
+<script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
+{
+  "color": "rgba(153, 204, 51, 1)"
+}
+</script>
+</div>
+
+<div data-tchmi-grid-row-index="0" data-tchmi-grid-column-index="0" id="Title_mail" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="125" data-tchmi-left-unit="px" data-tchmi-text="Mail" data-tchmi-top="65" data-tchmi-top-unit="px" data-tchmi-width="224" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-horizontal-alignment="Center" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-font-size="18" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-text-font-weight="Bold" data-tchmi-text-font-size-unit="px">
+
+
+        <script data-tchmi-target-attribute="data-tchmi-text-color" type="application/json">
+{
+  "color": "rgba(0, 0, 0, 1)"
+}
+</script>
+
+        <script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
+            {
+            "color": "rgba(153, 204, 51, 1)"
+            }
+        </script>
+    </div>
+
+<div data-tchmi-grid-row-index="0" data-tchmi-grid-column-index="0" id="TcHmiTextblock_14013" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="25" data-tchmi-left-unit="px" data-tchmi-text="No Destinator Alarm" data-tchmi-top="117" data-tchmi-top-unit="px" data-tchmi-width="150" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-horizontal-alignment="Center" data-tchmi-text-vertical-alignment="Center" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-text-font-size-unit="px">
+
+</div>
+
+<div data-tchmi-grid-row-index="0" data-tchmi-grid-column-index="0" id="TcHmiTextblock_14015" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="25" data-tchmi-left-unit="px" data-tchmi-text="Start Process Alarm" data-tchmi-top="151" data-tchmi-top-unit="px" data-tchmi-width="150" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-horizontal-alignment="Center" data-tchmi-text-vertical-alignment="Center" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px">
+
+</div>
+
+<div data-tchmi-grid-row-index="0" data-tchmi-grid-column-index="0" id="LED_NoDestinator_3" data-tchmi-type="TcHmi.Controls.System.TcHmiUserControlHost" data-tchmi-height="22" data-tchmi-height-unit="px" data-tchmi-left="175" data-tchmi-left-unit="px" data-tchmi-size="20" data-tchmi-target-user-control="HMI/UserControls/LED2Colors.usercontrol" data-tchmi-top="153" data-tchmi-top-unit="px" data-tchmi-width="25" data-tchmi-width-unit="px" data-tchmi-associated_variable="%f%%s%PLC1.OpcUa.AllDataR.MAIL.MesAlarmCode%/s% >3%/f%" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px">
+<script data-tchmi-target-attribute="data-tchmi-color_on" type="application/json">
+{
+  "color": "rgba(153, 204, 51, 1)"
+}
+</script>
+<script data-tchmi-target-attribute="data-tchmi-color_off" type="application/json">
+{
+  "color": "rgba(247, 11, 11, 1)"
+}
+</script>
+
+</div>
+
+<div data-tchmi-grid-row-index="0" data-tchmi-grid-column-index="0" id="LED_NoDestinator" data-tchmi-type="TcHmi.Controls.System.TcHmiUserControlHost" data-tchmi-height="22" data-tchmi-height-unit="px" data-tchmi-left="175" data-tchmi-left-unit="px" data-tchmi-size="20" data-tchmi-target-user-control="HMI/UserControls/LED2Colors.usercontrol" data-tchmi-top="117" data-tchmi-top-unit="px" data-tchmi-width="25" data-tchmi-width-unit="px" data-tchmi-associated_variable="%f%%s%PLC1.OpcUa.AllDataR.MAIL.MesAlarmCode%/s%>1%/f%" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px">
+<script data-tchmi-target-attribute="data-tchmi-color_on" type="application/json">
+{
+  "color": "rgba(153, 204, 51, 1)"
+}
+</script>
+<script data-tchmi-target-attribute="data-tchmi-color_off" type="application/json">
+{
+  "color": "rgba(247, 11, 11, 1)"
+}
+</script>
+
+</div>
+
+<div data-tchmi-grid-row-index="0" data-tchmi-grid-column-index="0" id="TcHmiTextblock_14014" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="234" data-tchmi-left-unit="px" data-tchmi-text="Timeout" data-tchmi-top="117" data-tchmi-top-unit="px" data-tchmi-width="150" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-horizontal-alignment="Center" data-tchmi-text-vertical-alignment="Center" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px">
+
+</div>
+
+<div data-tchmi-grid-row-index="0" data-tchmi-grid-column-index="0" id="LED_NoDestinator_1" data-tchmi-type="TcHmi.Controls.System.TcHmiUserControlHost" data-tchmi-height="22" data-tchmi-height-unit="px" data-tchmi-left="384" data-tchmi-left-unit="px" data-tchmi-size="20" data-tchmi-target-user-control="HMI/UserControls/LED2Colors.usercontrol" data-tchmi-top="119" data-tchmi-top-unit="px" data-tchmi-width="25" data-tchmi-width-unit="px" data-tchmi-associated_variable="%f%%s%PLC1.OpcUa.AllDataR.MAIL.MesAlarmCode%/s% >2%/f%" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px">
+<script data-tchmi-target-attribute="data-tchmi-color_on" type="application/json">
+{
+  "color": "rgba(153, 204, 51, 1)"
+}
+</script>
+<script data-tchmi-target-attribute="data-tchmi-color_off" type="application/json">
+{
+  "color": "rgba(247, 11, 11, 1)"
+}
+</script>
+
+</div>
+
+<div data-tchmi-grid-row-index="0" data-tchmi-grid-column-index="0" id="PCS_ConfirmSetpP_422" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="32" data-tchmi-height-unit="px" data-tchmi-left="278" data-tchmi-left-unit="px" data-tchmi-top="175" data-tchmi-top-unit="px" data-tchmi-width="130" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-icon-width-unit="%" data-tchmi-icon-height-unit="%" data-tchmi-icon-width="100" data-tchmi-icon-height="100" data-tchmi-zindex="18" data-tchmi-right-unit="px" data-tchmi-text-font-size-unit="px" data-tchmi-text="Reset serveur Mail" data-tchmi-tooltip="Reset serveur Mail" data-tchmi-bottom-unit="px" data-tchmi-text-horizontal-alignment="Center" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-font-weight="Bold" data-tchmi-text-font-style="Normal" data-tchmi-text-font-size="15">
+
+
+
+
+        <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">[
+  {
+    "event": "PCS_ConfirmSetpP_422.onStatePressed",
+    "actions": [
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%s%PLC1.OpcUa.AllDataW.Reset_MailServer%/s%",
+        "valueType": "tchmi:general#/definitions/BOOL",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:general#/definitions/BOOL",
+          "value": true
+        },
+        "asyncWait": true
+      }
+    ]
+  }
+]</script>
+    
+<script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
+{
+  "color": "rgba(232, 226, 226, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-text-color" type="application/json">
+{
+  "color": "rgba(2, 0, 0, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-color" type="application/json">
+{
+  "color": "rgba(2, 0, 0, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-width" type="application/json">
+{
+  "left": 1,
+  "right": 1,
+  "top": 1,
+  "bottom": 1,
+  "leftUnit": "px",
+  "rightUnit": "px",
+  "topUnit": "px",
+  "bottomUnit": "px"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-style" type="application/json">
+{
+  "left": "Solid",
+  "right": "Solid",
+  "top": "Solid",
+  "bottom": "Solid"
+}
+</script>
+</div>
+
+<div data-tchmi-grid-row-index="0" data-tchmi-grid-column-index="0" id="Title_SMS" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="125" data-tchmi-left-unit="px" data-tchmi-text="SMS" data-tchmi-top="224" data-tchmi-top-unit="px" data-tchmi-width="224" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-horizontal-alignment="Center" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-font-size="18" data-tchmi-right-unit="px" data-tchmi-text-font-size-unit="px" data-tchmi-text-font-weight="Bold" data-tchmi-bottom-unit="px">
+
+
+        <script data-tchmi-target-attribute="data-tchmi-text-color" type="application/json">
+{
+  "color": "rgba(0, 0, 0, 1)"
+}
+</script>
+
+        <script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
+            {
+            "color": "rgba(153, 204, 51, 1)"
+            }
+        </script>
+    </div>
+
+<div data-tchmi-grid-row-index="0" data-tchmi-grid-column-index="0" id="TcHmiTextblock_15104" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="25" data-tchmi-left-unit="px" data-tchmi-text="Login Error" data-tchmi-top="260" data-tchmi-top-unit="px" data-tchmi-width="150" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-horizontal-alignment="Center" data-tchmi-text-vertical-alignment="Center" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-text-font-size-unit="px">
+
+</div>
+
+<div data-tchmi-grid-row-index="0" data-tchmi-grid-column-index="0" id="TcHmiTextblock_15105" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="25" data-tchmi-left-unit="px" data-tchmi-text="Read Error" data-tchmi-top="305" data-tchmi-top-unit="px" data-tchmi-width="150" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-horizontal-alignment="Center" data-tchmi-text-vertical-alignment="Center" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-text-font-size-unit="px">
+
+</div>
+
+<div data-tchmi-grid-row-index="0" data-tchmi-grid-column-index="0" id="TcHmiTextblock_15106" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="234" data-tchmi-left-unit="px" data-tchmi-text="Send Error" data-tchmi-top="260" data-tchmi-top-unit="px" data-tchmi-width="150" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-horizontal-alignment="Center" data-tchmi-text-vertical-alignment="Center" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-text-font-size-unit="px">
+
+</div>
+
+<div data-tchmi-grid-row-index="0" data-tchmi-grid-column-index="0" id="TcHmiTextblock_15107" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="234" data-tchmi-left-unit="px" data-tchmi-text="Delete Error" data-tchmi-top="305" data-tchmi-top-unit="px" data-tchmi-width="150" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-horizontal-alignment="Center" data-tchmi-text-vertical-alignment="Center" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-text-font-size-unit="px">
+
+</div>
+
+<div data-tchmi-grid-row-index="0" data-tchmi-grid-column-index="0" id="PCS_ConfirmSetpP_441" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="36" data-tchmi-height-unit="px" data-tchmi-left="278" data-tchmi-left-unit="px" data-tchmi-top="350" data-tchmi-top-unit="px" data-tchmi-width="131" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-icon-width-unit="%" data-tchmi-icon-height-unit="%" data-tchmi-icon-width="100" data-tchmi-icon-height="100" data-tchmi-zindex="18" data-tchmi-right-unit="px" data-tchmi-text-font-size-unit="px" data-tchmi-text="Reset serveur SMS" data-tchmi-tooltip="Reset serveur Mail" data-tchmi-bottom-unit="px" data-tchmi-text-horizontal-alignment="Center" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-font-style="Normal" data-tchmi-text-font-weight="Bold" data-tchmi-text-font-size="15">
+
+
+
+
+        <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">[
+  {
+    "event": "PCS_ConfirmSetpP_441.onStatePressed",
+    "actions": [
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%s%PLC1.OpcUa.AllDataW.Reset_SmsServer%/s%",
+        "valueType": "tchmi:general#/definitions/BOOL",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:general#/definitions/BOOL",
+          "value": true
+        },
+        "asyncWait": true
+      }
+    ]
+  }
+]</script>
+    
+<script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
+{
+  "color": "rgba(232, 226, 226, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-width" type="application/json">
+{
+  "left": 1,
+  "right": 1,
+  "top": 1,
+  "bottom": 1,
+  "leftUnit": "px",
+  "rightUnit": "px",
+  "topUnit": "px",
+  "bottomUnit": "px"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-style" type="application/json">
+{
+  "left": "Solid",
+  "right": "Solid",
+  "top": "Solid",
+  "bottom": "Solid"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-color" type="application/json">
+{
+  "color": "rgba(2, 0, 0, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-text-color" type="application/json">
+{
+  "color": "rgba(2, 0, 0, 1)"
+}
+</script>
+</div>
+
+<div data-tchmi-grid-row-index="0" data-tchmi-grid-column-index="0" id="LED_Login" data-tchmi-type="TcHmi.Controls.System.TcHmiUserControlHost" data-tchmi-height="22" data-tchmi-height-unit="px" data-tchmi-left="176" data-tchmi-left-unit="px" data-tchmi-size="20" data-tchmi-target-user-control="HMI/UserControls/LED2Colors.usercontrol" data-tchmi-top="262" data-tchmi-top-unit="px" data-tchmi-width="25" data-tchmi-width-unit="px" data-tchmi-associated_variable="%f%%s%PLC1.OpcUa.AllDataR.SMS.MesAlarmCode%/s% >1%/f%" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px">
+<script data-tchmi-target-attribute="data-tchmi-color_on" type="application/json">
+{
+  "color": "rgba(153, 204, 51, 1)"
+}
+</script>
+<script data-tchmi-target-attribute="data-tchmi-color_off" type="application/json">
+{
+  "color": "rgba(247, 11, 11, 1)"
+}
+</script>
+
+</div>
+
+<div data-tchmi-grid-row-index="0" data-tchmi-grid-column-index="0" id="LED_Read" data-tchmi-type="TcHmi.Controls.System.TcHmiUserControlHost" data-tchmi-height="22" data-tchmi-height-unit="px" data-tchmi-left="176" data-tchmi-left-unit="px" data-tchmi-size="20" data-tchmi-target-user-control="HMI/UserControls/LED2Colors.usercontrol" data-tchmi-top="306" data-tchmi-top-unit="px" data-tchmi-width="25" data-tchmi-width-unit="px"  data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-associated_variable="%f%%s%PLC1.OpcUa.AllDataR.SMS.MesAlarmCode%/s% >3%/f%">
+<script data-tchmi-target-attribute="data-tchmi-color_on" type="application/json">
+{
+  "color": "rgba(153, 204, 51, 1)"
+}
+</script>
+<script data-tchmi-target-attribute="data-tchmi-color_off" type="application/json">
+{
+  "color": "rgba(247, 11, 11, 1)"
+}
+</script>
+
+</div>
+
+<div data-tchmi-grid-row-index="0" data-tchmi-grid-column-index="0" id="LED_Send" data-tchmi-type="TcHmi.Controls.System.TcHmiUserControlHost" data-tchmi-height="22" data-tchmi-height-unit="px" data-tchmi-left="384" data-tchmi-left-unit="px" data-tchmi-size="20" data-tchmi-target-user-control="HMI/UserControls/LED2Colors.usercontrol" data-tchmi-top="262" data-tchmi-top-unit="px" data-tchmi-width="25" data-tchmi-width-unit="px"  data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-associated_variable="%f%%s%PLC1.OpcUa.AllDataR.SMS.MesAlarmCode%/s% >2%/f%">
+<script data-tchmi-target-attribute="data-tchmi-color_on" type="application/json">
+{
+  "color": "rgba(153, 204, 51, 1)"
+}
+</script>
+<script data-tchmi-target-attribute="data-tchmi-color_off" type="application/json">
+{
+  "color": "rgba(247, 11, 11, 1)"
+}
+</script>
+
+</div>
+
+<div data-tchmi-grid-row-index="0" data-tchmi-grid-column-index="0" id="LED_Delete" data-tchmi-type="TcHmi.Controls.System.TcHmiUserControlHost" data-tchmi-height="22" data-tchmi-height-unit="px" data-tchmi-left="386" data-tchmi-left-unit="px" data-tchmi-size="20" data-tchmi-target-user-control="HMI/UserControls/LED2Colors.usercontrol" data-tchmi-top="308" data-tchmi-top-unit="px" data-tchmi-width="25" data-tchmi-width-unit="px"  data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-associated_variable="%f%%s%PLC1.OpcUa.AllDataR.SMS.MesAlarmCode%/s% >4%/f%">
+<script data-tchmi-target-attribute="data-tchmi-color_on" type="application/json">
+{
+  "color": "rgba(153, 204, 51, 1)"
+}
+</script>
+<script data-tchmi-target-attribute="data-tchmi-color_off" type="application/json">
+{
+  "color": "rgba(247, 11, 11, 1)"
+}
+</script>
+
+</div>
+
+</div>
+
+<div class="pointer" id="PCS_ConfirmSetpP_421" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="46" data-tchmi-height-unit="px" data-tchmi-left="668" data-tchmi-left-unit="px" data-tchmi-top="599" data-tchmi-top-unit="px" data-tchmi-width="201" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-icon-width-unit="%" data-tchmi-icon-height-unit="%" data-tchmi-icon-width="100" data-tchmi-icon-height="100" data-tchmi-zindex="2" data-tchmi-right-unit="px" data-tchmi-text-font-size-unit="px" data-tchmi-text="Confirm" data-tchmi-text-font-size="18" data-tchmi-bottom-unit="px" data-tchmi-text-horizontal-alignment="Center" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-font-style="Normal" data-tchmi-text-font-weight="Bold">
+
+        <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">[
+  {
+    "event": "PCS_ConfirmSetpP_421.onStatePressed",
+    "actions": [
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%s%PLC1.OpcUa.AllDataW.ChangePhoneMailInfos%/s%",
+        "valueType": "tchmi:general#/definitions/BOOL",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:general#/definitions/BOOL",
+          "value": true
+        },
+        "asyncWait": true
+      }
+    ]
+  }
+]</script>
+    
+<script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
+{
+  "color": "rgba(232, 226, 226, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-color" type="application/json">
+{
+  "color": "rgba(2, 0, 0, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-text-color" type="application/json">
+{
+  "color": "rgba(2, 0, 0, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-width" type="application/json">
+{
+  "left": 1,
+  "right": 1,
+  "top": 1,
+  "bottom": 1,
+  "leftUnit": "px",
+  "rightUnit": "px",
+  "topUnit": "px",
+  "bottomUnit": "px"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-style" type="application/json">
+{
+  "left": "Solid",
+  "right": "Solid",
+  "top": "Solid",
+  "bottom": "Solid"
+}
+</script>
+</div>
+
+<div id="Table_PhoneNum" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiDatagrid" data-tchmi-height="345" data-tchmi-height-unit="px" data-tchmi-left="562" data-tchmi-left-unit="px" data-tchmi-top="223" data-tchmi-top-unit="px" data-tchmi-width="200" data-tchmi-width-unit="px" data-tchmi-show-row-numbers="False" data-tchmi-right-unit="px" data-tchmi-data-symbol="%s%PLC1.OpcUa.AllValueW.AX_Numtel_OPC%/s%" data-tchmi-header-font-size="14" data-tchmi-header-font-style="Normal" data-tchmi-header-font-weight="Bold" data-tchmi-header-height-unit="px" data-tchmi-header-font-size-unit="px">
+<script data-tchmi-target-attribute="data-tchmi-src-column" type="application/json">
+{
+  "label": "Phone Number",
+  "control": "TextBox",
+  "width": 100,
+  "widthUnit": "%",
+  "resize": false,
+  "sortable": false,
+  "minWidth": 100,
+  "minWidthUnit": "%",
+  "cellBackground": null,
+  "textColor": null,
+  "editable": true,
+  "horizontalAlignment": "Center",
+  "verticalAlignment": "Center",
+  "format": null
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-cell-content-padding" type="application/json">
+{
+  "left": 3,
+  "leftUnit": "px",
+  "right": 3,
+  "rightUnit": "px",
+  "top": 0,
+  "topUnit": "px",
+  "bottom": 0,
+  "bottomUnit": "px"
+}
+</script>
+
+
+<script data-tchmi-target-attribute="data-tchmi-header-background-color" type="application/json">
+{
+  "color": "rgba(153, 204, 51, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-row-numbers-background-color" type="application/json">
+{
+  "color": "rgba(153, 204, 51, 1)"
+}
+</script>
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-header-text-color" type="application/json">
+{
+  "color": "rgba(0, 0, 0, 1)"
+}
+</script>
+</div>
+
+<div id="TcHmiDatagrid_72" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiDatagrid" data-tchmi-height="345" data-tchmi-height-unit="px" data-tchmi-left="762" data-tchmi-left-unit="px" data-tchmi-top="223" data-tchmi-top-unit="px" data-tchmi-width="119" data-tchmi-width-unit="px" data-tchmi-show-row-numbers="False" data-tchmi-right-unit="px" data-tchmi-data-symbol="%s%PLC1.OpcUa.AllValueW.AX_SubscribeSms_OPC%/s%" data-tchmi-header-font-style="Normal" data-tchmi-header-font-weight="Bold" data-tchmi-header-font-size="14" data-tchmi-header-height-unit="px" data-tchmi-header-font-size-unit="px" data-tchmi-bottom-unit="px">
+<script data-tchmi-target-attribute="data-tchmi-src-column" type="application/json">
+{
+  "label": "SMS Subscription",
+  "control": "CheckBox",
+  "width": 100,
+  "widthUnit": "%",
+  "resize": false,
+  "sortable": false,
+  "minWidth": 100,
+  "minWidthUnit": "%",
+  "cellBackground": null,
+  "textColor": null,
+  "editable": true,
+  "horizontalAlignment": "Center",
+  "verticalAlignment": "Center",
+  "format": null
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-cell-content-padding" type="application/json">
+{
+  "left": 3,
+  "leftUnit": "px",
+  "right": 3,
+  "rightUnit": "px",
+  "top": 0,
+  "topUnit": "px",
+  "bottom": 0,
+  "bottomUnit": "px"
+}
+</script>
+
+
+<script data-tchmi-target-attribute="data-tchmi-header-background-color" type="application/json">
+{
+  "color": "rgba(153, 204, 51, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-row-numbers-background-color" type="application/json">
+{
+  "color": "rgba(153, 204, 51, 1)"
+}
+</script>
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-header-text-color" type="application/json">
+{
+  "color": "rgba(0, 0, 0, 1)"
+}
+</script>
+</div>
+
+<div id="Table_LVL" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiDatagrid" data-tchmi-height="345" data-tchmi-height-unit="px" data-tchmi-left="380" data-tchmi-left-unit="px" data-tchmi-top="224" data-tchmi-top-unit="px" data-tchmi-width="66" data-tchmi-width-unit="px" data-tchmi-show-row-numbers="False" data-tchmi-right-unit="px" data-tchmi-tooltip="7: All , 8: Supervision ,16: O&M , 64: Security" data-tchmi-data-symbol="%s%PLC1.OpcUa.AllValueW.AX_UserLVL%/s%" data-tchmi-header-font-size="15" data-tchmi-header-font-style="Normal" data-tchmi-header-font-weight="Bold">
+<script data-tchmi-target-attribute="data-tchmi-src-column" type="application/json">
+{
+  "label": "User LVL",
+  "control": "TextBox",
+  "width": 100,
+  "widthUnit": "%",
+  "resize": false,
+  "sortable": false,
+  "minWidth": 100,
+  "minWidthUnit": "%",
+  "cellBackground": null,
+  "textColor": null,
+  "editable": true,
+  "horizontalAlignment": "Center",
+  "verticalAlignment": "Center",
+  "format": null
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-cell-content-padding" type="application/json">
+{
+  "left": 3,
+  "leftUnit": "px",
+  "right": 3,
+  "rightUnit": "px",
+  "top": 0,
+  "topUnit": "px",
+  "bottom": 0,
+  "bottomUnit": "px"
+}
+</script>
+
+
+<script data-tchmi-target-attribute="data-tchmi-header-background-color" type="application/json">
+{
+  "color": "rgba(153, 204, 51, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-row-numbers-background-color" type="application/json">
+{
+  "color": "rgba(153, 204, 51, 1)"
+}
+</script>
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-row-numbers-text-color" type="application/json">
+{
+  "color": "rgba(0, 0, 0, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-header-text-color" type="application/json">
+{
+  "color": "rgba(0, 0, 0, 1)"
+}
+</script>
+</div>
+
+<div class="pointer" id="PCS_ConfirmSetpP_444" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="46" data-tchmi-height-unit="px" data-tchmi-left="88" data-tchmi-left-unit="px" data-tchmi-top="599" data-tchmi-top-unit="px" data-tchmi-width="201" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-icon-width-unit="%" data-tchmi-icon-height-unit="%" data-tchmi-icon-width="100" data-tchmi-icon-height="100" data-tchmi-zindex="2" data-tchmi-right-unit="px" data-tchmi-text-font-size-unit="px" data-tchmi-text="Read From Target" data-tchmi-text-font-size="18" data-tchmi-state-symbol="%s%PLC1.OpcUa.bReadFromTargetInfos%/s%" data-tchmi-bottom-unit="px" data-tchmi-text-font-weight="Bold" data-tchmi-text-font-style="Normal" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-horizontal-alignment="Center">
+
+        
+    
+<script data-tchmi-target-attribute="data-tchmi-border-style" type="application/json">
+{
+  "left": "Solid",
+  "right": "Solid",
+  "top": "Solid",
+  "bottom": "Solid"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-width" type="application/json">
+{
+  "left": 1,
+  "right": 1,
+  "top": 1,
+  "bottom": 1,
+  "leftUnit": "px",
+  "rightUnit": "px",
+  "topUnit": "px",
+  "bottomUnit": "px"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
+{
+  "color": "rgba(232, 226, 226, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-color" type="application/json">
+{
+  "color": "rgba(2, 0, 0, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-text-color" type="application/json">
+{
+  "color": "rgba(2, 0, 0, 1)"
+}
+</script>
+</div>
+<script data-tchmi-target-attribute="data-tchmi-color_on" type="application/json">
+{
+  "color": "rgba(153, 204, 51, 1)"
+}
+</script>
+<script data-tchmi-target-attribute="data-tchmi-color_off" type="application/json">
+{
+  "color": "rgba(247, 11, 11, 1)"
+}
+</script>
+
+</div>
+
+<div id="LED_SMS_Send" data-tchmi-type="TcHmi.Controls.System.TcHmiUserControlHost" data-tchmi-height="22" data-tchmi-height-unit="px" data-tchmi-left="1320" data-tchmi-left-unit="px" data-tchmi-size="20" data-tchmi-target-user-control="HMI/UserControls/LED2Colors.usercontrol" data-tchmi-top="314" data-tchmi-top-unit="px" data-tchmi-width="22" data-tchmi-width-unit="px" data-tchmi-associated_variable="%f%%s%PLC1.OpcUa.AllDataR.SMS.MesAlarmCode%/s% >2%/f%">
+<script data-tchmi-target-attribute="data-tchmi-color_on" type="application/json">
+{
+  "color": "rgba(153, 204, 51, 1)"
+}
+</script>
+<script data-tchmi-target-attribute="data-tchmi-color_off" type="application/json">
+{
+  "color": "rgba(247, 11, 11, 1)"
+}
+</script>
+
+</div>
+
+<div id="LED_SMS_Login" data-tchmi-type="TcHmi.Controls.System.TcHmiUserControlHost" data-tchmi-height="22" data-tchmi-height-unit="px" data-tchmi-left="1110" data-tchmi-left-unit="px" data-tchmi-size="20" data-tchmi-target-user-control="HMI/UserControls/LED2Colors.usercontrol" data-tchmi-top="311" data-tchmi-top-unit="px" data-tchmi-width="20" data-tchmi-width-unit="px" data-tchmi-associated_variable="%f%%s%PLC1.OpcUa.AllDataR.SMS.MesAlarmCode%/s% >1%/f%" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px">
+<script data-tchmi-target-attribute="data-tchmi-color_on" type="application/json">
+{
+  "color": "rgba(153, 204, 51, 1)"
+}
+</script>
+<script data-tchmi-target-attribute="data-tchmi-color_off" type="application/json">
+{
+  "color": "rgba(247, 11, 11, 1)"
+}
+</script>
+
+</div>
+
+<div id="LED_SMS_Read" data-tchmi-type="TcHmi.Controls.System.TcHmiUserControlHost" data-tchmi-height="22" data-tchmi-height-unit="px" data-tchmi-left="1110" data-tchmi-left-unit="px" data-tchmi-size="20" data-tchmi-target-user-control="HMI/UserControls/LED2Colors.usercontrol" data-tchmi-top="353" data-tchmi-top-unit="px" data-tchmi-width="20" data-tchmi-width-unit="px" data-tchmi-associated_variable="%f%%s%PLC1.OpcUa.AllDataR.SMS.MesAlarmCode%/s% >3%/f%" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px">
+<script data-tchmi-target-attribute="data-tchmi-color_on" type="application/json">
+{
+  "color": "rgba(153, 204, 51, 1)"
+}
+</script>
+<script data-tchmi-target-attribute="data-tchmi-color_off" type="application/json">
+{
+  "color": "rgba(247, 11, 11, 1)"
+}
+</script>
+
+</div>
+
+<div id="LED_SMS_Delete" data-tchmi-type="TcHmi.Controls.System.TcHmiUserControlHost" data-tchmi-height="23" data-tchmi-height-unit="px" data-tchmi-left="1320" data-tchmi-left-unit="px" data-tchmi-size="20" data-tchmi-target-user-control="HMI/UserControls/LED2Colors.usercontrol" data-tchmi-top="355" data-tchmi-top-unit="px" data-tchmi-width="21" data-tchmi-width-unit="px" data-tchmi-associated_variable="%f%%s%PLC1.OpcUa.AllDataR.MAIL.MesAlarmCode%/s%>1%/f%" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-creator-locked="False" data-tchmi-creator-visibility="Visible">
+<script data-tchmi-target-attribute="data-tchmi-color_on" type="application/json">
+{
+  "color": "rgba(153, 204, 51, 1)"
+}
+</script>
+<script data-tchmi-target-attribute="data-tchmi-color_off" type="application/json">
+{
+  "color": "rgba(247, 11, 11, 1)"
+}
+</script>
+
+</div>
+
+</div>

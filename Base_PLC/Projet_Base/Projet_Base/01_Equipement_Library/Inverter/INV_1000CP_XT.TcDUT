@@ -1,0 +1,71 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="INV_1000CP_XT" Id="{5bd8286b-f59f-469f-ba98-df22646ae8ec}">
+    <Declaration><![CDATA[TYPE INV_1000CP_XT :
+	//SMA CP, CP-US, CP-JP and HE-20
+STRUCT
+		Mesdata					: INV;
+		BJMonitor				: INV_1000CP_XT_StringMonitor;	
+
+// Device Family
+		MesEventID				: REAL;		(* Event ID of the current event [ErrNo]*)
+		MesWaitGridTm			: TIME; 	(* Time until grid connection attempt (s) [TmsRmg].*)
+	// Setpoint ??? RecoAction
+		SetptRecoAction			: REAL;		(* 336 = Contact the manufacturer,337 = Contact the installer,338 = Invalid [Prio]*)
+		MesOpened_CBGrid		: BOOL;     (* 51 = Contactor closed,311 = Contactor open [GriSwStt]*)
+		MesRiso					: REAL;		(* Insulation resistance (Ohm) [Riso]*)
+		MesState_KeyComut		: BOOL;     (* Status of key switch :381 = Stop,569 = Activated [DInKeySwStrStp]*)
+		MesState_Inv			: REAL;		(* Operating state, 309 = Operation,381 = Stop,455 = Warning,1392 = Error,1393 = Wait for PV voltage,1394 = Wait for AC grid,1480 = "Wait for electricity supplier" operating state (for 0% regulation),1560 = Remote shutdown active,2383 = Manual restart [mode]*)
+		MesIDError				: REAL;     (* Error location OF the present error,267 = Inverter , 1395 = DC section,1396 = AC grid [Error]*)
+		MesEventID_INVSMA		: REAL;		(* Current, complete event number [ErrNoSma]*)
+		MesOpened_GFDI			: BOOL;     (* Switching status of the GFDI  (311: Open & 51 : Close) [DInGfdi]*)
+		MesOpened_CBdc			: BOOL;		(* DC Switch status (51: Close, 311: Open) [DcSwStt]*)
+		MesState_Restart		: REAL;		(* Status of current restart interlock :1690 = Fast shut-down, 2386 = Overvoltage, 2387 = Undervoltage, 2388 = Overfrequency, 2389 = Underfrequency, 2390 = Passive islanding detection, 2490 = Phase lost detection [ManResStt]*)
+		MesOpened_CBac			: BOOL;  	(* AC switch-disconnector in cabinet [AcDiscon]: 51 = Closed, 311 = Open*)
+		MesEActTot				: REAL;     (* Total yield (MWh) [E-Total]*)
+		MesEActDay				: REAL;     (* Daily yield (Wh) [E-heute]*)
+		MesWorkingHr			: TIME;     (* Operating time (Hr) [h-On]*)
+		MesFeedTm				: TIME;     (* Feed-in Time (Hr) []*)
+		MesWorkingHr_Fan1		: TIME;     (* Operating time of the interior fan 1 (Hr) [CntFanCab1]*)
+		MesWorkingHr_Fan2		: TIME;     (* Operating time of the interior fan 2 (Hr) [CntFanCab2]*)
+		MesWorkingHr_Heat		: TIME;		(* Operating time of the interior heater (Hr) [CntFanHs]*)
+		MesWorkingHr_Heat2		: TIME;		(* Operating time of the interior heater (Hr) [CntHtCab2]*)
+		MesWorkingHr_Fan3		: TIME;     (* Operating time of interior fan 3 (h) [CntFanCab3]*)
+		MesU12					: REAL;     (* (V) Line to line Voltage L1-L2 utility grid VacL12*)
+		MesU23					: REAL;     (* (V) Line to line Voltage L2-L3 utility grid VacL23*)
+		MesU31					: REAL;     (* (V) Line to line Voltage L3-L1 utility grid VacL31*)
+		MesI1					: REAL;		(* (A) Mean AC current L1 Total [IacL1]*)
+		MesI2					: REAL;		(* (A) Mean AC current L2 Total [IacL2]*)
+		MesI3					: REAL;		(* (A) Mean AC current L3 Total [IacL3]*)
+		MesTypeCosPhi			: REAL;		(* Setpoint excitation type of cos φ [PF-PFExtSpt]: 1041 = Capacative, 1042 = Inductive*)
+		MesQMode	           	: REAL;		(* Operating mode of the reactive power regulation [Q-VArMod]:303 = Off,1069= Reactive power-/voltage characteristic curve Q(V),1070 = Reactive power Q, direct setpoint,1071 = Reactive power const. Q (kVAr)                                                          *)
+											(* 1072 = Reactive power Q, setpoint via system control, 1074 = cos φ, direct setpoint, 1075 = cos φ, setpoint via system control, 1076 = cos φ(P) – characteristic curve, 1387 = Reactive power Q, setpoint via analog input , 1388 =cos φ, setpoint via analog input, *)
+											(* 1389 = Reactive power-/voltage characteristic curve Q(V) with hysteresis and deadband*)
+		MesSetptQ				: REAL;     (* Reactive power setpoint (kVAr) [SpntPwrRt]*)
+		MesSetptQ_Pct			: REAL;     (* Reactive power setpoint (%) [Q-VArNom].*)
+		MesSetptCosPhi			: REAL;		(* Setpoint cos φ [PF-PFSpt]*)
+		MesSetptType_CosPhi		: REAL;		(* Setpoint excitation type of cos φ [PF-PFExtSpt]: 1041 = Capacative, 1042 = Inductive*)
+		MesPMode				: REAL;		(*	 [P-WMod]: 303 = Off, 1077 = Active power limitation P (kW), 1078 = Active power limitation P in (%) of PMAX,*)
+											(*	1079 = Active power limitation P via plant control, 1390 = Active power limitation P via analog input*)
+
+// Stopped here											(*	1391 = Active power limitation P via digital inputs*)
+		MesPSetpt				: REAL;     (* (kW) Active power setpoint [P-WSp]*)
+		MesPSetptPct			: REAL;     (* (%) Active power setpoint  [P-WNom].*)
+		MesTmpHs				: REAL;		(* (°C) Heat sink temperature 1 [TmpHs]*)
+		MesTmpCab1				: REAL;		(* (°C) Heat sink temperature Cab 1 [TmpCab1]*)
+		MesTmpCab3				: REAL;		(* (°C) Heat sink temperature Cab 3 [TmpCab3]*)
+		MesTmpExt				: REAL;		(* (°C) External temperature 1 [TmpExt1]*)
+		MesTmpCol				: REAL;		(* (°C) Temperautre of the sinusoidal filter choke [TmpCol]*)
+		MesGHI					: REAL;		(* (W/m²) Total irradiation of the sensor surface [ExtSolIrr]*)
+		MesInCur1				: REAL;		(* (mA) Analog current Input 1 [ExtSolIrr]*)
+		MesInCur2				: REAL;		(* (mA) Analog current Input 2 [ExLAnaInCur]*)
+		MesOpStateOn			: BOOL;		(* (NA) Operating state : 381 = Stop,569 = Activated  [SpntRemEna]*)
+		MesbRIsoOn				: BOOL;		(* (NA) External measurement of the insulation resistance : 303=Off, 308=On*)
+		//AX_BJ					: ARRAY [1..8] OF REAL; // (A) Current of each BJ*)
+
+		
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

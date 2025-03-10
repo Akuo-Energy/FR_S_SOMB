@@ -1,0 +1,40 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <GVL Name="GVL_CFG" Id="{26c96b50-e8a2-42b0-92ab-047dfdedebbf}">
+    <Declaration><![CDATA[///////////////
+// Configuration Files. Define Power Plant sizing and references. 
+//////////////
+VAR_GLOBAL 
+		CstPLCBackup 			: BOOL := FALSE ;  			// TRUE if this PLC is used as a backup . 
+		CstNetAmsId_Slave		: STRING(20):= '5.49.202.22.1.1'; //NetAMSId Slave .'5.79.170.90.1.1'
+		CstNetAmsId_IndusPC		: STRING(20):= ''; // set '' if no Indus PLC
+		//CstIPIEC104			: STRING := '10.101.111.1' ; 
+		
+		
+END_VAR
+	
+VAR_GLOBAL 
+	// Solar Classique //
+		A1_PP					: FB_PP  ;  								// MCA Power Plant 
+ 
+	// PRODUCT DEFINITION //
+		//PTR 
+		AX_PTR 					: ARRAY[1..CstNbPTR_G] OF FB_PTR ; 	 		// Array with AMG products
+		
+		//SUB_MV
+		A1_SUBMV				: FB_SUBMV ;	 					 		// SUB_MV		
+		
+		//WEATHER STATION
+		A1_WS					: FB_WS;
+		
+		//ESS 
+		//AX_ESS				: ARRAY[1..CstNbESS_G] OF FB_ESS ; 
+		
+	// GLOBAL VARIABLE //
+	
+		CmdClearFault_G			: BOOL ; 									// (NA) Clear all permanent faults
+		CmdInit_G				: BOOL ; 									// (NA) Global Init Action
+		CstIPIEC104				: STRING := '10.111.109.1' ; 		
+END_VAR]]></Declaration>
+  </GVL>
+</TcPlcObject>

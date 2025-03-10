@@ -1,0 +1,259 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1">
+  <POU Name="FB_SUBHV" Id="{d7096a81-a23d-456e-87b3-9c57dd09549b}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_SUBHV EXTENDS FB_SUBHV_Base
+//////////////////
+// Substation for AMHE  Project 
+//////////////////
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance specific)  
+	// Parameters of the Object (instance specific)  
+
+END_VAR
+
+VAR_INPUT 
+	// EQUIPMENTS
+	AX_EM					: ARRAY[1..CstNbEM_G] OF  FB_EM_Pulse ; 
+	A1_DataLogger_PPC		: FB_Datalogger_SchSkid ; 
+	A1_PM								: FB_PM_ION7650; 				//FB_PM_Janitza;
+	
+	IN_MesAlarm_IntrusionMIDI_IO 		: BOOL ; // MIDI intrusion alarm 
+	IN_MesState_Siren1MIDI_IO 			: BOOL ; // MIDI Siren 1 is on 	
+	IN_MesState_Siren2MIDI_IO 			: BOOL ; // MIDI Siren 2 is on 	
+	
+	IN_MesAlarm_IntrusionPLAT_IO 		: BOOL ; // PLAT intrusion alarm 
+	IN_MesState_Siren1PLAT_IO 			: BOOL ; // PLAT Siren 1 is on 	
+	IN_MesState_Siren2PLAT_IO 			: BOOL ; // PLAT Siren 2 is on 	
+	
+	MesDataExd				: SUBHV_Exd; 				// (NA) [P,H,B] MCA PDL specific Data structure    	
+		
+	
+END_VAR
+
+VAR_OUTPUT
+		
+	
+END_VAR
+
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//
+	
+	 	R_TRIG_Event					: ARRAY[1..15] OF R_TRIG ;  
+		MesComErrorEthercat	 			: BOOL;						//(NA) Communication Error with Ethercat coupler 
+		TOF_Ethercat					: TOF ;    
+
+	// Unknown fault 
+		UnknownFault					: BOOL;           			// DM2 est reste ouverte avec Aucun défaut et une autorisation de couplage ==> aboutit a une perte d'autorisation    
+		RTrigEndGte						: R_TRIG;           		//
+		TPSepamCloseAfterGte			: TP;  						// 
+
+              	
+	//M_EVALUATE VARIABLES//        	
+	
+	//M_Init 
+
+END_VAR			]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{fa3b0a25-9947-4c0d-80ea-7ce1c5be36b5}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Generates object alarms and manages resets. 
+//////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager			: FB_AlarmCodeManager ; 
+
+	CalAlarmSynthesisPDL			: BOOL;
+	CalWarningSynthesisPDL			: BOOL;
+	
+	ChildWarningSynthesis: BOOL;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[		
+
+// PRODUCT ALARMS AND WARNINGS AGGREGATION //	
+
+
+// ALARM CODE //
+
+// Attention une alarm doit être mise en commentaire de la manière suivante (* *), l'utilisation du // pose pb sur Bazefield 
+
+	FB_AlarmCodeManager(
+		bAlarm1			:= FALSE,				
+		bAlarm2			:= FALSE,				
+		bAlarm3			:= FALSE, 				
+		bAlarm4			:= FALSE,				
+		bAlarm5			:= FALSE,				
+		bAlarm6			:= FALSE, 				
+		bAlarm7			:= FALSE,                       //
+		bAlarm8			:= FALSE,                       //
+		bAlarm9			:= FALSE,                       //
+		bAlarm10		:= FALSE,                       //
+		bAlarm11		:= FALSE,                       //
+		bAlarm12		:= FALSE,                       //
+		bAlarm13		:= FALSE,                       //
+		bAlarm14		:= FALSE,						//
+		bAlarm15		:= FALSE,                       //
+		wAlarmCode		=>MesDataExd.MesData.MesAlarmCode);                       	
+                                                                	
+                                                              	
+// WARNING CODE //                                              	
+	FB_AlarmCodeManager(                                        	
+ 		bAlarm1			:= FALSE,									//
+		bAlarm2			:= FALSE,                                   //
+		bAlarm3			:= FALSE,                                   //
+		bAlarm4			:= FALSE,    		                        //
+		bAlarm5			:= FALSE,                                   //
+		bAlarm6			:= FALSE,       			                //
+		bAlarm7			:= FALSE,                                   //
+		bAlarm8			:= FALSE,                                   //
+		bAlarm9			:= FALSE,                                   //
+		bAlarm10		:= FALSE,     								// 
+		bAlarm11		:= FALSE,									//
+		bAlarm12		:= FALSE,									// 
+		bAlarm13		:= FALSE,         							//           
+		bAlarm14		:= FALSE,        							//
+		bAlarm15		:= FALSE,	                                //
+		wAlarmCode		=>MesDataExd.MesData.MesWarningCode);
+		
+
+	
+// EVENT CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= FALSE,											// 
+		bAlarm2			:= FALSE,      						//    
+		bAlarm3			:= FALSE,//
+		bAlarm4			:= FALSE,//
+		bAlarm5			:= FALSE,//
+		bAlarm6			:= FALSE,//
+		bAlarm7			:= FALSE,//
+		bAlarm8			:= FALSE,//
+		bAlarm9			:= FALSE,//
+		bAlarm10		:= FALSE,//
+		bAlarm11		:= FALSE,//
+		bAlarm12		:= FALSE,//
+		bAlarm13		:= FALSE,                                           // 
+		bAlarm14		:= FALSE,                                           //
+		bAlarm15		:= FALSE,                                           // 
+		wAlarmCode		=>MesDataExd.MesData.MesEventCode);   
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_EquipmentCalls" Id="{652926ab-2046-4423-82e7-b3bd1c55923f}">
+      <Declaration><![CDATA[METHOD M_EquipmentCalls
+//////////////////
+// Evaluate AMS characteristics
+//////////////////
+
+VAR
+	// Method local variables (reinitialized at each cycle) 
+	i : INT;
+
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[A1_PM.M_Execute() ; 
+FOR KK:= 1 TO CstNbEM_G DO 
+	AX_EM[KK].M_Execute() ; 	
+END_FOR 		
+A1_DataLogger_PPC.M_Execute() ; ]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Evaluate" Id="{93e90946-2cdb-4cb7-aabe-311113000c0e}">
+      <Declaration><![CDATA[METHOD M_Evaluate
+//////////////////
+// Evaluate PDL Data 
+//////////////////
+VAR 
+
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[MesDataExd.PM		:= A1_PM.MesDataExd ; 
+FOR KK:= 1 TO CstNbEM_G DO 
+	MesDataExd.EM[KK] := AX_EM[KK].MesDataExd; 
+END_FOR			
+MesDataExd.Datalogger_PPC		:= A1_DataLogger_PPC.MesDataExd; 			
+
+
+MesDataExd.Datalogger_SECU[1].MesAlarm_Intrusion :=  IN_MesAlarm_IntrusionMIDI_IO; 
+MesDataExd.Datalogger_SECU[1].MesState_Siren1 :=  IN_MesState_Siren1MIDI_IO; 
+MesDataExd.Datalogger_SECU[1].MesState_Siren2 :=  IN_MesState_Siren2MIDI_IO; 
+
+MesDataExd.Datalogger_SECU[2].MesAlarm_Intrusion :=  IN_MesAlarm_IntrusionPLAT_IO; 
+MesDataExd.Datalogger_SECU[2].MesState_Siren1 :=  IN_MesState_Siren1PLAT_IO; 
+MesDataExd.Datalogger_SECU[2].MesState_Siren2 :=  IN_MesState_Siren2PLAT_IO; ]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{9d11ba52-fdc3-4092-9794-5d971047d349}">
+      <Declaration><![CDATA[METHOD M_Init
+
+
+VAR
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[	
+	A1_DataLogger_PPC.ParamIPAddress := '192.168.1.2'; // Needs update
+	
+
+	FOR KK:= 1 TO CstNbEM_G DO 
+		AX_EM[KK].ParamStepEactCons := 10 ; // kWh 
+		AX_EM[KK].ParamStepEactProd := 10 ; 
+		AX_EM[KK].ParamStepEreactCons := 10 ; 
+		AX_EM[KK].ParamStepEreactProd := 10 ; 
+		
+		
+	END_FOR 
+
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_SUBHV">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SUBHV.M_AlarmManagement">
+      <LineId Id="620" Count="0" />
+      <LineId Id="692" Count="0" />
+      <LineId Id="698" Count="0" />
+      <LineId Id="696" Count="1" />
+      <LineId Id="621" Count="0" />
+      <LineId Id="716" Count="1" />
+      <LineId Id="715" Count="0" />
+      <LineId Id="622" Count="57" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SUBHV.M_EquipmentCalls">
+      <LineId Id="165" Count="0" />
+      <LineId Id="167" Count="0" />
+      <LineId Id="166" Count="0" />
+      <LineId Id="168" Count="0" />
+      <LineId Id="152" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SUBHV.M_Evaluate">
+      <LineId Id="751" Count="12" />
+      <LineId Id="740" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SUBHV.M_Init">
+      <LineId Id="706" Count="0" />
+      <LineId Id="694" Count="0" />
+      <LineId Id="708" Count="0" />
+      <LineId Id="695" Count="0" />
+      <LineId Id="720" Count="0" />
+      <LineId Id="699" Count="0" />
+      <LineId Id="721" Count="0" />
+      <LineId Id="724" Count="1" />
+      <LineId Id="722" Count="1" />
+      <LineId Id="700" Count="0" />
+      <LineId Id="644" Count="0" />
+      <LineId Id="686" Count="0" />
+      <LineId Id="402" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

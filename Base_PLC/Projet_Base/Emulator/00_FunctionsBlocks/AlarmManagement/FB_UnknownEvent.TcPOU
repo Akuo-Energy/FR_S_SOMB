@@ -1,0 +1,70 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_UnknownEvent" Id="{79350bb2-1274-4b80-ba8a-30b39424b945}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_UnknownEvent
+////////////////// 
+// Detect an event that is not the result of an internal command, or an external event
+//////////////////	
+VAR_INPUT
+	IN_TempoAfterCommand					: TIME ;					// Tempo between internal command and event
+	IN_TempoReadExternalEvent					: TIME ;					// Tempo to read the external event
+	
+	IN_InternalCommand				: BOOL ; 			// Internal command that normally trigers the event 
+	IN_ExternalEvent				: BOOL ; 			// External Event that normally explains the Event (to be read after the event)
+	
+	IN_Event						: BOOL ; // Event that occur
+	
+	bReset				: BOOL := FALSE ; 	// Reset 
+	
+END_VAR
+
+VAR_OUTPUT
+	OUT_Unknown 			: BOOL ; 		// Flag to TRUE is the event is unknown ( neither related to the command, or an external event that is known) 
+	
+END_VAR
+
+VAR
+	FB_CheckCommand : FB_CheckCommand ;
+	// Inconsistency detection
+	R_TRIG1				: R_TRIG ; 		// Detect command
+	TOF1				: TOF ; 		// Creates a falling edge T time after command detcetion	
+	F_TRIG				: F_TRIG ; 		// Detect Falling edge of TOF1	
+	
+	F_TRIG2				: F_TRIG ; 		// Detect falling edge of feedback measure
+	TOF2				: TOF ; 		// Creates  a falling edge T time after Feedback measure ended detcetion
+ 
+	TON					: TON ; 		// Tempo in case of bistable functuion
+
+	// Reset management 	
+	TOF_Reset			: TOF;			// Hold Reset command afetr reset to inhibate future warnings
+	RS_Reset			: RS;			// Maintain reset command
+	
+	R_TRIG2: R_TRIG;
+	CalNotLinkedToCommand: BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+R_TRIG1(CLK := IN_InternalCommand) ; 
+
+TOF1(IN:=R_TRIG1.Q , PT:=IN_TempoAfterCommand) ;
+F_TRIG(CLK:=TOF1.Q);		
+
+R_TRIG2(CLK := IN_Event) ; 
+
+
+CalNotLinkedToCommand :=  NOT TOF1.Q AND R_TRIG2.Q ;
+ 
+FB_CheckCommand(T:= IN_TempoReadExternalEvent , bCmd := CalNotLinkedToCommand , bMes := IN_ExternalEvent , bReset := bReset , bImpulsion := TRUE ) ; 
+OUT_Unknown := FB_CheckCommAND.bWarning  ; 
+
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_UnknownEvent">
+      <LineId Id="260" Count="13" />
+      <LineId Id="22" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

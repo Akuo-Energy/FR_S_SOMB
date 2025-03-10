@@ -1,0 +1,130 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_Transfo_MVCom" Id="{579c77be-98e4-4ada-9336-053075b0c6ff}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Transfo_MVCom EXTENDS FB_Transfo_Base
+
+//////////////////
+// High Voltage transformer with Transfo or DMCR detection 
+//////////////////
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance/model specific) 
+	
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	
+END_VAR
+
+VAR_INPUT
+
+	MesDataExd	AT %Q*				: Transfo_MV ; 
+	
+END_VAR
+
+VAR
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{63434110-118d-4ef3-a347-0f44cbedb668}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Manages High Voltage Transformer Alarms
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager : FB_AlarmCodeManager ; 
+
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// ALARM CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= MesDataExd.MesData.MesAlarmTemp  ,				// Temperature Alarm
+		bAlarm2			:= MesDataExd.MesData.MesAlarmGas  , 				// Gas Alarm
+		bAlarm3			:= MesDataExd.MesData.MesAlarmOilLevel  , 			// Oil Level Alarm
+		bAlarm4			:= FALSE, 								//
+		bAlarm5			:= FALSE, 								//
+		bAlarm6			:= FALSE,                               //
+		bAlarm7			:= FALSE,                               //
+		bAlarm8			:= FALSE,                               //
+		bAlarm9			:= FALSE, 								//
+		bAlarm10		:= FALSE,                               //
+		bAlarm11		:= FALSE,                               //
+		bAlarm12		:= FALSE,                               //
+		bAlarm13		:= FALSE, 								//
+		bAlarm14		:= FALSE,                               //
+		bAlarm15		:= FALSE , 								//      
+		wAlarmCode		=>MesDataExd.MesData.MesAlarmCode);               
+
+// WARNING CODE //
+	FB_AlarmCodeManager(
+		bAlarm1 		:= FALSE,   							//
+		bAlarm2			:= FALSE, 		                   	 	//
+		bAlarm3			:= FALSE, 		                      	//
+		bAlarm4			:= FALSE, 		                    	//
+		bAlarm5			:= FALSE,                               //
+		bAlarm6			:= FALSE,                               //
+		bAlarm7			:= FALSE,                               //
+		bAlarm8			:= FALSE,                               //
+		bAlarm9			:= FALSE,                               //
+		bAlarm10		:= FALSE,                               //
+		bAlarm11		:= FALSE,                               //
+		bAlarm12		:= FALSE,                               //
+		bAlarm13		:= FALSE,                               //
+		bAlarm14		:= FALSE,                               //
+		bAlarm15		:= FALSE,                               //
+		wAlarmCode		=>MesDataExd.MesData.MesWarningCode);
+		
+// EVENT CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= FALSE, 			// 
+		bAlarm2			:= FALSE, 			// 
+		bAlarm3			:= FALSE, 			// 
+		bAlarm4			:= FALSE, 			// 
+		bAlarm5			:= FALSE,         	//
+		bAlarm6			:= FALSE,         	//
+		bAlarm7			:= FALSE,         	//
+		bAlarm8			:= FALSE,         	//
+		bAlarm9			:= FALSE,         	//
+		bAlarm10		:= FALSE,         	//
+		bAlarm11		:= FALSE,         	//
+		bAlarm12		:= FALSE,         	//
+		bAlarm13		:= FALSE,         	//
+		bAlarm14		:= FALSE,         	//
+		bAlarm15		:= FALSE,         	//
+		wAlarmCode		=>MesDataExd.MesData.MesEventCode);
+		
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Read" Id="{8da5738f-b180-4e16-8eee-e68ed5fdcd62}">
+      <Declaration><![CDATA[METHOD M_Read : BOOL
+VAR_INPUT
+END_VAR
+
+VAR
+	MesAuxTransfoGazDischarge: INT;
+	MesAuxTransfoTempTrigger: INT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_Transfo_MVCom">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Transfo_MVCom.M_AlarmManagement">
+      <LineId Id="208" Count="56" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Transfo_MVCom.M_Read">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

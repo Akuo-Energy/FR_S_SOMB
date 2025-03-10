@@ -1,0 +1,48 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_MergeWordsToUlint" Id="{111dc91d-e4db-4913-a83f-c8b698e0353a}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_MergeWordsToUlint
+////////////////// 
+// Merge two words or one word into a DINT or UDINT with big endian coding. And finally Output a Real. 
+//////////////////	
+
+VAR_IN_OUT
+	VAR_OUT 		: ULINT ; 	
+	
+END_VAR
+
+VAR_INPUT
+	WORD1 		: WORD; 			// Strong Word. Word to consider if size equals 1.
+	WORD2 		: WORD 	:= 0; 		// Weak Word. 
+	WORD3 		: WORD 	:= 0; 		// Weak Word. 
+	WORD4 		: WORD 	:= 0; 		// Weak Word. 
+	
+
+END_VAR
+
+VAR
+	VAR_AUX 		: ULINT ;			
+	
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+
+MEMCPY(destAddr := ADR(VAR_OUT)+3*SIZEOF(word1), srcAddr := ADR(WORD1), n := SIZEOF(word1));
+MEMCPY(destAddr := ADR(VAR_OUT)+2*SIZEOF(word1), srcAddr := ADR(WORD2), n := SIZEOF(word1));
+MEMCPY(destAddr := ADR(VAR_OUT)+1*SIZEOF(word1), srcAddr := ADR(WORD3), n := SIZEOF(word1));
+MEMCPY(destAddr := ADR(VAR_OUT)+0*SIZEOF(word1), srcAddr := ADR(WORD4), n := SIZEOF(word1));
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_MergeWordsToUlint">
+      <LineId Id="179" Count="0" />
+      <LineId Id="95" Count="0" />
+      <LineId Id="2" Count="0" />
+      <LineId Id="182" Count="0" />
+      <LineId Id="185" Count="0" />
+      <LineId Id="184" Count="0" />
+      <LineId Id="181" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

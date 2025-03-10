@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="ST_ValuesAlarms" Id="{f11e9621-1895-4c00-8aee-ccd2d8c76155}">
+    <Declaration><![CDATA[TYPE ST_ValuesAlarms :
+STRUCT
+	ID				: UINT;		// Unic ID to identify the alarm 
+	Message		 	: STRING(160);	// Alarm Message 
+	Value 			: BOOL;		// Value of the alarm
+	Ack 			: BOOL;		// Ack of the alarm	
+	TimeStamp_Act	: STRING;	// TimeStamp of the last activation or desactivation
+	
+	Groupe			: UINT:=0; // 0:sans action,1:Envois sms sur acttivation,2:Envois sms sur activation et desactivation
+	Alarms_LVL		: WORD:=1; // Si Num utilisateur > Alarms_LVL alors il ne recoit pas les sms 1 := Standart , 2 := Syntehses , 3:= Securité
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.13">
+  <POU Name="FB_SplitDintToWords" Id="{1768ffe9-1668-4c71-b956-3ac421f287a2}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_SplitDintToWords
+////////////////// 
+// Convert one REAL into  2 separate WORDS in Big Endian Encoding. 
+//////////////////	
+VAR_INPUT
+	IN		: DINT ;				// Real input
+	
+END_VAR
+
+VAR_OUTPUT
+	OUT		: ARRAY[0..1]OF WORD;	// Word output array
+	
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[OUT[1] := DWORD_TO_WORD(SHR(SHL(DINT_TO_DWORD(IN),16),16)) ; 	// Strong Word
+OUT[0] := DWORD_TO_WORD(SHR(DINT_TO_DWORD(IN),16)); 			// Weak Word]]></ST>
+    </Implementation>
+    <LineIds Name="FB_SplitDintToWords">
+      <LineId Id="3" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

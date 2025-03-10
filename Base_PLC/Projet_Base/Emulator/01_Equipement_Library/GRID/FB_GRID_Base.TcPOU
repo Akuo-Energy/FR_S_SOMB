@@ -1,0 +1,119 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_GRID_Base" Id="{451cc4f4-6953-47c3-a57d-deec918678b0}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_GRID_Base 
+//////////////////
+// Grid Operator interface. Base FB.
+//////////////////
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance specific) 
+	
+END_VAR
+
+VAR_INPUT
+	// I/O Inputs 
+		MesConnectOrderIO			: BOOL ; 					// (NA) 
+		MesDisconnectOrderIO 		: BOOL ; 					// (NA) 	
+		
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	
+END_VAR
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//                                                    								
+//	MesDataExd				: GRID ;                   								
+		
+	//M_INIT VARIABLES //
+		bInit						: BOOL:= TRUE ; 			// (NA) Initialize object parameters at first cycle 
+		
+	// M_EXECUTE VARIABLES //
+	
+   		MesCP_Read					: BOOL := TRUE;	(* Read function enable *)
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_CP" Id="{50816358-d22f-4ec8-87cc-bb72a590d042}">
+      <Declaration><![CDATA[METHOD M_CP
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[MesCP_GRID := TRUE ;  // Conditions to activate DEIE . 
+
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Evaluate" Id="{0a3e572d-f69b-47af-aeb6-bc1be7818e81}">
+      <Declaration><![CDATA[METHOD M_Evaluate
+//////////////////
+//  Read Modbus Variable for PCS. 
+/////////////////
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+END_VAR
+
+
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+///MesDataExd.MesData.:= MesDataExd.MesData.rderInit ; 
+
+IF MesCP_GRID THEN 
+MesDataExd.MesData.OUT_CmdAutCpl     := MesConnectOrderIO    ; 
+MesDataExd.MesData.OUT_CmdDisconnect := MesDisconnectOrderIO ; 
+	
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{1e4e7c17-6749-43ec-abd9-16e25d62a922}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+// PERMANENT CONDITIONS //
+	M_CP() ; 
+	
+// METHODS CALLS //
+	M_Evaluate() ; 
+	 
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_GRID_Base">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_GRID_Base.M_CP">
+      <LineId Id="27" Count="0" />
+      <LineId Id="25" Count="1" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_GRID_Base.M_Evaluate">
+      <LineId Id="45" Count="0" />
+      <LineId Id="39" Count="5" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_GRID_Base.M_Execute">
+      <LineId Id="713" Count="0" />
+      <LineId Id="680" Count="3" />
+      <LineId Id="692" Count="0" />
+      <LineId Id="700" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

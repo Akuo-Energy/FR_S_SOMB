@@ -1,0 +1,182 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.13">
+  <POU Name="FB_ANA_IO" Id="{60b063ad-f25a-432d-a880-05807cc347b8}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_ANA_IO EXTENDS FB_ANA_Base
+//////////////////
+// Analogic sensors. Base FB. 
+//////////////////
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance/mùodel specific) 
+		ParamName				: STRING:='TempPcs';			(* (NA) Name of the pyranometer : to easily identify it *)
+		{attribute 'OPC.UA.DA' := '1'}
+		ParamScaleMin			: REAL:=4; 						(* (NA) Minimal input value  *)
+		{attribute 'OPC.UA.DA' := '1'}
+		ParamScaleMax			: REAL:=20; 					(* (NA) Maximal input value  *)
+		{attribute 'OPC.UA.DA' := '1'}
+		ParamRangeMin			: REAL:=0; 						(* (NA) Minimal output value. Unit depends on output *)
+		{attribute 'OPC.UA.DA' := '1'}
+		ParamRangeMax			: REAL:=100; 					(* (NA) Maximal output value. Unit depends on output *)
+
+		ParamForced_4_20		: BOOL:=FALSE;				    (* (NA) Is the input between 4-20mA ? *)
+		ParamPT100				: BOOL:=FALSE;					(* (NA) PT 100 technology 			  *)
+		ParamFix				: INT:=1; 						(* (NA) Value to wich divide the initial value *)
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	
+END_VAR
+
+VAR_INPUT
+	// I/O Inputs 
+		//MesIO1				: INT;						 	// 	IO Value
+		IN_MesIOReal1			: REAL;
+		IN_MesIOReal2			: REAL;
+		
+		
+		MesDataExd			: ANA_Standard ;    		
+END_VAR
+
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//
+ 	
+	//M_READ VARIABLES//
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{bf455119-75ff-4cf8-880c-6cb668724d83}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Manages GHI system alarms and warnings
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+	FB_AlarmCodeManager		: FB_AlarmCodeManager ;   
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+RS_MaxAlarm(SET:= MesDataExd.MesData.Value > ParamVarMaxAlarm  ,RESET1 := MesDataExd.MesData.Value  < (ParamVarMaxAlarm - ParamDiffMax) OR CmdClearFault_G OR IN_CmdReset_L ) ; 
+
+RS_MaxWarning(SET:=  MesDataExd.MesData.Value  > ParamVarMaxWarning  ,RESET1 := MesDataExd.MesData.Value  < (ParamVarMaxWarning - ParamDiffMax) OR CmdClearFault_G OR IN_CmdReset_L ) ; 
+RS_MinAlarm(SET:= MesDataExd.MesData.Value  < ParamVarMinAlarm  ,RESET1 := MesDataExd.MesData.Value  > (ParamVarMinAlarm + ParamDiffMax) OR CmdClearFault_G OR IN_CmdReset_L ) ; 
+RS_MinWarning(SET:=  MesDataExd.MesData.Value  < ParamVarMinWarning  ,RESET1 := MesDataExd.MesData.Value  > (ParamVarMinWarning + ParamDiffMax) OR CmdClearFault_G OR IN_CmdReset_L ) ; 
+
+RSDiff(SET :=  ABS(MesValue1 - MesValue2) >= ParamDiffMax , RESET1 :=(ABS(MesValue1 - MesValue2) < ParamDiffMax*0.9) OR CmdClearFault_G OR IN_CmdReset_L) ; 
+
+
+// ALARM CODE //
+	FB_AlarmCodeManager(
+ 		bAlarm1			:= RSDiff.Q1 ,													// The difference between the measured values is higher than 10 %  
+		bAlarm2			:= IN_MesVar1Fault_IO OR IN_MesVar2Fault_IO,					// At least one sensor is on fault (0 mA) 
+		bAlarm3			:=FALSE , 														// 
+		bAlarm4			:=FALSE , 														// 
+		bAlarm5			:=FALSE , 														//
+		bAlarm6			:=FALSE ,                                                       //
+		bAlarm7			:=FALSE ,                                                       //
+		bAlarm8			:=FALSE ,                                                       //
+		bAlarm9			:=FALSE , 														// 
+		bAlarm10		:=FALSE , 														//
+		bAlarm11		:=FALSE ,                                                       //
+		bAlarm12		:=FALSE ,                                                       //
+		bAlarm13		:=FALSE ,                                                       //
+		bAlarm14		:=FALSE , 														//
+		bAlarm15		:=FALSE ,                                                       //
+		wAlarmCode		=>MesDataExd.MesData.MesAlarmCode);                                       
+                                                                                        
+// WARNING CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= RS_MaxAlarm.Q1,												// Sensor value is higher than Alarm value
+		bAlarm2			:= RS_MaxWarning.Q1 ,											// Sensor value is higher than Warning value
+		bAlarm3			:= RS_MinAlarm.Q1 ,												// Sensor value is lower than Alarm value 
+		bAlarm4			:= RS_MinWarning.Q1 ,											// Sensor value is lower than Warning value 
+		bAlarm5			:=FALSE , 														//
+		bAlarm6			:=FALSE ,                                       				//
+		bAlarm7			:=FALSE ,                                       				//
+		bAlarm8			:=FALSE ,                                       				//
+		bAlarm9			:=FALSE ,                                       				//
+		bAlarm10		:=FALSE ,                                       				//
+		bAlarm11		:=FALSE ,                                       				//
+		bAlarm12		:=FALSE ,                                       				//
+		bAlarm13		:=FALSE ,                                       				//
+		bAlarm14		:=FALSE ,                                       				//
+		bAlarm15		:=FALSE ,                                       				//
+		wAlarmCode		=>MesDataExd.MesData.MesWarningCode);
+		
+// EVENT CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:=FALSE , 														// 
+		bAlarm2			:=FALSE , 														// 
+		bAlarm3			:=FALSE , 														// 
+		bAlarm4			:=FALSE , 														// 
+		bAlarm5			:=FALSE , 														//
+		bAlarm6			:=FALSE ,       												//
+		bAlarm7			:=FALSE ,       												//
+		bAlarm8			:=FALSE ,       												//
+		bAlarm9			:=FALSE ,       												//
+		bAlarm10		:=FALSE ,       												//
+		bAlarm11		:=FALSE ,       												//
+		bAlarm12		:=FALSE ,       												//
+		bAlarm13		:=FALSE ,       												//
+		bAlarm14		:=FALSE ,       												//
+		bAlarm15		:=FALSE ,       												//
+		wAlarmCode		=>MesDataExd.MesData.MesEventCode);]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Read" Id="{36d463a1-a610-4d61-b1b3-34e655091fe3}">
+      <Declaration><![CDATA[METHOD M_Read
+//////////////////
+// Format GHI Data 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[MesValue1 := ((ParamRangeMax - ParamRangeMin) * INT_TO_REAL(IN_MesValue1_IO)/32767)  + ParamRangeMin; 
+MesValue2 := ((ParamRangeMax - ParamRangeMin) * INT_TO_REAL(IN_MesValue2_IO)/32767)  + ParamRangeMin; 
+
+IF ParamForced_4_20 THEN
+	MesValue1 := ((ParamRangeMax - ParamRangeMin) * ((IN_MesIOReal1 - ParamScaleMin)/(ParamScaleMax-ParamScaleMin)))  + ParamRangeMin; 
+	MesValue2 := ((ParamRangeMax - ParamRangeMin) * ((IN_MesIOReal2 - ParamScaleMin)/(ParamScaleMax-ParamScaleMin)))  + ParamRangeMin; 	
+END_IF
+
+IF ParamPT100 THEN
+	MesValue1	:= INT_TO_REAL(IN_MesValue1_IO) / (EXPT(10,ParamFix)) ; // Param Fix = 1 >> 1/10 , 2 >> 1/100 , 0 >> 1
+	MesValue2	:= INT_TO_REAL(IN_MesValue2_IO) / (EXPT(10,ParamFix)) ; // Param Fix = 1 >> 1/10 , 2 >> 1/100 , 0 >> 1	
+END_IF
+
+IF ParamNbSensors = 1 THEN 
+	MesValue2		:= MesValue1 ;
+END_IF
+
+MesDataExd.MesData.Value := (MesValue1  + MesValue2) / 2 ; 			// Mean value ; 
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_ANA_IO">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ANA_IO.M_AlarmManagement">
+      <LineId Id="337" Count="1" />
+      <LineId Id="412" Count="0" />
+      <LineId Id="339" Count="61" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ANA_IO.M_Read">
+      <LineId Id="109" Count="12" />
+      <LineId Id="133" Count="3" />
+      <LineId Id="122" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

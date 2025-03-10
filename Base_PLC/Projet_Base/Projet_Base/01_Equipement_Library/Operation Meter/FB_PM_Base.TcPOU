@@ -1,0 +1,160 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1">
+  <POU Name="FB_PM_Base" Id="{d03ca925-83b8-453a-a2ed-fabfea0c87ea}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_PM_Base 
+//////////////////
+// Measurement Solution. Base FB
+//////////////////
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance specific) 
+	ParamTempoComAlarm				: TIME 		:= T#10S ; 						(* (s) Config : Tempo to detect LOC Alarm*)
+	{attribute 'OPC.UA.DA' := '1'} 
+	ParamClockReadTime 				: TIME 		:= TIME#200MS;	  				(* (ms) Read Modbus period  *)
+	ParamTimeout					: TIME  	:= T#2S ;			  			(* (s) Timeout for modbus reading*)
+	
+	
+END_VAR
+
+VAR_INPUT
+	//Child objects
+	IN_CmdToggleRead				: BOOL ; 
+	IN_CmdReset_L					: BOOL ;									// (NA) External Reset Command
+
+END_VAR
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//
+		TON_ComAlarm				: TON ; 									// Tempo before detecting loss of communication 
+	    TON_ComWarning				: TON ; 									// Tempo before detecting loss of one frame                                               								
+                                            								    
+		MesWarningCom				: BOOL ; 									// True if bad communication 
+                                                                                 
+	//M_READ VARIABLES//                                                         
+//	MesDataExd		AT %Q*	: PM ;                                 
+		ClockRead			AT %Q*	: BOOL ;	 								// Clock Read
+                                                                                
+		                                                                         
+	//M_INIT VARIABLES //
+		bInit						: BOOL 				:= TRUE ; 							// (NA) Initialize object parameters at first cycle 
+		                                                                         
+	// M_EXECUTE VARIABLES //
+		TP1							: TP ; 												// (NA) Tempo to define Modbus Reading Frequency  
+                                                             	                                                                                                                                                      
+		//MesCP_Read					: BOOL;													// (NA) Permanent conditions to activate method
+        Trig_Cmd_Read				: R_TRIG;      
+
+                 
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{55f37f90-d101-4087-ae83-23902e38e74d}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Digiware measurement tool alarm and warning management
+/////////////////
+
+VAR 
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_CP" Id="{b84f0547-cdae-4a37-ad2e-c36249718d09}">
+      <Declaration><![CDATA[METHOD M_CP
+//////////////////
+//  Emulator
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{69ed72c7-fa2c-4bbc-ad69-38d92c70dd44}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	// EMULATOR
+
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// READING AND WRITING CLOCK //
+	TP1(IN:=NOT TP1.Q , PT:= ParamClockReadTime);
+	ClockRead 		:= TP1.Q;
+
+// PERMANENT CONDITIONS //
+	M_CP() ; 
+	
+// METHODS CALLS //
+	IF bInit THEN
+		M_Init() ; 
+		bInit					:= FALSE ; 
+	ELSIF CmdInit_G OR IN_CmdReset_L THEN 
+		bInit:= TRUE ;		
+	END_IF
+
+	M_Read() ; 
+	M_AlarmManagement(); 
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{509d3645-b00a-4fd8-aae1-e1d2fae3b32d}">
+      <Declaration><![CDATA[METHOD M_Init
+VAR 
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Read" Id="{56465a00-ea0b-4f7d-89af-61c6317771ac}">
+      <Declaration><![CDATA[METHOD M_Read
+//////////////////
+//  Read Modbus Variable for PCS . 
+/////////////////
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+END_VAR
+
+
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_PM_Base">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PM_Base.M_AlarmManagement">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PM_Base.M_CP">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PM_Base.M_Execute">
+      <LineId Id="746" Count="16" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PM_Base.M_Init">
+      <LineId Id="3" Count="1" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PM_Base.M_Read">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

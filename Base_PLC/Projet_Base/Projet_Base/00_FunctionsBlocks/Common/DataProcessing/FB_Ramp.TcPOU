@@ -1,0 +1,78 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_Ramp" Id="{819b570b-97dd-49c9-b4ce-9c69b3d096cf}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Ramp
+VAR_INPUT
+	IN			: REAL;							(* New Setpoint variable *)
+	ASCEND		: REAL;					(* maximum positive slope. Set negative value for no limit *)
+	
+	DESCEND		: REAL;				(* maximum negative slope (non-negative!!).Set negative value for no limit *)
+	TIMEBASE	: TIME;					(* reference for ASCEND/DESCEND :
+											t#0s : ASCEND/DESCEND defined per call
+											else : ASCEND/DESCEND defined per specified time *)
+	IN_RESET_VALUE		: REAL; // Value at which the OUT is reseted 
+	RESET				:BOOL;						(* reset *)
+END_VAR
+VAR_OUTPUT
+	OUT								: REAL;						(* output limited by  slope *)
+	Out_Completed 					: BOOL ; // True when the ramp is over. 
+END_VAR
+VAR
+	DIFF: REAL;
+	OLD_IN: REAL;
+	TB,CET:DWORD;
+	CLOCK: TON;
+	probe:REAL;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[Out_Completed := FALSE ;
+
+IF RESET=TRUE OR CLOCK.PT<>TIMEBASE THEN			(* Reset *)
+	OUT :=  IN_RESET_VALUE ; 
+	OLD_IN:=OUT;
+	CLOCK(PT:=TIMEBASE,IN:=FALSE);
+	Out_Completed := TRUE  ;
+END_IF
+
+DIFF:=IN-OLD_IN;									(* Calculate setpoint difference between old and new setpoint *)
+
+IF TIMEBASE=T#0S THEN								(* PLC Cycletime *)
+	IF DIFF>ASCEND AND ASCEND >0 THEN
+		OUT:=OLD_IN+ASCEND;
+	ELSIF DIFF<-DESCEND AND DESCEND >0 THEN
+		OUT:=OLD_IN-DESCEND;
+	ELSE
+		OUT:=IN;
+		Out_Completed := TRUE  ;					// 
+	END_IF;
+ELSE												(* Slope per timebase *)
+	TB:=TIME_TO_DWORD(TIMEBASE);					(* TIMEBASE as DWORD *)
+		CLOCK();
+	CET:=TIME_TO_DWORD(CLOCK.ET);					(* Elapsed time : correspond to cycle time*)
+	IF CET>0 THEN									(* *)
+		CLOCK(IN:=FALSE);							(* Restart timer *)
+		CLOCK(IN:=TRUE);
+		probe:=DIFF*TB/CET;							// SMesIng value difference to fit timebase
+		IF probe>ASCEND AND ASCEND >0 THEN						(* ascending *)
+			OUT:=OLD_IN+ASCEND*CET/DWORD_TO_REAL(TB);
+		ELSIF probe<-DESCEND AND DESCEND >0 THEN					(* descending *)
+			OUT:=OLD_IN-DESCEND*CET/DWORD_TO_REAL(TB);
+		ELSE										(* If value between max descend and max ascend.  *)
+			OUT:=IN;
+			Out_Completed := TRUE  ;
+		END_IF;
+	ELSE											(* keine Zeit verstrichen *)
+		CLOCK.PT:=TIMEBASE;							(* => ggf. Initialisierung *)
+		CLOCK(IN:=TRUE);							(* => ggf. Timer neu starten *)
+		Out_Completed := TRUE  ;
+	END_IF;
+END_IF;
+
+OLD_IN:=OUT;]]></ST>
+    </Implementation>
+    <LineIds Name="FB_Ramp">
+      <LineId Id="169" Count="42" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

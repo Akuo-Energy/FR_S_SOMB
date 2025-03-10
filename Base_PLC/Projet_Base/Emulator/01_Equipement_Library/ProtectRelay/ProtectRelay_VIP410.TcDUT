@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.9">
+  <DUT Name="ProtectRelay_VIP410" Id="{d209d994-0b0b-4272-9aa8-656084533942}">
+    <Declaration><![CDATA[TYPE ProtectRelay_VIP410 :
+STRUCT
+		MesData						: ProtectRelay; 	(* (NA) MesData 																												*)
+		MesStatCom					: BOOL ; 			(* (NA) False: device did not respond successfully to most recent read or write request, True: device is responding normally	*)
+		MesAvgI1					: REAL ; 			(* (A) Phase 1 Average current                                                                                       			*)
+		MesAvgI2					: REAL ; 			(* (A) Phase 2 Average current                                                                                       			*)
+		MesAvgI3					: REAL ; 			(* (A) Phase 3 Average current                                                                                       			*)
+		MesI0Fault					: REAL ; 			(* (A) Fault current                                                                                                 			*)
+		StatusWord					: WORD ; 			(* (NA) Status Word                                                                                                     		*)
+		ControlWord					: WORD ; 			(* (NA) Control Word                                                                                                    		*)
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

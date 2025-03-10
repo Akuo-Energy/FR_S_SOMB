@@ -1,0 +1,133 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_WS_Base" Id="{5b9413d3-15a2-43b0-982d-98449dbb4e11}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_WS_Base 
+VAR_INPUT PERSISTENT
+		//M_INIT VARIABLES // 	
+		bInit						: BOOL := TRUE ; 			// (NA) Initialize object parameters at first cycle 
+END_VAR
+
+VAR_INPUT
+	IN_CmdReset_L 					: BOOL ;  					//(NA) [P,H]   Reset Command . 
+END_VAR
+
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//
+	
+		
+	                                             
+	//M_STATEMANAGER VARIABLES//
+	
+		
+	//M_EVALUATE VARIABLES//
+//	MesDataExd				: WS ;						// (NA) [P,H,B] PTR concept Data structure
+ 
+	// M_EXECUTE //             	
+		KK							: BYTE ; 					// (NA) Loop over child objects 
+		
+
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_EquipmentCalls" Id="{24170469-6628-4368-986f-34104e10eea1}">
+      <Declaration><![CDATA[METHOD M_EquipmentCalls
+//////////////////
+// Evaluate AMS characteristics
+//////////////////
+
+VAR
+	// Method local variables (reinitialized at each cycle) 
+
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Evaluate" Id="{62f822e4-675f-400b-9500-8ad3ef1812a7}">
+      <Declaration><![CDATA[METHOD M_Evaluate
+//////////////////
+// Evaluate available Powers and AMG characteristics . 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{0b3d7e8e-bf86-406f-9ed2-2a05ab76eab6}">
+      <Declaration><![CDATA[METHOD M_Execute
+/////////////////////
+// Action Calls and Object Calls
+/////////////////////
+VAR
+	
+
+
+
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+// INITIALIZE // 
+	IF bInit THEN
+		M_Init() ; 
+		bInit		:= FALSE ; 
+		
+	ELSIF CmdInit_G THEN 
+		bInit		:= TRUE ;
+		
+	END_IF
+
+// OBJECT CALLS //
+	M_EquipmentCalls() ; 
+	
+// METHODS CALLS //
+	// Order is important 
+
+	M_Evaluate();
+	
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{6635a32a-7e59-4f2f-bba1-3361fcfbdb5e}">
+      <Declaration><![CDATA[METHOD M_Init 
+VAR
+	KK 				: UINT;
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_WS_Base">
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_WS_Base.M_EquipmentCalls">
+      <LineId Id="49" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_WS_Base.M_Evaluate">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_WS_Base.M_Execute">
+      <LineId Id="251" Count="19" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_WS_Base.M_Init">
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

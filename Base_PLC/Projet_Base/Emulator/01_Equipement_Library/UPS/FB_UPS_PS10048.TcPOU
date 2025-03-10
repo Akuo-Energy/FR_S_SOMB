@@ -1,0 +1,132 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_UPS_PS10048" Id="{3e4f4997-9ba7-4daf-9f3a-948b9ffff165}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_UPS_PS10048 EXTENDS FB_UPS_Base
+//////////////////
+// SEPAM system for High Voltage or Low Voltage Grid Protection. 
+//////////////////
+
+VAR_INPUT 
+	ParamTcpPort				: UINT:=502;
+	ParamIPAddress				: STRING; 
+	ParamUnitID					: BYTE; 
+END_VAR
+
+VAR_OUTPUT
+	
+END_VAR
+
+VAR_INPUT
+
+END_VAR
+
+VAR
+MesDataExd    	AT %Q*	: UPS_PS10048;
+	FB_ModbusRead	          	: ARRAY[1..4] OF FB_ModbusRead; 
+			
+	MesBlock1_Temp 				: ARRAY [1..1] OF WORD; 
+	MesBlock2_Temp 				: ARRAY [1..11] OF WORD; 
+	MesBlock3_Temp 				: ARRAY [1..8] OF WORD; 
+	MesBlock4_Temp 				: ARRAY [1..2] OF WORD; 
+	
+	AX_ModbusReadAlarm			: ARRAY[1..4] OF BOOL;
+	AX_ModbusReadAlarmId		: ARRAY[1..4] OF UDINT;	
+	
+	//M_EXECUTE //
+	bInit: BOOL;
+	
+	
+	// Emulator 
+	Emul_MesAlamCom 			: BOOL := FALSE;
+	Emul_MesAlarm_AcLow			: BOOL := FALSE;
+	Emul_MesAlarm_AcOff			: BOOL := FALSE;
+	Emul_MesAlarm_Charger		: BOOL := FALSE;
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_Execute" Id="{773cf805-8222-4d05-a11b-56be713b02c0}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR_INPUT
+	
+END_VAR
+VAR 
+	MW					: FB_MergeWordsToFloat;
+	MW_1				: FB_MergeWordsToDint;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[	//COM
+MesDataExd.MesData.MesAlarmCom 	:= Emul_MesAlamCom;
+MesDataExd.MesData.MesCapacity_Nom 		:= ParamEBatt.MesDataExd.MesData.MesUdc_48V; 	
+	
+MesDataExd.MesData.MesUdc_12V 			:= 12;		 
+
+MesDataExd.MesData.MesCapacity_Nom 		:= 37000;
+	                                
+    MesDataExd.MesData.MesAlarm_AcLow		:= Emul_MesAlarm_AcLow;
+	 
+IF bInit THEN
+	bInit 				:= FALSE; 
+MesDataExd.MesData.MesSoC 	:= 50; 
+END_IF
+
+MesDataExd.MesUBatt 	:= 47.5 ; 
+IF MesDataExd.MesData.MesSoC 	>=100 THEN 
+MesDataExd.MesData.MesIdc_Bat  := SEL(A1_SUBMV.A1_MainMVCB.MesDataExd.MesData.MesClosed , -.MesDataExd.MesData.MesIdc_12V , 0) ; 			// can only be negative discharging 
+ELSE
+MesDataExd.MesData.MesIdc_Bat :=  SEL(A1_SUBMV.A1_MainMVCB.MesDataExd.MesData.MesClosed , MesDataExd.MesData.MesIdc_12V , 4) ;
+END_IF
+
+MesDataExd.MesSoC	  				:=  MAX( 0, MesDataExd.MesData.MesSoC  + 100.MesDataExd.MesData.MesIdc_Bat*.MesDataExd.MesData.MesUBatt * 1/3600000 * ParamCycleTime_Emul / ParamEBatt); 
+MesDataExd.MesUdc_48V 				:=  SEL(A1_SUBMV.A1_MainMVCB.MesDataExd.MesData.MesClosed, MesDataExd.MesData.MesUBatt, 48) ; 
+
+MesDataExd.MesData.MesAlarm_Ulow  	:= MesDataExd.MesData.MesSoC < 20 ; // Low battery capacity 
+MesDataExd.MesData.MesDischarging 	:= MesDataExd.MesData.MesIdc_Bat < 0; 
+	
+MesDataExd.MesAlarm_AcOff 			:= Emul_MesAlarm_AcOff;
+MesDataExd.MesAlarm_AcLow 			:= Emul_MesAlarm_AcLow;
+MesDataExd.MesFault_Charger			:= Emul_MesAlarm_Charger;
+
+MesdataExd.MesFault_Minor   		:= MesDataExd.MesData.MesAlarm_AcLow OR MesDataExd.MesData.MesAlarm_Ulow ;
+MesdataExd.MesFault_Major   		:= MesDataExd.MesData.MesSoC < 10 OR MesDataExd.MesData.MesAlarm_AcOff OR MesDataExd.MesData.MesFault_Charger;
+mesdataexd.MesAlarm_GeneralOff		:= MesDataExd.MesData.MesAlarm_AcOff OR MesDataExd.MesData.MesSoC < 5;
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_UPS_PS10048">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_UPS_PS10048.M_Execute">
+      <LineId Id="1566" Count="0" />
+      <LineId Id="1568" Count="0" />
+      <LineId Id="1621" Count="0" />
+      <LineId Id="1653" Count="0" />
+      <LineId Id="1572" Count="0" />
+      <LineId Id="1580" Count="2" />
+      <LineId Id="1592" Count="1" />
+      <LineId Id="1596" Count="3" />
+      <LineId Id="1602" Count="6" />
+      <LineId Id="1659" Count="0" />
+      <LineId Id="1650" Count="0" />
+      <LineId Id="1616" Count="0" />
+      <LineId Id="1654" Count="0" />
+      <LineId Id="1617" Count="1" />
+      <LineId Id="1640" Count="0" />
+      <LineId Id="1664" Count="0" />
+      <LineId Id="1641" Count="0" />
+      <LineId Id="1665" Count="0" />
+      <LineId Id="1667" Count="0" />
+      <LineId Id="1666" Count="0" />
+      <LineId Id="1642" Count="0" />
+      <LineId Id="1644" Count="0" />
+      <LineId Id="1622" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

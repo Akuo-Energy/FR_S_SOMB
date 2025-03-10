@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="ST_SMSDataSetEntry_Send" Id="{ab839f0e-d0b2-40fe-a1e9-7b6764732e55}">
+    <Declaration><![CDATA[TYPE ST_SMSDataSetEntry_Send :
+STRUCT
+	ID				: UINT;			// Unic ID to identify the alarm
+	IndexWord		: UINT; 		//Index du word correspondant aux alarmes
+	IndexBit		: UINT; 		//Index du bit correspondant a l'alarme
+	Active			: BOOL; 		//Ne pas remplir - Utilisé par le code
+	Num_tel			: STRING(20);//Ne pas remplir - Utilisé par le code
+	TimeStamp_Act	: STRING;	// TimeStamp of the last activation or desactivation
+	Alarms_LVL		: WORD;
+END_STRUCT
+END_TYPE]]></Declaration>
+  </DUT>
+</TcPlcObject>

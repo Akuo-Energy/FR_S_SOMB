@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.9">
+  <DUT Name="Transfo" Id="{84ed3443-6c1f-4db2-b102-f2edc808e5b3}">
+    <Declaration><![CDATA[TYPE Transfo :
+STRUCT
+    MesWarningTemp				: BOOL ;	(* Transfo Temperature warning		    *)
+    MesAlarmTemp				: BOOL ;	(* Transfo Temperature Alarm		    *)
+    MesAlarmGas					: BOOL ;	(* Transfo Gas Alarm			        *)
+    MesAlarmOilLevel			: BOOL ;	(* Transfo Oil Level Alarm		        *)
+    MesAlarmsSynthesis			: BOOL ;	(* Transfo Synthesis Alarm              *)
+                                                                             
+	MesAlarmCode				: WORD ;  	(* (NA) Internal Akuo AlarmCode         *)
+	MesWarningCode				: WORD ; 	(* (NA) Internal Akuo WarningCode       *)
+	MesEventCode				: WORD ; 	(* (NA) Internal Akuo EventCode	        *)
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

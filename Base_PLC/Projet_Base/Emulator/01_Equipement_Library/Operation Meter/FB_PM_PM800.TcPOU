@@ -1,0 +1,105 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.9">
+  <POU Name="FB_PM_PM800" Id="{567002ef-8b16-449b-a275-78015a1dff37}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_PM_PM800 EXTENDS FB_PM_Base
+VAR_INPUT
+		IPAddrAI 	: STRING;	// Adresse IP Requête Analogic Inputs
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+MesDataExd AT %Q*	: PM_PM800 ;
+	
+	// Modbus Read Variables
+	FB_ModbusReadAI : ARRAY[1..2] OF FB_ModbusRead ;
+	
+	// Temp Blocks Filled by Requests
+	AI_List_1 	    : ARRAY[1..128] OF WORD ;
+	AI_List_2 		: ARRAY[1..128] OF WORD ;
+	
+	tTimeout 		: TIME := T#2S ;
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{102db4e9-b9e7-4b9d-a92d-397f6c0a7dab}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+VAR_INPUT
+END_VAR
+//////////////////
+// Digiware measurement tool alarm and warning management
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager			: FB_AlarmCodeManager ; 
+	
+	ComWarning					: BOOL;			// Error in one of the Modbus Requests
+	ComAlarm					: BOOL;			// Error in both Modbus Requests
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[ComWarning 	:= FB_ModbusReadAI[1].ModbusReadAlarm OR FB_ModbusReadAI[2].ModbusReadAlarm;
+ComAlarm 	:= FB_ModbusReadAI[1].ModbusReadAlarm AND FB_ModbusReadAI[2].ModbusReadAlarm;
+	
+TON_ComAlarm(IN:= ComAlarm , PT:= ParamTempoComAlarm, Q= MesDataExd.MesData.MesAlarmCom) ;	
+TON_ComWarning(IN:= ComWarning  , PT:= ParamTempoComAlarm, Q=>MesWarningCom) ;	
+
+//					General com alarm : All the read FB fucked up
+
+
+// ALARM CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= MesDataExd.MesData.MesAlarmCom  , 					// Communication Alarm #COM
+		bAlarm2			:=FALSE, // 
+		bAlarm3			:=FALSE, // 
+		bAlarm4			:=FALSE, // 
+		bAlarm5			:=FALSE, //
+		bAlarm6			:=FALSE, //
+		bAlarm7			:=FALSE, //
+		bAlarm8			:=FALSE, //
+		bAlarm9			:=FALSE, //
+		bAlarm10		:=FALSE, //
+		bAlarm11		:=FALSE, //
+		bAlarm12		:=FALSE, //
+		bAlarm13		:=FALSE, //
+		bAlarm14		:=FALSE, //
+		bAlarm15		:= FALSE , 			// 			 
+		wAlarmCode		=>MesDataExd.MesData.MesAlarmCode);
+
+// WARNING CODE //
+	FB_AlarmCodeManager(		
+		bAlarm1			:=MesWarningCom	,				 // Communication Warning #COM
+		bAlarm2			:=FALSE, 		// 
+		bAlarm3			:=FALSE, 		// 
+		bAlarm4			:=FALSE, 		// 
+		bAlarm5			:=FALSE, //
+		bAlarm6			:=FALSE, //
+		bAlarm7			:=FALSE, //
+		bAlarm8			:=FALSE, //
+		bAlarm9			:=FALSE, //
+		bAlarm10		:=FALSE, //
+		bAlarm11		:=FALSE, //
+		bAlarm12		:=FALSE, //
+		bAlarm13		:=FALSE, //
+		bAlarm14		:=FALSE, //
+		bAlarm15		:=FALSE, //
+		wAlarmCode		=>MesDataExd.MesData.MesWarningCode);		
+
+// EVENT CODE //
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_PM_PM800">
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PM_PM800.M_AlarmManagement">
+      <LineId Id="6" Count="0" />
+      <LineId Id="67" Count="0" />
+      <LineId Id="7" Count="45" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

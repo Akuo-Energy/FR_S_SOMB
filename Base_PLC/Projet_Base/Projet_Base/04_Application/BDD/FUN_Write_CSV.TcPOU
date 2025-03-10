@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FUN_Write_CSV" Id="{816e0a32-1332-45e9-86c6-85f74d76957f}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM FUN_Write_CSV
+
+VAR_INPUT
+ InDirectory             : T_MaxString;
+AX_Variables            : ARRAY [1..500] OF ST_ValuesWrite;
+    WriteValue          : FB_Write_CSV;
+END_VAR
+    ]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+AX_Variables[ 1].Address := ADR(A1_SUBMV.MesDataExd.MesData.MesU);AX_Variables[ 1].Description :='SUBMV:// (V) Mean Phase to Phase grid voltage';
+AX_Variables[ 1].Size:= SIZEOF(A1_SUBMV.MesDataExd.MesData.MesU);AX_Variables[ 1].sampling := 60000;
+AX_Variables[ 2].Address := ADR(A1_SUBMV.MesDataExd.MesData.MesFreq);AX_Variables[ 2].Description :='SUBMV:// (Hz) Grid Frequency';
+AX_Variables[ 2].Size:= SIZEOF(A1_SUBMV.MesDataExd.MesData.MesFreq);AX_Variables[ 2].sampling := 60000;
+AX_Variables[ 3].Address := ADR(A1_SUBMV.MesDataExd.MesData.MesPsol);AX_Variables[ 3].Description :='SUBMV:// (kW) Total Solar Active Power';
+AX_Variables[ 3].Size:= SIZEOF(A1_SUBMV.MesDataExd.MesData.MesPsol);AX_Variables[ 3].sampling := 60000;
+
+WriteValue(InDirectory := InDirectory, ParamNbColumns := 3,AX_StructureValues := AX_Variables);
+    ]]></ST>
+    </Implementation>
+    <LineIds Name="FUN_Write_CSV">
+      <LineId Id="3" Count="8" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

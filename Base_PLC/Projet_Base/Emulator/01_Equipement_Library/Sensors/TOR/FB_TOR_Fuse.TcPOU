@@ -1,0 +1,76 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_TOR_Fuse" Id="{dd02a99d-7cfe-40f8-8124-ab2b1f328b10}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_TOR_Fuse EXTENDS FB_TOR_Base
+//////////////////
+//  Smoke and Fire detection system with Typhoon triggering system. 
+//////////////////
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance/model specific) 
+	ParamTempoFuse :TIME:=T#5S;//  (s)Tempo before raising an alarm
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	
+END_VAR
+
+VAR_INPUT
+	// I/O Inputs 		                                     				
+		
+	
+END_VAR
+
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//
+		FB_PermAlarm				: SR ;					// (NA) FB to maintain Fire Alarm even if sensor stop detection (burn) .
+ 		TON_Fuse					: TON; 	
+	//M_STATEMANAGER VARIABLES//
+	MesDataExd			: TOR_Standard ;  
+
+		
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+
+]]></ST>
+    </Implementation>
+    <Method Name="M_Execute" Id="{7bb33436-82c5-4ca4-9531-ba327a13daa6}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// EMULATOR I/O //
+
+	
+	IF ParamNbSensors = 9 THEN // Use of contactor bi-stable No and NC
+		IN_MesState2_IO := NOT IN_MesState2_IO;
+	END_IF
+SUPER^.M_Execute() ; 
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_TOR_Fuse">
+      <LineId Id="3" Count="1" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_TOR_Fuse.M_Execute">
+      <LineId Id="3" Count="0" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="39" Count="0" />
+      <LineId Id="41" Count="0" />
+      <LineId Id="40" Count="0" />
+      <LineId Id="29" Count="0" />
+      <LineId Id="8" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

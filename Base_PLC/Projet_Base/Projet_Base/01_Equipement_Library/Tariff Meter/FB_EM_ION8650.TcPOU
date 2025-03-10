@@ -1,0 +1,361 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_EM_ION8650" Id="{6a084f91-7ccd-4df2-9032-34b5a1ca4842}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_EM_ION8650 EXTENDS FB_EM_Base
+//////////////////
+// Measurement Solution. Base FB
+//////////////////
+VAR_INPUT PERSISTENT
+	{attribute 'OPC.UA.DA' := '1'} 
+	ParamTcpPort						: UINT	 := 502;				(* (NA) TCP port						 		*) 
+	{attribute 'OPC.UA.DA' := '1'}  	                                	                                     		
+	ParamIPAddress						: STRING := '10.0.0.1'; 		(* (NA) IP address of main gateway SC3 	 		*)
+	ParamUnitID 						: BYTE   := 1; 					(* (NA) Modbus Unit ID					 		*)
+	ParamTimeout						: TIME   := T#5S;		  		(* (s) Timeout for modbus reading 		 		*)
+	ParamEmailOC						: BOOL   := FALSE;				(* (NA) Send email to OC in case of phase loss  *)
+END_VAR
+
+VAR_INPUT
+	//Child objects
+	MesDataExd			  				: EM_ION8650; 
+	AlarmOn_Sent		 				: BOOL;
+	AlarmOff_Sent						: BOOL;
+END_VAR
+
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//
+	FB_DetectFixedValue   				: FB_DetectFixedValue; 
+    Eact_null    		  				: REAL;                                   								
+	Message_Email_SMC1		  			: ST_ValuesAlarms;
+	Message_Email_SMC2		  			: ST_ValuesAlarms;
+	TrigAlarmGrid_ON	  				: R_TRIG;
+	TrigAlarmGrid_OFF	  				: F_TRIG;
+	
+	FB_ModbusRead	          			: ARRAY [1..6] OF FB_ModbusRead; 	// (NA) FB for Modbus Reading                          		
+	MesBlock1_Temp						: ARRAY [1..2] OF WORD;       		// (NA) Temporary Block with multiple modbus reading (Caution : Double Word variables)	                            		
+	MesBlock2_Temp						: ARRAY [1..10] OF WORD; 
+	AX_ModbusReadAlarm					: ARRAY [1..2] OF BOOL;
+	AX_ModbusReadAlarmId				: ARRAY [1..2] OF UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{caa29eb8-5110-471c-bdae-7847d214c31b}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Digiware measurement tool alarm and warning management
+/////////////////
+
+VAR 
+	FB_AlarmCodeManager : FB_AlarmCodeManager; 
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+FB_DetectFixedValue(IN_Addr := ADR(MesDataExd.MesData.MesEactCons), IN_Size := SIZEOF(MesDataExd.MesData.MesEactCons), IN_Duration :=T#3H , IN_EmptyStruct := ADR(Eact_null ) ); 
+
+// ALARM CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= MesDataExd.MesData.MesEActProd > 10,																	// Production measured			
+		bAlarm2			:= FB_DetectFixedValue.OUT_bStatic,																		// Loss of communication with meter 
+		bAlarm3			:=FALSE,//MesDataExd.MesLossPhase, 																			// Loss of one or more TC phases 
+		bAlarm4			:=FALSE, 																								// 
+		bAlarm5			:=FALSE, 																								//
+		bAlarm6			:=FALSE,        																						//
+		bAlarm7			:=FALSE,        																						//
+		bAlarm8			:=FALSE,        																						//
+		bAlarm9			:=FALSE,        																						//
+		bAlarm10		:=FALSE,        																						//
+		bAlarm11		:=FALSE,        																						//
+		bAlarm12		:=FALSE,        																						//
+		bAlarm13		:=FALSE,        																						//
+		bAlarm14		:=FALSE,        																						//
+		bAlarm15		:=FALSE,        																						//
+		wAlarmCode		=>MesDataExd.MesData.MesAlarmCode);
+
+// WARNING CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:=FALSE,										//  
+		bAlarm2			:=FALSE, 										// 
+		bAlarm3			:=FALSE, 										// 
+		bAlarm4			:=FALSE, 										// 
+		bAlarm5			:=FALSE, 										//
+		bAlarm6			:=FALSE,        								//
+		bAlarm7			:=FALSE,        								//
+		bAlarm8			:=FALSE,        								//
+		bAlarm9			:=FALSE,        								//
+		bAlarm10		:=FALSE,        								//
+		bAlarm11		:=FALSE,        								//
+		bAlarm12		:=FALSE,        								//
+		bAlarm13		:=FALSE,        								//
+		bAlarm14		:=FALSE,        								//
+		bAlarm15		:=FALSE,        								//
+		wAlarmCode		=>MesDataExd.MesData.MesWarningCode);
+			
+// EVENT CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= IN_CmdReset_L, 				// Reset command
+		bAlarm2			:= FALSE, 						// 
+		bAlarm3			:= FALSE, 						// 
+		bAlarm4			:= FALSE, 						// 
+		bAlarm5			:= FALSE, 						//
+		bAlarm6			:= FALSE, 						//
+		bAlarm7			:= FALSE,                       //
+		bAlarm8			:= FALSE,                       //
+		bAlarm9			:= FALSE,                       //
+		bAlarm10		:= FALSE,                       //
+		bAlarm11		:= FALSE,                       //
+		bAlarm12		:= FALSE,                       //
+		bAlarm13		:= FALSE,                       //
+		bAlarm14		:= FALSE,                       //
+		bAlarm15		:= FALSE,                       //
+		wAlarmCode		=>MesDataExd.MesData.MesEventCode);
+		
+		
+IF ParamEmailOC THEN
+	IF ParamTcpPort = 503 THEN // SMC1
+		// Send email to OC in case of loss of a measurement phase
+		TrigAlarmGrid_ON(CLK:= MesDataExd.MesLossPhase); 
+		
+		IF NOT MesDataExd.MesLossPhase THEN 
+			AlarmOn_Sent := FALSE;
+			//FUN_SendMail.FIFO.In.ID		:= 0;
+		END_IF
+		
+		IF TrigAlarmGrid_ON.Q  AND NOT AlarmOn_Sent THEN //A1_SUBMV.A1_EM_Main.MesDataExd.MesLossPhase AND NOT AlarmOn_Sent THEN
+			Message_Email_SMC1.TimeStamp_Act:= SYSTEMTIME_TO_STRING(CalLocalTimeStruct);
+			Message_Email_SMC1.ID			:= 200;//65535;
+			Message_Email_SMC1.Value		:= TRUE;
+			FUN_SendMail.FIFO.In 			:= Message_Email_SMC1;
+			FUN_SendMail.FIFO.A_Add();
+		END_IF
+		
+		// Alarm disactivated
+		TrigAlarmGrid_OFF(CLK:= MesDataExd.MesLossPhase); 
+		
+		IF MesDataExd.MesLossPhase THEN 
+			AlarmOff_Sent := FALSE;
+		END_IF
+		
+		IF TrigAlarmGrid_OFF.Q  AND NOT AlarmOff_Sent THEN //A1_SUBMV.A1_EM_Main.MesDataExd.MesLossPhase AND NOT AlarmOn_Sent THEN
+			Message_Email_SMC1.TimeStamp_Act:= SYSTEMTIME_TO_STRING(CalLocalTimeStruct);
+			Message_Email_SMC1.ID			:= 200;//65535;
+			Message_Email_SMC1.Value		:= FALSE;
+			FUN_SendMail.FIFO.In 			:= Message_Email_SMC1;
+			FUN_SendMail.FIFO.A_Add();
+		END_IF
+	ELSIF ParamTcpPort = 504 THEN // SMC2
+		// Send email to OC in case of loss of a measurement phase
+		TrigAlarmGrid_ON(CLK:= MesDataExd.MesLossPhase); 
+		
+		IF NOT MesDataExd.MesLossPhase THEN 
+			AlarmOn_Sent := FALSE;
+		END_IF
+		
+		IF TrigAlarmGrid_ON.Q  AND NOT AlarmOn_Sent THEN 
+			Message_Email_SMC2.TimeStamp_Act:= SYSTEMTIME_TO_STRING(CalLocalTimeStruct);
+			Message_Email_SMC2.ID			:= 200;
+			Message_Email_SMC2.Value		:= TRUE;
+			FUN_SendMail.FIFO.In 			:= Message_Email_SMC2;
+			FUN_SendMail.FIFO.A_Add();
+		END_IF
+		
+		// Alarm disactivated
+		TrigAlarmGrid_OFF(CLK:= MesDataExd.MesLossPhase); 
+		
+		IF MesDataExd.MesLossPhase THEN 
+			AlarmOff_Sent := FALSE;
+		END_IF
+		
+		IF TrigAlarmGrid_OFF.Q  AND NOT AlarmOff_Sent THEN 
+			Message_Email_SMC2.TimeStamp_Act:= SYSTEMTIME_TO_STRING(CalLocalTimeStruct);
+			Message_Email_SMC2.ID			:= 200;
+			Message_Email_SMC2.Value		:= FALSE;
+			FUN_SendMail.FIFO.In 			:= Message_Email_SMC2;
+			FUN_SendMail.FIFO.A_Add();
+		END_IF
+	END_IF
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Evaluate" Id="{a7929598-0b41-404c-a8fc-2e931c07bad9}">
+      <Declaration><![CDATA[METHOD M_Evaluate
+VAR_INPUT
+END_VAR
+
+VAR
+	TM_0 : EM_ION8650;	// Empty structure
+	OutTrig_Eac : BOOL;
+	OutTrig_Eap : BOOL;
+	OutTrig_Erc : BOOL;
+	OutTrig_Erp : BOOL;
+	bTest : BOOL;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF CmdInitialValues.MesData.MesEactCons <> TM_0.MesData.MesEactCons OR CmdInitialValues.MesData.MesEActProd <> TM_0.MesData.MesEActProd OR CmdInitialValues.MesData.MesEReactCons <> TM_0.MesData.MesEReactCons OR CmdInitialValues.MesData.MesEReactProd <> TM_0.MesData.MesEReactProd THEN
+MesDataExd:= CmdInitialValues;
+	CmdInitialValues := TM_0 ;
+END_IF
+
+trig1(CLK := IN_MesPulseEactCons_IO, Q => OutTrig_Eac);
+trig2(CLK := IN_MesPulseEactProd_IO, Q => OutTrig_Eap);
+trig3(CLK:= IN_MesPulseEreactCons_IO, Q => OutTrig_Erc);
+trig4(CLK:= IN_MesPulseEreactProd_IO, Q => OutTrig_Erp);
+
+IF OutTrig_Eac THEN
+MesDataExd.MesData.MesEactCons := MesDataExd.MesData.MesEactCons + ParamStepEactCons;
+END_IF 
+
+IF OutTrig_Eap THEN
+MesDataExd.MesData.MesEActProd := MesDataExd.MesData.MesEActProd + ParamStepEactProd;
+END_IF 
+
+IF OutTrig_Erc THEN
+MesDataExd.MesData.MesEReactCons := MesDataExd.MesData.MesEReactCons + ParamStepEreactCons;
+END_IF 
+
+IF OutTrig_Erp THEN
+MesDataExd.MesData.MesEReactProd := MesDataExd.MesData.MesEReactProd + ParamStepEreactProd;
+END_IF 
+
+SUPER^.M_Evaluate();]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{918e1659-031d-4821-a828-1eb7ac639c58}">
+      <Declaration><![CDATA[METHOD M_Init
+VAR 
+	InitialValues : EM_ION8650; 
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+Message_Email_SMC1.Message 	:= '"SMC 1: Falta tensión en fases A, B o C en la subestación del Parque Solar Fotovoltaico Matrisol';
+Message_Email_SMC2.Message 	:= '"SMC 2: Falta tensión en fases A, B o C en la subestación del Parque Solar Fotovoltaico Matrisol';
+bInit 						:= FALSE;
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Read" Id="{e0dd340f-5081-4051-9c63-3d1d54cf9c1e}">
+      <Declaration><![CDATA[
+METHOD M_Read : BOOL
+VAR_INPUT
+END_VAR
+
+VAR
+	MW_UInt				: FB_MergeWordsToUint;
+	MW_Real				: FB_MergeWordsToDint;
+	Temp_Value			: UINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+IF MesDataExd.MesData.MesCP_Read  THEN	
+//// MODBUS Read	
+	FB_ModbusRead[1]
+		(
+			nTCPPort		:= ParamTcpPort,
+			ClockRead		:= MesDataExd.MesData.MesCP_Read AND ClockRead, 
+			Reset			:= CmdClearFault_G OR IN_CmdReset_L,
+			sIPAddr			:= ParamIPAddress,
+			nUnitID			:= ParamUnitID, 
+			tTimeout		:= ParamTimeout,
+			nQuantity		:= 1, 
+			nMBAddr			:= 218, 
+			cbLength		:= SIZEOF(MesBlock1_Temp), 
+			pDestAddr		:= ADR(MesBlock1_Temp), 
+			ModbusReadAlarm	=> AX_ModbusReadAlarm[1], 
+			ErrorId			=> AX_ModbusReadAlarmId[1]
+		);
+	
+	// FB_ModbusRead[2]
+	// 	(
+	// 		nTCPPort		:= ParamTcpPort,
+	// 		ClockRead		:= MesDataExd.MesData.MesCP_Read AND ClockRead, 
+	// 		Reset			:= CmdClearFault_G OR IN_CmdReset_L,
+	// 		sIPAddr			:= ParamIPAddress,
+	// 		nUnitID			:= ParamUnitID, 
+	// 		tTimeout		:= ParamTimeout,
+	// 		nQuantity		:= 12, 
+	// 		nMBAddr			:= 40091, 
+	// 		cbLength		:= SIZEOF(MesBlock1_Temp), 
+	// 		pDestAddr		:= ADR(MesBlock2_Temp), 
+	// 		ModbusReadAlarm	=> AX_ModbusReadAlarm[2], 
+	// 		ErrorId			=> AX_ModbusReadAlarmId[2]
+	// 	);
+	
+	MW_UInt(WORD_STRONG:= MesBlock1_Temp[ 1], VAR_OUT := Temp_Value);
+		
+	IF Temp_Value = 2 THEN
+		MesDataExd.MesLossPhase := TRUE;
+	ELSE
+		MesDataExd.MesLossPhase := FALSE;	
+	END_IF 
+	
+	MW_Real(WORD_STRONG:= MesBlock2_Temp[ 2], WORD_WEAK:= MesBlock2_Temp[ 1], VAR_OUT := MesDataExd.MesData.MesEActProd);
+	MW_Real(WORD_STRONG:= MesBlock2_Temp[ 2], WORD_WEAK:= MesBlock2_Temp[ 1], VAR_OUT := MesDataExd.MesData.MesEActCons);
+	
+END_IF 	]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_EM_ION8650">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_EM_ION8650.M_AlarmManagement">
+      <LineId Id="76" Count="22" />
+      <LineId Id="100" Count="34" />
+      <LineId Id="2" Count="0" />
+      <LineId Id="259" Count="1" />
+      <LineId Id="218" Count="0" />
+      <LineId Id="143" Count="0" />
+      <LineId Id="142" Count="0" />
+      <LineId Id="171" Count="0" />
+      <LineId Id="177" Count="2" />
+      <LineId Id="184" Count="0" />
+      <LineId Id="153" Count="0" />
+      <LineId Id="180" Count="0" />
+      <LineId Id="148" Count="0" />
+      <LineId Id="147" Count="0" />
+      <LineId Id="183" Count="0" />
+      <LineId Id="200" Count="0" />
+      <LineId Id="145" Count="0" />
+      <LineId Id="144" Count="0" />
+      <LineId Id="159" Count="0" />
+      <LineId Id="217" Count="0" />
+      <LineId Id="201" Count="4" />
+      <LineId Id="207" Count="6" />
+      <LineId Id="216" Count="0" />
+      <LineId Id="163" Count="0" />
+      <LineId Id="219" Count="0" />
+      <LineId Id="221" Count="4" />
+      <LineId Id="227" Count="22" />
+      <LineId Id="220" Count="0" />
+      <LineId Id="250" Count="0" />
+      <LineId Id="258" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_EM_ION8650.M_Evaluate">
+      <LineId Id="51" Count="25" />
+      <LineId Id="12" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_EM_ION8650.M_Init">
+      <LineId Id="18" Count="1" />
+      <LineId Id="23" Count="0" />
+      <LineId Id="13" Count="0" />
+      <LineId Id="17" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_EM_ION8650.M_Read">
+      <LineId Id="271" Count="0" />
+      <LineId Id="244" Count="0" />
+      <LineId Id="164" Count="15" />
+      <LineId Id="197" Count="0" />
+      <LineId Id="304" Count="13" />
+      <LineId Id="259" Count="0" />
+      <LineId Id="318" Count="0" />
+      <LineId Id="280" Count="4" />
+      <LineId Id="295" Count="0" />
+      <LineId Id="294" Count="0" />
+      <LineId Id="257" Count="0" />
+      <LineId Id="328" Count="0" />
+      <LineId Id="330" Count="0" />
+      <LineId Id="329" Count="0" />
+      <LineId Id="147" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

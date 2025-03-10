@@ -1,0 +1,197 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1">
+  <POU Name="FB_NCU_Base" Id="{e070f539-9f0f-4afd-ad1d-5c738321e762}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK  FB_NCU_Base
+//////////////////
+// NCU Function 
+//////////////////
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance/model specific) 
+	ParamIPAddress				: STRING := '192.168.1.1' ; // IP 
+	ParamTcpPort				: UINT		:= 502;
+	ParamTimeOut				: TIME := T#10S ; 
+	ParamClockReadTime			: TIME := T#1S ; 
+	
+	ParamClockWriteTime			: TIME := T#1S ; 	
+	
+	ParamUnitID 				: BYTE:=1; 					// (NA)   SMA Modbus Unit ID.
+	ParamNbTracker				: BYTE ; 					// Number of tracker behind the 
+	ParamNCUNum					: INT ; 					// Numerous of TCU 
+	                                                		
+	ParamTempoComAlarm			: TIME 			 ; 			// (s) Config : Tempo to detect LOC Alarm	
+
+END_VAR
+
+VAR_INPUT 
+	//Child objects
+	IN_CmdReset_L							: BOOL;				// (NA) External Reset Command	
+    IN_CmdToggleRead						: BOOL;
+    IN_CmdToggleWrite						: BOOL;
+END_VAR
+
+
+VAR
+	//M_ROTATE VARIABLES//
+	
+		
+	//M_ALARMMANAGEMENT VARIABLES//
+		TON_ComAlarm				: TON ; 												// Tempo before detecting loss of communication. 
+	
+	
+		
+	//M_READ VARAIBLES 
+	
+		
+	//M_STATEMANAGER VARIABLES//
+	
+		
+	// M_EXECUTE VARIABLES 	//      
+		TP1							: TP ; 				// (NA) Tempo to define Modbus Reading Frequency 
+		TP2 						: TP ; 				// (NA) Tempo to define Modbus Writing Frequency
+		                            
+		ClockRead					: BOOL;				// (NA) Modbus reading Clock
+		ClockWrite 					: BOOL;				// (NA) Modbus writing Clock 	
+
+    //M_CP VARIABLES//
+		Trig_Cmd_Read						: R_TRIG;                                                                                        
+		Trig_Cmd_Write						: R_TRIG;                                                                                        
+	//M_INIT VARIABLES // 	        		
+		bInit								: BOOL := TRUE ; 		// (NA) Initialize object parameters at first cycle 
+				
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{45f68959-3abf-4272-a977-c973f8a127a9}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Manages Contactor alarms and warnings
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_CP" Id="{abf456c9-672c-4781-a1ed-8c2e426120e9}">
+      <Declaration><![CDATA[METHOD M_CP 
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{31bc01cf-6276-428e-81dd-8eb67265daae}">
+      <Declaration><![CDATA[METHOD M_Execute
+VAR_INPUT
+END_VAR
+
+VAR
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+
+
+// READING AND WRITING CLOCK //
+	TP1(IN:=NOT TP1.Q , PT:= ParamClockReadTime);
+	ClockRead 				:= TP1.Q;
+
+	TP2(IN:=NOT TP2.Q , PT:= ParamClockWriteTime);
+	ClockWrite 				:= TP2.Q;
+
+// PERMANENT CONDITIONS //	
+	
+	
+//Methods call	
+	M_Read();
+	M_Rotate(); 
+
+	M_AlarmManagement(); ]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Read" Id="{8ae70366-d19c-4383-8dda-5eb0b93c28af}">
+      <Declaration><![CDATA[METHOD M_Read
+//////////////////
+// Manages Opening of the contactor
+//////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	KK: WORD ; 
+	LL: WORD ; 
+	JJ: WORD;
+	MW: FB_MergeWordsToDint;
+	MF : FB_MergeWordsToFloat ; 
+
+	MesFlag				: ARRAY[1..5] OF  WORD;	
+	MesAlarm2			: ARRAY[1..5] OF WORD;
+	MesAlarm			: ARRAY[1..5] OF WORD;
+	MesStatus			: ARRAY[1..5] OF WORD ; 
+	MesStatusSynthesis	: WORD ; 
+
+	CalTraNb: UINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Rotate" Id="{92e25784-f75a-4d4d-adf9-38e890c36ca3}">
+      <Declaration><![CDATA[METHOD M_Rotate
+//////////////////
+// Manages Opening of the contactor
+//////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+	CHECK: BOOL ;
+	WriteCmd: BOOL ;
+	CHECK1: BOOL ;
+	WriteCmd1: BOOL ;	
+	CHECK2: BOOL ;
+	WriteCmd2: BOOL ;	
+	CHECK3: BOOL ;
+	WriteCmd3: BOOL ;	
+		
+	
+	SetptGroupCmd		: WORD ; 
+
+
+
+
+	FRS1: BOOL;
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_NCU_Base">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_NCU_Base.M_AlarmManagement">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_NCU_Base.M_CP">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_NCU_Base.M_Execute">
+      <LineId Id="179" Count="11" />
+      <LineId Id="207" Count="5" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_NCU_Base.M_Read">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_NCU_Base.M_Rotate">
+      <LineId Id="201" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

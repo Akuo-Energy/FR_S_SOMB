@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.9">
+  <DUT Name="TOR_Rain" Id="{66497eea-1041-4994-9076-cf58aa15a43e}">
+    <Declaration><![CDATA[TYPE TOR_Rain :
+STRUCT
+	
+	MesData					: TOR ;		(* MesData 											 *)
+	MesRainFall_LastHour  	: REAL;   	(* (mm)Amount of water fall during the last hour	 *)
+	MesRainFall_LastDay   	: REAL;   	(* (mm)Amount of water fall during the last Day (mm) *)
+	MesRainFall_LastMonth 	: REAL;   	(* (mm)Amour of water fall during the last Year (mm) *)
+	                           
+	AvgmmHour	  			: REAL; 	(* (mm)Hourly AVG of water fall                      *)
+	AvgmmDay   				: REAL;     (* (mm)Daily AVG of water fall                       *)
+	AvgmmMonth 				: REAL;     (* (mm) Monthly AVG of water fall                    *)
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

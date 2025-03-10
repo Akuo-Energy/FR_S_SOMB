@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <DUT Name="TAC" Id="{ee073675-0127-4393-b5b1-87c533047b8e}">
+    <Declaration><![CDATA[TYPE TAC :
+STRUCT
+	
+	MesFault				: BOOL;		(* (NA) Fault detected*)
+	OUT_CmdActivated		: BOOL;		(* (NA) The TAC is ordered to be active*)
+	MesActivated			: BOOL;		(* (NA) The TAC has been measured to be active*)
+	MesCmdDisconnect		: BOOL;		(* (NA) TAC received a disonnect order from Grid Manager*)
+	MesAlarmCode			: WORD;		(* (NA) Akuo Internal Alarm Code*)
+	MesWarningCode			: WORD;		(* (NA) Akuo Internal Warning Code*)
+END_STRUCT
+END_TYPE
+ ]]></Declaration>
+  </DUT>
+</TcPlcObject>

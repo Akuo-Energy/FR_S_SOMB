@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.9">
+  <DUT Name="ProtectRelay_T20" Id="{eaaba671-5f7f-4621-b6b2-bdda7c67c3e6}">
+    <Declaration><![CDATA[///////////
+// Structure For I35. Main Operating Data to be saved ( ex: OPC ) .  
+//////////
+TYPE ProtectRelay_T20 :
+STRUCT
+	// I35 Data measures
+	
+		MesData						: ProtectRelay; (*							*)							
+                                           			(*                          *)
+	                                       			(*                          *)
+		MesFreq						: REAL;			(* (Hz) Frequence of grid   *)
+		MesP						: REAL;			(* (Kw)Power on Grid        *)
+		MesQ						: REAL;			(* (kvar) Power on grid     *)
+		MesS						: REAL;			(* (KVA) Power apparent     *)
+		                                   			(*                          *)
+		MesTripProtec				: REAL;			(* A                        *)
+		MesGlobalWarming		    : REAL;			(* % Au warming of TR       *)
+
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

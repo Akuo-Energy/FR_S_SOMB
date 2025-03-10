@@ -1,0 +1,177 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_ProtectRelay_SepamS48" Id="{45bbe1a9-fe7b-4825-b55e-7d5363c57476}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_ProtectRelay_SepamS48 EXTENDS FB_ProtectRelay_Base
+//////////////////
+// SEPAM system for High Voltage or Low Voltage Grid Protection. 
+//////////////////
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance/model specific) 
+	   ParamTimeoutRTU						: TIME  := T#10S;					(* (s)	  Com RTU Timeout *)
+	   ParamUnitID							: BYTE 	:= 1;						(* (NA)	  unit ID*)
+	   ParamInInterfaceSub					: BOOL;								(* (NA)   Serial interface RS422/RS485 TYPE (0:EL6021, 1:SUB9)*)
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	OUT_Protect_GTE_LONG_Running			: BOOL; 							// Long GTE fault, PP stop for 2m and lost of autorisation 
+
+END_VAR
+
+VAR_INPUT
+	// I/O Inputs	
+	IN_MesAlarmIMax_IO						: BOOL; 							// I max fault Fault, Losing autorisation and not possible to consumed
+	IN_MesAlarmUmin_IO						: BOOL; 							// U min Fault, Keeping autorisation, If we have 3 gte in 30 min ==> Stop fedding and consumed during 2h
+	IN_MesAlarmPWH_IO						: BOOL; 							// Defaut wattmétrique
+	                                                								                                                	
+	IN_CmdReset_3GTEFault					: BOOL; 							// 3GTE Fault Reset 
+		
+END_VAR
+
+VAR
+	//M_Read
+	Trig_Read								: R_TRIG;
+	ModbusRTU								: FB_ModbusRTU ;					// (NA) FB for Modbus Reading
+	MbStruct								: ARRAY[1..2] OF Struct_InputRTU;
+
+                                			
+	ModbusAlarm								: ARRAY[1..2] OF BOOL;					// (NA) Read alarm
+	AX_Quantity								: ARRAY[1..2] OF WORD;					// (NA) Quantity of blocks to read
+	AX_Address								: ARRAY[1..2] OF WORD;					// (NA) Start address of the read
+	OutErrorMbRead							: ARRAY[1..2] OF BOOL;
+                                			
+	Busy									: BOOL;
+	MesBlock_Temp							: ARRAY [1..2] OF ARRAY [0..94] OF WORD;
+	                            			
+	RTrigI									: R_TRIG;
+MesDataExd					AT %Q* 		: ProtectRelay_S48  ; 
+	                            			
+	//M_EVALUATE                			
+	TON_GteIsLong							: TON;
+
+
+		
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_Execute" Id="{c2228ac2-0f2d-4349-b947-0d0b4ef02c20}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	MesStateCB	 : BOOL;
+
+	KK 			 : INT;
+	CalNbFeederClosed	: UINT ; 
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+
+CalNbFeederClosed := 0 ; 
+FOR KK:= 1 TO CstNbFeederMVCB_G DO 
+	CalNbFeederClosed :=  CalNbFeederClosed + SEL(A1_SUBMV.AX_FeederMVCB[KK].MesClosed , 0, 1 ) ; 
+
+END_FOR
+
+
+
+
+	
+MesStateCB := A1_SUBMV.A1_MainMVCB.MesDataExd.MesData.MesClosed;
+MesDataExd.MesData.MesI1 := 0;
+
+IF MesStateCB THEN
+	FOR KK:=1 TO CstNbPTR_G DO
+	MesDataExd.MesData.MesI1 := MesDataExd.MesData.MesI1 + AX_PTR[KK].MesDataExd.MesData.MesI;
+	END_FOR  
+	
+
+MesDataExd.MesData.MesI1 := MesDataExd.MesData.MesI1 *CalNbFeederClosed /CstNbFeederMVCB_G;
+		
+
+	
+MesDataExd.MesData.MesI2 	:= MesDataExd.MesData.MesI1 ; 	
+MesDataExd.MesData.MesI3 	:= MesDataExd.MesData.MesI1 ; 
+MesDataExd.MesData.MesI0 	:= 0 ;
+ 
+ELSE 
+MesDataExd.MesData.MesI1 	:= 0 ;
+MesDataExd.MesData.MesI2 	:= 0 ;
+MesDataExd.MesData.MesI3 	:= 0 ;
+MesDataExd.MesData.MesI0 	:= 0 ;
+END_IF
+
+MesDataExd.MesData.MesImax1	:= MAX(MesDataExd.MesData.MesImax1 , MesDataExd.MesData.MesI1  ) ; 
+MesDataExd.MesData.MesImax2	:= MAX(MesDataExd.MesData.MesImax2 , MesDataExd.MesData.MesI2  ) ; 
+MesDataExd.MesData.MesImax3	:= MAX(MesDataExd.MesData.MesImax3 , MesDataExd.MesData.MesI3  ) ; 
+MesDataExd.MesData.MesImax0	:= MAX(MesDataExd.MesData.MesImax0 , MesDataExd.MesData.MesI0  ) ; 
+
+MesDataExd.MesData.MesU12:= A1_SUBMV.MesDataExd.MesData.MesU;
+MesDataExd.MesData.MesU31:= MesDataExd.MesData.MesU12;
+MesDataExd.MesData.MesU23:= MesDataExd.MesData.MesU12;
+
+MesDataExd.MesV1 := MesDataExd.MesData.MesU12/SQRT(3) ;
+MesDataExd.MesV2 := MesDataExd.MesV1;	 
+MesDataExd.MesV3 := MesDataExd.MesV1;
+
+MesDataExd.MesData.MesFreq := A1_SUBMV.MesDataExd.MesData.MesFreq;
+MesDataExd.MesP := A1_SUBMV.MesDataExd.MesData.MesPsol ; // Psol - Pload - Paux 
+MesDataExd.MesQ := A1_SUBMV.MesDataExd.MesData.MesQsol; 
+MesDataExd.MesS := SQRT(MesDataExd.MesP* MesDataExd.MesP + MesDataExd.MesQ*MesDataExd.MesQ);
+MesDataExd.MesCosPhi := MesDataExd.MesP / MesDataExd.MesS;
+
+IF MesDataExd.MesP > 0 THEN
+	MesDataExd.EActProd := MesDataExd.EActProd + MesDataExd.MesP*ParamCycleTime_Emul/3600000	;
+END_IF
+IF MesDataExd.MesP < 0 THEN
+	MesDataExd.EActCons := MesDataExd.EActCons - MesDataExd.MesP*ParamCycleTime_Emul/3600000	;
+END_IF
+IF MesDataExd.MesQ > 0 THEN
+	MesDataExd.EReactProd := MesDataExd.EReactProd + MesDataExd.MesQ*ParamCycleTime_Emul/3600000	;
+END_IF
+IF MesDataExd.MesQ < 0 THEN
+	MesDataExd.EReactCons := MesDataExd.EReactCons - MesDataExd.MesQ*ParamCycleTime_Emul/3600000	;
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_ProtectRelay_SepamS48">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ProtectRelay_SepamS48.M_Execute">
+      <LineId Id="20" Count="0" />
+      <LineId Id="113" Count="0" />
+      <LineId Id="122" Count="0" />
+      <LineId Id="114" Count="1" />
+      <LineId Id="119" Count="0" />
+      <LineId Id="121" Count="0" />
+      <LineId Id="120" Count="0" />
+      <LineId Id="116" Count="2" />
+      <LineId Id="112" Count="0" />
+      <LineId Id="21" Count="2" />
+      <LineId Id="54" Count="0" />
+      <LineId Id="24" Count="7" />
+      <LineId Id="34" Count="16" />
+      <LineId Id="69" Count="0" />
+      <LineId Id="71" Count="1" />
+      <LineId Id="70" Count="0" />
+      <LineId Id="73" Count="0" />
+      <LineId Id="57" Count="1" />
+      <LineId Id="60" Count="0" />
+      <LineId Id="63" Count="3" />
+      <LineId Id="100" Count="0" />
+      <LineId Id="68" Count="0" />
+      <LineId Id="83" Count="11" />
+      <LineId Id="81" Count="0" />
+      <LineId Id="95" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

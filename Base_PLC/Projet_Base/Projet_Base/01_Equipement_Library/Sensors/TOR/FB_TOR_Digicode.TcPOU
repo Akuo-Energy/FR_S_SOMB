@@ -1,0 +1,222 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_TOR_Digicode" Id="{9f654e0c-8242-4dc1-8a07-3a5d73f93a1b}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_TOR_Digicode EXTENDS FB_TOR_Base
+//////////////////
+//  Door sensor system . State = True >> Door Closed .
+//////////////////
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance/model specific) 
+		ParamTempoDoorAlarm			: TIME := T#10S ;	(* (s) Tempo for Door sensor alarm *)
+		
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	
+END_VAR
+
+VAR_INPUT
+	// I/O Inputs 		                                     				
+	OUT_CmdActivated_IO : BOOL;
+	
+		MesDataExd			: TOR_Standard ;  
+
+
+	
+END_VAR
+
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//
+		TON_Ouverture				: TON;				//(NA) Tempo to detect door opened for too long time . 
+
+
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{b07acd95-6741-4ef5-b0a2-430145323ecb}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Manages Door sensor alarms and warnings
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager : FB_AlarmCodeManager ; 
+
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Detection Variables
+TON_Ouverture(IN:= MesDataExd.MesData.MesAlarmState,PT:=ParamTempoDoorAlarm);
+
+// ALARM CODE //
+	FB_AlarmCodeManager(
+ 		bAlarm1			:= FALSE,    	// 
+		bAlarm2			:= FALSE, 		// 
+		bAlarm3			:= FALSE, 		// 
+		bAlarm4			:= FALSE, 		// 
+		bAlarm5			:= FALSE,       //
+		bAlarm6			:= FALSE,       //
+		bAlarm7			:= FALSE,       //
+		bAlarm8			:= FALSE,       //
+		bAlarm9			:= FALSE,       //
+		bAlarm10		:= FALSE,       //
+		bAlarm11		:= FALSE,       //
+		bAlarm12		:= FALSE,       //
+		bAlarm13		:= FALSE,       //
+		bAlarm14		:= FALSE,       //
+		bAlarm15		:= FALSE,       //
+		wAlarmCode		=>MesDataExd.MesData.MesAlarmCode);
+
+// WARNING CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= FALSE,		    	// 
+		bAlarm2			:= FALSE, 				// 
+		bAlarm3			:= FALSE, 				// 
+		bAlarm4			:= FALSE, 				// 
+		bAlarm5			:= FALSE, 				//
+		bAlarm6			:= FALSE,               //
+		bAlarm7			:= FALSE,               //
+		bAlarm8			:= FALSE,               //
+		bAlarm9			:= FALSE,               //
+		bAlarm10		:= FALSE,               //
+		bAlarm11		:= FALSE,               //
+		bAlarm12		:= FALSE,               //
+		bAlarm13		:= FALSE,               //
+		bAlarm14		:= FALSE,               //
+		bAlarm15		:= FALSE,               //
+		wAlarmCode		=>MesDataExd.MesData.MesWarningCode);
+
+// EVENT CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= MesDataExd.MesData.MesAlarmState, 			// Digicode is activated
+		bAlarm2			:= NOT MesDataExd.MesData.MesAlarmState, 		// Digicode is deactivated
+		bAlarm3			:= FALSE, 						// 
+		bAlarm4			:= FALSE, 						// 
+		bAlarm5			:= FALSE, 						//
+		bAlarm6			:= FALSE, 						//
+		bAlarm7			:= FALSE, 						//
+		bAlarm8			:= FALSE, 						//
+		bAlarm9			:= FALSE, 						//
+		bAlarm10		:= FALSE, 						//
+		bAlarm11		:= FALSE, 						//
+		bAlarm12		:= FALSE, 						//
+		bAlarm13		:= FALSE, 						//
+		bAlarm14		:= FALSE, 						//
+		bAlarm15		:= OUT_CmdActivated_IO, 		//	Output for LED is active
+		wAlarmCode		=>MesDataExd.MesData.MesEventCode);
+		
+		
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{fc1f51d7-e2e6-4a8b-9808-644aaaa86ebb}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+SUPER^.M_Execute() ; 
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_StateManager" Id="{8d02ccb3-74c3-44b3-b4e2-51452ae23125}">
+      <Declaration><![CDATA[METHOD M_StateManager
+//////////////////
+// Detect when fire occurs
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle)
+ 	MesStateInterm1 : BOOL;
+	MesStateInterm2 : BOOL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+IF ParamCableCutSecurity THEN
+	MesStateInterm1 := NOT IN_MesState1_IO ; 
+	MesStateInterm2 := NOT IN_MesState2_IO ; 
+ELSE 
+	MesStateInterm1 := IN_MesState1_IO;
+	MesStateInterm2 := IN_MesState2_IO;
+END_IF
+
+IF ParamNbSensors = 1 THEN 
+	MesStateInterm2 := MesStateInterm1 ;
+END_IF
+
+IF ParamAtleastOne THEN 
+MesDataExd.MesData.MesAlarmState := MesStateInterm1 OR MesStateInterm2 ; 
+ELSE
+MesDataExd.MesData.MesAlarmState := MesStateInterm1 AND MesStateInterm2 ; 
+END_IF
+
+R_TRIGAlarm(CLK:= MesDataExd.MesData.MesAlarmState ) ; 
+IF R_TRIGAlarm.Q THEN
+	MesCountAlarm :=  MIN(MesCountAlarm + 1 ,4294967295 ) ; 
+ELSIF IN_ResetCounter THEN 
+	MesCountAlarm := 0 ; 
+END_IF
+
+MesDataExd.MesData.MesCountAlarm	:= MesCountAlarm ; 
+OUT_CmdActivated_IO := MesDataExd.MesData.MesAlarmState;
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_TOR_Digicode">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_TOR_Digicode.M_AlarmManagement">
+      <LineId Id="4" Count="1" />
+      <LineId Id="8" Count="2" />
+      <LineId Id="12" Count="0" />
+      <LineId Id="88" Count="12" />
+      <LineId Id="87" Count="0" />
+      <LineId Id="13" Count="2" />
+      <LineId Id="60" Count="0" />
+      <LineId Id="17" Count="0" />
+      <LineId Id="74" Count="12" />
+      <LineId Id="73" Count="0" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="20" Count="0" />
+      <LineId Id="33" Count="16" />
+      <LineId Id="111" Count="2" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_TOR_Digicode.M_Execute">
+      <LineId Id="45" Count="0" />
+      <LineId Id="55" Count="0" />
+      <LineId Id="2" Count="0" />
+      <LineId Id="65" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_TOR_Digicode.M_StateManager">
+      <LineId Id="153" Count="0" />
+      <LineId Id="110" Count="2" />
+      <LineId Id="155" Count="0" />
+      <LineId Id="157" Count="1" />
+      <LineId Id="113" Count="10" />
+      <LineId Id="135" Count="1" />
+      <LineId Id="124" Count="0" />
+      <LineId Id="137" Count="0" />
+      <LineId Id="141" Count="1" />
+      <LineId Id="138" Count="0" />
+      <LineId Id="140" Count="0" />
+      <LineId Id="139" Count="0" />
+      <LineId Id="125" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

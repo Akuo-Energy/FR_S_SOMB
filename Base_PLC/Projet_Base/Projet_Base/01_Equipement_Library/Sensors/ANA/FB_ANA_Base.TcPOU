@@ -1,0 +1,124 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.13">
+  <POU Name="FB_ANA_Base" Id="{70a0c1b4-d32e-499c-8332-5d2117beaa2e}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_ANA_Base 
+//////////////////
+// Analogic sensOR  Base FB. 
+//////////////////
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance/mùodel specific) 
+	ParamVarMaxAlarm		: REAL 		:=105		; (* (%)  Config : Maximal allowed Site Hygrometry *)
+	ParamVarMaxWarning		: REAL 		:=90		; (* (%)  Config : Maximal Site hygrometry warning*)
+	ParamVarMinAlarm		: REAL 		:=-5		; (* (%)  Config : Minimal allowed Site Hygrometry *)
+	ParamVarMinWarning		: REAL 		:=0			; (* (%)  Config : Minimal Site hygrometry warning*)
+	ParamDiffMax			: REAL 		:= 20 		; (* (NA) Config : Maximal Analogic difference acceptable between two sensors*)
+	
+	ParamNbSensors			: INT 		:=1			; (* (NA) Config : Number of sensors*)
+	
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	
+END_VAR
+
+VAR_INPUT
+	// I/O Inputs 
+		IN_CmdToggleRead   				: BOOL;
+	
+		IN_MesValue1_IO					: UINT ; 		// 	IO Value
+		IN_MesValue2_IO					: UINT ; 		// 	IO Value
+
+		IN_MesVar1Fault_IO	AT %I*		: BOOL ; 		//(NA)  sensor 1 has a 0 mA fault  
+		IN_MesVar2Fault_IO				: BOOL ; 		//(NA)  sensor 2 has a 0 mA fault  		
+END_VAR
+
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//
+
+		RS_MaxAlarm: RS;
+		RS_MinAlarm: RS;
+		RS_MinWarning: RS;
+		RS_MaxWarning: RS;
+	
+		RSDiff: RS;
+                                         	
+	//M_READ VARIABLES//
+		MesValue1						: REAL ;  		// Temporary Value
+		MesValue2						: REAL ; 
+		
+//	MesDataExd					: ANA ; 
+			MesCP_Read					: BOOL := TRUE;	(* Read function enable *)
+		MesCP_Write					: BOOL := TRUE;	(* Write function enable *)
+		
+		// M_INIT //
+		bInit 							: BOOL;
+		IN_CmdReset_L					: BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{e92314c5-b008-4d32-9333-816d7e87764b}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Manages GHI system alarms and warnings
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+ 	FB_AlarmCodeManager		: FB_AlarmCodeManager ; 
+	
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{dcb6cc6e-4b7f-4186-9465-86b7bab5628d}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// METHODS CALLS // 
+	M_Read(); 
+	M_AlarmManagement() ; ]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Read" Id="{0710b5d0-dc54-4f13-872c-f42adb345e1e}">
+      <Declaration><![CDATA[METHOD M_Read
+//////////////////
+// Format GHI Data 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_ANA_Base">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ANA_Base.M_AlarmManagement">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ANA_Base.M_Execute">
+      <LineId Id="21" Count="1" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ANA_Base.M_Read">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

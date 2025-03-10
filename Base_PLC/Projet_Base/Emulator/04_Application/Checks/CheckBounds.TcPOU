@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="CheckBounds" Id="{a0070896-dbd0-4dbe-a242-7361e1e52187}" SpecialFunc="CheckBounds">
+    <Declaration><![CDATA[// Code généré automatiquement : NE PAS MODIFIER
+FUNCTION CheckBounds : DINT
+VAR_INPUT
+	index, lower, upper: DINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// Code généré automatiquement : Il s’agit d’une proposition d’implémentation.
+{noflow}
+Fault_Count_G(CU:=FALSE) ; 
+IF  index < lower THEN
+	CheckBounds := lower;
+	Fault_Count_G(CU:=TRUE) ; 
+ELSIF  index > upper THEN
+	CheckBounds := upper;
+	Fault_Count_G(CU:=TRUE) ; 
+ELSE  
+	CheckBounds := index;
+END_IF
+{flow}]]></ST>
+    </Implementation>
+    <LineIds Name="CheckBounds">
+      <LineId Id="8" Count="1" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="10" Count="1" />
+      <LineId Id="17" Count="0" />
+      <LineId Id="12" Count="1" />
+      <LineId Id="19" Count="0" />
+      <LineId Id="14" Count="2" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

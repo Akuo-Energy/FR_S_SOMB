@@ -1,0 +1,1252 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_PCS_Jema_IBX3" Id="{e04bad9e-2777-4da9-ab7a-226472f70b83}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_PCS_Jema_IBX3 EXTENDS FB_PCS_Base
+//////////////////
+// PLC controller . Jema Object 
+//////////////////
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object
+		ParamPn							: REAL := 1500.0;		(* (kW) Nominal power*)
+		ParamQn							: REAL := 1500.0;		(* (kW) Nominal power*)
+		ParamSn								: REAL := 1500.0;	(* (kVA) Maximum apparent power of the PCS (lasts 30s)*)
+		
+		ParamTimeoutCmdQ					: TIME := T#15S; 	(* (s) Time to activate or deactivate Q regulation before an alarm is raised*)
+		ParamTimeoutCmdCosPhi				: TIME := T#15S; 	(* (s) Time to activate or deactivate CosPhi regulation before an alarm is raised*)
+		ParamTimeoutQvU						: TIME := T#15S;	(* (s) Time to activate or deactivate Q(U) regulation before an alarm is raised*)
+		ParamTimeoutPvF						: TIME := T#15S;	(* (s) Time to activate or deactivate P(f) regulation before an alarm is raised*)
+		ParamTimeOutBat						: TIME := T#1M;		(* (ms) Battery alarm time before a soft stop is sent to the equipment*)
+		ParamTimeoutGridFormerTransition	: TIME := T#1M ;	(* (ms) Time elapsed after grid former cmd when an alarm is raised*)
+		ParamTimeoutGridFeederTransition	: TIME := T#1M;		(* (ms) Time elapsed after grid feeder cmd when an alarm is raised*)
+ 		ParamTimeoutOffTransition			: TIME := T#1M;		// (ms) Time elapsed after CmdStop cmd when an alarm is raised
+   	
+    {attribute 'OPC.UA.DA' := '1'}                		
+		ParamAllowRechargeLowSoc			: BOOL := TRUE;		(* (NA) if true, the PCS will charge when SoC between Soc_Min and Soc_Stop*)
+    {attribute 'OPC.UA.DA' := '1'}                		
+		ParamPrechargeLowSoc				: REAL := 30;		(* (kW) setpoint sent at low SoC*)
+    {attribute 'OPC.UA.DA' := '1'}                		
+		ParamTimeLowSocToRecharge			: TIME := T#5M;		(* (ms) Time elapsed in low soc area before a soft stop is sent again *)
+		ParamPoverQ							: BOOL := TRUE;		// If P over Q is True, then Max setpoint for Q calculated from setpoint of P
+    	          	
+		ParamQfU_UDbHigh    				: REAL;				(* (V) JEMA U1 : AKUO U_UDbHigh*)
+		ParamQfU_Umax		    			: REAL;				(* (V) JEMA U2 : AKUO U_Umax*)
+		ParamQfU_UDbLow	    				: REAL;				(* (V) JEMA U3 : AKUO U_UDbLow*)
+		ParamQfU_Umin		    			: REAL;				(* (V) JEMA U4 : AKUO U_Umin*)
+		                            		
+		ParamQfU_QDbHigh					: REAL;				(* (kVAr) JEMA Q1 : AKUO U_QDbHigh*)
+		ParamQfU_Qmax						: REAL;				(* (kVAr) JEMA Q2 : AKUO U_Qmax*)
+		ParamQfU_QDbLow						: REAL;				(* (kVAr) JEMA Q3 : AKUO U_QDbLow*)
+		ParamQfU_Qmin						: REAL;				(* (kVAr) JEMA Q4 : AKUO U_Qmin*)
+    	                            		
+		ParamPfF_FDbHigh	    			: REAL;				(* (Hz) JEMA f1 : AKUO P_FDbHigh*)
+		ParamPfF_Fmax		    			: REAL;				(* (Hz) JEMA f2 : AKUO P_Fmax*)
+		ParamPfF_FDbLow	    				: REAL;				(* (Hz) JEMA f3 : AKUO P_FDbLow*)
+		ParamPfF_Fmin		    			: REAL;				(* (Hz) JEMA f4 : AKUO P_Fmin*)
+		                            		
+		ParamPfF_PDbHigh					: REAL;				(* (kW) JEMA P1 : AKUO P_PDbHigh*)
+		ParamPfF_Pmax						: REAL;				(* (kW) JEMA P2 : AKUO P_Pmax*)
+		ParamPfF_PDbLow						: REAL;				(* (kW) JEMA P3 : AKUO P_PDbLow*)
+		ParamPfF_Pmin						: REAL;				(* (kW) JEMA P4 : AKUO P_Pmin*)
+    	
+		ParamPfF_FhystLow					: REAL;				(* (Hz) JEMA fst1*)
+		ParamPfF_FhystHigh					: REAL;				(* (Hz) JEMA fst2*)
+		
+		ParamFLow_droop						: REAL;				(* (Hz) flow frequency (droop curve)*)
+		ParamFHigh_droop					: REAL;				(* (Hz) fhigh frequency (droop curve)*)
+		ParamULow_droop						: REAL;				(* (V) Ulow voltage (droop curve)*)
+		ParamUHigh_droop					: REAL;				(* (V) Ulow voltage (droop curve)*)
+		
+		ParamTimeSoCRangeReachedRmp			: TIME;				(* (ms) Time to ramp P back to the setpoint after the SoC reached its limits*)
+		ParamTimeFreqRegStbDuration			: TIME;				(* (ms) Time to ramp P back to the setpoint after entering the stable *)
+		ParamTimeEnterStblPriorRmp			: TIME; 			(* (ms) Time to wait after entering the stable before ramping the P back to the setpoint*)
+    	                            	
+		ParamFreqRegSoCmax 					: REAL;	 			(* (%) Jema Stops charging setpoint and overfreq regulation if BESS reaches this value*)
+		ParamFreqRegSoCmin 					: REAL;				(* (%) Jema Stops discharging setpoint and underfreq regulation if BESS reaches this value*)
+
+		ParamSetPtModbusMode				: BOOL := TRUE;		(* (NA) If True, then Setpoints come from Modbus*)    	
+		ParamLVRT_Enabled					: BOOL; 			(* (NA) LVRT Enabled *)
+		ParamAntiIslanding_Enabled			: BOOL;				(* (NA) Is Anti Islanding enabled*)
+    {attribute 'OPC.UA.DA' := '1'}                		
+		ParamDeactivateWatchdog				: BOOL := TRUE;				// Parameter to deactivate the watchdog
+
+    {attribute 'OPC.UA.DA' := '1'}                		
+		ParamSocLow							: REAL := 10;		(* (%) SoC from which we start limiting the maximal output Power*)
+    {attribute 'OPC.UA.DA' := '1'}                		
+		ParamSocHigh						: REAL := 85;		(* (%) SoC from which we start limiting the minimal output Power*)
+    {attribute 'OPC.UA.DA' := '1'}                		
+		ParamSocMin_G						: REAL := 5;		(* (%) Minimal SoC *)	
+    {attribute 'OPC.UA.DA' := '1'}                		
+		ParamSocMax_G						: REAL := 90;		(* (%) Maximal SoC *)	
+    {attribute 'OPC.UA.DA' := '1'}                		
+		ParamSocStop						: REAL := 3;		(* (%) SoC from which we stop the PCS*)
+    {attribute 'OPC.UA.DA' := '1'}                		
+		ParamSocRecharge					: REAL := 4;		(* (%) SoC from which we recharge the PCS*)	
+    {attribute 'OPC.UA.DA' := '1'}                		
+		ParamPCharge						: REAL := -10;		(* (kW) power at which we consider the PCS Recharges*)
+
+    {attribute 'OPC.UA.DA' := '1'}                		
+		ParamChargeEfficiency				: REAL := 97;		(* (%) percentage of efficiency of PCS during charge*)
+    {attribute 'OPC.UA.DA' := '1'}                		
+		ParamDischargeEfficiency			: REAL := 97;		(* (%) percentage of efficiency of PCS during discharge*)
+		
+END_VAR 
+VAR_INPUT   	                   			
+	MesDataExd								: PCS_Jema_IBX3 ;
+	// Commands :
+		IN_CmdPcsLocal						: BOOL;				// PCS is not included in available PCS' pool (excluded from HPP control). 
+		IN_CmdStopOperation					: BOOL;				// BESS Specific command : Stop operation		
+		IN_CmdPreventStart					: BOOL;				// BESS Specific command : Prevent start	
+		IN_CmdOpenAC						: BOOL;				// Cmd To send an Open AC order
+		IN_CmdOpenDC						: BOOL;				// Cmd To send an Open DC order	
+ 		IN_CmdP_On							: BOOL;				// Cmd start regulating on SetptP from outside of PCS : if you wan to know from what source, add a _IO2 value
+		IN_CmdQ_On							: BOOL;				// Cmd start regulating on SetptQ from outside of PCS : if you wan to know from what source, add a _IO2 value
+		IN_CmdCosPhi_On						: BOOL;				// Cmd start regulating on SetptCosPhi from outside of PCS : if you wan to know from what source, add a _IO2 value
+		IN_CmdP_Off							: BOOL;				// Cmd start regulating on SetptP from outside of PCS : if you wan to know from what source, add a _IO2 value
+		IN_CmdQ_Off							: BOOL;				// Cmd start regulating on SetptQ from outside of PCS : if you wan to know from what source, add a _IO2 value
+		IN_CmdCosPhi_Off					: BOOL;				// Cmd start regulating on SetptCosPhi from outside of PCS : if you wan to know from what source, add a _IO2 value
+		IN_CmdFreqregOn						: BOOL;				// Cmd 
+		IN_CmdFreqregOff					: BOOL;				// 
+		IN_CmdUregOn						: BOOL;				// 
+		IN_CmdUregOff						: BOOL;				// 
+	                      		
+		IN_CmdBlackStart					: BOOL; 			// Cmd Black start from outside of PCS : if you wan to know from what source, add a _IO2 value
+		IN_CmdGridFormer					: BOOL;				// 
+		IN_CmdGridFeeder					: BOOL;				// 
+	
+		IN_SetptU_Local						: REAL := 500;	// Local Command
+		IN_SetptF_Local						: REAL := 50;		// Local Command
+		
+		IN_CmdWatchdog						: BOOL ; 			// Activate or Deactivate the Watchdog function
+	                
+END_VAR
+VAR_OUTPUT
+	//Child objects
+		OUT_SetptP_IO					: INT;			// (NA) Analogical value for the active power setpoint (based on ParamPnom)
+		OUT_SetptQ_IO					: INT;			// (NA) Analogical value for the reactive power setpoint (based on ParamQnom)
+
+END_VAR
+VAR      
+	MesPSetpt_Test : REAL;
+	MesQSetpt_Test : REAL;    
+                           	
+	//M_ALARMMANAGEMENT VARIABLES//  
+		AX_AlarmWords						: ARRAY[1..30] OF ST_ValuesAlarms;
+		AX_AlarmWords_Null					: ARRAY[1..30] OF ST_ValuesAlarms;
+		AX_AlarmWordsJema					: ARRAY[1..225] OF ST_ValuesAlarms;
+		AX_AlarmWordsJema_Null				: ARRAY[1..225] OF ST_ValuesAlarms;
+		NumAlarmsActive						: UINT;
+		NumAlarmsActiveJema					: UINT;
+		TON_BatComAlarm						: TON;
+	//M_READ VARIABLES//            		
+		TP_ReadCompleted					: TP;
+		MesBlock1_Temp_Old					: ARRAY [1..4] OF ARRAY[1..120] OF WORD ; // (NA) Temporary Block Matrix for PCS modbus reading		
+
+		ModbusRead            				: ARRAY [1..4] OF FB_ModbusRead ; 	// (NA) FB for Modbus Reading
+		MesBlock1_Temp						: ARRAY [1..4] OF ARRAY[1..120] OF WORD ; // (NA) Temporary Block Matrix for PCS modbus reading		
+		AX_PcsHeartbit						: ARRAY [1..4] OF BOOL;
+		                                	
+		MesModbusReadAlarm 		  			: ARRAY [1..4] OF BOOL ;				// (NA) Modbus Read Alarm for communication
+		TON_PcsHeartBitAlarm				: ARRAY [1..4] OF TON ;	
+		TON_AlarmPcs						: ARRAY [1..4] OF TON ; 			// DesInhibate undervoltage alarms on PCS few seconds after PCS connected .  
+                                        	
+		DFV									: ARRAY[1..3] OF FB_DetectFixedValue;	
+		StaticValuesToCompareHeartbit		: ARRAY[1..3] OF REAL;
+		                                	                                     
+		CTU_PcsNb							: CTU ; 
+	
+
+	// M_EVALUATE VARIABLES//
+		Time_Discharge_LowSoc				: TIME;
+		Time_Start_Discharge_LowSoc			: TIME;
+		MesStatusWatchdog					: BOOL;
+		MesHeartbeat_Old					: WORD;
+		Trig_Watchdog						: R_TRIG;
+		DataSystemBMS						: BAT_SAMS;
+		
+	// Microcycling //
+		MesMicroCyclingP					: REAL;				// (kW) Actual P for microcyling mode (if micro act = either ParamPmicro/-ParamPmicor, else 0)		
+		MesMicroCyclingP_Old				: REAL;				// (kW) Active power the PCS will have during microcyling
+	    MesMicroCyclingAllowed				: BOOL;				// (NA) If SoC is in range for microCycling                        		
+		Trig_MicroCyclingNoLongerAllowed	: F_TRIG;			// Trig to detect falling edge of microcylingAllowed
+
+	//M_WRITECOMMAND VARIABLES//    		
+		ModbusWrite							: ARRAY [1..3] OF FB_ModbusWrite ;				// (NA) Functionnal Block for Writing Command Word through modbus
+		Trig_Write							: ARRAY [1..3] OF R_TRIG;               		
+		MesModbusWriteCmdAlarm				: ARRAY [1..3] OF BOOL ;						// (NA) Modbus Write Failed  (Command word) . 	
+		MesModbusWriteCode          		: ARRAY [1..3] OF UDINT ; 						// (NA) Modbus Write Alarm Code 
+		CmdWrite			AT%Q*			: ARRAY [1..3] OF BOOL;                     	
+		AX_Cmd				AT%Q*			: ARRAY [1..3] OF ARRAY [1..120] OF WORD;   	
+		AX_Cmd_Old							: ARRAY [1..3] OF ARRAY [1..120] OF WORD;   	
+                                   		                                                	
+		TRIG_CmdOpenAC						: R_TRIG;										// Trig to detect an order to change Mode
+		TRIG_CmdOpenDC						: R_TRIG;										// Trig to detect an order to change Mode
+		TRIG_CmdP_On						: R_TRIG;										// Trig to detect an order to change Mode
+		TRIG_CmdQ_On			    		: R_TRIG;										// Trig to detect an order to change Mode
+		TRIG_CmdCosPhi_On 					: R_TRIG;										// Trig to detect an order to change Mode
+		TRIG_CmdP_Off						: R_TRIG;										// Trig to detect an order to change Mode
+		TRIG_CmdQ_Off			    		: R_TRIG;										// Trig to detect an order to change Mode
+		TRIG_CmdCosPhi_Off 					: R_TRIG;										// Trig to detect an order to change Mode
+		TRIG_CmdBlackStart					: R_TRIG;										// Trig to detect an order to change Mode
+		TRIG_CmdReset						: R_TRIG;		
+		TRIG_FreqReg_On						: R_TRIG;
+		TRIG_FreqReg_Off					: R_TRIG;
+		TRIG_UReg_On						: R_TRIG;
+		TRIG_UReg_Off						: R_TRIG;
+		TRIG_CmdGridFormer					: R_TRIG;
+		TRIG_CmdGridFeeder					: R_TRIG;
+		TRIG_CmdMicroCyclingOn				: R_TRIG;
+		TRIG_CmdMicroCyclingOff     		: R_TRIG;
+		TRIG_CmdStop						: R_TRIG;
+		TRIG_CmdStandby						: R_TRIG;
+		TRIG_CmdStart						: R_TRIG;
+		TRIG_CmdPcsLocal					: R_TRIG;
+		
+		TRIG_Recharge_LowSoc				: R_TRIG;
+		TRIG_RechargeBackToNormalSoc		: R_TRIG;
+		TRIG_SocStop						: R_TRIG;
+		TON_SocStop							: TON;
+		TRIG_SocStop_Again					: R_TRIG;
+        TRIG_BackToNormalSoc				: R_TRIG;
+                		
+		TP_CmdBlackStart					: TP;				// TP To ensure R trig is detected
+		TP_Reset							: TP ; 				// (NA) Maintain Reset command for a certain time 
+		TP_CmdStandby						: TP;				// TP To maintain a soft stop order
+
+		// Pour la commande start, j'envoie une consigne pour fermer les contacteurs DC des batteries
+		TP_CmdOpenAC						: TP;				// TP To ensure R trig is detected
+		TP_CmdOpenDC						: TP;				// TP To ensure R trig is detected
+
+		TP_CmdStart							: TP;				// TP To ensure R trig is detected
+		TP_CmdPreStart						: TP;				// TP To send a close dc breaker order before sending start order
+		F_TrigPreStart						: F_TRIG;			// failing edge to detect end of TP;
+		
+		// Pour la commande stop, pour éviter qu'on ouvre tout d'un coup, je faire un pré stop pendant 1,5s où j'envoie un autre de standby
+		TP_CmdStop							: TP;				// TP To ensure R trig is detected
+		TP_CmdPreStop						: TP;				// TP to send a soft stop before sending a stop 
+		F_TrigPreStop						: F_TRIG;			// failing edge to detect end of TP;
+		                            		
+		TON_CmdP_On							: TON;			// Trig to detect an order to change Mode
+		TON_CmdQ_On			    			: TON;			// Trig to detect an order to change Mode
+		TON_CmdCosPhi_On 					: TON;			// Trig to detect an order to change Mode
+		TON_CmdP_Off						: TON;			// Trig to detect an order to change Mode
+		TON_CmdQ_Off			    		: TON;			// Trig to detect an order to change Mode
+		TON_CmdCosPhi_Off 					: TON;			// Trig to detect an order to change Mode
+		TON_CmdBlackStart					: TON;			// Trig to detect an order to change Mode
+		TON_FreqReg_On						: TON;
+		TON_FreqReg_Off						: TON;
+		TON_UReg_On							: TON;
+		TON_UReg_Off						: TON;
+		TON_CmdGridFormer					: TON;
+		TON_CmdGridFeeder					: TON;
+		TON_CmdMicroCyclingOn				: TON;
+		TON_CmdMicroCyclingOff     			: TON;
+		TON_CmdStart			    		: TON;
+		TON_CmdStop	                		: TON;
+		TON_CmdStandby		        		: TON;
+		TON_TimeAllowedToRecharge			: TON;		// tempo pour s'assurer que si start dans le mode low SOC, on stop après 10min si pas de chargement
+		
+
+		RS_hystlimitmin						: RS;
+		RS_hystlimitmax						: RS;
+ 		RS_hystlimitEnergyShifmin			: RS;
+		RS_hystlimitEnergyShifmax			: RS;
+		
+		CalPmaxCorr_highSoC					: REAL;
+		CalPminCorr_lowSoC					: REAL;
+        	           	                            		
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{37bd3961-0d03-4700-801b-8894b4cb3cfb}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+//  PCS Alarm Management 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager : FB_AlarmCodeManager ; 
+	KK					: UINT;				// For Loop
+	ComWarning			: BOOL;				// Aggregated Wcommunication warning
+	ComAlarm			: BOOL;				// Aggregated communication Alarm
+	
+	CalAlarmPcsSynthesis: BOOL;
+	LL					: UINT;
+	ID_Journal			: UINT;
+	WordTest			: WORD;
+	MesNbMots			: UINT;
+END_VAR	
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// COMMUNICATION //
+	ComWarning 				:=  MesModbusReadAlarm[1] OR MesModbusReadAlarm[2] OR MesModbusReadAlarm[3] ;		
+	ComAlarm				:=  MesModbusReadAlarm[1] AND MesModbusReadAlarm[2] AND MesModbusReadAlarm[3]  ;
+		
+	TON_ComAlarm(IN:= ComAlarm , PT:= ParamTempoComAlarm, Q=>MesComAlarm) ;	
+	TON_ComWarning(IN := ComWarning, PT := ParamTempoComWarning, Q => MesComWarning);
+	TON_BatComAlarm(IN := AX_ESS[ParamEssNum].AX_Bat[ParamPcsNum].MesDataExd.MesData.MesAlarmCom, PT := ParamTimeOutBat );	
+	
+	MesDataExd.MesData.MesAlarmCom		:= MesComAlarm ; 
+	MesDataExd.MesData.MesWarningCom 	:= MesComWarning ; 
+	
+
+// PCS ALARM INHIBITION
+FOR KK := 1 TO ParamNbPowerCol DO
+	TON_AlarmPcs[KK](IN:=NOT MesDataExd.MesData.MesState.0, PT:= T#5S ) ;
+	IF NOT TON_AlarmPcs[KK].Q THEN 
+		MesDataExd.AX_PowerCol[KK].MesRegAlarm0.4 := FALSE ; 
+		MesDataExd.AX_PowerCol[KK].MesRegAlarm0.7 := FALSE ; 
+		MesDataExd.AX_PowerCol[KK].MesRegAlarm0.9 := FALSE ; 
+		MesDataExd.AX_PowerCol[KK].MesRegAlarm0.11 := FALSE ; 
+		MesDataExd.AX_PowerCol[KK].MesRegAlarm0.13 := FALSE ;			
+	END_IF
+	
+	DFV[KK](IN_Addr := ADR(MesDataExd.AX_PowerCol[KK].MesHeartbit), IN_EmptyStruct := ADR(StaticValuesToCompareHeartbit[KK]) , IN_Size := SIZEOF(MesDataExd.AX_PowerCol[KK].MesHeartbit), IN_Duration := T#10S, OUT_bStatic => AX_PcsHeartbit[KK] ) ; 
+	
+END_FOR	
+
+
+// SYNTHESES ALARMES //
+CalAlarmPcsSynthesis := MesDataExd.AX_PowerCol[1].MesRegAlarm0 > 0
+OR MesDataExd.AX_PowerCol[2].MesRegAlarm0 > 0
+OR MesDataExd.AX_PowerCol[3].MesRegAlarm0 > 0
+OR MesDataExd.AX_PowerCol[1].MesRegAlarm1 > 0
+OR MesDataExd.AX_PowerCol[2].MesRegAlarm1 > 0
+OR MesDataExd.AX_PowerCol[3].MesRegAlarm1 > 0
+OR MesDataExd.AX_PowerCol[1].MesRegAlarm2 > 0
+OR MesDataExd.AX_PowerCol[2].MesRegAlarm2 > 0
+OR MesDataExd.AX_PowerCol[3].MesRegAlarm2 > 0
+OR MesDataExd.AX_PowerCol[1].MesRegAlarm3 > 0
+OR MesDataExd.AX_PowerCol[2].MesRegAlarm3 > 0
+OR MesDataExd.AX_PowerCol[3].MesRegAlarm3 > 0
+OR MesDataExd.AX_PowerCol[1].MesRegAlarm4 > 0
+OR MesDataExd.AX_PowerCol[2].MesRegAlarm4 > 0
+OR MesDataExd.AX_PowerCol[3].MesRegAlarm4 > 0 ;
+
+
+// AlarmCode		
+	FB_AlarmCodeManager(
+		bAlarm1		:= CalAlarmPcsSynthesis		,								// Power columns Alarm Synthesis, at least one alarm active on power column
+		bAlarm2		:= TON_CmdP_On.Q OR TON_CmdP_Off.Q,							// Timeout for CmdP order
+		bAlarm3		:= TON_CmdQ_On.Q OR TON_CmdQ_Off.Q,							// Timeout for CmdQ order			
+		bAlarm4		:= TON_BatComAlarm.Q,										// Communication alarm with Batteries : SoftStop order sent to PCS                           			    	
+		bAlarm5		:= TON_CmdBlackStart.Q,                                     // Timeout for BlackStart order   			
+		bAlarm6		:= TON_FreqReg_On.Q OR TON_FreqReg_Off.Q,                   // Timeout for Freq Regulation activation                            				
+		bAlarm7		:= TON_UReg_On.Q OR TON_UReg_Off.Q,                         // Timeout for Voltage Regulation activation
+		bAlarm8 	:= TON_CmdGridFormer.Q,                                     // Timeout for grid former activation
+		bAlarm9		:= TON_CmdGridFeeder.Q,                                     // Timeout for grid feeder activation
+		bAlarm10	:= TON_CmdMicroCyclingOn.Q OR TON_CmdMicroCyclingOff.Q,     // Timeout for MicroCycling
+		bAlarm11	:= MesDataExd.MesData.MesAlarmCom,                          // Communication alarm : none of the Power Columns are responding 				
+		bAlarm12	:= IN_CmdStart and IN_CmdPreventStart,                      // Start command received whilst forbidden to start			
+		bAlarm13	:= FALSE,                                               	//			
+		bAlarm14	:= FALSE,                                               	//		
+		bAlarm15	:= FALSE,                                               	//		
+		wAlarmCode	=>MesDataExd.MesData.MesAlarmCode);		                                		
+		                                                                                 	
+		
+// WARNING CODE //
+	FB_AlarmCodeManager(
+		bAlarm1		:= MesComWarning, 									// Communication warning : At least one of the Power Columns are not responding 
+		bAlarm2		:= MesDataExd.MesData.MesState.4,					// PCS switches off because of low SOC
+		bAlarm3		:= MesDataExd.MesData.MesState.4 AND IN_CmdStart,	// Command start while low SOC state                                          
+		bAlarm4		:= MesDataExd.MesData.MesState.3,					// PCS Tries recharging because of low SOC                                          
+		bAlarm5		:= MesDataExd.AX_PowerCol[3].MesDeratingWord.0,  																								// Power Column 3 derating active due to temperature
+		bAlarm6		:= MesDataExd.AX_PowerCol[1].MesDeratingWord.4 OR MesDataExd.AX_PowerCol[2].MesDeratingWord.4 OR MesDataExd.AX_PowerCol[3].MesDeratingWord.4,      	// At least one power column has a derating due to overvoltage
+		bAlarm7		:= MesDataExd.AX_PowerCol[1].MesDeratingWord.5 OR MesDataExd.AX_PowerCol[2].MesDeratingWord.5 OR MesDataExd.AX_PowerCol[3].MesDeratingWord.5,      	// At least one power column has a derating due to undervoltage
+		bAlarm8		:= MesDataExd.AX_PowerCol[1].MesDeratingWord.6 OR MesDataExd.AX_PowerCol[2].MesDeratingWord.6 OR MesDataExd.AX_PowerCol[3].MesDeratingWord.6,      	// At least one power column has a derating due to overfrequency
+		bAlarm9		:= MesDataExd.AX_PowerCol[1].MesDeratingWord.7 OR MesDataExd.AX_PowerCol[2].MesDeratingWord.7 OR MesDataExd.AX_PowerCol[3].MesDeratingWord.7,      	// At least one power column has a derating due to underfrequency
+		bAlarm10	:= MesDataExd.AX_PowerCol[1].MesDoorOpened,        	// Power column 1 cabinet door is opened
+		bAlarm11	:= MesDataExd.AX_PowerCol[2].MesDoorOpened,        	// Power column 2 cabinet door is opened
+		bAlarm12	:= MesDataExd.AX_PowerCol[3].MesDoorOpened,        	// Power column 3 cabinet door is opened
+		bAlarm13	:= MesDataExd.AX_PowerCol[2].MesDeratingWord.0,  		           													//Power Column 2 derating active due to temperature
+		bAlarm14	:= MesDataExd.AX_PowerCol[1].MesDeratingWord.0,  		           													//Power Column 1 derating active due to temperature
+		bAlarm15	:=FALSE , // 
+		wAlarmCode	=>MesDataExd.MesData.MesWarningCode);
+		
+// EVENT CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= MesDataExd.AX_PowerCol[1].MesData.MesAcSwitchClosed,																							// AC Switch Closed for PCS 1
+		bAlarm2			:= MesDataExd.MesData.MesOpened_Dc, 																											// DC Switch Closed
+		bAlarm3			:= MesDataExd.MesData.OUT_CmdStandby, 																												// Soft stop command
+		bAlarm4			:= MesDataExd.MesData.MesOnGrid,																													// OnGrid Mode is activated
+		bAlarm5			:= MesDataExd.MesData.MesOffGrid, 																													// Offgrid Mode is activated
+		bAlarm6			:= MesDataExd.MesData.OUT_CmdStart, 																												// Cmd Start
+		bAlarm7			:= MesDataExd.MesData.OUT_CmdStop, 																												// Full stop command
+		bAlarm8			:= MesDataExd.OUT_CmdBlackStart, 																											// Cmd BlackStart
+		bAlarm9			:= MesDataExd.AX_PowerCol[1].MesRegAlarm2.9 OR MesDataExd.AX_PowerCol[2].MesRegAlarm2.9 OR MesDataExd.AX_PowerCol[3].MesRegAlarm2.9,			// Grid collapsed 
+		bAlarm10		:= MesDataExd.AX_PowerCol[2].MesData.MesAcSwitchClosed,																							// AC Switch Closed for PCS 2
+		bAlarm11		:= SEL(ParamNbPowerCol>2 ,  FALSE, MesDataExd.AX_PowerCol[3].MesData.MesAcSwitchClosed),																// AC Switch Closed for PCS 3
+		bAlarm12		:= MesDataExd.MesData.MesOpened_Ac, 																											// Ac breaker is Closed. 
+		bAlarm13		:= MesDataExd.MesData.MesState_Precharge,                                                                                            					// ESS - INV : Precharge
+		bAlarm14		:= NOT MesDataExd.OUT_CmdGridMode,                                                                                                         // OnGrid command
+		bAlarm15		:= MesDataExd.OUT_CmdGridMode, 																											// OffGrid command
+		wAlarmCode		=>MesDataExd.MesData.MesEventCode);                                                                                           					// 
+		
+
+NumAlarmsActive := 0;
+AX_AlarmWords := AX_AlarmWords_Null;
+MesNbMots := 2;
+FOR KK := 1 TO MesNbMots DO			// Combien j'ai de mots
+	ID_Journal := 15 + (ParamEssNum-1) * MesNbMots * CstNbPcs_ESS_G + (ParamPcsNum - 1) * CstNbPcs_ESS_G + (KK- 1);
+	FOR LL := 1 TO 15 DO 	// Les bits 
+		WordTest := ROR(FUN_Alarms.AX_RecupWord[ID_Journal],LL);
+		IF WordTest.0 THEN
+			NumAlarmsActive := NumAlarmsActive + 1;
+			AX_AlarmWords[NumAlarmsActive].Message := FUN_Alarms.AX_Journal[ID_Journal][LL].Message;
+		ELSE
+			AX_AlarmWords[NumAlarmsActive+1].Message := '';
+		END_IF
+	END_FOR
+END_FOR		
+
+NumAlarmsActiveJema := 0;
+AX_AlarmWordsJema := AX_AlarmWordsJema_Null;
+MesNbMots := 15;
+FOR KK := 1 TO MesNbMots DO			// Combien j'ai de mots
+	FOR LL := 1 TO 15 DO 	// Les bits 
+		ID_Journal := 57 + (ParamEssNum-1) * MesNbMots * CstNbPcs_ESS_G + (ParamPcsNum - 1) * CstNbPcs_ESS_G + (KK- 1);
+		WordTest := ROR(FUN_Alarms.AX_RecupWord[ID_Journal],LL);
+		IF WordTest.0 THEN
+			NumAlarmsActiveJema := NumAlarmsActiveJema + 1;
+			AX_AlarmWordsJema[NumAlarmsActiveJema].Message := FUN_Alarms.AX_Journal[ID_Journal][LL].Message;
+		ELSE
+			AX_AlarmWordsJema[NumAlarmsActiveJema+1].Message := '';
+		END_IF
+	END_FOR
+END_FOR		
+		
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_CP" Id="{87e660df-2e87-4c9f-ad6e-6f69ca7f8ddb}">
+      <Declaration><![CDATA[METHOD M_CP
+//////////////////
+//  Emulator
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+SUPER^.M_CP() ; 
+
+
+
+
+Trig_Cmd_Read(CLK:=IN_CmdToggleRead);
+Trig_Cmd_Write(CLK:=IN_CmdToggleWrite);
+	
+IF Trig_Cmd_Read.Q THEN
+	IN_CmdToggleRead := FALSE;
+	MesDataExd.MesData.MesCP_Read := NOT MesDataExd.MesData.MesCP_Read;
+END_IF
+
+
+IF Trig_Cmd_Write.Q THEN
+	IN_CmdToggleWrite := FALSE;
+	MesDataExd.MesData.MesCP_Write := NOT MesDataExd.MesData.MesCP_Write;
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Evaluate" Id="{ad772c39-fc2f-4066-9ba7-a9ebefc61035}">
+      <Declaration><![CDATA[METHOD M_Evaluate : BOOL
+VAR_INPUT
+END_VAR
+VAR
+	KK : UINT;
+	bTest: BOOL;
+	MesAlarmPcs: BOOL;
+	AX_Journal : ARRAY[57..57] of array[1..15] of ST_ValuesAlarms;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// External values update :
+//	DataSystemBMS 				:= AX_ESS[ParamEssNum].AX_Bat[ParamPcsNum].MesDataExd;
+
+// Gestion des watchdogs
+	Trig_Watchdog(CLK := MesHeartbeat_Old <> MesDataExd.MesData.MesHeartBeat);
+	IF Trig_Watchdog.Q 	THEN
+		MesHeartbeat_Old := MesDataExd.MesData.MesHeartBeat;
+		MesStatusWatchdog := NOT MesStatusWatchdog;
+	END_IF
+
+
+// Gestion des Start/Stop par SOC Low
+
+	TRIG_SocStop			(clk := NOT MesDataExd.MesData.MesState.0 AND NOT MesDataExd.MesData.MesState.4 AND DataSystemBMS.MesSoCConnected <= ParamSocStop);
+	
+	IF TRIG_SocStop.Q THEN
+		MesDataExd.MesData.MesState.4 := TRUE;
+	END_IF
+	
+	
+	TRIG_SocStop_Again(CLK := Time_Discharge_LowSoc > ParamTimeLowSocToRecharge);
+	IF NOT MesDataExd.MesData.MesState.0 AND MesDataExd.MesData.MesState.4 AND MesDataExd.MesData.MesPdc >= 0 THEN
+		Time_Discharge_LowSoc := Time_Discharge_LowSoc + TIME() - Time_Start_Discharge_LowSoc;
+	ELSIF MesDataExd.MesData.MesState.0 AND (NOT MesDataExd.MesData.MesState.4 OR Time_Discharge_LowSoc >= ParamTimeLowSocToRecharge) THEN
+		Time_Discharge_LowSoc := T#0S;
+	END_IF
+	Time_Start_Discharge_LowSoc := TIME();
+	
+	TRIG_BackToNormalSoc(CLK := MesDataExd.MesData.MesState.4 AND DataSystemBMS.MesSoCConnected > ParamSocStop);
+	IF TRIG_BackToNormalSoc.Q THEN
+		MesDataExd.MesData.MesState.4 := 0;
+	END_IF
+	
+	
+	
+	IF ParamAllowRechargeLowSoc THEN
+		TRIG_Recharge_LowSoc(CLK := NOT MesDataExd.MesData.MesState.0 AND NOT MesDataExd.MesData.MesState.4 AND DataSystemBMS.MesSoCConnected <= ParamSocRecharge);
+		IF TRIG_Recharge_LowSoc.Q THEN
+			MesDataExd.MesData.MesState.3 := TRUE;
+		END_IF
+		
+		TRIG_RechargeBackToNormalSoc(CLK := MesDataexd.MesData.MesState.3 AND DataSystemBMS.MesSoCConnected >= ParamSocMin_G);
+		IF TRIG_RechargeBackToNormalSoc.Q THEN
+			MesDataexd.MesData.MesState.3 := FALSE;
+		END_IF
+	END_IF
+	
+	
+	
+// PROPERTIES UPDATE // 
+	// Controller
+	
+	MesDataExd.MesData.MesP 	:= 0 ; 
+	MesDataExd.MesData.MesPdc 	:= 0 ;
+	MesDataExd.MesData.MesQ 	:= 0 ; 
+	MesDataExd.MesData.MesI 	:= 0 ; 			
+	MesDataExd.MesData.MesIdc 	:= 0 ; 		
+	MesDataExd.MesData.MesTemp	:= 0 ;
+	
+	MesDataExd.MesData.MesAlarmCom					:= TRUE ; 	// All PCS in Com alarm . 			
+	MesDataExd.MesData.MesALOPowerCol_Connected 			:= FALSE; 	// At least one inverter connected and not in alarm			
+	MesDataExd.MesData.MesFreqReg_Active 			:= FALSE;
+	MesDataExd.MesData.MesUReg_Active 				:= FALSE;
+
+	// Update PCS Values	
+	FOR KK:= 1 TO ParamNbPowerCol DO 
+		MesDataExd.MesData.MesP 						:= MesDataExd.AX_PowerCol[KK].MesData.MesP + MesDataExd.MesData.MesP  ; 
+		MesDataExd.MesData.MesI 						:= MesDataExd.AX_PowerCol[KK].MesData.MesI + MesDataExd.MesData.MesI  ; 
+		MesDataExd.MesData.MesPdc 						:= MesDataExd.AX_PowerCol[KK].MesData.MesPdc + MesDataExd.MesData.MesPdc  ; 
+		MesDataExd.MesData.MesQ 						:= -MesDataExd.AX_PowerCol[KK].MesData.MesQ + MesDataExd.MesData.MesQ  ; 
+		MesDataExd.MesData.MesIdc 						:= MesDataExd.AX_PowerCol[KK].MesData.MesIdc + MesDataExd.MesData.MesIdc  ; 
+		MesDataExd.MesData.MesFreqReg_Active			:= MesDataExd.MesData.MesFreqReg_Active 			OR MesDataExd.AX_PowerCol[KK].MesDeratingWord.6 OR MesDataExd.AX_PowerCol[KK].MesDeratingWord.7 ;
+		MesDataExd.MesData.MesUReg_Active				:= MesDataExd.MesData.MesUReg_Active 				OR MesDataExd.AX_PowerCol[KK].MesDeratingWord.4 OR MesDataExd.AX_PowerCol[KK].MesDeratingWord.5 ;
+		MesAlarmPcs										:= MesDataExd.AX_PowerCol[KK].MesRegAlarm0 > 0 		OR MesDataExd.AX_PowerCol[KK].MesRegAlarm1 > 0 	OR MesDataExd.AX_PowerCol[KK].MesRegAlarm2 > 0 OR MesDataExd.AX_PowerCol[KK].MesRegAlarm3 > 0 OR MesDataExd.AX_PowerCol[KK].MesRegAlarm4 > 0;                                        	
+		MesDataExd.MesData.MesAlarmCom					:= MesDataExd.MesData.MesAlarmCom 					AND AX_PcsHeartbit[KK];
+		MesDataExd.MesData.MesALOPowerCol_Connected 			:= MesDataExd.MesData.MesALOPowerCol_Connected 			OR MesDataExd.AX_PowerCol[KK].MesData.MesAcSwitchClosed (*FAT TESTAND NOT MesAlarmPcs *);
+	
+		MesDataExd.MesData.MesTemp 						:= MesDataExd.MesData.MesTemp + MesDataExd.AX_PowerCol[KK].MesData.MesTemp/ParamNbPowerCol;
+	
+			
+	END_FOR 
+	
+	MesDataExd.MesData.MesCosPhi 				:= SEL(	(MesDataExd.MesData.MesP=0) AND  (MesDataExd.MesData.MesQ =0 ), MesDataExd.MesData.MesP / SQRT(EXPT(MesDataExd.MesData.MesP, 2) + EXPT(MesDataExd.MesData.MesQ, 2))   , 1) ; 		
+	MesDataExd.MesData.MesFreq					:= SEL(MesDataExd.AX_PowerCol[1].MesData.MesFreq=0 ,MesDataExd.AX_PowerCol[1].MesData.MesFreq , SEL(MesDataExd.AX_PowerCol[2].MesData.MesFreq=0 ,MesDataExd.AX_PowerCol[2].MesData.MesFreq ,MesDataExd.AX_PowerCol[3].MesData.MesFreq ))   ; 		
+	MesDataExd.MesData.MesU 					:= SEL(MesDataExd.AX_PowerCol[1].MesData.MesU=0 ,MesDataExd.AX_PowerCol[1].MesData.MesU , SEL(MesDataExd.AX_PowerCol[2].MesData.MesU=0 ,MesDataExd.AX_PowerCol[2].MesData.MesU ,MesDataExd.AX_PowerCol[3].MesData.MesU ))   ; 		
+	MesDataExd.MesData.MesUdc 					:= SEL(MesDataExd.AX_PowerCol[1].MesData.MesUdc=0 ,MesDataExd.AX_PowerCol[1].MesData.MesUdc , SEL(MesDataExd.AX_PowerCol[2].MesData.MesUdc=0 ,MesDataExd.AX_PowerCol[2].MesData.MesUdc ,MesDataExd.AX_PowerCol[3].MesData.MesUdc ))   ; 			
+	 
+	
+//--------------------------------------------------------------------------------//
+// 							Gestion des setpoints								  //
+//--------------------------------------------------------------------------------//
+	
+// Gestion de la puissance dispo batterie		
+	//  MesDataExd.MesData.CalDynamicEfficiencyPcs := (ParamRendementPcsNom  - ParamRendementPcsMin)* (1-EXP(-(abs.MesDataExd.MesData.CalP)/ParamPnom)*100/ParamTauxDeChargeRef)) + ParamRendementPcsMin;
+
+// Gestion des limites hautes de SoC
+	RS_hystlimitmax(SET:= DataSystemBMS.MesSoCConnected >= ParamSocMax_G , RESET1:= DataSystemBMS.MesSoCConnected < ParamSocHigh) ; 
+	RS_hystlimitmin(SET:= DataSystemBMS.MesSoCConnected <= ParamSocMin_G , RESET1:= DataSystemBMS.MesSoCConnected > ParamSocLow) ; 
+	
+	IF DataSystemBMS.MesSoCConnected >= ParamSocHigh THEN
+		CalPmaxCorr_highSoC := (ParamSocMax_G - DataSystemBMS.MesSoCConnected)/(ParamSocMax_G - ParamSocHigh );
+	ELSE 
+		CalPmaxCorr_highSoC := 1 ;
+	END_IF 
+	IF DataSystemBMS.MesSoCConnected <= ParamSocLow THEN
+		CalPminCorr_lowSoC := (ParamSocMin_G - DataSystemBMS.MesSoCConnected)/(ParamSocMin_G - ParamSocLow );
+	ELSE
+		CalPminCorr_lowSoC := 1;
+	END_IF
+	
+	IF (datasystembms.MesData.MesCCL <> 0 OR datasystembms.MesData.MesDCL <> 0) AND DataSystemBMS.MesUdcConnected <> 0 THEN
+		MesDataExd.MesData.MesSmax_ChargeFromBat 		:=  SEL(RS_hystlimitmax.Q1, 1, 0) * CalPmaxCorr_highSoC * MIN(DataSystemBMS.MesData.MesCCL*ParamChargeEfficiency/100,	ParamPn);
+		MesDataExd.MesData.MesSmax_DischargeFromBat 	:=  SEL(RS_hystlimitmin.Q1, 1, 0) * CalPminCorr_lowSoC * MIN(DataSystemBMS.MesData.MesDCL*ParamDischargeEfficiency/100,	ParamPn);
+	ELSE
+		MesDataExd.MesData.MesSmax_ChargeFromBat := 0;
+		MesDataExd.MesData.MesSmax_DischargeFromBat := 0;
+	END_IF
+	
+
+// Local
+	// Si je suis en local, je désactive le micro cycling et je réecris le setpoint d'input	
+		IF MesDataExd.MesData.OUT_CmdPcsLocal THEN
+			IN_SetptP := IN_SetptP_Local;
+			IN_SetptQ := IN_SetptQ_Local;
+			IN_SetptU := IN_SetptU_Local;
+			IN_SetptF := IN_SetptF_Local;
+		END_IF
+
+	MesDataExd.MesData.OUT_SetptSMax := MIN(MesDataExd.MesData.MesAvailability * MesDataExd.MesData.MesSnom/100.0,  ParamPn);
+
+IF ParamPoverQ THEN 
+	// Le setpoint Max correspond à la dispo * la puissance nominale
+	MesDataExd.MesData.OUT_SetptPMax := MIN(MesDataExd.MesData.MesSmax_DischargeFromBat, MesDataExd.MesData.OUT_SetptSMax);
+	MesDataExd.MesData.OUT_SetptPMin := - MIN(MesDataExd.MesData.MesSmax_ChargeFromBat, MesDataExd.MesData.OUT_SetptSMax);
+
+	// Min
+	IF ABS(MesDataExd.MesData.OUT_SetptSMax) > ABS(MesDataExd.MesData.OUT_SetptP) THEN
+		MesDataExd.MesData.OUT_SetptQMax		:= MIN(ParamQn, SQRT(EXPT(MesDataExd.MesData.OUT_SetptSMax, 2) - EXPT(MesDataExd.MesData.OUT_SetptP, 2)));
+	ELSE
+		MesDataExd.MesData.OUT_SetptQMax := 0;
+	END_IF
+	IF ABS(MesDataExd.MesData.OUT_SetptSMax) > ABS(MesDataExd.MesData.OUT_SetptP) THEN
+		MesDataExd.MesData.OUT_SetptQMin		:= -MIN(ParamQn,SQRT( EXPT(MesDataExd.MesData.OUT_SetptSMax, 2) - EXPT(MesDataExd.MesData.OUT_SetptP, 2)));
+	ELSE 
+		MesDataExd.MesData.OUT_SetptQMin := 0;
+	END_IF
+ELSE
+	MesDataExd.MesData.OUT_SetptQMax := SEL(MesDataExd.MesData.MesP = 0, SEL(MesDataExd.MesData.MesP>0, MesDataExd.MesData.MesSmax_ChargeFromBat, MesDataExd.MesData.MesSmax_DischargeFromBat), MIN(MesDataExd.MesData.MesSmax_ChargeFromBat, MesDataExd.MesData.MesSmax_DischargeFromBat));
+	MesDataExd.MesData.OUT_SetptQMin := -MesDataExd.MesData.OUT_SetptQMax;
+		
+	MesDataExd.MesData.OUT_SetptPMax		:= MIN(SQRT(EXPT(MesDataExd.MesData.MesSmax_ChargeFromBat, 2) - EXPT(MesDataExd.MesData.OUT_SetptQ, 2)),  SEL(DataSystemBMS.MesSoCConnected < ParamSocMin_G, ParamPn, 0));
+	MesDataExd.MesData.OUT_SetptPMin		:= MAX(SQRT(EXPT(MesDataExd.MesData.MesSmax_DischargeFromBat, 2) - EXPT(MesDataExd.MesData.OUT_SetptQ, 2)),  SEL(DataSystemBMS.MesSoCConnected > ParamSocMax_G, ParamPn, 0));
+END_IF
+
+// J'affecte les variables que je vais écrire
+IF MesDataExd.OUT_CmdP THEN
+	IF ParamAllowRechargeLowSoc AND MesDataExd.MesData.MesState.3 THEN
+		IN_SetptP := MIN(IN_SetptP, - ABS(ParamPrechargeLowSoc)) ;
+	END_IF
+	MesDataExd.MesData.OUT_SetptP		:= MIN(MAX(IN_SetptP, MesDataExd.MesData.OUT_SetptPMin), MesDataExd.MesData.OUT_SetptPMax);
+	
+ELSE
+	MesDataExd.MesData.OUT_SetptP 		:= 0;
+END_IF
+
+IF MesDataExd.OUT_CmdQ THEN
+	MesDataExd.MesData.OUT_SetptQ		:= -MIN(MAX(IN_SetptQ, MesDataExd.MesData.OUT_SetptQMin), MesDataExd.MesData.OUT_SetptQMax);
+ELSE
+	MesDataExd.MesData.OUT_SetptQ 		:= 0;
+END_IF
+
+MesDataExd.OUT_SetptV := IN_SetptU;
+MesDataExd.OUT_SetptF := IN_SetptF;
+
+
+TON_CmdQ_On				(IN := MesDataExd.OUT_CmdQ 						AND NOT MesDataExd.MesData.MesID_State_Inv.4, PT := ParamTimeoutCmdQ);		
+TON_CmdQ_Off			(IN :=  NOT MesDataExd.OUT_CmdQ  				AND MesDataExd.MesData.MesID_State_Inv.4, PT := ParamTimeoutCmdQ);				   	
+TON_CmdCosPhi_On		(IN := MesDataExd.OUT_CmdCosPhi 				AND NOT MesDataExd.MesData.MesID_State_Inv.5, PT := ParamTimeoutCmdCosPhi);		
+TON_CmdCosPhi_Off		(IN :=  NOT MesDataExd.OUT_CmdCosPhi 			AND MesDataExd.MesData.MesID_State_Inv.5, PT := ParamTimeoutCmdCosPhi);		
+TON_FreqReg_On			(IN := MesDataExd.OUT_CmdFreqregMode 			AND NOT MesDataExd.MesData.MesID_State_Inv.2, PT := ParamTimeoutPvF);			
+TON_FreqReg_Off			(IN :=  NOT MesDataExd.OUT_CmdFreqregMode 		AND MesDataExd.MesData.MesID_State_Inv.2, PT := ParamTimeoutPvF	);		
+TON_UReg_On				(IN := MesDataExd.OUT_CmdUregMode 				AND NOT MesDataExd.MesData.MesID_State_Inv.1, PT := ParamTimeoutQvU	);		
+TON_UReg_Off			(IN :=  NOT MesDataExd.OUT_CmdUregMode 			AND MesDataExd.MesData.MesID_State_Inv.1, PT := ParamTimeoutQvU	);		
+TON_CmdGridFormer		(IN := MesDataExd.OUT_CmdGridMode 				AND NOT MesDataExd.MesData.MesID_State_Inv.10, PT := ParamTimeoutGridFormerTransition	);		
+TON_CmdGridFeeder		(IN :=  NOT MesDataExd.OUT_CmdGridMode			AND MesDataExd.MesData.MesID_State_Inv.10, PT := ParamTimeoutGridFeederTransition	);		
+TON_CmdStop				(IN := MesDataExd.MesData.OUT_CmdStop					AND MesDataExd.MesData.MesState.0);
+TON_CmdStart			(IN := MesDataExd.MesData.OUT_CmdStart					AND NOT MesDataExd.MesData.MesState.0);
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{8fd142f4-e285-44ba-8031-1f4bc7bf4e02}">
+      <Declaration><![CDATA[METHOD M_Init
+
+VAR 
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SUPER^.M_Init() ; 
+
+MesDataExd.MesData.MesState.0 := TRUE; // Initialize state to OFF
+
+MesDataExd.OUT_CmdP := TRUE;
+MesDataExd.OUT_CmdQ := TRUE;
+
+MesDataExd.MesData.MesCP_Read := TRUE;
+MesDataExd.MesData.MesCP_Write := TRUE;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Read" Id="{ab337af9-7808-4807-9df2-7878d83da4be}">
+      <Declaration><![CDATA[METHOD M_Read
+//////////////////
+//  Read Modbus Variable for PCS . 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	MW 						: FB_MergeWordsToDint; 
+
+	
+	MesPsetPt_Temp 			: REAL ;
+	MesQsetPt_Temp			: REAL ;
+	MesPavailablePcs_Temp	: REAL;
+	MesPavailable_Temp		: REAL;
+	
+	ComErrorPcs_Temp		: WORD;
+	
+	KK						: BYTE;  					// FOR Loop 
+	LL						: BYTE;						// Alarm Loop
+
+	MesPsetPtPcs_temp		: ARRAY[1..CstNbPcs_ESS_G] OF  REAL; // Setpt lu sur le module
+	MesQsetPtPcs_temp		: ARRAY[1..CstNbPcs_ESS_G] OF  REAL;
+
+	AX_Qty					: ARRAY[1..3] OF WORD := [75, 68, 68];
+	AX_Addr					: ARRAY[1..3] OF WORD := [1100, 1200, 1300];
+	bReadChanged : BOOL;
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+IF MesDataExd.MesData.MesCP_Read  THEN	
+// MODBUS REQUEST//
+
+		ModbusRead[4]
+		(
+			tTimeout		:= ParamTimeout,
+			nUnitID			:= ParamUnitID,
+			sIPAddr			:= ParamIPAddress ,
+			ClockRead		:= ClockRead AND MesDataExd.MesData.MesCP_Read,
+			nTcpPort		:= ParamTcpPort,
+			nQuantity		:= 75,
+			Reset			:= IN_CmdReset,
+			nMBAddr			:= 1100  ,//Access every PCS power modules
+			cbLength		:= SIZEOF(MesBlock1_Temp[4]) , 
+			pDestAddr		:= ADR(MesBlock1_Temp[4]),
+			ModbusReadAlarm	=>MesModbusReadAlarm[4]
+		);
+			
+	bReadChanged := MEMCMP(pBuf1 := ADR(MesBlock1_Temp_Old), pBuf2 := ADR(MesBlock1_Temp), n := SIZEOF(MesBlock1_Temp))<> 0;
+	
+	IF bReadChanged THEN
+		MEMCPY(destAddr := ADR(MesBlock1_Temp_Old), srcAddr := ADR(MesBlock1_Temp), n := SIZEOF(MesBlock1_Temp_Old));
+	END_IF
+	TP_ReadCompleted(IN := bReadChanged, pt := ParamClockReadTime/2, Q=>MesDataExd.MesReadCompleted);
+
+			
+	// MODBUS REQUEST//
+		FOR KK:=1 TO ParamNbPowerCol DO 	
+			ModbusRead[KK]
+			(
+				tTimeout		:= ParamTimeout,
+				nUnitID			:= ParamUnitID,
+				sIPAddr			:= ParamIPAddress,
+				ClockRead		:= ClockRead AND MesDataExd.MesData.MesCP_Read,
+				nTcpPort		:= ParamTcpPort,
+				nQuantity		:= AX_Qty[KK],
+				Reset			:= IN_CmdReset,
+				nMBAddr			:= AX_Addr[KK] ,
+				cbLength		:= SIZEOF(MesBlock1_Temp[KK]) , 
+				pDestAddr		:= ADR(MesBlock1_Temp[KK]),
+				ModbusReadAlarm	=>MesModbusReadAlarm[KK]
+			);
+		END_FOR
+		
+		
+	// MODBUS BLOCK SEPARATION/
+		// Block1 (PCS) 
+		FOR KK:=1 TO ParamNbPowerCol DO 	// Value per Power Column (3 per inverter IBX3)
+			// Measurements
+			MW( WORD_STRONG:= MesBlock1_Temp[KK][1], SIGNED:=TRUE, FIX:=1 , SIZE:=1, VAR_OUT := MesDataExd.AX_PowerCol[KK].MesData.MesUdc); 
+			MW( WORD_STRONG:= MesBlock1_Temp[KK][2], SIGNED:=TRUE, FIX:=1 , SIZE:=1, VAR_OUT := MesDataExd.AX_PowerCol[KK].MesData.MesIdc); //Vérifier les signes
+			MW( WORD_STRONG:= MesBlock1_Temp[KK][3], SIGNED:=FALSE, FIX:=1 , SIZE:=1, VAR_OUT := MesDataExd.AX_PowerCol[KK].MesData.MesU);
+			MW( WORD_STRONG:= MesBlock1_Temp[KK][6], SIGNED:=FALSE, FIX:=1 , SIZE:=1, VAR_OUT := MesDataExd.AX_PowerCol[KK].MesData.MesI1); //Vérifier les signes
+			MW( WORD_STRONG:= MesBlock1_Temp[KK][7], SIGNED:=FALSE, FIX:=1 , SIZE:=1, VAR_OUT := MesDataExd.AX_PowerCol[KK].MesData.MesI2); //Vérifier les signes
+			MW( WORD_STRONG:= MesBlock1_Temp[KK][8], SIGNED:=FALSE, FIX:=1 , SIZE:=1, VAR_OUT := MesDataExd.AX_PowerCol[KK].MesData.MesI3); //Vérifier les signes
+			MW( WORD_STRONG:= MesBlock1_Temp[KK][9], SIGNED:=TRUE, FIX:=1 , SIZE:=1, VAR_OUT := MesDataExd.AX_PowerCol[KK].MesData.MesPdc); // Vérifier les signes
+			MW( WORD_STRONG:= MesBlock1_Temp[KK][10], SIGNED:=TRUE, FIX:=1 , SIZE:=1, VAR_OUT := MesDataExd.AX_PowerCol[KK].MesData.MesP); // Vérifier les signes
+			MW( WORD_STRONG:= MesBlock1_Temp[KK][11], SIGNED:=TRUE, FIX:=1 , SIZE:=1, VAR_OUT := MesDataExd.AX_PowerCol[KK].MesData.MesQ);// Vérifier les signes
+			MW( WORD_STRONG:= MesBlock1_Temp[KK][12], SIGNED:=FALSE, FIX:=3 , SIZE:=1, VAR_OUT := MesDataExd.AX_PowerCol[KK].MesData.MesCosPhi);
+			MW( WORD_STRONG:= MesBlock1_Temp[KK][13], SIGNED:=FALSE, FIX:=2 , SIZE:=1, VAR_OUT := MesDataExd.AX_PowerCol[KK].MesData.MesFreq);
+			
+			// Inputs (Temp and IO)
+			MW( WORD_STRONG:= MesBlock1_Temp[KK][15], SIGNED:=TRUE, FIX:=1 , SIZE:=1, VAR_OUT := MesDataExd.AX_PowerCol[KK].MesTempControl);
+			MW( WORD_STRONG:= MesBlock1_Temp[KK][18], SIGNED:=TRUE, FIX:=1 , SIZE:=1, VAR_OUT := MesDataExd.AX_PowerCol[KK].MesTempPowerUnit);
+	
+			// Alarms
+		MesDataExd.AX_PowerCol[KK].MesRegAlarm0:=MesBlock1_Temp[KK][24];
+		MesDataExd.AX_PowerCol[KK].MesRegAlarm1:=MesBlock1_Temp[KK][25];
+		MesDataExd.AX_PowerCol[KK].MesRegAlarm2:=MesBlock1_Temp[KK][26];
+		MesDataExd.AX_PowerCol[KK].MesRegAlarm3:=MesBlock1_Temp[KK][27];
+		MesDataExd.AX_PowerCol[KK].MesRegAlarm4:=MesBlock1_Temp[KK][28];					
+	
+			MW( WORD_STRONG:= MesBlock1_Temp[KK][48], SIGNED:=TRUE, FIX:=1 , SIZE:=1, VAR_OUT := MesDataExd.AX_PowerCol[KK].MesTempCabinet);
+			
+			// States
+		MesDataExd.AX_PowerCol[KK].MesData.MesAcSwitchClosed := MesBlock1_Temp[KK][61].2 ;	// AC contactor status
+		MesDataExd.AX_PowerCol[KK].MesDoorOpened := NOT MesBlock1_Temp[KK][61].6; // Door : 1= Close, O= Open
+		MesDataExd.AX_PowerCol[KK].MesDeratingWord := MesBlock1_Temp[KK][62] ;
+			
+			MW( WORD_STRONG:= MesBlock1_Temp[KK][68], SIGNED:=FALSE, FIX:=0 , SIZE:=1, VAR_OUT := MesDataExd.AX_PowerCol[KK].MesHeartbit);
+			
+	
+		END_FOR
+	
+		// Inverter states (à tester)
+	
+	MesDataExd.MesData.MesID_State_Inv				:= MesBlock1_Temp[4][67];
+	MesDataExd.MesData.MesSnom						:= MIN(WORD_TO_REAL(MesBlock1_Temp[1][69]),ParamSn);	
+	MesDataExd.MesData.MesAvailability				:= WORD_TO_REAL(MesBlock1_Temp[4][70]);
+		
+	MW( WORD_STRONG := MesBlock1_Temp[4][71], SIZE := 1, FIX := 0, SIGNED := FALSE, VAR_OUT := MesDataExd.MesHumidity);
+	MW( WORD_STRONG := MesBlock1_Temp[4][72], SIZE := 1, FIX := 1, SIGNED := TRUE, VAR_OUT := MesDataExd.MesData.MesTemp);
+	MesDataExd.MesData.MesTemp 						:= WORD_TO_REAL(MesBlock1_Temp[4][72])/10;
+	MesDataExd.MesData.MesState_Precharge 			:= WORD_TO_BOOL(MesBlock1_Temp[4][73]);
+	MesDataExd.MesData.MesOpened_Dc					:= NOT MesBlock1_Temp[4][74].0;
+	MesDataExd.MesData.MesOpened_Ac					:= NOT  MesBlock1_Temp[4][61].0;
+	MesDataExd.MesState_SoCLimitReached				:= MesBlock1_Temp[4][74].2;
+	MesDataExd.MesData.MesOffGrid					:= MesBlock1_Temp[4][74].3;
+	MesDataExd.MesData.MesOnGrid					:= MesBlock1_Temp[4][74].4;
+	MesDataExd.MesData.MesHeartBeat					:= MesBlock1_Temp[4][75];
+	
+	
+	
+	
+	
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_StateManager" Id="{35f94957-a63f-4443-90c6-837fdbcc814a}">
+      <Declaration><![CDATA[METHOD M_StateManager
+//////////////////
+// Detect which is the state of the PCS system . 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+	
+	ELS: INT;
+END_VAR
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+MesDataExd.MesData.MesState.0 	:= 0;
+IF NOT MesDataExd.MesData.MesALOPowerCol_Connected OR MesDataExd.MesData.MesOpened_Ac OR  MesDataExd.MesData.MesOpened_Dc THEN 
+	// OFF State :  No Charger connected or all charger in alarm
+	MesDataExd.MesData.MesState.0 	:= 1 ; 
+END_IF
+
+MesDataExd.MesData.MesState.1 	:= 0 ; 
+IF MesDataExd.MesData.MesOffGrid THEN
+	// Feeding master
+	MesDataExd.MesData.MesState.1 	:= 1 ; 
+END_IF	
+
+MesDataExd.MesData.MesState.2 	:= 0 ; 
+IF MesDataExd.MesData.OUT_CmdPcsLocal THEN
+	MesDataExd.MesData.MesState.2 	:= 1 ; 
+END_IF
+
+
+
+
+SUPER^.M_StateManager() ; ]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_WriteCommand" Id="{9ec7aa49-e4f7-4615-a872-aa5e9ea14a4d}">
+      <Declaration><![CDATA[METHOD M_WriteCommand
+//////////////////
+//  Modbus Write of the command for the PCS. 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+	AX_Adr			: ARRAY[1..3] OF UINT := [1707	, 1802	, 	0217	];
+	AX_QTY			: ARRAY[1..3] OF BYTE := [41	, 33	, 	2		];
+	AX_UnitID		: ARRAY[1..3] OF BYTE := [1		, 1		, 	1		];	
+
+	KK: INT;
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[TRIG_CmdP_On			(CLK := IN_CmdP_On);						
+TRIG_CmdP_Off			(CLK := IN_CmdP_Off);							
+TRIG_CmdQ_On			(CLK := IN_CmdQ_On);                        
+TRIG_CmdQ_Off			(CLK := IN_CmdQ_Off);                      
+TRIG_CmdCosPhi_On		(CLK := IN_CmdCosPhi_On);              
+TRIG_CmdCosPhi_Off		(CLK := IN_CmdCosPhi_Off);            
+TRIG_CmdReset			(CLK := IN_CmdReset);
+TRIG_FreqReg_On			(CLK := IN_CmdFreqregOn);
+TRIG_FreqReg_Off		(CLK := IN_CmdFreqregOff);
+TRIG_UReg_On			(CLK := IN_CmdUregOn);			
+TRIG_UReg_Off			(CLK := IN_CmdUregOff);
+TRIG_CmdGridFormer		(CLK := IN_CmdGridFormer);
+TRIG_CmdGridFeeder		(CLK := IN_CmdGridFeeder);
+TRIG_CmdOpenAC			(CLK := IN_CmdOpenAC);
+TRIG_CmdOpenDC			(CLk := IN_CmdOpenDC);
+TRIG_CmdStop			(CLK := IN_CmdStop);
+TRIG_CmdStandby			(CLK := (IN_CmdStandby OR TON_BatComAlarm.Q)  AND NOT TP_CmdStop.Q );
+TRIG_CmdStart			(CLK := IN_CmdStart AND NOT TP_CmdStop.Q AND NOT IN_CmdStopOperation AND (NOT IN_CmdPreventStart OR MesDataExd.MesData.OUT_CmdPcsLocal));
+TRIG_CmdBlackStart		(CLK := IN_CmdBlackStart);	
+
+
+TP_CmdPreStop			(IN := TRIG_CmdStop.Q, 																		PT := T#1S500MS);
+TP_CmdPreStart			(IN := TRIG_CmdStart.Q, 																	PT := ParamTimePulseTrig);
+TP_CmdOpenAC			(IN := TRIG_CmdOpenAC.Q, 																	PT := ParamTimePulseTrig);
+TP_CmdOpenDC			(IN := TRIG_CmdOpenDC.Q, 																	PT := ParamTimePulseTrig);
+TP_CmdStop				(IN := F_TrigPreStop.Q, 																	PT := ParamTimePulseTrig);
+TP_CmdStart				(IN := F_TrigPreStart.Q, 																	PT := ParamTimePulseTrig);
+TP_CmdStandby			(IN := TRIG_CmdStop.Q OR TRIG_CmdStandby.Q OR TRIG_SocStop.Q OR TRIG_SocStop_Again.Q, 	PT := ParamTimePulseTrig);
+TP_Reset				(IN := TRIG_CmdReset.Q, 																	PT := ParamTimePulseTrig);
+                		
+                		
+F_TrigPreStart			(CLK := TP_CmdPreStart.Q);
+F_TrigPreStop			(CLK := TP_CmdPreStop.Q);
+
+
+IF TRIG_CmdBlackStart.Q THEN
+	IN_CmdBlackStart := FALSE;
+END_IF
+IF TRIG_CmdStop.Q THEN
+	IN_CmdStop := FALSE;
+END_IF
+IF TRIG_CmdStart.Q THEN
+	AX_ESS[ParamEssNum].AX_BAT[ParamPcsNum].IN_CmdCloseDC := TRUE;
+	IN_CmdStart := FALSE;
+END_IF
+IF TRIG_CmdStandby.Q THEN
+	IN_CmdStandby := FALSE;
+END_IF
+
+IF TRIG_CmdReset.Q THEN
+	IN_CmdReset := FALSE;
+END_IF
+
+IF TRIG_CmdP_Off.Q THEN
+	MesDataExd.OUT_CmdP := FALSE;
+	IN_CmdP_Off := FALSE;
+END_IF
+
+IF TRIG_CmdP_On.Q THEN
+	MesDataExd.OUT_CmdP := TRUE;
+	IN_CmdP_On := FALSE;
+END_IF
+IF TRIG_CmdQ_Off.Q OR TRIG_CmdCosPhi_On.Q THEN
+	MesDataExd.OUT_CmdQ := FALSE;
+	IN_CmdQ_Off := FALSE;
+END_IF
+IF TRIG_CmdQ_On.Q THEN
+	MesDataExd.OUT_CmdQ := TRUE;
+	IN_CmdQ_On := FALSE;
+END_IF
+
+IF TRIG_CmdCosPhi_Off.Q OR TRIG_CmdQ_On.Q THEN
+	MesDataExd.OUT_CmdCosPhi := FALSE;
+	IN_CmdCosPhi_Off := FALSE;
+END_IF
+
+IF TRIG_CmdCosPhi_On.Q THEN
+	MesDataExd.OUT_CmdCosPhi := TRUE;
+	MesDataExd.OUT_SetptCosPhi	:= IN_SetptCosPhi;
+	IN_CmdCosPhi_On := FALSE;
+END_IF
+
+IF TRIG_FreqReg_On.Q THEN
+	MesDataExd.OUT_CmdFreqregMode := TRUE;
+	IN_CmdFreqregOn := FALSE;
+END_IF
+IF TRIG_FreqReg_Off.Q THEN
+	MesDataExd.OUT_CmdFreqregMode := FALSE;
+	IN_CmdFreqregOff := FALSE;
+END_IF
+
+IF TRIG_UReg_On.Q THEN
+	MesDataExd.OUT_CmdUregMode := TRUE;
+	IN_CmdUregOn := FALSE;
+END_IF
+IF TRIG_UReg_Off.Q THEN
+	MesDataExd.OUT_CmdUregMode := FALSE;
+	IN_CmdUregOff := FALSE;
+END_IF
+	
+IF TRIG_CmdGridFormer.Q THEN
+	MesDataExd.OUT_CmdGridMode := TRUE;
+	IN_CmdGridFormer := FALSE;
+END_IF 
+IF TRIG_CmdGridFeeder.Q OR TRIG_CmdStop.Q THEN //Si on fait une commande stop, on passe le mode en grid feeder
+	MesDataExd.OUT_CmdGridMode := FALSE;
+	IN_CmdGridFeeder := FALSE;
+END_IF
+
+
+IF IN_CmdPcsLocal THEN
+	IN_CmdPcsLocal := FALSE;
+	MesDataExd.MesData.OUT_CmdPcsLocal := NOT MesDataExd.MesData.OUT_CmdPcsLocal;
+END_IF
+
+IN_CmdWatchdog := CalLocalTimeStruct.wSecond MOD 2 = 0;
+
+MesDataExd.MesData.OUT_CmdStop 			:= TP_CmdStop.Q;
+MesDataExd.MesData.OUT_CmdStart 		:= TP_CmdStart.Q;
+MesDataExd.OUT_CmdBlackStart 	:= TP_CmdBlackStart.Q;
+MesDataExd.MesData.OUT_CmdStandby 		:= TP_CmdStandby.Q;
+
+
+Trig_Write[1](CLK := MEMCMP(pBuf1 :=ADR(AX_Cmd[1]), pBuf2 := ADR(AX_Cmd_Old[1]), n := SIZEOF(AX_CMD[1]))<>0);
+Trig_Write[2](CLK := MEMCMP(pBuf1 :=ADR(AX_Cmd[2]), pBuf2 := ADR(AX_Cmd_Old[2]), n := SIZEOF(AX_CMD[2]))<>0);
+Trig_Write[3](CLK := MEMCMP(pBuf1 :=ADR(AX_Cmd[3]), pBuf2 := ADR(AX_Cmd_Old[3]), n := SIZEOF(AX_CMD[3]))<>0);
+
+IF MEMCMP(pBuf1 :=ADR(AX_Cmd[1]), pBuf2 := ADR(AX_Cmd_Old[1]), n := SIZEOF(AX_CMD[1]))<>0 THEN
+	MEMCPY(destAddr := ADR(AX_Cmd_Old[1]), srcAddr := ADR(AX_Cmd[1]), n:= SIZEOF(AX_Cmd[1]));
+END_IF
+IF MEMCMP(pBuf1 :=ADR(AX_Cmd[2]), pBuf2 := ADR(AX_Cmd_Old[2]), n := SIZEOF(AX_CMD[2]))<>0 THEN
+	MEMCPY(destAddr := ADR(AX_Cmd_Old[2]), srcAddr := ADR(AX_Cmd[2]), n:= SIZEOF(AX_Cmd[2]));
+END_IF		
+IF MEMCMP(pBuf1 :=ADR(AX_Cmd[3]), pBuf2 := ADR(AX_Cmd_Old[3]), n := SIZEOF(AX_CMD[3]))<>0 THEN
+	MEMCPY(destAddr := ADR(AX_Cmd_Old[3]), srcAddr := ADR(AX_Cmd[3]), n:= SIZEOF(AX_Cmd[3]));
+END_IF			
+
+	// Manouvers (41708)
+		AX_Cmd[1][1].1:= IN_CmdOpenAC;
+		AX_Cmd[1][1].2:= IN_CmdOpenDC;
+		
+	// SoC	
+		AX_Cmd[1][2]  := REAL_TO_WORD(ParamFreqRegSoCmax); 
+		AX_Cmd[1][3]  := REAL_TO_WORD(ParamFreqRegSoCmin); 
+		AX_Cmd[1][4]  := REAL_TO_WORD(TRUNC(DataSystemBMS.MesSoCConnected));		// SoC connected 
+		
+		
+	// Param voltage regulation (activate in Function Mode)
+		// Regulation from voltage
+		AX_Cmd[1][7]  := REAL_TO_WORD(ParamQfU_UDbHigh)		; 
+		AX_Cmd[1][8]  := REAL_TO_WORD(ParamQfU_Umax)		  	; 
+		AX_Cmd[1][9]  := REAL_TO_WORD(ParamQfU_UDbLow)	 	; 
+		AX_Cmd[1][10] := REAL_TO_WORD( ParamQfU_Umin	)  		; 
+		
+		IF ParamNbPowerCol > 0 THEN 
+			AX_Cmd[1][11]  := REAL_TO_WORD(MIN(MAX(-ParamQfU_QDbHigh*ParamNbPowerCol/ParamPn*1000.0, -1000 ), 1000))			; 
+			AX_Cmd[1][12]  := REAL_TO_WORD(MIN(MAX(-ParamQfU_Qmax*ParamNbPowerCol/ParamPn*1000.0, -1000 ), 1000))			  	; 
+			AX_Cmd[1][13]  := REAL_TO_WORD(MIN(MAX(-ParamQfU_QDbLow*ParamNbPowerCol/ParamPn*1000.0, -1000 ), 1000))		 	; 
+			AX_Cmd[1][14]  := REAL_TO_WORD(MIN(MAX(-ParamQfU_Qmin*ParamNbPowerCol/ParamPn*1000.0, -1000 ), 1000))		  		; 
+		ELSE
+			AX_Cmd[1][11]  := 0 ; 
+			AX_Cmd[1][12]  := 0 ; 
+			AX_Cmd[1][13]  := 0 ; 
+			AX_Cmd[1][14]  := 0 ; 
+		END_IF
+
+		
+		
+		AX_Cmd[1][15] := REAL_TO_WORD(A1_PP.ParamNominalVoltage)	; 
+		AX_Cmd[1][16] := REAL_TO_WORD(A1_SUBMV.MesDataExd.MesData.MesU)	;	
+		
+	// Param frequency regulation 
+		AX_Cmd[1][21] := REAL_TO_WORD(ParampfF_fDbHigh*100.0)		;
+		AX_Cmd[1][22] := REAL_TO_WORD(ParamPfF_Fmax*100.0)		;
+		AX_Cmd[1][23] := REAL_TO_WORD(ParamPfF_FDbLow*100.0)		;
+		AX_Cmd[1][24] := REAL_TO_WORD(ParamPfF_Fmin*100.0)		;
+		AX_Cmd[1][25] := REAL_TO_WORD(ParampfF_fDbHigh*100.0)		;
+		AX_Cmd[1][26] := REAL_TO_WORD(ParamPfF_FDbLow*100.0)		;
+		
+		AX_Cmd[1][27] := REAL_TO_WORD(ParamPfF_FhystLow*100.0)	;
+		AX_Cmd[1][28] := REAL_TO_WORD(ParamPfF_FhystHigh*100.0)	;		
+		
+		AX_Cmd[1][29] := REAL_TO_WORD(MIN(MAX(ParamPfF_PDbHigh/ParamPn*1000.0 , -1000 ), 1000)	)	;
+		AX_Cmd[1][30] := REAL_TO_WORD(MIN(MAX(ParamPfF_Pmin/ParamPn	*1000.0, -1000 ), 1000)	)		;  
+		AX_Cmd[1][31] := REAL_TO_WORD(MIN(MAX(ParamPfF_PDbLow/ParamPn*1000.0, -1000 ), 1000)	)		; 
+		AX_Cmd[1][32] := REAL_TO_WORD(MIN(MAX(ParamPfF_Pmax/ParamPn*1000.0, -1000 ), 1000)		)	;  
+		AX_Cmd[1][33] := REAL_TO_WORD(MIN(MAX(ParamPfF_PDbHigh/ParamPn*1000.0, -1000 ), 1000)	)		;		// P5 . 
+		AX_Cmd[1][34] := REAL_TO_WORD(MIN(MAX(ParamPfF_PDbLow/ParamPn*1000.0, -1000 ), 1000)	)		; 
+
+
+		AX_Cmd[1][35] := TIME_TO_WORD(ParamTimeSoCRangeReachedRmp/1000*10);				// (s) Time to go to 0 power (if SoC issue or if end of stable)
+		AX_Cmd[1][37] := TIME_TO_WORD(ParamTimeEnterStblPriorRmp/1000*10);					// (s) Time to wait after entering the stable before ramping the P back to the setpoint
+		AX_Cmd[1][36] := TIME_TO_WORD(ParamTimeFreqRegStbDuration/1000*10);				// (s) Time to stay in the stable area before it goes to 0
+		
+	// Function Mode
+		AX_Cmd[1][38].0:= IN_CmdWatchdog; 							// PCS stops (hard stop) if watchdog does not change during more than 10sec
+		AX_Cmd[1][38].1:= TP_Reset.Q;							// Reset
+		AX_Cmd[1][38].2:= MesDataExd.OUT_CmdGridMode;	 				// To be tested
+		AX_Cmd[1][38].3:= ParamSetPtModbusMode;					// Write 1 to send Setpoint via Modbus 
+		AX_Cmd[1][38].4:= MesDataExd.OUT_CmdGridMode;				// Write 1 to switch to Master (to be tested)
+		AX_Cmd[1][38].5:= MesDataExd.MesData.OUT_CmdStart; 				// Start: pas besoin de maintenir
+		AX_Cmd[1][38].6:= MesDataExd.MesData.OUT_CmdStop; 					// Hard Stop : Open everything and stop charger .
+		AX_Cmd[1][38].7:= MesDataExd.OUT_CmdP;						// P regulation enabled 
+		AX_Cmd[1][38].8:= MesDataExd.OUT_CmdFreqregMode; 			// Send one to activate the Frequency regulation, to be tested
+		AX_Cmd[1][38].9:= MesDataExd.OUT_CmdUregMode; 				// Send one to activate the voltage regulation, to be tested
+		AX_Cmd[1][38].10:= MesDataExd.OUT_CmdQ;	 				// Q regulation enabled 
+		AX_Cmd[1][38].11:= MesDataExd.OUT_CmdCosPhi;				// Cmd CosPhi ack
+		AX_Cmd[1][38].12:= NOT ParamPoverQ;						// Param Q over P for Jema
+		AX_Cmd[1][38].13:= ParamLVRT_Enabled;					// Param LVRT enable
+		AX_Cmd[1][38].14:= ParamAntiIslanding_Enabled;			// Param Anti Islanding enable
+		AX_Cmd[1][38].15:= MesDataExd.MesData.OUT_CmdStandby;				// Cmd Standby
+		
+		
+	// Param Frequency regulation (2)
+		AX_Cmd[1][39] := REAL_TO_WORD(DataSystemBMS.MesData.MesUdc);
+	 
+		AX_Cmd[1][40] := BOOL_TO_WORD(ParamDeactivateWatchdog);
+	
+		AX_Cmd[1][41].0 := NOT MesDataExd.OUT_CmdGridMode;
+		
+	// Setpoints
+
+		AX_Cmd[2][1] := REAL_TO_WORD(MesDataExd.MesData.OUT_SetptP);					// Setpoint active power in kW
+		AX_Cmd[2][2] := REAL_TO_WORD(MesDataExd.MesData.OUT_SetptQ);					// Setpoint reactive power in kVar
+		AX_Cmd[2][4] := REAL_TO_WORD(MesDataExd.OUT_SetptCosPhi*1000);			// Setpoint CosPhi
+		
+	
+//MesBatInit := DataSystemBMS.		
+
+		AX_Cmd[2][18] := REAL_TO_WORD(DataSystemBMS.MesData.MesSoH);
+		AX_Cmd[2][19] := REAL_TO_WORD(DataSystemBMS.MesUdcMin*1000);
+		AX_Cmd[2][22] := REAL_TO_WORD(DataSystemBMS.MesUdcMax*1000);
+		AX_Cmd[2][25] := UINT_TO_WORD(DataSystemBMS.MesNbRackConnected);
+		AX_Cmd[2][26] := UINT_TO_WORD(DataSystemBMS.MesNbRackTot);
+		AX_Cmd[2][28] := REAL_TO_WORD(DataSystemBMS.MesData.MesIdc*10);
+
+		
+		AX_Cmd[3][1] := REAL_TO_WORD(MesDataExd.OUT_SetptV);
+		AX_Cmd[3][2] := REAL_TO_WORD(MesDataExd.OUT_SetptF*100);
+		AX_Cmd[3][3] := REAL_TO_WORD(ParamFLow_droop*100);
+		AX_Cmd[3][4] := REAL_TO_WORD(ParamFHigh_droop*100);
+		AX_Cmd[3][5] := REAL_TO_WORD(ParamULow_droop); 
+		AX_Cmd[3][6] := REAL_TO_WORD(ParamUHigh_droop);
+		
+		
+// WRITE COMMAND //
+	FOR KK := 1 TO 3 DO
+		CmdWrite[KK] := ClockWrite OR Trig_Write[KK].Q;
+	END_FOR
+	
+	// MODBUS REQUEST //	
+		// Modbus Blocks write			
+		ModbusWrite[1]
+		(
+			nTCPport			:= ParamTcpPort,
+			pSrcAddr 			:= ADR(AX_Cmd[1]) ,
+			cbLength			:= SIZEOF(AX_Cmd[1]) , 
+			nQuantity 			:= AX_QTY[1],			
+			Reset				:= CmdClearFault_G, 
+			sIPAddr				:= ParamIPAddress , 
+			nUnitID				:= ParamUnitID , 
+			nMBAddr				:= AX_Adr[1] , 
+			tTimeout			:= ParamTimeout ,
+			WriteCmd			:= (ClockWrite OR Trig_Write[2].Q) AND MesDataExd.Mesdata.MesCP_Write , 
+			ModbusWriteAlarm	=> MesModbusWriteCmdAlarm[1] , 
+			ErrorId				=> MesModbusWriteCode[1]
+		);   
+			
+		// Modbus Blocks write			
+		ModbusWrite[2]
+		(
+			nTCPport			:= ParamTcpPort,
+			pSrcAddr 			:= ADR(AX_Cmd[2]) ,
+			cbLength			:= SIZEOF(AX_Cmd[2]) , 
+			nQuantity 			:= AX_QTY[2],			
+			Reset				:= CmdClearFault_G, 
+			sIPAddr				:= ParamIPAddress , 
+			nUnitID				:= ParamUnitID , 
+			nMBAddr				:= AX_Adr[2] , 
+			tTimeout			:= ParamTimeout ,
+			WriteCmd			:= (ClockWrite OR Trig_Write[2].Q)  AND MesDataExd.Mesdata.MesCP_Write , 
+			ModbusWriteAlarm	=> MesModbusWriteCmdAlarm[2] , 
+			ErrorId				=> MesModbusWriteCode[2]
+		);   				
+		
+		ModbusWrite[3]
+		(
+			nTCPport			:= ParamTcpPort,
+			pSrcAddr 			:= ADR(AX_Cmd[3]) ,
+			cbLength			:= SIZEOF(AX_Cmd[3]) , 
+			nQuantity 			:= AX_QTY[3],			
+			Reset				:= CmdClearFault_G, 
+			sIPAddr				:= ParamIPAddress , 
+			nUnitID				:= ParamUnitID, 
+			nMBAddr				:= AX_Adr[3] , 
+			tTimeout			:= ParamTimeout ,
+			WriteCmd			:= (ClockWrite OR Trig_Write[3].Q)  AND MesDataExd.Mesdata.MesCP_Write , 
+			ModbusWriteAlarm	=> MesModbusWriteCmdAlarm[3] , 
+			ErrorId				=> MesModbusWriteCode[3]
+		); 		
+		
+		
+// ANALOG CMD 
+OUT_SetptP_IO		:= REAL_TO_INT((32767-0)/(2*ParamPn)* MesDataExd.MesData.OUT_SetptP+32767/2) ;
+OUT_SetptQ_IO		:= REAL_TO_INT((32767-0)/(2*ParamPn)* MesDataExd.MesData.OUT_SetptQ+32767/2) ;	
+		]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_PCS_Jema_IBX3">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PCS_Jema_IBX3.M_AlarmManagement">
+      <LineId Id="2304" Count="136" />
+      <LineId Id="449" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PCS_Jema_IBX3.M_CP">
+      <LineId Id="69" Count="19" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PCS_Jema_IBX3.M_Evaluate">
+      <LineId Id="2546" Count="187" />
+      <LineId Id="101" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PCS_Jema_IBX3.M_Init">
+      <LineId Id="58" Count="0" />
+      <LineId Id="68" Count="1" />
+      <LineId Id="59" Count="4" />
+      <LineId Id="47" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PCS_Jema_IBX3.M_Read">
+      <LineId Id="6027" Count="102" />
+      <LineId Id="6160" Count="0" />
+      <LineId Id="6130" Count="0" />
+      <LineId Id="6161" Count="0" />
+      <LineId Id="6131" Count="0" />
+      <LineId Id="5853" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PCS_Jema_IBX3.M_StateManager">
+      <LineId Id="85" Count="1" />
+      <LineId Id="3" Count="2" />
+      <LineId Id="59" Count="0" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="111" Count="0" />
+      <LineId Id="100" Count="0" />
+      <LineId Id="98" Count="0" />
+      <LineId Id="8" Count="0" />
+      <LineId Id="60" Count="0" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="112" Count="0" />
+      <LineId Id="102" Count="4" />
+      <LineId Id="110" Count="0" />
+      <LineId Id="107" Count="0" />
+      <LineId Id="73" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PCS_Jema_IBX3.M_WriteCommand">
+      <LineId Id="3361" Count="12" />
+      <LineId Id="3376" Count="5" />
+      <LineId Id="3681" Count="0" />
+      <LineId Id="3387" Count="36" />
+      <LineId Id="3698" Count="0" />
+      <LineId Id="3424" Count="11" />
+      <LineId Id="3696" Count="0" />
+      <LineId Id="3436" Count="3" />
+      <LineId Id="3697" Count="0" />
+      <LineId Id="3440" Count="32" />
+      <LineId Id="3487" Count="55" />
+      <LineId Id="3735" Count="0" />
+      <LineId Id="3543" Count="54" />
+      <LineId Id="3718" Count="2" />
+      <LineId Id="3600" Count="80" />
+      <LineId Id="881" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

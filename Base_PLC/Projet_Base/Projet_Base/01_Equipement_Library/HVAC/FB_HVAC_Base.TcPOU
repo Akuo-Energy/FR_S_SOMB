@@ -1,0 +1,155 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1">
+  <POU Name="FB_HVAC_Base" Id="{fbc9c282-5f77-4ff9-8af9-181629fe9b39}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_HVAC_Base
+VAR_INPUT PERSISTENT
+	ParamClockWriteTime						: TIME 		:= T#2S;	(* Modbus Writing Frequency                 *)
+	ParamClockReadTime						: TIME 		:= T#1S;	(* Modbus Reading  Frequency                *)	
+
+
+END_VAR
+
+VAR_INPUT
+		IN_CmdToggleRead						: BOOL;
+    IN_CmdToggleWrite						: BOOL;
+END_VAR
+
+VAR
+
+	//M_CP VARIABLES//
+		Trig_Cmd_Read						: R_TRIG;                                                                                        
+		Trig_Cmd_Write						: R_TRIG;                                                                                        
+
+	
+		TP1								: TP;
+		TP2								: TP;
+		TpUpdate						: TP;
+		Trig_CmdStart					: R_TRIG;
+		Trig_CmdReset					: R_TRIG;
+		FTrig_CmdReset					: F_TRIG ; 
+		Trig_CmdStop					: R_TRIG;
+		WorkingHr						: TIME ; 
+	
+	///MesDataExd			AT%Q*		: HVAC;
+	
+		ClockWrite				AT%Q*		: BOOL;
+		ClockRead				AT%Q*		: BOOL;
+		
+END_VAR
+VAR_OUTPUT PERSISTENT
+		OUT_State							: BOOL;
+        OUT_WorkingHr						: TIME;                  			
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{b515b9a4-f763-458b-9e52-1e2fdf480c1f}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement : BOOL
+VAR_INPUT
+END_VAR
+
+VAR
+	FB_AlarmCodeManager			: FB_AlarmCodeManager ;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_CP" Id="{2e129181-da54-4a35-b951-f05f52bd5b8a}">
+      <Declaration><![CDATA[METHOD M_CP : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Evaluate" Id="{ff834e69-d6dd-4fbd-ad1d-e4e00954600d}">
+      <Declaration><![CDATA[METHOD M_Evaluate : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{adbe62d6-d8d8-40e2-b8d6-6bf4a795b81f}">
+      <Declaration><![CDATA[METHOD M_Execute : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[TP1(IN:=NOT TP1.Q , PT:= ParamClockWriteTime);
+ClockWrite 	:= TP1.Q ;
+TP2(IN:=NOT TP2.Q , PT:= ParamClockReadTime);
+ClockRead 	:= TP2.Q ;
+
+TpUpdate(IN := NOT TpUpdate.Q, PT := T#5M);
+	
+
+	M_Evaluate();
+	M_AlarmManagement();
+	M_CP();
+	M_Write();
+	M_Read();
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Read" Id="{58f1717e-0223-4a0d-942d-ba2e88345a61}">
+      <Declaration><![CDATA[METHOD M_Read : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Write" Id="{b4119fa8-8c6c-4da6-b163-0835bb49a9fd}">
+      <Declaration><![CDATA[METHOD M_Write : BOOL
+VAR_INPUT
+END_VAR
+VAR
+	WordToWrite		: WORD;
+	AX_Addr			: ARRAY[1..3] OF UINT :=[1, 2, 3];
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_HVAC_Base">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_HVAC_Base.M_AlarmManagement">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_HVAC_Base.M_CP">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_HVAC_Base.M_Evaluate">
+      <LineId Id="8" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_HVAC_Base.M_Execute">
+      <LineId Id="12" Count="0" />
+      <LineId Id="10" Count="0" />
+      <LineId Id="22" Count="0" />
+      <LineId Id="15" Count="0" />
+      <LineId Id="14" Count="0" />
+      <LineId Id="16" Count="0" />
+      <LineId Id="26" Count="0" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="20" Count="1" />
+      <LineId Id="30" Count="0" />
+      <LineId Id="19" Count="0" />
+      <LineId Id="11" Count="0" />
+      <LineId Id="13" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_HVAC_Base.M_Read">
+      <LineId Id="29" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_HVAC_Base.M_Write">
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

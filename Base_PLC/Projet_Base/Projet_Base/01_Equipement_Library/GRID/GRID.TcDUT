@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1">
+  <DUT Name="GRID" Id="{a5a7c3b2-bb06-4993-8af7-9f2c33978767}">
+    <Declaration><![CDATA[///////////
+// Structure For DEIECommand. Main Operating Data to be saved (ex: OPC)  
+//////////
+TYPE GRID :
+STRUCT
+	// TC
+	OUT_CmdAutCpl			 	: BOOL ;			(* (NA) Autorisation couplage (pulse)*)
+	OUT_CmdDisconnect		 	: BOOL ;			(* (NA) Disconnect command (pulse)*)
+	OUT_CmdEmergencyDisconnect	: BOOL ;			(* (NA) Emergency disconnect command (pulse)*)	
+	OUT_SetptP 				 	: REAL ;			(* (kW) P Setpoint from EDF*)
+	OUT_SetptQ 				 	: REAL ;			(* (kVar) Q Setpoint from EDF*)
+	OUT_MesPPUnavailable		: BOOL ;			(* (NA) TS centrale indisponible*)
+	OUT_MesPPConnected			: BOOL ; 			(* (NA)Centrale couplée(1)/Centrale Découplée(0)*)	
+	
+	// State 	
+	MesAlarmCode				: WORD ; 			(* (NA) Internal Akuo Alarm Code*)
+	MesWarningCode 			 	: WORD ; 			(* (NA) Internal Akuo Warning Code*)
+	MesEventCode			 	: WORD ;			(* (NA) Internal Akuo Warning Code*)
+	MesEventCode2				: WORD ; 			(* (NA) EventCode 2*)
+
+	MesAlarmCom				 	: BOOL ;			(* (NA) Communication alarm *)
+	MesCP_Read				 	: BOOL := TRUE; 	(* (NA) Cal : Read function enable*)
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>
+
+
+

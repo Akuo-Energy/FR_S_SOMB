@@ -1,0 +1,119 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_INV_Base" Id="{fe626e47-18d0-4937-a0c6-9145d15ee169}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_INV_Base
+//////////////////
+
+// PV INverter. Base FB. 
+//////////////////
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance/model specific) 
+	ParamTempoComAlarm					: TIME 		:= T#30S ; 			// (s) Config : Tempo to detect LOC Alarm
+	ParamTimeOutCurtail     			: TIME 		:= T#45S ;			// (s) 	Config : Tempo to curtail power at set value before Timeout warning
+	ParamClockReadTime 					: TIME 		:= TIME#2S;	  		// (Time) Read Modbus Frequency  
+	ParamClockWriteTime 				: TIME 		:= TIME#2S; 	  	// (Time) Write Modbus Frequency
+ 	ParamTimeout						: TIME  	:= T#5S ;		  	// (Time) Timeout for modbus reading
+	                        			
+	ParamPn								: REAL;      					// (kW)    Nominal Capacity of SMA SC2750
+		
+END_VAR
+
+VAR_INPUT
+		IN_SetptPlimit					: REAL := 10000;		// (kW) [P,H] Dynamic active Power limit setpoint (curtailing)  
+		IN_SetptPlimit_Local			: REAL;					// (kW) [P,H] Dynamic active Power limit setpoint (curtailing)  
+		IN_SetptQlimit					: REAL := 2000; 		// Dynamic reactive power setpoints 	
+		IN_CmdStart						: BOOL;					// (NA) [P,H] External Start Command
+		IN_CmdStop 						: BOOL; 				// (NA) [P,H] External Stop CommAND  
+		IN_CmdStop_Local				: BOOL; 				// (NA) [P,H] External Stop Command, only for this inverter
+		IN_CmdStart_Local				: BOOL:=TRUE;			// (NA) [P,H] External Start Command, only for this inverter	
+
+		
+		IN_CmdToggleRead				: BOOL ;
+		IN_CmdToggleWrite				: BOOL ; 
+		IN_CmdReset_L					: BOOL ;				// (NA) External Reset Command
+END_VAR
+
+VAR
+	// M_ALARMMNGMT VARIABLES //
+		TON_ComAlarm					: TON ; 				// Tempo before deteting loss of communication. 
+	    TON_ComWarning					: TON ; 				// Tempo before detecting loss of communication.                                                	
+                                    	 		    	
+		MesWarningCom					: BOOL ; 				// (NA) [P,H]  True if bad communication
+                                    	
+		CalModbusWriteAlarm         	: BOOL ; 				// (NA) Modbus Write Alarm synthesis
+                                    	
+                                    	
+	// M_READ VARIABLES//           	
+//	MesDataExd		      	: INV ; 				// (NA) [P,H,B] INV  Data Structure 
+                                    	
+
+	// M_CURTAIL VARIABLES //
+		FB_CheckCommand1		  		: FB_CheckCommand ; 	// (NA) Functionnal Block to check if Curtail limit Writing Successful
+		FB_CheckSetPt		  			: FB_CheckSetPt ; 		// (NA) Functionnal Block to check if Q setpoint Writing Successful
+                                    	
+		R_TRIG_Curtail					: R_TRIG ;
+                                    	
+		CalCompareWarningCurtail		: BOOL ; 				// (NA) Curtail failed alarm						
+		CalCompareWarningQSetpt			: BOOL ; 				// (NA) Curtail failed alarm						
+                                    	
+		WriteCmdP 			 			: BOOL;					// Modbus Write Rising Edge 
+		WriteCmdQ 			 			: BOOL;					// Modbus Write Rising Edge 
+	                                	
+                                    	
+	// M_STARTSTOP//            		
+		Trig_Cmd_Read					: R_TRIG; 
+		Trig_Cmd_Write					: R_TRIG;                                    	
+		                            	
+		RS_Cmd_Read						: RS ; 	
+		RS_Cmd_Write					: RS ; 	       	
+		Trig_Local_Start				: R_Trig;
+		Trig_Local_Stop					: R_Trig;
+		Trig_Start						: R_Trig;
+		Trig_Stop						: R_Trig;	         
+		RS_StartStop					: RS ; 					// (NA) Bistable Function for Start and Stop 
+		RS_StartStop_Local				: RS;					// (NA) Bistable Function for Start and Stop local                        	
+		                            	
+	// M_STATEMANAGER//             	
+		MesState						: BYTE; 				// (NA) Cal [P,H,B] Bit 0: OFF , Bit 2 : Feeding Slave 	
+                                  
+	//M_EXECUTE VARIABLES //
+		TP1								: TP ; 					// (NA) Tempo to define Modbus Reading Frequency 
+		TP2 							: TP ; 					// (NA) Tempo to define Modbus Writing Frequency
+		                                                    	
+		ClockRead		AT %Q*			: BOOL;					// (NA) Modbus reading Clock
+		ClockWrite 		AT %Q*			: BOOL;					// (NA) Modbus writing Clock 		
+		
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+
+]]></ST>
+    </Implementation>
+    <Method Name="M_Execute" Id="{b846763a-e747-4e5a-8f9d-0419ae22d443}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_INV_Base">
+      <LineId Id="3" Count="1" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_INV_Base.M_Execute">
+      <LineId Id="521" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,217 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.14">
+  <POU Name="FB_TOR_SD" Id="{90dc2fe8-b2b7-433d-ae09-aa441c1a15e4}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_TOR_SD EXTENDS FB_TOR_Base
+//////////////////
+//  Smoke and Fire detection system with Typhoon triggering system. 
+//////////////////
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance/model specific) 
+	ParamTempoFire :TIME:=T#2S;(*  (s)Tempo before raising an alarm*)
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+		OUT_FireDetection	: BOOL;
+END_VAR
+
+VAR_INPUT
+	// I/O Inputs 		                                     				
+		
+		MesDataExd			: TOR_Standard ;  
+
+END_VAR
+
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//
+		FB_PermAlarm				: SR ;					// (NA) FB to maintain Fire Alarm even if sensor stop detection (burn) .
+		TON_Fire					: TON ; 
+ 
+	//M_STATEMANAGER VARIABLES//
+		
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+
+]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{bf04f165-0833-4ee3-9edc-1ee259c1678c}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Manages Smoke detector alarms and warnings
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager			: FB_AlarmCodeManager ; 
+	bTrigDaily 					: BOOL;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Detection Variables
+TON_Fire(IN:= MesDataExd.MesData.MesAlarmState, PT:= ParamTempoFire ) ; 
+FB_PermAlarm(SET1 := TON_Fire.Q  , Reset := CmdClearFault_G OR IN_CmdReset_L ); // SR FB for keep fire if burn .
+
+bTrigDaily := (CalLocalTimeStruct.wHour = 10 OR CalLocalTimeStruct.wHour = 16) AND CalLocalTimeStruct.wMinute = 0;
+
+OUT_FireDetection 	:= FB_PermAlarm.Q1;
+
+IF IN_CmdReset_L THEN
+	IN_CmdReset_L := FALSE;
+END_IF
+
+// ALARM CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= OUT_FireDetection ,  				// Fire Detection		
+		bAlarm2			:= bTrigDaily AND OUT_FireDetection,	// Reminder : fire detection still active. 
+		bAlarm3			:=FALSE, 								// 
+		bAlarm4			:=FALSE, 								// 
+		bAlarm5			:=FALSE, 								//
+		bAlarm6			:=FALSE,                            	//
+		bAlarm7			:=FALSE,                            	//
+		bAlarm8			:=FALSE,                            	//
+		bAlarm9			:=FALSE,                            	//
+		bAlarm10		:=FALSE,                            	//
+		bAlarm11		:=FALSE,                            	//
+		bAlarm12		:=FALSE,                            	//
+		bAlarm13		:=FALSE,                            	//
+		bAlarm14		:=FALSE,                            	//
+		bAlarm15		:=FALSE,                            	//
+		wAlarmCode		=>MesDataExd.MesData.MesAlarmCode );
+		
+// WARNING CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:=FALSE,	  															// 
+		bAlarm2			:=FALSE, 																//
+		bAlarm3			:=FALSE, 																// 
+		bAlarm4			:=FALSE, 																// 
+		bAlarm5			:=FALSE, 																// 
+		bAlarm6			:=FALSE,                                                                //
+		bAlarm7			:=FALSE,                                                                //
+		bAlarm8			:=FALSE,                                                                //
+		bAlarm9			:=FALSE,                                                                //
+		bAlarm10		:=FALSE,                                                                //
+		bAlarm11		:=FALSE,                                                                //
+		bAlarm12		:=FALSE,                                                                //
+		bAlarm13		:=FALSE,                                                                //
+		bAlarm14		:=FALSE,                                                                //
+		bAlarm15		:=FALSE,                                                                //
+		wAlarmCode			=>MesDataExd.MesData.MesWarningCode);
+		
+// EVENT CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= IN_MesState1_IO, 		// First sensor is ON
+		bAlarm2			:= IN_MesState2_IO, 		// Second sensor is ON
+		bAlarm3			:= FALSE, 					// 		
+		bAlarm4			:= FALSE, 					// 
+		bAlarm5			:= FALSE, 					//
+		bAlarm6			:= FALSE,                   //
+		bAlarm7			:= FALSE,                   //
+		bAlarm8			:= FALSE,                   //
+		bAlarm9			:= FALSE,                   //
+		bAlarm10		:= FALSE,                   //
+		bAlarm11		:= FALSE,                   //
+		bAlarm12		:= FALSE,                   //
+		bAlarm13		:= FALSE,                   //
+		bAlarm14		:= FALSE,                   //
+		bAlarm15		:= FALSE,                   //
+		wAlarmCode		=>MesDataExd.MesData.MesEventCode);]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{8a526882-db39-4f89-9bc6-69e135744eec}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+	IF ParamNbSensors = 9 THEN // Use of contactor bi-stable No and NC
+		IN_MesState2_IO := NOT IN_MesState2_IO;
+	END_IF
+SUPER^.M_Execute() ; 
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_StateManager" Id="{6cbd8098-f8f8-4b44-905c-5200dc0f0cb4}">
+      <Declaration><![CDATA[METHOD M_StateManager
+//////////////////
+// Detect when fire occurs
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle)
+ 	MesStateInterm1 : BOOL;
+	MesStateInterm2 : BOOL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+IF ParamCableCutSecurity THEN
+	MesStateInterm1 := NOT IN_MesState1_IO ; 
+	MesStateInterm2 := NOT IN_MesState2_IO ; 
+ELSE 
+	MesStateInterm1 := IN_MesState1_IO;
+	MesStateInterm2 := IN_MesState2_IO;
+END_IF
+
+IF ParamNbSensors = 1 THEN 
+	MesStateInterm2 := MesStateInterm1 ;
+END_IF
+
+IF ParamAtleastOne THEN 
+MesDataExd.MesData.MesAlarmState := MesStateInterm1 OR MesStateInterm2 ; 
+ELSE
+MesDataExd.MesData.MesAlarmState := MesStateInterm1 AND MesStateInterm2 ; 
+END_IF
+
+R_TRIGAlarm(CLK:= MesDataExd.MesData.MesAlarmState ) ; 
+IF R_TRIGAlarm.Q THEN
+	MesCountAlarm :=  MIN(MesCountAlarm + 1 ,4294967295 ) ; 
+ELSIF IN_ResetCounter THEN 
+	MesCountAlarm := 0 ; 
+END_IF
+
+MesDataExd.MesData.MesCountAlarm	:= MesCountAlarm ; 
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_TOR_SD">
+      <LineId Id="3" Count="1" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_TOR_SD.M_AlarmManagement">
+      <LineId Id="240" Count="4" />
+      <LineId Id="323" Count="1" />
+      <LineId Id="310" Count="3" />
+      <LineId Id="245" Count="55" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_TOR_SD.M_Execute">
+      <LineId Id="51" Count="4" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_TOR_SD.M_StateManager">
+      <LineId Id="153" Count="0" />
+      <LineId Id="110" Count="2" />
+      <LineId Id="155" Count="0" />
+      <LineId Id="157" Count="1" />
+      <LineId Id="113" Count="10" />
+      <LineId Id="135" Count="1" />
+      <LineId Id="124" Count="0" />
+      <LineId Id="137" Count="0" />
+      <LineId Id="141" Count="1" />
+      <LineId Id="138" Count="0" />
+      <LineId Id="140" Count="0" />
+      <LineId Id="139" Count="0" />
+      <LineId Id="125" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

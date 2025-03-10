@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <DUT Name="PM_DirisA40" Id="{28766751-e609-4c16-932b-bc03a447f284}">
+    <Declaration><![CDATA[///////////
+// Structure For I35. Main Operating Data to be saved (ex: OPC).  
+//////////
+TYPE PM_DirisA40 :
+STRUCT
+		MesData						: PM ; (* Object *) 
+		
+		
+		MesComAlarm		: BOOL ;			(* (NA) Akuo Com Alarm*)
+		MesComWarning	: BOOL ;			(* (NA) Akuo Com Warning*)
+		MesTHDU12		: REAL ; 			(* (%) THD *)
+		MesTHDU23       : REAL ;            (* (%) THD *)
+		MesTHDU31       : REAL ;            (* (%) THD *)
+		MesTHDV1        : REAL ;            (* (%) THD *)
+		MesTHDV2        : REAL ;            (* (%) THD *)
+		MesTHDV3        : REAL ;            (* (%) THD *)
+		MesTHDI1        : REAL ;            (* (%) THD *)
+		MesTHDI2        : REAL ;            (* (%) THD *)
+		MesTHDI3        : REAL ;            (* (%) THD *)
+		MesTHDIN        : REAL ;            (* (%) THD *)
+		
+		
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="ServerCSV" Id="{d2ba38ef-3475-4c92-a548-463a5bb303d5}">
+    <Declaration><![CDATA[
+TYPE ServerCSV :
+STRUCT
+	FileSize			: ULINT;			(*(o) Size of the file being used for logging alarms *)
+	TimeCreation		: TIMESTRUCT;		(* TimeCreation of file*)
+	TimeModif			: TIMESTRUCT;		(* Time Modif of file*)
+	MesAlarmCode		: WORD;				(* Alarm Code related to this functionnality*)
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

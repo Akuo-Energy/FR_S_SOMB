@@ -1,0 +1,71 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_EM" Id="{1c00bafd-cef9-4f87-acc1-09cd9d8c0469}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_EM EXTENDS FB_EM_Base
+//////////////////
+// Measurement Solution. Base FB
+//////////////////
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance specific) 
+		
+	
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	
+END_VAR
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//
+		Eess: REAL;
+	Eessinit	: REAL ; 
+                             
+
+	//M_INIT VARIABLES //
+	
+		
+	// M_EXECUTE VARIABLES //
+ 		
+	// M_Reset_L
+		
+                      
+END_VAR
+
+VAR_INPUT
+		
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_Execute" Id="{b911bfe2-5195-426d-b58f-95118f11d398}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	// EMULATOR
+
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[Eess :=  Eess + ((A1_PP.MesDataExd.MesData.MesPbat + A1_SUBMV.MesDataExd.MesData.MesPaux)/6)*ParamCycleTime_Emul/3600000  ; 
+
+MesPulseEactCons := FALSE ; 
+IF Eess > Eessinit + ParamStepEactCons THEN	// every 10 kWh 
+	MesPulseEactCons := TRUE ; 
+	Eessinit := Eess ; 
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_EM">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_EM.M_Execute">
+      <LineId Id="735" Count="6" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="PM_PM800" Id="{7d3a01d8-f971-4cde-bf4d-c7f1b0e0d03c}">
+    <Declaration><![CDATA[TYPE PM_PM800 :
+STRUCT
+	MesData 					: PM;
+	
+	MesTHD1 			: REAL;	(* Total Harmonic Distortion Phase 1, Adr 1199 *)
+	MesTHD2 			: REAL;	(* Total Harmonic Distortion Phase 2, Adr 1200 *)
+	MesTHD3 			: REAL;	(* Total Harmonic Distortion Phase 3, Adr 1201 *)
+	MesTHD1N 			: REAL;	(* Total Harmonic Distortion Phase 1 - Neutre, Adr 1206 *)
+	MesTHD2N 			: REAL;	(* Total Harmonic Distortion Phase 2 - Neutre, Adr 1207 *)
+	MesTHD3N 			: REAL;	(* Total Harmonic Distortion Phase 3 - Neutre, Adr 1208 *)
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

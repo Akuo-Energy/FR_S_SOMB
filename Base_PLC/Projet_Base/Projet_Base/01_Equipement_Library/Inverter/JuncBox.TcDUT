@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1">
+  <DUT Name="JuncBox" Id="{5b86f1c7-3248-42ca-b62b-170d1842b65f}">
+    <Declaration><![CDATA[TYPE JuncBox :
+STRUCT
+	/// STR 
+	AX_STR: ARRAY[1..CstNbSTR_SB_G] OF STR_SSM;
+
+	MesClosed_DCSwitch	: BOOL ; // State of DC Switch 
+
+	/// Status of signal contact 1 [Signal contact 1]: 303 =Off , 308 = On
+	MesID_SignalContact1: WORD;
+	/// Status of signal contact 2 [Signal contact 2]: 303 =Off , 308 = On
+	MesID_SignalContact2: WORD;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

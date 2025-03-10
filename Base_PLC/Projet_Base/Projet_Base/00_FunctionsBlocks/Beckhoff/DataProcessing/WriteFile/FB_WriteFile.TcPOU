@@ -1,0 +1,217 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_WriteFile" Id="{be63f8c2-f73a-4b07-a6e6-7e599e704016}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_WriteFile
+
+VAR_INPUT 
+	InDirFile : STRING(1000);
+	InAmsId : T_AmsNetID :='';
+	InPMessage: POINTER TO BYTE;
+	InLMessage: UDINT;
+	InStart : BOOL;
+	InMode : DWORD := 16#4;	// Append Mode . 
+END_VAR
+
+VAR_OUTPUT
+	OutBusy 	: BOOL;
+	OutError 	: BOOL;
+	OutErrorId 	: STRING;
+	cbWritten 	: UDINT;
+	OutCompleted : BOOL;
+END_VAR
+
+VAR 
+MesDataExd: LoggerCSV;
+	FileHandle 	: UINT;
+	select		: INT;
+	AX_ErrorId	: ARRAY[1..NbSteps] OF UDINT;
+	AX_Error 	: ARRAY[1..NbSteps] OF BOOL;
+	OpenFile 	: FB_FileOpen;
+	CloseFile 	: FB_FileClose;
+	WriteFile 	: FB_FileWrite;
+	TextToWrite : STRING(255);
+	nSeekPos 	: DINT;
+	i 			: UINT;
+	bCompleted	: BOOL;
+	Trigger		: R_TRIG;
+END_VAR
+
+VAR CONSTANT
+	NbSteps 	: UINT := 3;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[OutCompleted := FALSE;
+CASE select OF
+	0: // Initialize
+		Trigger(CLK := InStart);
+		IF Trigger.Q THEN
+			select := 1;
+			OutBusy := TRUE;
+			OutError := FALSE;
+			OutErrorId :='';
+		END_IF
+	1:
+		OpenFile(sNetId := InAmsId, 
+			sPathName := InDirFile,
+			nMode := InMode,
+			ePath := Path_generic,
+			bExecute := TRUE,
+			hFile => FileHandle,
+			nErrId => AX_ErrorId[Select],
+			bError => AX_Error[Select]
+		);
+		IF NOT(OpenFile.bBusy) THEN
+ 			IF NOT(OpenFile.bError) THEN
+				select := select+1;
+				OpenFile(bExecute := FALSE);
+			ELSE
+				select := -1;
+			END_IF
+		END_IF
+
+	2: 
+		WriteFile(
+			sNetId := InAmsId,
+			hFile := FileHandle,
+			pWriteBuff := InPMessage,
+			cbWriteLen := InLMessage,
+			bExecute := TRUE,
+			nErrId => AX_ErrorId[Select],
+			bError => AX_Error[Select]
+		);
+		IF NOT(WriteFile.bBusy) THEN
+			IF NOT(WriteFile.bError) THEN
+				select := select+1;
+				WriteFile(bExecute := FALSE);
+				cbWritten := WriteFile.cbWrite;
+			ELSE
+				select := -1;
+			END_IF
+		END_IF
+	3 : 
+		CloseFile(sNetId := InAmsId, 
+			hFile := FileHandle,
+			bExecute := TRUE, 
+			tTimeout := T#1S,
+			nErrId => AX_ErrorId[Select],
+			bError => AX_Error[Select]
+		);
+		IF NOT(CloseFile.bBusy) THEN
+			IF NOT(CloseFile.bError) THEN
+				select := 10;
+				CloseFile(bExecute := FALSE);
+			ELSE
+				select := -1;
+			END_IF
+		END_IF
+		
+	10: 
+		FileHandle := 0;
+		OutBusy := FALSE;
+		select := 0;
+		OutCompleted := TRUE;
+		FOR i := 1 TO NbSteps DO
+			AX_ErrorId[i] := 0;
+			AX_Error[i] := FALSE;
+		END_FOR
+		
+	-1 : 
+		IF FileHandle <> 0 THEN
+			CloseFile(sNetId := InAmsId, hFile := FileHandle, bExecute := TRUE);
+		END_IF
+		OpenFile(bExecute := FALSE);
+		WriteFile(bExecute := FALSE);
+		IF NOT(CloseFIle.bBusy) THEN
+			CloseFile(bExecute := FALSE);
+		END_IF
+		M_AlarmManager();
+		select := 10;
+END_CASE
+]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManager" Id="{68c0d724-fa69-4ec1-adc2-d68e67348b50}">
+      <Declaration><![CDATA[METHOD M_AlarmManager : BOOL
+VAR
+	j : UINT;
+	StringInterm : STRING;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[OutError := FALSE;
+OutErrorId :='';
+FOR j := 1 TO NbSteps DO
+	OutError := OutError OR AX_Error[j];
+	IF AX_Error[j] THEN
+		OutErrorId := concat(concat(Concat(UINT_TO_STRING(j),'_'), UDINT_TO_STRING(AX_ERRORID[j])), CONCAT('*',OutErrorId));
+	END_IF
+END_FOR]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_WriteFile">
+      <LineId Id="59" Count="0" />
+      <LineId Id="227" Count="1" />
+      <LineId Id="398" Count="0" />
+      <LineId Id="229" Count="0" />
+      <LineId Id="260" Count="0" />
+      <LineId Id="277" Count="1" />
+      <LineId Id="230" Count="0" />
+      <LineId Id="21" Count="1" />
+      <LineId Id="110" Count="5" />
+      <LineId Id="251" Count="0" />
+      <LineId Id="116" Count="0" />
+      <LineId Id="118" Count="0" />
+      <LineId Id="232" Count="0" />
+      <LineId Id="119" Count="0" />
+      <LineId Id="176" Count="0" />
+      <LineId Id="233" Count="0" />
+      <LineId Id="235" Count="1" />
+      <LineId Id="122" Count="0" />
+      <LineId Id="181" Count="0" />
+      <LineId Id="30" Count="1" />
+      <LineId Id="174" Count="0" />
+      <LineId Id="163" Count="4" />
+      <LineId Id="252" Count="0" />
+      <LineId Id="175" Count="0" />
+      <LineId Id="169" Count="0" />
+      <LineId Id="237" Count="0" />
+      <LineId Id="170" Count="0" />
+      <LineId Id="177" Count="0" />
+      <LineId Id="322" Count="0" />
+      <LineId Id="173" Count="0" />
+      <LineId Id="239" Count="1" />
+      <LineId Id="238" Count="0" />
+      <LineId Id="41" Count="1" />
+      <LineId Id="123" Count="2" />
+      <LineId Id="128" Count="0" />
+      <LineId Id="253" Count="0" />
+      <LineId Id="180" Count="0" />
+      <LineId Id="130" Count="0" />
+      <LineId Id="245" Count="0" />
+      <LineId Id="131" Count="0" />
+      <LineId Id="178" Count="0" />
+      <LineId Id="134" Count="0" />
+      <LineId Id="246" Count="3" />
+      <LineId Id="49" Count="1" />
+      <LineId Id="259" Count="0" />
+      <LineId Id="285" Count="1" />
+      <LineId Id="397" Count="0" />
+      <LineId Id="255" Count="0" />
+      <LineId Id="258" Count="0" />
+      <LineId Id="256" Count="0" />
+      <LineId Id="250" Count="0" />
+      <LineId Id="226" Count="0" />
+      <LineId Id="269" Count="0" />
+      <LineId Id="271" Count="1" />
+      <LineId Id="357" Count="4" />
+      <LineId Id="275" Count="1" />
+      <LineId Id="51" Count="0" />
+      <LineId Id="64" Count="0" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_WriteFile.M_AlarmManager">
+      <LineId Id="12" Count="6" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

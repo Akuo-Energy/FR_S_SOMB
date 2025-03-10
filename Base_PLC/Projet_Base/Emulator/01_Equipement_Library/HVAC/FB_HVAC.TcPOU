@@ -1,0 +1,66 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_HVAC" Id="{fa59d4c7-8d1d-4a9a-ba78-dabcacf4a703}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_HVAC
+VAR_INPUT PERSISTENT
+	ParamIpAddress							: STRING;
+	ParamUnitID								: BYTE  	:= 1 ; 
+	ParamTcpPort							: UINT 		:= 502;
+	ParamPriority							: UINT;
+	ParamClockWriteTime						: TIME 		:= T#5S;
+	ParamClockReadTime						: TIME 		:= T#5S;
+	ParamTimeOut							: TIME 		:= T#2S;
+	ParamMaintainPulse						: TIME 		:= T#2S;
+END_VAR
+
+VAR_INPUT
+	IN_SetptTemp				AT%Q*			: REAL;
+	IN_SetptHygro				AT%Q*			: REAL;
+	IN_CmdStart								: BOOL;
+	IN_CmdStop								: BOOL;
+	IN_CmdReset_L							: BOOL;
+	IN_CmdToggleRead						: BOOL;
+    IN_CmdToggleWrite						: BOOL;
+END_VAR
+
+VAR
+
+	//M_CP VARIABLES//
+		Trig_Cmd_Read				: R_TRIG;                                                                                        
+		Trig_Cmd_Write				: R_TRIG;                                                                                        
+
+		
+	//M_READ VARIABLES//
+	
+		
+	MesDataExd			AT%Q*		: HVAC;
+		BlockToWrite			AT%Q*		: UINT;		
+		ClockWrite				AT%Q*		: BOOL;
+		ClockRead				AT%Q*		: BOOL;
+	
+		
+END_VAR
+VAR_OUTPUT PERSISTENT
+		OUT_State							: BOOL;
+        OUT_WorkingHr					: TIME;                  			
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_Execute" Id="{21f6a06e-7ec4-489a-ac0a-8e3ef1b39af6}">
+      <Declaration><![CDATA[METHOD M_Execute : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_HVAC">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_HVAC.M_Execute">
+      <LineId Id="13" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

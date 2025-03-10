@@ -1,0 +1,26 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_SplitUlintToWords" Id="{68305350-c159-4a21-bd35-8823e07b1498}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_SplitUlintToWords
+VAR_INPUT
+	IN_ULINT : ULINT;
+END_VAR
+VAR_OUTPUT
+	OUT_WorDS_Transfoong :  WORD;
+	OUT_WordWeak :  WORD;
+
+END_VAR
+VAR
+
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[MEMCPY(destAddr := ADR(OUT_WorDS_Transfoong), srcAddr := ADR(IN_ULINT), n := 2);
+MEMCPY(destAddr := ADR(OUT_WordWeak), srcAddr := ADR(IN_ULINT) + 2, n := 2);]]></ST>
+    </Implementation>
+    <LineIds Name="FB_SplitUlintToWords">
+      <LineId Id="5" Count="0" />
+      <LineId Id="16" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,151 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_GRID_Base" Id="{a53138e9-ee3a-4546-9f4a-90d0bbc7a85b}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_GRID_Base 
+//////////////////
+// Grid Operator interface. Base FB.
+//////////////////
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance specific) 
+	
+END_VAR
+
+VAR_INPUT
+	// I/O Inputs 
+		MesConnectOrderIO			: BOOL ; 					// (NA) 
+		MesDisconnectOrderIO 		: BOOL ; 					// (NA) 	
+		
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	
+END_VAR
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//                                                    								
+//	MesDataExd				: GRID ;                   								
+		
+	//M_INIT VARIABLES //
+		bInit						: BOOL:= TRUE ; 			// (NA) Initialize object parameters at first cycle 
+		
+	// M_EXECUTE VARIABLES //
+	
+   		MesCP_Read					: BOOL := TRUE;	(* Read function enable *)
+		
+
+                      	
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{cfc988a6-98cf-4910-ac20-f9cb665f79aa}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Digiware measurement tool alarm and warning management
+/////////////////
+
+VAR 
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_CP" Id="{6ec53ebf-efe7-4c49-93d7-bc0e8b44e18b}">
+      <Declaration><![CDATA[METHOD M_CP
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Evaluate" Id="{7d7248e6-308a-468b-b889-6ba9479a0029}">
+      <Declaration><![CDATA[METHOD M_Evaluate
+//////////////////
+//  Read Modbus Variable for PCS. 
+/////////////////
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+END_VAR
+
+
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{42fa0658-f7f6-4e51-b689-231d51131139}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+// PERMANENT CONDITIONS //
+	M_CP() ; 
+	
+// METHODS CALLS //
+	IF bInit THEN
+		M_Init() ; 
+		bInit					:= FALSE ; 
+	ELSIF CmdInit_G THEN 
+		bInit:= TRUE ;
+		
+	END_IF
+
+	M_Evaluate() ; 
+	M_AlarmManagement(); 
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{3ef9e88c-53b8-4737-9c9d-07e9cd8838fe}">
+      <Declaration><![CDATA[METHOD M_Init
+VAR 
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_GRID_Base">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_GRID_Base.M_AlarmManagement">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_GRID_Base.M_CP">
+      <LineId Id="27" Count="0" />
+      <LineId Id="25" Count="1" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_GRID_Base.M_Evaluate">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_GRID_Base.M_Execute">
+      <LineId Id="713" Count="0" />
+      <LineId Id="680" Count="12" />
+      <LineId Id="700" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_GRID_Base.M_Init">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>
+
+
+

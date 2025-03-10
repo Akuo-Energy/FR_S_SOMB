@@ -1,0 +1,51 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1">
+  <DUT Name="HVAC_NARADA" Id="{c9fa1c3b-f25a-435e-aed0-aec2b54a9e42}">
+    <Declaration><![CDATA[TYPE HVAC_NARADA :
+STRUCT
+	
+	MesData				: HVAC ;	
+
+	MesCoolTemp			: REAL	;		(*(°C)	Cooling Temperature value .*)
+	MesCoolSens			: REAL	;		(*(°C)	Cooling Sensitivity value .*)
+	MesHeatingTemp		: REAL	;		(*(°C)	Cooling Temperature value .*)
+	MesHeatingSens		: REAL	;		(*(°C)	Cooling Sensitivity value .*)
+	MesSetptHygro		: REAL ;		(*(%)	 Hygrometry setpoint  *)
+	MesSensHygro		: REAL ;		(*(%)	 Hygrometry sensitivity  *)
+	MesTempmin			: REAL ;		(*(°C)  Min Temperature *)
+	MesTempmax			: REAL ;		(*(°C)	 Max Temperature *)
+	MesHygromax			: REAL ;		(*(%)	 Maximum humidity*)
+	MesState			: REAL ;		(* status of HVAC*)
+	MesStateFanInternal	: BOOL ;		(* Status of fan internal*)
+	MesStateFanExternal	: BOOL ;		(*Status of fan external*)
+	MesCompressorStatus : BOOL ;		(* State of compressor*)
+	MesHeating			: REAL ;		(*()	 The HVAC is heating the air*)
+	MesFrostTemp		: BOOL ;		(* (°C)frosting temperature *)
+	MesCondTemp			: BOOL ;		(* (°C Condescending temperature *)	
+	MesPressure1		: REAL ; 		 (*(bar) Pressure of the evaporatr 1 (bar )*)
+	MesTemp_Room		: REAL ; 		 (*(°C)	 Temperature value .*)
+	MesHygro			: REAL ; 		 (*(%) Humidity of the hvac *)
+	MesTemp_Outside		: REAL ; 		 (*(°C)  Outside air temperature*)
+	                                     
+	MesAlarmLow			: WORD ; 		 (* 	 HVAC Alarm word 1*)
+	MesAlarmHigh		: WORD ; 		 (* 	 HVAC Alarm word 2*)
+	
+END_STRUCT
+END_TYPE
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,287 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_PP" Id="{e3e5c824-4e39-4429-bbd2-b3bf1e0bb7c1}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_PP
+//////////////////
+//  Hybrid Power Plant. 
+//////////////////
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance specific)           
+		// Contractual Limits and values 
+			ParamPmax								: REAL :=  12000 ; 	// (kW)MAximal contractual injection power to the grid . PUISSANCE CLIENT VS PUISSANCE RACCORDEMENT  ? 
+			ParamPmin								: REAL := -9000 ; 	// (kW)Miniaml contractual injection power to the grid .
+			ParamQmax								: REAL :=  5000 ; 	// (kVAr)MAximal contractual injection power to the grid .
+			ParamQmin								: REAL := -5000 ; 	// (kVAr)Miniaml contractual injection power to the grid .		
+			ParamNominalVoltage						: REAL := 11000;	// (V) Nominal voltage of the grid for voltage regulation
+			ParamNominalFrequency 					: REAL := 50 ; 		// (Hz) Nominal Frequency of the grid 
+			
+		// Operationnal Limits
+			ParamQmaxPbelow20						: REAL:=2000;		// (kVAr)Qmax limit if P is below 20 % of Pmax 
+			ParamTanPhiMax							: REAL:=0.4;		// (p.u)TanPhi Max limit for Q regulation
+			ParamTanPhiMin							: REAL:=0.2 ;		// (p.u)TanPhiMin limit for Q regulation 
+			
+		// Modes 
+			ParamLocalMode							: BOOL := TRUE ; 	// In Local mode, the DEIE is inhibated . 
+			ParamQcontrol							: BOOL:=FALSE;				// Q regulation is activated
+			ParamTanPhiCtrl							: BOOL:= TRUE ;		// TanPhi Regulation is activated
+			Param_SetptTanPhi						: REAL := 0.1;		//(p.u) Setpoint Tan Phi
+			
+		// Regulation 
+			ParamPoffset_OL							: REAL:=0 ;			// (kW)Offset for P PID in Open loop  
+			ParamQoffset_OL							: REAL:=0 ;			// (kVAr)Offset for Q PID in Open loop  		
+			ParamPIDP_K								: REAL := 0.0007;	// (NA)Gain proportionnel pour régulation P 
+		    ParamPidP_I								: REAL := 0.015;	// (NA)Gain intégral pour régulation P 
+		    ParamPidP_D								: REAL:=0;				// (NA)Gain dérivé pour régulation P 
+			        
+			ParamPIDQ_K								: REAL := 0.0007;	// (NA)Gain proportionnel pour régulation Q 
+		    ParamPidQ_I								: REAL := 0.015; 	// (NA)Gain intégral pour régulation Q 
+		    ParamPidQ_D								: REAL:=0;          	// (NA)Gain dérivé pour régulation Q 
+	
+			ParamPIDQMin					: REAL :=-1500; // (kVAr)High Limit For PID OF active Power
+			ParamPIDQMax					: REAL :=1500;  //(kVAr) Low Limit For PID OF Reactive Power
+			
+			
+			ParamQfUQmin					: REAL:= -5000;	// (kVAr) Voltage Regulation Minimal Reactive Power @ maximal voltage
+			ParamQfUQmax					: REAL:= 5000;  // (kVAr) Voltage Regulation Maximal Reactive Power @ minimal voltage
+			ParamQfUUHigh					: REAL:= 25000; // (V)    Voltage Regulation Maximal voltage
+			ParamQfUDdBandHigh				: REAL:= 22000; // (V)    Voltage Regulation Deadband High voltage
+			ParamQfUDdBandLow				: REAL:= 18000; // (V)    Voltage Regulation Deadband Low voltage
+			ParamQfUULow					: REAL:= 15000; // (V)    Voltage Regulation Minimal Voltage
+			
+			
+			
+			
+		// Coupling Management
+			ParamNofeedingTime						: TIME  :=T#3M;		// (min)Temps max avant decouplage //contractuel
+			ParamNofeedingWarningTime           	: TIME  :=T#30S;     //(s) Temps avant decouplage HT, permet d'eteindre les onduleurs //contractuel
+  			ParamNofeedingAlarmTime           		: TIME  :=T#2M45S;  // (min)Temps avant decouplage HT, permet d'eteindre les onduleurs //contractuel
+            ParamDiscoAlarmTime						: TIME  :=T#28S;                   // (s)Temps max pour effacement d'urgence                 	
+			ParamForcedStayConnect					: BOOL:=FALSE;   			// If True, let the ESS connected even if the Programm restarts .
+        		                   		
+		// Computer specifications. 
+			ParamMinimalDiskSpace			: UDINT := 300000 ; 					//(Mo) Minimal Remaining Disk space before alarm
+			ParamCodeVersion					: STRING := '20180225' ; // Program Version
+			ParamNbCoupler						: BYTE := 39 ; 		//Number of Ethercat coupler	
+			
+			
+			// Non parameters persistent data . 	
+	    	PIDP									: FB_PIDRegulation;
+			PIDQ									: FB_PIDRegulation;
+			bInit									: BOOL := TRUE ; 			// (NA) Initialize object parameters at first start ( refactoring)
+			
+END_VAR
+
+VAR_INPUT
+	MesData				: PP ; 									// (NA) [H,B] Agglomerated PP Data 
+		
+	// Commands
+		IN_CmdReset_L							: BOOL;						// (NA) Cmd Reset Local
+		
+	// PID 
+		IN_CmdPIDP_LocalMode 				: BOOL;
+		IN_PIDP_SetptP_local				: REAL;	// Local reference instead of DEIE reference. 
+		IN_PIDP_CmdOpenLoop					: BOOL;
+		IN_PIDP_SetptPOpenloop				: REAL;		
+
+		IN_PIDP_CmdReset						: BOOL ;
+		IN_PIDQ_CmdReset						: BOOL ;
+		
+                      		
+	// PID Q 
+		IN_CmdPIDQ_LocalMode				: BOOL;
+		IN_PIDQ_SetptQ_Local				: REAL;
+		IN_PIDQ_CmdOpenLoop					: BOOL;			
+		IN_PIDQ_SetptQOpenLoop				: REAL;	                        
+		IN_PIDQ_CmdQfU						: BOOL;
+ 		
+		IN_TestMailSms						: BOOL;	       	
+END_VAR
+
+VAR
+	//M_STATEMACHINE VARIABLES//
+		MesState							: WORD ; 					// (NA) Cal State of the PP : Bit0 : Off, Bit1: Offgrid, Bit2:OnGrid
+
+	//M_ALARMMANAGEMENT VARIABLES//
+	    R_TRIG_Event						: ARRAY[1..15] OF R_TRIG ;    
+
+
+		AX_AlarmWords						: ARRAY[1..60] OF ST_ValuesAlarms;
+		AX_AlarmWords_Null					: ARRAY[1..60] OF ST_ValuesAlarms;
+		NumAlarmsActive						: UINT;
+
+
+         	
+	//M_RESETMANAGER VARIABLES //           	
+                                            		                            	
+	// M_EVALUATE VARIABLES //              	
+	
+		MesMissingDongle	AT %I*				: UINT ; 					// (NA) Dongle has been removed  IO
+
+		TestMailSms								: BOOL ;
+		TON_TestMailSms							: TON;   
+		
+	// M_EMS VARIABLE//				        	                              	
+		OUT_PIDPMode							: INT ; // PID mode ( 1: bypassed , 2: 3: Proportionnal , 4 : PI , 5: PID , 6 : PD  )
+		OUT_PIDQMode							: INT ; // PID mode ( 1: bypassed , 2: 3: Proportionnal , 4 : PI , 5: PID , 6 : PD  )
+        SetPoint_P 								: REAL ; // Intermediare variable. output of the PID . 
+        SetPoint_Q 								: REAL ; // Intermediare variable. output of the PID .            
+       	
+	//M_INIT VARIABLES // 	                	
+
+		KK 										: UINT ; 
+                                            	
+	// M_SETPOINTCALCULATOR                 
+		
+	//M_MODEMANAGER //
+		R_TRIG_ManualMode							: R_TRIG;
+		CalElapsedTime								: REAL;		// Durée de la régulation de fréquence en minutes. 
+	// PMS 
+		TON_UPS								: TON ; 
+		R_TRIGStartDEIE						: R_TRIG ; 
+		F_TRIGStartDEIE						: F_TRIG ; 
+        TON_Centrale_Cpl					: TON ;      
+	//FEEDING
+		CP_Feed_PP_State	: BOOL;
+		CP_Feed_SEPAM		: BOOL;	// PAs de demande d'effacement ET de demande de decouplage
+		CP_Feed_DEIE		: BOOL;	// PAs de demande d'effacement ET de demande de decouplage
+		CP_Feed_SUB_MV				: BOOL;	// PAs de demande d'effacement ET de demande de decouplage
+		CP_Feed_Start		: BOOL ; // 
+		
+	//NOFEEDING
+		CP_NoFeed_DEIE		: BOOL;  //Demande de decouplage OU demande d'effacement
+		CP_NoFeed_SEPAM		: BOOL;  //Demande de decouplage OU demande d'effacement
+		CP_NoFeed_SUB_MV		: BOOL;
+		CP_NoFeed_PP_State	: BOOL;
+
+        		
+	//NOFEEDING                     		
+		TON_Secu_NoFeed						: TOn;
+		TON_Secu_Alarms						: TON;
+		RsGteFault							: RS;		// AT leastr One GTE FAUT (Long or 3xGTE during 30 min), that mean we have stop during 3min or 30 min
+		TON_Warning_Disconnect					: TON;
+		TON_Alarm_Disconnect					: TON;
+		TON_Warning_EmergencyDisconnect					: TON;
+		TON_Alarms_EmergencyDisconnect							: TON;                              	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// INITIALIZE // 
+	IF bInit THEN
+		M_Init() ; 
+		bInit:= FALSE ; 
+		
+	ELSIF CmdInit_G THEN 
+		bInit:= TRUE ;  
+		
+	END_IF
+
+	
+// OBJECT CALLS //
+A1_SUBMV.M_Execute() ;
+A1_WS.M_Execute();
+
+
+FOR KK:=1 TO CstNbPTR_G DO 
+	AX_PTR[KK].M_Execute() ;
+END_FOR
+
+
+// ACTION CALLS //
+
+M_Evaluate() ; 
+
+
+
+
+]]></ST>
+    </Implementation>
+    <Method Name="M_Evaluate" Id="{de1f3cc4-38e2-4bac-944e-e7796e42c448}">
+      <Declaration><![CDATA[METHOD M_Evaluate
+//////////////////
+// Evaluate PP characteristics
+//////////////////
+
+VAR
+	// Method local variables (reinitialized at each cycle) 
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[MesData.MesFreq := GVL_EmulConfig.MesFreqGen;
+MesData.MesU := GVL_EmulConfig.MesUGen;
+
+	
+MesData.MesPsol	:= 0;
+	FOR KK:= 1 TO CstNbPTR_G DO 
+		//MesDataExd.MesData.MesPbat	:= AX_ESS[KK].MesDataExd.MesData.MesP + MesDataExd.MesData.MesPbat ; 
+	MesData.MesPsol	:= AX_PTR[KK].MesDataExd.MesData.MesP + MesData.MesPsol;
+	END_FOR 
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{a379b4dd-110e-4f8b-ab64-82f9d5645d0e}">
+      <Declaration><![CDATA[METHOD M_Init
+VAR 
+
+	F: INT;
+	ParamPTRVersion: INT;
+	ParamNbINV: INT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Set all equipment parameters here 
+
+//PTR
+	FOR KK:=1 TO CstNbPTR_G DO
+		AX_PTR[KK].ParamPTRVersion			:= 'PTR';
+		AX_PTR[KK].ParamTimeOutStart        := T#30S;
+		AX_PTR[KK].ParamTimeOutStop         := T#30S;
+		AX_PTR[KK].ParamTimeOutDisconnect   := T#30S;
+		AX_PTR[KK].ParamTempoComAlarm		:= T#10S;		
+		AX_PTR[KK].ParamTempoStartInv		:= T#1S ;		
+		AX_PTR[KK].ParamTempoStopInv		:= T#1S ;			
+		AX_PTR[KK].ParamPTRNum				:= UINT_TO_BYTE(KK); 		
+		AX_PTR[KK].ParamNbINV				:= CstNbInv_PTR_G ; 
+
+	
+				
+	END_FOR
+	
+		                                	
+// SUB_MV                                  	
+
+	A1_SUBMV.ParamTempoPoste				:= T#2S; 	
+	A1_SUBMV.ParamTempoUnknowFault		:= T#15S;	
+	A1_SUBMV.ParamTempoSepamCloseAfterGte := T#15S; 
+	A1_SUBMV.ParamSUB_MVVersion				:= 'SUB_MV'; 				
+	A1_SUBMV.ParamTimeOutConnect			:= T#20S ; 
+	A1_SUBMV.ParamTimeOutDisconnect		:= T#20S ; 
+	A1_SUBMV.ParamTempoComAlarm			:= T#5S ; 	
+	A1_SUBMV.ParamPmax					:= 150000 ;				
+	A1_SUBMV.ParamAutoCloseMainMVCBEnabled	:= TRUE ; 
+	
+	
+
+// PP initialization. 
+	IN_PIDP_SetptP_local		:= 13200 ; // Initialize Local setpoint to maximal power . 
+
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_PP">
+      <LineId Id="4718" Count="27" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PP.M_Evaluate">
+      <LineId Id="1008" Count="1" />
+      <LineId Id="1025" Count="0" />
+      <LineId Id="1010" Count="5" />
+      <LineId Id="751" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PP.M_Init">
+      <LineId Id="294" Count="36" />
+      <LineId Id="140" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

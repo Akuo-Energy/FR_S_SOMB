@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.9">
+  <DUT Name="Datalogger_Secu" Id="{ab97463c-6717-4d1f-8240-c122b1070501}">
+    <Declaration><![CDATA[TYPE Datalogger_Secu :
+STRUCT
+	
+	MesData					: Datalogger ; 
+
+	MesAlarm_Intrusion		: BOOL ;  (* Intrusion alarm *) 
+	MesState_Siren1			: BOOL ; (* anti-intrusion siren is on *) 	                                                   			                                               
+	MesState_Siren2			: BOOL ; (* anti-intrusion siren is on *) 	
+
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

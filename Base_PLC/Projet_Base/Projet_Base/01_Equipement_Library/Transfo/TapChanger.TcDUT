@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="TapChanger" Id="{f5b2b014-952c-44a0-8cbd-88a0cbbd2fca}">
+    <Declaration><![CDATA[TYPE TapChanger :		// Regleur Transfo 
+STRUCT
+
+	MesAlarm						: BOOL;          (* *)
+	MesAlarm_Discordance			: BOOL;          (* *)
+	MesAlarm_NoOutletDetected		: BOOL;          (* *)
+	MesModeAuto						: BOOL;          (* *)
+	MesModeManual					: BOOL;          (* *)
+	MesState_ManoeuverAuthorized	: BOOL;	         (* *)
+	OUT_CmdRampUp					: BOOL;          (* *)
+	OUT_CmdRampDown					: BOOL;          (* *)
+	       	
+	MesIDPosPrise1to21 				: REAL;          (*PosPrise1to21 *)
+
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

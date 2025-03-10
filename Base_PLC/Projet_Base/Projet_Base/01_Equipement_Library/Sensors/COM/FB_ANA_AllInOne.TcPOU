@@ -1,0 +1,318 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1">
+  <POU Name="FB_ANA_AllInOne" Id="{a3b88c7a-e1b9-48ec-bd33-0f503332ce50}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_ANA_AllInOne
+VAR_INPUT
+	ParamNameAllInOne		: STRING 	:= 'Wind spd + dir + hygro + temp';				// (NA) Name of the pyranometer : to easily identify it
+	ParamTempoComAlarm		: TIME 		:= T#10S ; 										// (s) Config : Tempo to detect LOC Alarm
+	{attribute 'OPC.UA.DA' := '1'} 
+	ParamClockReadTime 		: TIME 		:= T#2S;	  									// (Time) Read Modbus Frequency . 
+ 	ParamTimeout			: TIME  	:= T#5S ;		  								// (Time) Timeout for modbus reading
+	{attribute 'OPC.UA.DA' := '1'} 
+	ParamUnitID				: BYTE		:= 1;											// (NA) Unit ID for modbus reading
+	{attribute 'OPC.UA.DA' := '1'} 
+	ParamTCPPort			: UINT		:= 502;											// (NA) TCP port for modbus
+	{attribute 'OPC.UA.DA' := '1'} 
+	ParamIpAddress			: STRING	:= '127.0.0.1';									// (NA) IP address for modbus
+	
+	ParamFunctionModbus		: UINT := 4;
+END_VAR
+
+VAR_INPUT
+		MesDataExd					: AllInOne_Standard ; 							// (NA) [P,H,B] INV  Data Structure 
+END_VAR
+
+VAR
+	//M_AlarmManagement
+	TON_ComAlarm				: TON ; 								// Tempo before deteting loss of communication. 
+
+	
+	IN_CmdReset_L					: BOOL;                                                        	
+		
+	// M_READ VARIABLES//
+
+	FB_ModbusReadInputRegs		: ARRAY[1..2] OF FB_MBReadInputRegs;	// FB for Modbus Read
+	MesBlock1_Temp 				: ARRAY[1..96]  OF WORD; 				// (NA) Temporary Block with multiple modbus reading (Caution : Double Word variables)
+	MesBlock2_Temp 				: ARRAY[1..3]  OF WORD; 				// (NA) Temporary Block with multiple modbus reading (Caution : Double Word variables)
+	MesModbusReadAlarm1 		: BOOL ; 								// (NA) Modbus Read Alarm for all modbus frames		
+	MesModbusReadAlarm2 		: BOOL ; 								// (NA) Modbus Read Alarm for all modbus frames		
+	MesAlarmCom					: BOOL;                         		
+	MesModbusAlarmCode			: UDINT;								// (NA) Modbus Read Alarm Code	
+	                                                            		
+	// M_STATEMANAGER//                                         		
+	FB_OperationIndex			: FB_OperationIndex ;           		
+	MesLastStart				: STRING ;			 					// Datetime of the last Start
+	MesState					: BYTE ; 								// (NA) Cal                                                                                                            	
+	MesRunningTime				: INT ; 								// Total Running Time
+	                                                        			
+	//M_EXECUTE VARIABLES //                                		
+	TP1							: TP ; 									// (NA) Tempo to define Modbus Reading Frequency 
+	                                                        	
+	ClockRead				AT %Q*	: BOOL;								// (NA) Modbus reading Clock
+	bBusy	: BOOL;
+	uErrorId : UINT;
+	bError	: BOOL;
+	bCompleted	: BOOL;
+	
+	//M_INIT //
+	bInit 						: BOOL;							 
+END_VAR
+
+VAR_OUTPUT
+END_VAR
+VAR
+	InputRTU_1				: Struct_InputRTU;
+	InputRTU_2				: Struct_InputRTU;
+	
+	IN_CmdToggleRead			: BOOL;
+	TrigRead 					: R_TRIG;							// (NA) Modbus writing Clock 	
+
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{47a45b6f-0724-49ec-8e2e-95599688b294}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Manages IntelliGen Alarms
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager : FB_AlarmCodeManager ; 
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+TON_ComAlarm(IN:= (MesModbusReadAlarm1) AND (MesModbusReadAlarm2) , PT:= ParamTempoComAlarm, Q=>MesAlarmCom) ;	
+
+FB_AlarmCodeManager(
+		bAlarm1			:= MesAlarmCom,  					// No connexion to inverter 
+		bAlarm2			:= FALSE,//
+		bAlarm3			:= False,//
+		bAlarm4			:= False,//
+		bAlarm5			:= False,//
+		bAlarm6			:= FALSE, 							//
+		bAlarm7			:= False, 							//
+		bAlarm8			:= False, 							//
+		bAlarm9			:= FALSE, 							//gg
+		bAlarm10		:= False, 							//
+		bAlarm11		:= FALSE,                         //
+		bAlarm12		:= FALSE,                         //
+		bAlarm13		:= FALSE,                         //
+		bAlarm14		:= FALSE, 							// 
+		bAlarm15		:= FALSE , 			// 
+		wAlarmCode		=>MesDataExd.MesData.MesAlarmCode);
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_CP" Id="{bc2fad36-68fe-4b7c-93c3-6da579132e98}">
+      <Declaration><![CDATA[METHOD M_CP 
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+
+
+
+
+
+TrigRead(CLK:=IN_CmdToggleRead);
+	
+IF TrigRead.Q THEN
+	IN_CmdToggleRead := FALSE;
+	MesDataExd.MesData.MesCP_Read := NOT MesDataExd.MesData.MesCP_Read;
+END_IF
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{b3f87000-892a-4895-bf0d-5f4baa7d1be1}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF NOT bInit THEN
+	M_Init();
+END_IF
+
+// READING AND WRITING CLOCK //
+	TP1(IN:=NOT TP1.Q , PT:= ParamClockReadTime);
+	ClockRead 				:= TP1.Q;
+	
+	
+	M_CP();
+	
+// METHODS CALLS//
+	M_Read();
+
+
+
+	/////////
+	M_StateManager() ; 
+	
+
+	M_AlarmManagement();
+	
+	
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{138b198f-455f-4b0b-9f08-49c7d41a30cc}">
+      <Declaration><![CDATA[METHOD M_Init : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+bInit := FALSE;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Read" Id="{cadf178c-5bd0-4980-81dd-a5eacf4f4ecb}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'M_Read'}
+METHOD M_Read
+//////////
+// Read Method for SMA : Modbus reading
+//////////
+VAR
+	// Method local variables (reinitialized at each cycle) 
+	MW 					: FB_MergeWordsToDint; 
+
+END_VAR
+
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[	
+InputRTU_1.InBuffer := ADR(MesBlock1_Temp);
+InputRTU_1.InFunction := ParamFunctionModbus; // 2 : Lecture entrées discrètes ; 3 : Lecture holding registers 
+InputRTU_1.InQuantity := 96;
+InputRTU_1.InStartAddr := 0;
+InputRTU_1.InUnitID := ParamUnitID;
+InputRTU_1.OutBusy := ADR(bBusy);
+InputRTU_1.OutError := ADR(bError);
+InputRTU_1.OutErrorId := ADR(uErrorId);
+InputRTU_1.OutCompleted := ADR(bCompleted);
+
+TrigRead(CLK := ClockRead AND  MesDataExd.MesData.MesCP_Read);
+
+IF TrigRead.Q THEN
+	A1_WS.ModbusRTU.M_AddAction_FIFO(InStruct := InputRTU_1, InPriority := 1);
+END_IF
+	
+MW(WORD_STRONG := MesBlock1_Temp[11], size := 1, fix := 1,SIGNED := TRUE, VAR_OUT := MesDataExd.MesData.MesHygro);
+MW(WORD_STRONG := MesBlock1_Temp[15], size := 1, fix := 1,SIGNED := TRUE, VAR_OUT := MesDataExd.MesPressure);
+MW(WORD_STRONG := MesBlock1_Temp[19], size := 1, fix := 1,SIGNED := TRUE, VAR_OUT := MesDataExd.MesData.MesWindDir);
+MW(WORD_STRONG := MesBlock1_Temp[28], size := 1, fix := 1,SIGNED := TRUE, VAR_OUT := MesDataExd.MesGHI);
+MW(WORD_STRONG := MesBlock1_Temp[32], size := 1, fix := 1,SIGNED := TRUE, VAR_OUT := MesDataExd.MesData.MesTemp_Amb);
+MW(WORD_STRONG := MesBlock1_Temp[36], size := 1, fix := 1,SIGNED := TRUE, VAR_OUT := MesDataExd.MesData.MesDewPoint);
+MW(WORD_STRONG := MesBlock1_Temp[43], size := 1, fix := 1,SIGNED := TRUE, VAR_OUT := MesDataExd.MesData.MesWindSp);
+
+
+
+//
+//	
+//MW(WORD_STRONG := MesBlock2_Temp[1], size := 1, fix := 0,SIGNED := TRUE, VAR_OUT := MesDataExd.MesData.MesRain1);
+//MW(WORD_STRONG := MesBlock2_Temp[2], size := 1, fix := 0,SIGNED := TRUE, VAR_OUT := MesDataExd.MesData.MesRain2);
+//MW(WORD_STRONG := MesBlock2_Temp[3], size := 1, fix := 0,SIGNED := TRUE, VAR_OUT := MesDataExd.MesData.MesRain3);]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_StateManager" Id="{c35091d4-452e-4f8f-9dea-9c7c034a7192}">
+      <Declaration><![CDATA[METHOD M_StateManager
+//////////////////
+// Detect which is the state of the inverter. IF loss of communication MesState =0 , the last inverter state is kept .  
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+	
+END_VAR
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// OPERATIONNAL INDEX //
+//	FB_OperationIndex(
+//		MesON 				:= MesState>1, 
+//		CmdReset 			:= CmdReInitMaintenanceIndicator_G,
+//		CalRunningTimeHr 	=> CalRunningTime , 
+//		CalNbMove 			=> CalNbMove,
+//		CalTimeStart 		=> CalLastStart) ;  ]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_ANA_AllInOne">
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ANA_AllInOne.M_AlarmManagement">
+      <LineId Id="12" Count="0" />
+      <LineId Id="11" Count="0" />
+      <LineId Id="13" Count="17" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ANA_AllInOne.M_CP">
+      <LineId Id="42" Count="0" />
+      <LineId Id="46" Count="1" />
+      <LineId Id="49" Count="4" />
+      <LineId Id="55" Count="5" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ANA_AllInOne.M_Execute">
+      <LineId Id="479" Count="0" />
+      <LineId Id="481" Count="1" />
+      <LineId Id="480" Count="0" />
+      <LineId Id="400" Count="3" />
+      <LineId Id="406" Count="0" />
+      <LineId Id="410" Count="0" />
+      <LineId Id="492" Count="0" />
+      <LineId Id="411" Count="2" />
+      <LineId Id="415" Count="0" />
+      <LineId Id="455" Count="3" />
+      <LineId Id="466" Count="3" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ANA_AllInOne.M_Init">
+      <LineId Id="7" Count="1" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ANA_AllInOne.M_Read">
+      <LineId Id="14" Count="0" />
+      <LineId Id="68" Count="0" />
+      <LineId Id="167" Count="0" />
+      <LineId Id="169" Count="1" />
+      <LineId Id="172" Count="2" />
+      <LineId Id="178" Count="0" />
+      <LineId Id="213" Count="0" />
+      <LineId Id="158" Count="0" />
+      <LineId Id="79" Count="0" />
+      <LineId Id="247" Count="0" />
+      <LineId Id="189" Count="0" />
+      <LineId Id="195" Count="0" />
+      <LineId Id="191" Count="0" />
+      <LineId Id="40" Count="0" />
+      <LineId Id="43" Count="0" />
+      <LineId Id="227" Count="2" />
+      <LineId Id="232" Count="2" />
+      <LineId Id="231" Count="0" />
+      <LineId Id="230" Count="0" />
+      <LineId Id="51" Count="0" />
+      <LineId Id="47" Count="0" />
+      <LineId Id="123" Count="1" />
+      <LineId Id="126" Count="0" />
+      <LineId Id="128" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ANA_AllInOne.M_StateManager">
+      <LineId Id="95" Count="5" />
+      <LineId Id="12" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

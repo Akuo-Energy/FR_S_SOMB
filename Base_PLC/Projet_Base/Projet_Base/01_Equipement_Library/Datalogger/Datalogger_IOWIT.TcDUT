@@ -1,0 +1,38 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="Datalogger_IOWIT" Id="{939621fb-368d-4d3a-9c8c-468241e2332c}">
+    <Declaration><![CDATA[TYPE Datalogger_IOWIT :		// Data from WIT in PTR
+STRUCT
+	
+
+	MesData						: Datalogger ; 
+		            			
+	Transfo						: Transfo_MV ; 
+	                			
+	WS							: WS_PTR ; 
+	                			
+	MainMVCB					: MainMVCB_Sch ; 
+	CB_INV						: ARRAY[1..CstNbInv_PTR_G] OF  TOR ; 
+	CB_Transfo					: TOR ; 
+	                				
+	FSS							: FSS ; 
+	DS							: TOR ; 
+	MS	 						: TOR ; 
+
+
+
+
+
+	MesInvReturnContact1 		: BOOL;		(* Inverter return contact 1 *)
+	MesInvReturnContact2 		: BOOL;		(*  Inverter return contact 2 *)
+	MesTransfoLocalTemp			: REAL;		(* (°C) Transformer room temperature *)
+	
+
+	MesAlarmCode				: WORD ; 	(* Internal Akuo Alarm Code *)
+	MesWarningCode				: WORD ; 	(* Internal Akuo Warning Code *)
+	MesEventCode				: WORD ; 	(* Internal Akuo Event Code *)
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

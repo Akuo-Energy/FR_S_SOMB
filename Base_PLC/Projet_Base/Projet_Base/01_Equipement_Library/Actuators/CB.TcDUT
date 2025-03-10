@@ -1,0 +1,72 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.2">
+  <DUT Name="CB" Id="{3238818b-984d-4fb3-95a6-837be18afa03}">
+    <Declaration><![CDATA[TYPE CB :
+///////////
+// Structure For Bousquet. Main Operating Data to be saved ( ex: OPC )   
+//////////
+STRUCT
+	//DI
+	MesClosed		: BOOL ;	(* Cell is closed*)
+	MesOpened		: BOOL ;	(* cell is opened*)
+	
+	MesAlarmCode	: WORD ;	(* Internal Akuo Alarm Code*)
+	MesWarningCode	: WORD ;	(* Internal Akuo Warning Code*)
+	MesEventCode	: WORD ;	(* Internal Akuo Warning Code*)
+	
+	MesCP_Open		: BOOL ;   	(* Cal(NA) Permanent Conditions*)
+	MesCP_Close		: BOOL ; 	(* Cal(NA) Permanent Conditions*) 
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,85 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_CB_FeederMVCB" Id="{00fe5170-b6bb-4423-993e-73a81d8016d2}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_CB_FeederMVCB EXTENDS FB_CB_Base
+//////////////////
+//  Motorized Circuit Breaker with telecommAND   Requires Open and Close impulsions.
+//////////////////
+
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance/model specific) 
+	ParamTP_Impulsion		    : TIME 		:= T#2S ;	// (s) Config : Tempo for the start or stop command impulsion
+	ParamComutNc			    : BOOL ;				// Local selector in normally closed . NC >> True = Selector in local. 
+	ParamSectLigne			    : BYTE      :=1 ;		// Monitoring du sectionneur de ligne de la MainMVCB .0 = TRUE := Monitoré .1 = TRUE Close is connected
+
+END_VAR
+VAR_INPUT
+	A1_Sect				       : FB_CB_MVSwitch;
+
+// I/O Inputs              
+	IN_MesAlarmPwr_IO		           : BOOL ;	              // (NA)[P,H,B] Remote control Power supply Error .  IO  	
+	IN_MesTripped_IO		  		   : BOOL ; 	          // Tripped position of the CB Must Ack To switch in again
+	IN_MesComutLocal_IO			   	   : BOOL := TRUE ; 	  // True if cell is in local position . 
+	IN_MesEarth_IO 			       : BOOL ; 	
+		
+END_VAR
+VAR_OUTPUT 
+	OUT_CmdOpen_IO	          	   : BOOL ; 	          // (NA) Physical I/O Open Command IO
+	OUT_CmdClose_IO			   : BOOL ; 	          // (NA) Physical I/O Close Command IO
+END_VAR
+
+VAR
+	//M_OPENCLOSE VARIABLES//
+	MesDataExd					: CB_FeederMVCB_Sch ; 
+	
+	//M_ALARMMANAGEMENT VARIABLES//
+		
+	//M_STATEMANAGER VARIABLES//
+	
+	// M_EXECUTE VARIABLES //
+		
+	// EMULATOR //
+
+		
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_Execute" Id="{1b37fcdc-3eaa-49e4-82e4-7eb0fb1ec3a2}">
+      <Declaration><![CDATA[METHOD M_Execute
+VAR_INPUT
+END_VAR
+
+VAR
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+TON_OutputWait_Open(IN := OUT_CmdOpen_IO, PT := ParamTimeOpen_Wait, Q => MesOpened);
+TON_OutputWait_Close(IN :=OUT_CmdClose_IO, PT := ParamTimeClose_Wait, Q => MesClosed);
+
+
+
+SUPER^.M_Execute();
+
+// updat.MesDataExd.MesData.to be used in other functions 
+MesDataExd.MesData.MesClosed := RS_Emulate.Q1 ; ]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_CB_FeederMVCB">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_CB_FeederMVCB.M_Execute">
+      <LineId Id="138" Count="4" />
+      <LineId Id="110" Count="0" />
+      <LineId Id="78" Count="0" />
+      <LineId Id="2" Count="0" />
+      <LineId Id="150" Count="1" />
+      <LineId Id="149" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

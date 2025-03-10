@@ -1,0 +1,198 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.13">
+  <POU Name="FB_ANA_Irra_Fx" Id="{75ce3f9d-7b12-4a59-9799-9ea97d29b3dd}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_ANA_Irra_Fx EXTENDS FB_ANA_Base
+//////////////////
+// (4-20 mA) sensor . 
+//////////////////
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance/model specific) 
+	ParamSensibility				: REAL:=1 ;		(* (mV/W.m2) Pyranometer sensibility. Scale often : -200 W/m2 >> 0 mV , 2000 W/m2 >> 32 mV*) 
+	ParamFactorConvertisseur		: REAL := 10 ; (* (mA/mV) Coefficient de conversion mV en mA. Default value = 2  *)
+		{attribute 'OPC.UA.DA' := '1'}
+		ParamScaleMin			: REAL:=4; 						(* (NA) Minimal input value  *)
+		{attribute 'OPC.UA.DA' := '1'}
+		ParamScaleMax			: REAL:=20; 					(* (NA) Maximal input value  *)
+		{attribute 'OPC.UA.DA' := '1'}
+		ParamRangeMin			: REAL:=0; 						(* (NA) Minimal output value. Unit depends on output *)
+		{attribute 'OPC.UA.DA' := '1'}
+		ParamRangeMax			: REAL:=1600; 					(* (NA) Maximal output value. Unit depends on output *)
+	
+	
+	
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	
+END_VAR
+
+VAR_INPUT
+	// I/O Inputs 
+	IN_MesReal1_IO			: UINT;
+END_VAR         			
+                			
+VAR    
+
+
+    MesData					: ANA ;     
+
+         			
+	A						: REAL;     // F(x) = Ax+B
+	B						: REAL;     // F(x) = Ax+B
+
+
+		
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{3b698864-71a7-439a-af7a-799184f4fe36}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Manages GHI system alarms and warnings
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+	FB_AlarmCodeManager		: FB_AlarmCodeManager ;   
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+RS_MaxAlarm(SET:= MesData.Value > ParamVarMaxAlarm  ,RESET1 := MesData.Value  < (ParamVarMaxAlarm - ParamDiffMax) OR CmdClearFault_G OR IN_CmdReset_L ) ; 
+
+RS_MaxWarning(SET:=  MesData.Value  > ParamVarMaxWarning  ,RESET1 := MesData.Value  < (ParamVarMaxWarning - ParamDiffMax) OR CmdClearFault_G OR IN_CmdReset_L ) ; 
+RS_MinAlarm(SET:= MesData.Value  < ParamVarMinAlarm  ,RESET1 := MesData.Value  > (ParamVarMinAlarm + ParamDiffMax) OR CmdClearFault_G OR IN_CmdReset_L ) ; 
+RS_MinWarning(SET:=  MesData.Value  < ParamVarMinWarning  ,RESET1 := MesData.Value  > (ParamVarMinWarning + ParamDiffMax) OR CmdClearFault_G OR IN_CmdReset_L ) ; 
+
+RSDiff(SET :=  ABS(MesValue1 - MesValue2) >= ParamDiffMax , RESET1 :=(ABS(MesValue1 - MesValue2) < ParamDiffMax*0.9) OR CmdClearFault_G OR IN_CmdReset_L) ; 
+
+
+// ALARM CODE //
+	FB_AlarmCodeManager(
+ 		bAlarm1			:= RSDiff.Q1 ,													// The difference between the measured values is higher than 10 %  
+		bAlarm2			:= IN_MesVar1Fault_IO OR IN_MesVar2Fault_IO,					// At least one sensor is on fault (0 mA) 
+		bAlarm3			:=FALSE , 														// 
+		bAlarm4			:=FALSE , 														// 
+		bAlarm5			:=FALSE , 														//
+		bAlarm6			:=FALSE ,                                                       //
+		bAlarm7			:=FALSE ,                                                       //
+		bAlarm8			:=FALSE ,                                                       //
+		bAlarm9			:=FALSE , 														// 
+		bAlarm10		:=FALSE , 														//
+		bAlarm11		:=FALSE ,                                                       //
+		bAlarm12		:=FALSE ,                                                       //
+		bAlarm13		:=FALSE ,                                                       //
+		bAlarm14		:=FALSE , 														//
+		bAlarm15		:=FALSE ,                                                       //
+		wAlarmCode		=>MesData.MesAlarmCode);                                       
+                                                                                        
+// WARNING CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= RS_MaxAlarm.Q1,												// Sensor value is higher than Alarm value
+		bAlarm2			:= RS_MaxWarning.Q1 ,											// Sensor value is higher than Warning value
+		bAlarm3			:= RS_MinAlarm.Q1 ,												// Sensor value is lower than Alarm value 
+		bAlarm4			:= RS_MinWarning.Q1 ,											// Sensor value is lower than Warning value 
+		bAlarm5			:=FALSE , 														//
+		bAlarm6			:=FALSE ,                                       				//
+		bAlarm7			:=FALSE ,                                       				//
+		bAlarm8			:=FALSE ,                                       				//
+		bAlarm9			:=FALSE ,                                       				//
+		bAlarm10		:=FALSE ,                                       				//
+		bAlarm11		:=FALSE ,                                       				//
+		bAlarm12		:=FALSE ,                                       				//
+		bAlarm13		:=FALSE ,                                       				//
+		bAlarm14		:=FALSE ,                                       				//
+		bAlarm15		:=FALSE ,                                       				//
+		wAlarmCode		=>MesData.MesWarningCode);
+		
+// EVENT CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:=FALSE , 														// 
+		bAlarm2			:=FALSE , 														// 
+		bAlarm3			:=FALSE , 														// 
+		bAlarm4			:=FALSE , 														// 
+		bAlarm5			:=FALSE , 														//
+		bAlarm6			:=FALSE ,       												//
+		bAlarm7			:=FALSE ,       												//
+		bAlarm8			:=FALSE ,       												//
+		bAlarm9			:=FALSE ,       												//
+		bAlarm10		:=FALSE ,       												//
+		bAlarm11		:=FALSE ,       												//
+		bAlarm12		:=FALSE ,       												//
+		bAlarm13		:=FALSE ,       												//
+		bAlarm14		:=FALSE ,       												//
+		bAlarm15		:=FALSE ,       												//
+		wAlarmCode		=>MesData.MesEventCode);]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Read" Id="{074803c7-3a3b-4371-be39-15a4303a3315}">
+      <Declaration><![CDATA[METHOD M_Read
+//////////////////
+// Format GHI Data 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	MesValue_420mA : REAL;
+	MesValue_mV	: REAL ; 
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[(*	IF ParamSensibility > 0.1	THEN  
+		A := (ParamRangeMax-ParamRangeMin)/(ParamScaleMax-ParamScaleMin)*ParamFactorConvertisseur / ParamSensibility; 
+		B :=  (ParamRangeMin*ParamScaleMax -ParamRangeMax*ParamScaleMin)/(ParamScaleMax-ParamScaleMin) * ParamFactorConvertisseur / ParamSensibility;
+	ELSE
+		A:=0 ; 
+		B:=0 ; 
+	END_IF
+*)
+	
+	// Convert 0 >> 32767 to 4-20 mA . 
+	MesValue_420mA := ((ParamScaleMax-ParamScaleMin)/(32767-0)*(IN_MesReal1_IO-0))+ParamScaleMin;		// 
+	
+	// Convert in mV 
+	MesValue_mV		:= (MesValue_420mA - ParamScaleMin) * ParamFactorConvertisseur ; 	// Consider that mV starts at 0  . 
+	
+	// Convert in W /m2 et mise à l'echelle
+	MesData.Value := SEL( ABS(ParamSensibility)< 0.01 ,   MesValue_mV / ParamSensibility , 0 ) ; // Does not take in account voltage offset . 
+	
+	// Convert 4-20 mA to 0 >> 1600 W/m2 
+	
+	
+	//MesData.Value := A*MesValue_420mA + B;
+	]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_ANA_Irra_Fx">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ANA_Irra_Fx.M_AlarmManagement">
+      <LineId Id="3" Count="64" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ANA_Irra_Fx.M_Read">
+      <LineId Id="35" Count="0" />
+      <LineId Id="61" Count="4" />
+      <LineId Id="59" Count="0" />
+      <LineId Id="89" Count="0" />
+      <LineId Id="48" Count="0" />
+      <LineId Id="93" Count="0" />
+      <LineId Id="47" Count="0" />
+      <LineId Id="94" Count="0" />
+      <LineId Id="96" Count="0" />
+      <LineId Id="99" Count="0" />
+      <LineId Id="97" Count="0" />
+      <LineId Id="100" Count="1" />
+      <LineId Id="98" Count="0" />
+      <LineId Id="95" Count="0" />
+      <LineId Id="102" Count="1" />
+      <LineId Id="36" Count="0" />
+      <LineId Id="78" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

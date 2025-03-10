@@ -1,0 +1,140 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_Datalogger_SchSkid" Id="{40b9e2e6-b1ad-49c5-b75b-e8e3e759d58f}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Datalogger_SchSkid EXTENDS FB_Datalogger_Base
+ 
+
+VAR_INPUT PERSISTENT
+
+	ParamTempoComAlarm			: TIME 		:= T#30S ; 							// (s) Config : Tempo to detect LOC Alarm
+	ParamTimeOutCurtail     	: TIME 		:= T#45S ;							// (s) Config : Tempo to curtail power at set value before Timeout warning
+	ParamClockReadTime 			: TIME 		:= TIME#11S;	  					// (Time) Read Modbus Frequency . 
+	ParamClockWriteTime 		: TIME 		:= TIME#2S; 	  					// (Time) Write Modbus Frequency .
+ 	ParamTimeout				: TIME  	:= T#5S ;		  					// (Time) Timeout for modbus reading
+END_VAR
+
+       	
+VAR_INPUT           	
+	// I/O Inputs 
+	
+END_VAR             	
+      	
+VAR                 	
+MesDataExd  AT %Q*		: Datalogger_SchSkid;
+
+    Emul_Pyrano_Value 			: REAL := 10;  
+	Emul_TempPanel_Value 		: REAL := 9;	
+	Emul_WindSp_Value 			: REAL := 15;
+	Emul_WindDir_Value			: REAL := 13;  
+            	
+	CmdbyCom 		AT %Q*		: WORD;
+//INPUT Modbus
+	FB_ModbusRead	          	: ARRAY[1..2] OF FB_ModbusRead; 	            // (NA) FB for Modbus Reading
+	FB_COMWrite					: FB_ModbusWrite;
+	MesBlock1_Temp				: ARRAY [1..19] OF WORD ; 
+	MesBlock2_Temp 				: ARRAY [1..26] OF WORD ; 
+	
+	ModbusInputBoolAlarms		: BOOL;
+	ModbusInputBoolAlarmId		: UDINT;
+	ModbusInputAnaAlarms		: BOOL;
+	ModbusInputAnaAlarmId		: UDINT;
+	TEMP_4_20					: ARRAY [1..13] OF REAL;
+
+//OUTPUT Modbus
+	MesModbusCmdByComAlarm 		: BOOL;
+	MesModbusCmdByComCodeId		: UDINT;
+	Front_Montant				: R_Trig;
+	RS_Open						: RS;
+	RS_Close					: RS;	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_Execute" Id="{1e4eb402-2b5c-444f-b289-063d454d735b}">
+      <Declaration><![CDATA[METHOD M_Execute : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+// Modeliser les MainMVCB_PTR
+//Outputs
+IF ParamID_PTR = 1 OR ParamID_PTR = 2 THEN
+MesDataExd.MesState_MVCB 				:= 	CmdbyCom.1 OR NOT A1_SUBMV.AX_FeederMVCB[1].IN_MesOpened_IO;
+ELSE
+MesDataExd.MesState_MVCB 				:= 	CmdbyCom.1 OR NOT A1_SUBMV.AX_FeederMVCB[2].IN_MesOpened_IO;
+END_IF
+
+
+	AX_PTR[ParamID_PTR].A1_MainMVCB_PTR.IN_MesClosed_IO := MesDataExd.MesState_MVCB;
+
+
+
+
+AX_PTR[ParamID_PTR].A1_MainMVCB_PTR.IN_MesComutLocal_IO	:= MesDataExd.MesComutLocal;
+
+// Inputs
+//MesDataExd.MesData.MesWatchdog_ProtectRelayVIP  :=	AX_PTR[ParamID_PTR].A1_VIP410.MesDataExd.MesData.MesWatchdog;	// check vip				
+MesDataExd.CB_INV[1].MesAlarmState	 	:=	SEL(AX_PTR[ParamID_PTR].MesDataExd.AX_INV[1].MesState = 8 OR AX_PTR[ParamID_PTR].MesDataExd.AX_INV[1].MesState = 5, FALSE, TRUE) OR AX_PTR[ParamID_PTR].MesDataExd.MainMVCB_PTR.MesData.MesOpened;										
+MesDataExd.CB_INV[2].MesAlarmState	 	:=	SEL(AX_PTR[ParamID_PTR].MesDataExd.AX_INV[2].MesState = 8 OR AX_PTR[ParamID_PTR].MesDataExd.AX_INV[2].MesState = 5, FALSE, TRUE) OR AX_PTR[ParamID_PTR].MesDataExd.MainMVCB_PTR.MesData.MesOpened;					
+
+IF 	ParamID_PTR	= 4 THEN
+MesDataExd.CB_INV[1].MesAlarmState 	:= MesDataExd.CB_INV[2].MesAlarmState; 								// CB of inverter one is in inverter 2
+END_IF
+
+MesdataExd.MesComutLocal := TRUE;									
+MesDataExd.MesState_MVCB := SEL(AX_PTR[ParamID_PTR].A1_MainMVCB_PTR.IN_MesClosed_IO, FALSE, TRUE); 								
+//MesDataExd.MesData.MesFault_ProtectRelayVIP := AX_PTR[ParamID_PTR].A1_VIP410.MesDataExd.MesData.MesAlarmCom;						
+
+//MesDataExd.MesData.Transfo_Synthesis.MesDataExd.MesData.MesAlarmTemp := AX_PTR[ParamID_PTR].A1_Transfo_1.MesDataExd.MesData.MesAlarmTemp OR AX_PTR[ParamID_PTR].A1_Transfo_2.MesDataExd.MesData.MesAlarmTemp;			
+//MesDataExd.MesData.Transfo_Synthesis.MesDataExd.MesData.MesAlarmsSynthesis := AX_PTR[ParamID_PTR].A1_Transfo_1.MesDataExd.MesData.MesAlarmsSynthesis OR AX_PTR[ParamID_PTR].A1_Transfo_2.MesDataExd.MesData.MesAlarmsSynthesis;		
+MesDataExd.DS_Synthesis.MesAlarmState := FALSE ;							
+	
+// 4-20 mA
+A1_WS.AX_Pyrano[1].IN_MesIOReal1       				:= Emul_Pyrano_Value;    
+A1_WS.AX_Pyrano[2].IN_MesIOReal1 					:= Emul_Pyrano_Value;
+A1_WS.AX_Pyrano[3].IN_MesIOReal1 					:= Emul_Pyrano_Value;
+A1_WS.AX_Pyrano[4].IN_MesIOReal1 					:= Emul_Pyrano_Value;
+                                            		
+A1_WS.AX_Temp_Panel[1].IN_MesIOReal1  		:= Emul_TempPanel_Value;
+A1_WS.AX_Temp_Panel[2].IN_MesIOReal1  		:= Emul_TempPanel_Value;
+A1_WS.AX_Temp_Panel[3].IN_MesIOReal1  		:= Emul_TempPanel_Value;
+//A1_WS.AX_Temp_Panel[4].IN_MesIOReal1  		:= Emul_TempPanel_Value;
+                           	]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_Datalogger_SchSkid">
+      <LineId Id="151" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Datalogger_SchSkid.M_Execute">
+      <LineId Id="133" Count="1" />
+      <LineId Id="138" Count="2" />
+      <LineId Id="142" Count="1" />
+      <LineId Id="141" Count="0" />
+      <LineId Id="156" Count="0" />
+      <LineId Id="159" Count="0" />
+      <LineId Id="161" Count="0" />
+      <LineId Id="158" Count="0" />
+      <LineId Id="124" Count="0" />
+      <LineId Id="155" Count="0" />
+      <LineId Id="154" Count="0" />
+      <LineId Id="148" Count="0" />
+      <LineId Id="150" Count="0" />
+      <LineId Id="82" Count="0" />
+      <LineId Id="81" Count="0" />
+      <LineId Id="83" Count="1" />
+      <LineId Id="129" Count="0" />
+      <LineId Id="126" Count="1" />
+      <LineId Id="125" Count="0" />
+      <LineId Id="128" Count="0" />
+      <LineId Id="85" Count="2" />
+      <LineId Id="130" Count="2" />
+      <LineId Id="90" Count="0" />
+      <LineId Id="97" Count="0" />
+      <LineId Id="91" Count="0" />
+      <LineId Id="111" Count="8" />
+      <LineId Id="121" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

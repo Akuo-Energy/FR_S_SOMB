@@ -1,0 +1,101 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="AllDataWPulse" Id="{e9368159-ee32-420c-bd69-efd3623ee526}">
+    <Declaration><![CDATA[
+TYPE AllDataWPulse :
+STRUCT
+	//Communication
+	CmdReset_ServerSMS			: BOOL;			(* Reset SMS Server *)
+	CmdReset_ServerMail			: BOOL;			(* Reset Mail server *)
+	CmdReset_Router_ADSL		: BOOL;			(* Restart ADSL router *)	
+	CmdReset_Router_4G			: BOOL;			(* Restart 4G router *)
+	CmdReset_IPC				: BOOL;			(* Restart IPC *)
+	CmdDeleteAllSms				: BOOL;  		(* Delete all SMS in the buffer *)
+	CmdChangeInfos_PhoneEmail	: BOOL;			(* Apply new changes in Mail and SMS infos *)
+	CmdReadInfosFromTarget_PhoneEmail	: BOOL ; 	(* Get Saved configuration *)
+	CmdTestSms					: BOOL;         (* Test SMS function *)
+	
+	
+	CmdRestart_OPCUA 	   		: BOOL;			(* Restart OPCUA *)
+	CmdRestart_Teamviewer		: BOOL;			(* Restart Teamviewer *)
+	CmdRestart_HMIServer 		: BOOL;			(* Restart HMIServer *)
+	CmdRestart_Telegraf 			: BOOL;			(* Restart Codesys *)	
+
+
+	CmdRestart_PLC				: BOOL;			(* Restart PLC *)
+	CmdForcedStay_Connect		: BOOL;			(* Force the power plant to remains connected during a code restart or reboot *)
+	CmdIpLauncher				: BOOL;			(* Get the public IP of the power plant	*)                  
+	CmdStart_Vpn				: BOOL;			(* Start VPN *)
+	CmdStop_Vpn					: BOOL;			(* Stop VPN *)
+                         
+	// Maintenance and Test     
+	CmdInhibAllWrite			: BOOL; 		(* Force all digital and analog output to FALSE when activated. Inhibite communication write *) 
+	CmdAllowAllWrite			: BOOL; 		(* Force all digital and analog output to TRUE when activated.  Allow communication write *)
+	CmdInhibAllRead				: BOOL; 		(* Force all digital and analog input to FALSE when activated. Inhibite communication read *)
+	CmdAllowAllRead				: BOOL; 		(* Force all digital and analog input to TRUE when activated. Allow communication read  *)
+	CmdWriteSetptTanPhi			: BOOL; 		(* PP Setpoint TanphI *)
+                           
+	// SUB_MV                      
+	CmdClose_MainMVCB			: BOOL; 		(* Close MainMVCB *)
+	CmdOpen_MainMVCB			: BOOL;     	(* Open MainMVCB *)
+	CmdReset_MainMVCB			: BOOL;     	(* Reset MainMVCB *)	
+
+	CmdOpen_FeederMVCB			: ARRAY[1..CstNbFeederMVCB_G] OF  BOOL;     (* Open FeederMVCB [ARRAY]*)
+	CmdClose_FeederMVCB			: ARRAY[1..CstNbFeederMVCB_G] OF  BOOL;   	(* Close FeederMVCB [ARRAY]*)
+	CmdReset_FeederMVCB			: ARRAY[1..CstNbFeederMVCB_G] OF  BOOL;   	(* Reset FeederMVCB [ARRAY]*)
+	                                        
+	CmdStartLocalSetptP_PP		: BOOL;     	(*	Activate local setpoint at substation *)
+	CmdStopLocalSetptP_PP		: BOOL;     	(*	Desactivate local setpoint at substation *)
+	
+	// PTR
+		CmdOpen_PTR					: ARRAY[1..CstNbPTR_G] OF BOOL;		(*	Open corresponding PTR [ARRAY]*) 
+		CmdClose_PTR				: ARRAY[1..CstNbPTR_G] OF BOOL;		(* Close corresponding PTR [ARRAY]*)
+	
+	// Inverter
+		CmdStart_INV				: ARRAY[1..CstNbPTR_G] OF ARRAY[1..CstNbInv_PTR_G] OF BOOL;		(* Switch On inverter [ARRAY]*)
+		CmdStop_INV					: ARRAY[1..CstNbPTR_G] OF ARRAY[1..CstNbInv_PTR_G] OF BOOL;     (* Switch Off inverter [ARRAY]*)
+		CmdStartSetptP_INV			: ARRAY[1..CstNbPTR_G] OF ARRAY[1..CstNbInv_PTR_G] OF BOOL;     (* Activate local setpoint on inverter [ARRAY]*)
+		CmdStopSetptP_INV			: ARRAY[1..CstNbPTR_G] OF ARRAY[1..CstNbInv_PTR_G] OF BOOL;		(* Desactivate local setpoint on inverter [ARRAY]*)
+		CmdToggleCom_Read			: ARRAY[1..CstNbPTR_G] OF ARRAY[1..CstNbInv_PTR_G] OF BOOL;		(* Inverter Toggle Read Communication [ARRAY]*) 
+		CmdToggleCom_Write			: ARRAY[1..CstNbPTR_G] OF ARRAY[1..CstNbInv_PTR_G] OF BOOL;		(* Inverter Toggle Write Communication [ARRAY]*)
+	
+	// PCS
+		CmdReset_ESS					: ARRAY[1..CstNbESS_G] OF BOOL;		(* Reset ESS [ARRAY]*)
+		CmdCalibrationCalculation_PCS	: ARRAY[1..CstNbESS_G] OF ARRAY[1..CstNbPcs_ESS_G] OF BOOL;		(* Calibrate calculation PCS [ARRAY]*)
+		CmdStart_PCS					: ARRAY[1..CstNbESS_G] OF ARRAY[1..CstNbPcs_ESS_G] OF BOOL;		(* Switch On PCS [ARRAY]*)
+		CmdStop_PCS						: ARRAY[1..CstNbESS_G] OF ARRAY[1..CstNbPcs_ESS_G] OF BOOL;     (* Switch Off PCS [ARRAY]*)
+		CmdStandby_PCS					: ARRAY[1..CstNbESS_G] OF ARRAY[1..CstNbPcs_ESS_G] OF BOOL;     (* Switch to standby PCS [ARRAY]*)
+		CmdReset_PCS					: ARRAY[1..CstNbESS_G] OF ARRAY[1..CstNbPcs_ESS_G] OF BOOL;     (* Reset PCS [ARRAY]*)
+		CmdLocal_PCS					: ARRAY[1..CstNbESS_G] OF ARRAY[1..CstNbPcs_ESS_G] OF BOOL;		(* Switch PCS to local [ARRAY]*)
+		
+	// BAT
+		CmdOpenDc_BAT					: ARRAY[1..CstNbESS_G] OF ARRAY[1..CstNbBat_ESS_G] OF BOOL;		(* Open DC Battery [ARRAY]*) 
+		CmdCloseDc_BAT					: ARRAY[1..CstNbESS_G] OF ARRAY[1..CstNbBat_ESS_G] OF BOOL;		(* Close DC Battery [ARRAY]*) 
+		CmdReset_BAT					: ARRAY[1..CstNbESS_G] OF ARRAY[1..CstNbBat_ESS_G] OF BOOL;		(* Reset Battery [ARRAY]*) 
+		
+	// UPS 
+		CmdRestart_UPS48			: BOOL ; (*	Restart UPS *)
+		CmdRestart_UPS24			: BOOL ; (*	Restart UPS *)
+	
+	// SD
+		CmdReset_SD					: BOOL; (* Reset all Smoke detectors with one commande*)
+	
+	// GRID
+		CmdAutCpl					: BOOL; 		(* Coupling authorization	*)
+		CmdDisconnect				: BOOL; 		(* Powerplant disconnect order *)
+		CmdEmergencyDisconnect		: BOOL; 		(* Powerplant Emergency disconnect order *)
+		
+	//Project specific ( France ) 
+	CmdDisconnect_end			: BOOL; 		(* Powerplant End of disconnect order *)
+	CmdEmergencyDisconnect_end	: BOOL; 		(* Powerplant End of Emergency disconnect order *)
+	CmdStartPReg				: BOOL ; 		(* Activate P regulation from Grid   *)
+	CmdStopPreg                 : BOOL ; 		(* Desactivate P regulation from Grid   *)
+	CmdStartQReg                : BOOL ; 		(* Activate Q regulation from Grid   *)
+	CmdStopQReg                 : BOOL ; 		(* Desactivate Q regulation from Grid   *)
+
+           	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,571 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_PPC_SmaKita" Id="{00c3301b-5aa0-4ddd-8b22-91832d7c1a2e}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_PPC_SmaKita EXTENDS FB_PPC_Base
+//////////////////
+// SMA SC2750
+// PT1: 
+// PT2: 18 BJ
+// PT3:	
+// PT4: 18 BJ
+//////////////////
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance specific) 
+	ParamIPAddress				: STRING 	:= '192.168.20.66'; 	// (NA)Config: IP Adress of PV INverter
+	ParamTcpPort				: UINT 			:= 502;					
+	ParamNameInv				: STRING;
+	AcknowledgeOrder			: BOOL;	
+	(* ajouter parametres ID pour les fct modbus *)
+	ParamUnitID 				: BYTE  := 3; 			  // (NA)   SMA Modbus Unit ID. 
+	ParamMoxa_Configured		: BOOL;		
+	AknowledgeValue				: DWORD  := 26;
+	ParamQmax					: REAL := 2200*0.8;
+	ParamQmin					: REAL := 2200*-0.8;
+	
+	ParamReal					: REAL;
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	
+END_VAR
+
+VAR_INPUT
+		MesDataExd					: PPC_Sma;
+END_VAR
+
+VAR
+	//M_Acknowledge
+		
+		MesModbusAcknowAlarm				: BOOL;
+		CTUTryAcknow						: CTU:=(PV:=5);  // Number of try of acknowledge 
+		TONAcknow							: TON:=(PT:=T#10S); //Time beteween two try
+	// M_ALARMMNGMT VARIABLES //
+	
+	
+	// M_READ VARIABLES//
+
+		
+		ModbusReadRegs		   		: ARRAY[1..2] OF  FB_ModbusRead ; 				// (NA) FB for Modbus Reading
+		MesBlock_Temp 				: ARRAY[1..2] OF ARRAY[1..120]  OF WORD; 		// (NA) Temporary Block with multiple modbus reading (Caution : Double Word variables)
+		ModbusAlarm		 		  	: ARRAY[1..2] OF BOOL ; 						// (NA) Modbus Read Alarm for all modbus frames		
+		ModbusAlarmsID				: ARRAY[1..2] OF UDINT;							// (NA) Modbus Read Alarm Code		
+
+	// M_CURTAIL VARIABLES //
+		ModbusWrite 		  		: ARRAY[1..2] OF  FB_ModbusWrite ; 				// (NA) Functionnal Block for Writing Curtail limit through modbus	
+		AX_CmdWrite					: ARRAY[1..100] OF WORD;
+		AX_CmdWrite1				: ARRAY[1..100] OF WORD;
+
+		
+		CurtailModeValue_P			: DWORD; 					// 1077 := WctlMan : Inverter set setpoint, 1079 := WCtlCom Inverter take the setpoint set by com (plc),303 := OFF
+		CurtailModeValue_Q			: DWORD;					// 303:=OFF,1075:= PFCtlCom,1074:= PFCtlMan,1072 VarCtlCom
+		
+		
+		SetptPlimit_Temp			: WORD := 2750;    							// (NA) Intermediate Modbus P Setpoint command
+		SetptQ_Temp					: INT;								// Intermediate Modbus Q Setpoint command
+
+		TestSetptQ_Real				: REAL :=1042  ;
+		
+		MesModbusWriteCode          : UDINT ; 							// (NA) Modbus Write Alarm Code 	
+		
+		MesModbusCurtailAlarm		: BOOL ;				   			// (NA) Modbus Write Curtail Alarm 
+		
+	// M_INIT //
+		Code_Ctrl_Com 				: UINT := 1079 ;
+		bInit						: BOOL;
+		MesModbusCurtailInitAlarm 	: BOOL ;
+		
+	// M_STARTSTOP//
+		CalCP_SetInvMode			: BOOL;
+	// M_CP
+		CalCP_Acknowledge			: BOOL;
+	// M_STATEMANAGER//
+	
+	//M_StartStop
+		InvModeValue				: ARRAY[1..2] OF WORD;						//973:= -,381 := Stop,309 :=Operation
+		FB_ModbusWrite_I6 		  	: FB_ModbusWrite ; 	
+	//M_EXECUTE VARIABLES //
+		
+
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+
+]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{23c63ccd-9417-4182-8fea-80e9083fb854}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Manages IntelliGen Alarms
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager : FB_AlarmCodeManager ; 
+
+	KK					: BYTE;		// For Loop 
+	
+	ComWarning			: BOOL;		// Aggregated Wcommunication warning
+	ComAlarm			: BOOL;		// Aggregated communication Alarm
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//COMMUNICATION//
+	CalModbusWriteAlarm := MesModbusCurtailAlarm OR MesModbusCurtailInitAlarm; 
+	
+	ComWarning 			:= MesModbusCurtailAlarm ;			// At least one modbus trame did not work
+	ComAlarm			:= TRUE;						// All modbus trame did not work
+	
+	FOR KK:=1 TO 4 DO // nb of trame = 4
+
+	END_FOR
+	//Warning
+	MesComWarning 	:= ComWarning ;  
+	//Alarm
+	TON_ComAlarm(IN:= ComAlarm , PT:= ParamTempoComAlarm, Q=> MesDataExd.MesData.MesAlarmCom) ;	// Alarms if ALL TRAM MODBUS did not work and timeout of 15s
+	
+	Setptcurtail := FALSE;
+	IF IN_SetptPlimit_Local <> ParamPnom THEN
+		Setptcurtail := TRUE;
+	END_IF
+		
+
+	
+	
+// ALARM CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= FALSE,
+		bAlarm2			:= FALSE,
+		bAlarm3			:= FALSE,
+		bAlarm4			:= FALSE,
+		bAlarm5			:= FALSE,
+		bAlarm6			:= FALSE,
+		bAlarm7			:= FALSE,
+		bAlarm8			:= FALSE,
+		bAlarm9			:= FALSE,
+		bAlarm10		:= FALSE,
+		bAlarm11		:= FALSE,
+		bAlarm12		:= FALSE,
+		bAlarm13		:= FALSE,
+		bAlarm14		:= FALSE,						// 
+		bAlarm15		:= FALSE,	
+		wAlarmCode		=> MesDataExd.MesData.MesAlarmCode);
+
+
+
+// EVENT CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= RS_StartStop.Q1, 			// Start command
+		bAlarm2			:= NOT RS_StartStop.Q1, 		// Stop command
+		bAlarm3			:= FALSE, 		// Curtailing is ON
+		bAlarm4			:= FALSE, 	// switch of precharging contactor open
+		bAlarm5			:= FALSE, 
+		bAlarm6			:= FALSE, 
+		bAlarm7			:= FALSE, 
+		bAlarm8			:= FALSE, 
+		bAlarm9			:= FALSE, 
+		bAlarm10		:= FALSE, 
+		bAlarm11		:= FALSE, 
+		bAlarm12		:= FALSE, 
+		bAlarm13		:= FALSE, 
+		bAlarm14		:= FALSE, 
+		bAlarm15		:= FALSE, 
+		wAlarmCode		=>  MesDataExd.MesData.MesEventCode);]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_CP" Id="{fc164b3f-2b1a-478e-92c8-8913d035daaf}">
+      <Declaration><![CDATA[METHOD M_CP
+//////////////////
+//  Emulator
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+TONAcknow.IN:=(MesModbusAcknowAlarm OR AcknowledgeOrder) ;//AND NOT CTUTryAcknow.Q; // 10s before try a new aknowledge
+TONAcknow();
+
+
+
+
+SUPER^.M_CP() ; 
+
+
+
+
+Trig_Cmd_Read(CLK:=IN_CmdToggleRead);
+Trig_Cmd_Write(CLK:=IN_CmdToggleWrite);
+	
+IF Trig_Cmd_Read.Q THEN
+	IN_CmdToggleRead := FALSE;
+	MesDataExd.MesData.MesCP_Read := NOT MesDataExd.MesData.MesCP_Read;
+END_IF
+
+
+IF Trig_Cmd_Write.Q THEN
+	IN_CmdToggleWrite := FALSE;
+	MesDataExd.MesData.MesCP_Write := NOT MesDataExd.MesData.MesCP_Write;
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{b290eaa0-47c5-4473-a68b-3e85cf78beb1}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF NOT bInit THEN
+	M_Init();
+END_IF
+
+
+SUPER^.M_Execute() ; ]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{a1cb4b0d-974a-45de-a6d3-d0e31c4d8e65}">
+      <Declaration><![CDATA[METHOD M_Init
+VAR_INPUT
+END_VAR
+
+VAR
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[ParamPnom := 2200.0 ;
+IN_SetptPlimit_Local :=  2200.0;
+ParamQnom := 1650;
+bInit := TRUE;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Read" Id="{67c6cd81-1ab3-486c-b0b0-1ac97ddfe48b}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'M_Read'}
+METHOD M_Read
+//////////
+// Read Method for SMA : Modbus reading
+//////////
+VAR
+	// Method local variables (reinitialized at each cycle) 
+	MW 					: FB_MergeWordsToDint; 
+	
+	
+	KK					: BYTE;						 // Index to loop over modbus blocks. 	
+	JJ					: BYTE;						// Index loop over Number of SB
+	CalOpTm: INT;
+	
+	AX_Qty				: ARRAY[1..2] OF WORD := [100, 		6 		];
+	AX_Addr				: ARRAY[1..2] OF WORD := [57, 	40112 	];
+	AX_UnitId			: ARRAY[1..2] OF BYTE := [1, 		1		];
+
+	
+	mesH: REAL;
+	test: LREAL;
+	test1: UINT;
+END_VAR
+
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+IF MesDataExd.MesData.MesCP_Read THEN 
+	
+	FOR KK := 1 TO 1 DO
+		ModbusReadRegs[KK]
+		(
+			nTcpPort := ParamTcpPort,
+			pDestAddr := ADR(MesBlock_Temp[KK]),
+			cbLength := SIZEOF(MesBlock_Temp[KK]),
+			sIPAddr := ParamIPAddress,
+			tTimeout := ParamTimeout,
+			nQuantity := AX_Qty[KK],
+			nMBAddr := AX_Addr[KK],
+			nUnitID := AX_UnitID[KK],
+			ClockRead := ClockRead,
+			ErrorId => ModbusAlarmsID[KK],
+			ModbusReadAlarm => ModbusAlarm[KK]
+		);
+	END_FOR
+	
+	MW(WORD_STRONG := MesBlock_Temp[1][1 ] 										, SIZE :=  1, FIX :=  1, SIGNED := TRUE, 	SmaDevice := TRUE, VAR_OUT := MesDataExd.MesData.MesSetptP);
+	MW(WORD_STRONG := MesBlock_Temp[1][2 ] 										, SIZE :=  1, FIX :=  1, SIGNED := TRUE, 	SmaDevice := TRUE, VAR_OUT := MesDataExd.MesData.MesP);
+	MW(WORD_STRONG := MesBlock_Temp[1][4 ] 										, SIZE :=  1, FIX :=  1, SIGNED := TRUE, 	SmaDevice := TRUE, VAR_OUT := MesDataExd.MesData.MesSetptQ);
+	MW(WORD_STRONG := MesBlock_Temp[1][5 ] 										, SIZE :=  1, FIX :=  1, SIGNED := TRUE, 	SmaDevice := TRUE, VAR_OUT := MesDataExd.MesData.MesQ);
+	MW(WORD_STRONG := MesBlock_Temp[1][10] 										, SIZE :=  1, FIX :=  1, SIGNED := TRUE, 	SmaDevice := TRUE, VAR_OUT := MesDataExd.MesData.MesNbInvAvail);
+	MW(WORD_STRONG := MesBlock_Temp[1][16] 										, SIZE :=  1, FIX :=  0, SIGNED := FALSE, 	SmaDevice := TRUE, VAR_OUT := MesDataExd.MesData.MesPState);
+	MW(WORD_STRONG := MesBlock_Temp[1][18] 										, SIZE :=  1, FIX :=  0, SIGNED := FALSE, 	SmaDevice := TRUE, VAR_OUT := MesDataExd.MesData.MesQState);
+	MW(WORD_STRONG := MesBlock_Temp[1][20] 										, SIZE :=  1, FIX :=  0, SIGNED := FALSE, 	SmaDevice := TRUE, VAR_OUT := MesDataExd.MesData.MesGeneState);
+	MW(WORD_STRONG := MesBlock_Temp[1][30], WORD_WEAK := MesBlock_Temp[1][31]	, SIZE :=  2, FIX :=  0, SIGNED := TRUE, 	SmaDevice := TRUE, VAR_OUT := MesDataExd.MesData.MesPNomControlled);
+	MW(WORD_STRONG := MesBlock_Temp[1][32], WORD_WEAK := MesBlock_Temp[1][33]	, SIZE :=  2, FIX :=  0, SIGNED := TRUE, 	SmaDevice := TRUE, VAR_OUT := MesDataExd.MesData.MesPControlled);
+	MW(WORD_STRONG := MesBlock_Temp[1][34], WORD_WEAK := MesBlock_Temp[1][35]	, SIZE :=  2, FIX :=  0, SIGNED := TRUE, 	SmaDevice := TRUE, VAR_OUT := MesDataExd.MesData.MesQControlled);
+	MW(WORD_STRONG := MesBlock_Temp[1][40], WORD_WEAK := MesBlock_Temp[1][41]	, SIZE :=  2, FIX :=  0, SIGNED := TRUE, 	SmaDevice := TRUE, VAR_OUT := MesDataExd.MesData.MesQNomControlled);
+	MW(WORD_STRONG := MesBlock_Temp[1][42] 										, SIZE :=  1, FIX :=  0, SIGNED := FALSE, 	SmaDevice := TRUE, VAR_OUT := MesDataExd.MesData.MesWatchdog);
+
+	
+END_IF
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_StartStop" Id="{262e2bda-7c6e-415c-8038-6b9bc9dd4a3d}">
+      <Declaration><![CDATA[METHOD M_StartStop
+//////////////////
+// Start and Stop AMG
+/////////////////
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Set SetptLimit to zero if Stop command
+SUPER^.M_StartStop() ; 
+//RS_StartStop(SET:=CmdStart,Reset1:=CmdStop); IN BASE
+
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_StateManager" Id="{08f04785-5cde-448b-9e7b-bc7bad37a17e}">
+      <Declaration><![CDATA[METHOD M_StateManager
+//////////////////
+// Detect which is the state of the inverter. IF loss of communication MesState =0 , the last inverter state is kept .  
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+	
+	MesGeneState: WORD;
+
+END_VAR
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[MesState 			:= 0  ; 
+
+MesGeneState:= REAL_TO_WORD(MesDataExd.MesGeneState);
+
+
+IF MesGeneState.0 THEN
+	MesState.5 := TRUE;
+ELSIF MesGeneState.1 THEN
+	MesState.5 := FALSE;
+END_IF
+
+IF MesGeneState.8 = 1 THEN
+	MesState.3 := TRUE;
+ELSIF MesGeneState.9 THEN
+	MesState.3 := FALSE;
+END_IF
+
+IF MesDataExd.MesPState = 2 THEN 
+	MesState.1 := TRUE;
+ELSE 
+	MesState.1 := FALSE;
+END_IF
+IF MesDataExd.MesQState = 2 THEN 
+	MesState.2 := TRUE;
+ELSE 
+	MesState.2 := FALSE;
+END_IF
+SUPER^.M_StateManager() ; ]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Write" Id="{6fb3dfcd-343c-4be9-9f4b-313757ffa227}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'M_Write'}
+METHOD M_Write
+//////////////////
+// Write Curtail Command through modbus to PV inverters.  
+//////////////////
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+	SFW : FB_SplitRealToWords_IEEE754;
+
+	dwordTest: DWORD;
+	wordTest1: WORD;
+	WordTest2: WORD;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+AX_CmdWrite[1] := 0;
+SFW(IN_Real := A1_SUBMV.A1_GRID.MesDataExd.MesData.OUT_SetptP , 	OUT_WordStrong =>AX_CmdWrite[3], 	OUT_WordWeak =>AX_CmdWrite[2]);
+
+AX_CmdWrite[14] := 0;
+SFW(IN_Real := A1_SUBMV.A1_GRID.MesDataExd.MesData.OUT_SetptQ, 	OUT_WordStrong =>AX_CmdWrite[16], 	OUT_WordWeak =>AX_CmdWrite[15]);
+
+(*
+AX_CmdWrite[31] := REAL_TO_WORD(RtuData.SetptQfU_Acknw*100);
+AX_CmdWrite[37] := UINT_TO_WORD(REAL_TO_UINT(RtuData.SetptPF_Acknw*10000));
+AX_CmdWrite[49] := REAL_TO_WORD(2.0); 								// Configuration of active power control (Active power control with P(f) generic 2-5)
+AX_CmdWrite[50] := UINT_TO_WORD(RtuData.OUT_TypeConsigneReactive); //Type de consigne  en cours 0: Aucune, 1: Q, 2: QfU, 3: PF
+
+*)
+//
+//
+SFW(IN_Real := A1_SUBMV.MesDataExd.MesData.MesPsol, 			OUT_WordStrong =>AX_CmdWrite1[2], 	OUT_WordWeak =>AX_CmdWrite1[1]);
+
+
+SFW(IN_Real := A1_SUBMV.MesDataExd.MesData.MesQsol, 			OUT_WordStrong =>AX_CmdWrite1[4], 	OUT_WordWeak =>AX_CmdWrite1[3]);
+AX_CmdWrite1[5] := REAL_TO_WORD(REAL_TO_UINT(A1_SUBMV.MesDataExd.MesData.MesU*100));
+AX_CmdWrite1[6] := REAL_TO_WORD(REAL_TO_UINT(A1_SUBMV.MesDataExd.MesData.MesFreq*100)); 
+//AX_CmdWrite1[7] := REAL_TO_WORD(REAL_TO_UINT(A1_SUBMV.MesDataExd.MesData.MesTanPhi*1000)); 	// Csophi 
+
+ModbusWrite[1]
+(
+	pSrcAddr := ADR(AX_CmdWrite),
+	sIPAddr := ParamIPAddress,
+	nTCPport := ParamTcpPort,
+	tTimeout := ParamTimeout,
+	nMBAddr := 133,
+	cbLength := SIZEOF(AX_CmdWrite),
+	nQuantity :=  50,
+	WriteCmd := ClockWrite,
+	nUnitID := 1
+);
+
+ModbusWrite[2]
+(
+	pSrcAddr := ADR(AX_CmdWrite1),
+	sIPAddr := ParamIPAddress,
+	nTCPport := ParamTcpPort,
+	tTimeout := ParamTimeout,
+	nMBAddr := 189,
+	cbLength := SIZEOF(AX_CmdWrite1),
+	nQuantity :=  7,
+	WriteCmd := ClockWrite,
+	nUnitID := 1
+);
+
+SUPER^.M_Write() ; ]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_PPC_SmaKita">
+      <LineId Id="3" Count="1" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PPC_SmaKita.M_AlarmManagement">
+      <LineId Id="244" Count="6" />
+      <LineId Id="252" Count="0" />
+      <LineId Id="254" Count="4" />
+      <LineId Id="331" Count="0" />
+      <LineId Id="336" Count="0" />
+      <LineId Id="329" Count="0" />
+      <LineId Id="332" Count="0" />
+      <LineId Id="334" Count="1" />
+      <LineId Id="333" Count="0" />
+      <LineId Id="259" Count="0" />
+      <LineId Id="330" Count="0" />
+      <LineId Id="260" Count="18" />
+      <LineId Id="296" Count="18" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PPC_SmaKita.M_CP">
+      <LineId Id="103" Count="4" />
+      <LineId Id="117" Count="19" />
+      <LineId Id="81" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PPC_SmaKita.M_Execute">
+      <LineId Id="24" Count="0" />
+      <LineId Id="34" Count="1" />
+      <LineId Id="13" Count="1" />
+      <LineId Id="12" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PPC_SmaKita.M_Init">
+      <LineId Id="23" Count="0" />
+      <LineId Id="47" Count="0" />
+      <LineId Id="39" Count="0" />
+      <LineId Id="31" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PPC_SmaKita.M_Read">
+      <LineId Id="1550" Count="2" />
+      <LineId Id="1524" Count="0" />
+      <LineId Id="1454" Count="12" />
+      <LineId Id="1276" Count="0" />
+      <LineId Id="1474" Count="0" />
+      <LineId Id="1476" Count="1" />
+      <LineId Id="1480" Count="1" />
+      <LineId Id="1479" Count="0" />
+      <LineId Id="1484" Count="1" />
+      <LineId Id="1492" Count="2" />
+      <LineId Id="1483" Count="0" />
+      <LineId Id="1496" Count="2" />
+      <LineId Id="1495" Count="0" />
+      <LineId Id="1486" Count="1" />
+      <LineId Id="1553" Count="0" />
+      <LineId Id="1491" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PPC_SmaKita.M_StartStop">
+      <LineId Id="109" Count="0" />
+      <LineId Id="224" Count="0" />
+      <LineId Id="223" Count="0" />
+      <LineId Id="225" Count="0" />
+      <LineId Id="199" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PPC_SmaKita.M_StateManager">
+      <LineId Id="83" Count="0" />
+      <LineId Id="130" Count="2" />
+      <LineId Id="125" Count="0" />
+      <LineId Id="93" Count="0" />
+      <LineId Id="126" Count="0" />
+      <LineId Id="128" Count="1" />
+      <LineId Id="127" Count="0" />
+      <LineId Id="135" Count="2" />
+      <LineId Id="145" Count="0" />
+      <LineId Id="139" Count="1" />
+      <LineId Id="146" Count="0" />
+      <LineId Id="112" Count="0" />
+      <LineId Id="147" Count="0" />
+      <LineId Id="149" Count="1" />
+      <LineId Id="148" Count="0" />
+      <LineId Id="151" Count="3" />
+      <LineId Id="113" Count="0" />
+      <LineId Id="12" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PPC_SmaKita.M_Write">
+      <LineId Id="636" Count="0" />
+      <LineId Id="635" Count="0" />
+      <LineId Id="631" Count="0" />
+      <LineId Id="628" Count="0" />
+      <LineId Id="731" Count="0" />
+      <LineId Id="712" Count="0" />
+      <LineId Id="693" Count="0" />
+      <LineId Id="761" Count="0" />
+      <LineId Id="692" Count="0" />
+      <LineId Id="639" Count="0" />
+      <LineId Id="629" Count="0" />
+      <LineId Id="625" Count="0" />
+      <LineId Id="642" Count="0" />
+      <LineId Id="762" Count="1" />
+      <LineId Id="643" Count="0" />
+      <LineId Id="690" Count="0" />
+      <LineId Id="645" Count="0" />
+      <LineId Id="760" Count="0" />
+      <LineId Id="691" Count="0" />
+      <LineId Id="646" Count="0" />
+      <LineId Id="650" Count="3" />
+      <LineId Id="655" Count="0" />
+      <LineId Id="657" Count="10" />
+      <LineId Id="743" Count="0" />
+      <LineId Id="732" Count="10" />
+      <LineId Id="656" Count="0" />
+      <LineId Id="623" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

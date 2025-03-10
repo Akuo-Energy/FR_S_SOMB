@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="SUBHV" Id="{9dcd9420-3338-4061-bfc3-9269c1345455}">
+    <Declaration><![CDATA[//////////////////////////////////////////////////////////////////
+// Structure For PDL. Main Operating Data to be saved (ex: OPC) //  
+//////////////////////////////////////////////////////////////////
+
+TYPE SUBHV :
+STRUCT
+	// Substation Data
+	
+	MesAlarmCode				: WORD ; (* (NA) Internal Akuo AlarmCode 	*) 
+ 	MesWarningCode				: WORD ; (* (NA) Internal Akuo WarningCode  *)
+	MesEventCode				: WORD ; (* (NA) Internal Akuo EventCode 	*)
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

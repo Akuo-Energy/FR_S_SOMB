@@ -1,0 +1,32 @@
+﻿<div id="UserControl1_115" data-tchmi-type="TcHmi.Controls.System.TcHmiUserControl" 
+     data-tchmi-top="0" data-tchmi-left="0" 
+     data-tchmi-width="150" data-tchmi-height="150" data-tchmi-width-unit="150" data-tchmi-height-unit="150"
+     data-tchmi-creator-viewport-width="160" data-tchmi-creator-viewport-height="200" data-tchmi-zindex="4">
+
+<div id="LigneFuseCoupee_1" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiLine" data-tchmi-height="%f%0.1*%pp%H%/pp%%/f%" data-tchmi-height-unit="px" data-tchmi-left="%f%%pp%W%/pp%/2-0.1*%pp%W%/pp%%/f%" data-tchmi-left-unit="px" data-tchmi-top="%f%%pp%H%/pp%/2-0.1*%pp%H%/pp%%/f%" data-tchmi-top-unit="px" data-tchmi-width="13" data-tchmi-width-unit="px" data-tchmi-x1="0" data-tchmi-x2="%f%0.1*%pp%W%/pp%%/f%" data-tchmi-y1="0" data-tchmi-y2="%f%0.1*%pp%H%/pp%%/f%" data-tchmi-visibility="%f%if(%pp%State%/pp%) {'Collapsed'}else{'Visible'}%/f%" data-tchmi-zindex="4" data-tchmi-stroke-thickness="%pp%StrokeWidth%/pp%">
+
+
+<script data-tchmi-target-attribute="data-tchmi-stroke-color" type="application/json">
+{
+  "color": "rgba(250, 15, 15, 1)"
+}
+</script>
+</div>
+
+<div id="LigneTop_1" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiLine" data-tchmi-height="%f%%pp%H%/pp%/2-0.05*%pp%H%/pp%%/f%" data-tchmi-height-unit="px" data-tchmi-left="%f%%pp%W%/pp%/2%/f%" data-tchmi-left-unit="px" data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-width="25" data-tchmi-width-unit="px" data-tchmi-x1="0" data-tchmi-x2="0" data-tchmi-y1="0" data-tchmi-y2="%f%%pp%H%/pp%/2-0.1*%pp%H%/pp%%/f%" data-tchmi-y2-unit="px" data-tchmi-stroke-color="%f%if(%pp%State%/pp%){'{&quot;color&quot;:&quot;rgba(0,0,0,1)&quot;}'}else{'{&quot;color&quot;:&quot;rgba(250,15,15,1)&quot;}'} %/f%" data-tchmi-zindex="0" data-tchmi-stroke-thickness="%pp%StrokeWidth%/pp%" data-tchmi-stroke-thickness-unit="px">
+
+</div>
+
+<div id="LigneBottom_1" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiLine" data-tchmi-height="%f%%pp%H%/pp%/2%/f%" data-tchmi-height-unit="px" data-tchmi-left="%f%%pp%W%/pp%/2%/f%" data-tchmi-left-unit="px" data-tchmi-top-unit="px" data-tchmi-width="5" data-tchmi-width-unit="px" data-tchmi-x1="0" data-tchmi-x2="0" data-tchmi-y1="0" data-tchmi-y2="%f%%pp%H%/pp%/2%/f%" data-tchmi-y2-unit="px" data-tchmi-stroke-color="%f%if(%pp%State%/pp%){'{&quot;color&quot;:&quot;rgba(0,0,0,1)&quot;}'}else{'{&quot;color&quot;:&quot;rgba(250,15,15,1)&quot;}'} %/f%" data-tchmi-zindex="4" data-tchmi-top="%f%%pp%H%/pp%/2%/f%" data-tchmi-stroke-thickness="%pp%StrokeWidth%/pp%">
+
+</div>
+
+<div id="LignePleine_1" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiLine" data-tchmi-height="%f%0.1*%pp%H%/pp%%/f%" data-tchmi-height-unit="px" data-tchmi-left="%f%%pp%W%/pp%/2%/f%" data-tchmi-left-unit="px" data-tchmi-top="%f%%pp%H%/pp%/2-0.1*%pp%H%/pp%%/f%" data-tchmi-top-unit="px" data-tchmi-width="24" data-tchmi-width-unit="px" data-tchmi-x1="0" data-tchmi-x2="0" data-tchmi-y1="0" data-tchmi-y2="%f%0.1*%pp%H%/pp%%/f%" data-tchmi-visibility="%f%if(%pp%State%/pp%) {'Visible'}else{'Collapsed'}%/f%" data-tchmi-zindex="4" data-tchmi-y2-unit="px" data-tchmi-stroke-thickness-unit="px" data-tchmi-stroke-thickness="%pp%StrokeWidth%/pp%">
+
+</div>
+
+<div id="TcHmiRectangle_249" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiRectangle" data-tchmi-height="%pp%H%/pp%" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-width="%pp%W%/pp%" data-tchmi-width-unit="px" data-tchmi-stroke-thickness="%pp%StrokeWidth%/pp%" data-tchmi-zindex="5">
+
+</div>
+
+</div>

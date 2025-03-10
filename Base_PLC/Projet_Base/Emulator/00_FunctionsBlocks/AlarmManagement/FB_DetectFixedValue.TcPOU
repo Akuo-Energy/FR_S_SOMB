@@ -1,0 +1,38 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_DetectFixedValue" Id="{39b4ba3f-d188-42ea-aef6-eca0d2c1ac45}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_DetectFixedValue
+VAR_INPUT
+	IN_Addr			: POINTER TO BYTE;			// Adr of the variable to  analyse
+	IN_EmptyStruct	: POINTER TO BYTE;			// Adr of a null variable on which I input the compared value
+	IN_Size			: UINT;						// Size of the variable to analyse
+	IN_Duration		: TIME;						// Duration after which an alarm is raised
+END_VAR
+VAR_OUTPUT
+	OUT_bStatic		: BOOL;						// Value has been static for more than IN_Duration time
+END_VAR
+VAR
+	TON_CMP			: TON;
+	bFixed			: BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[bFixed :=  MEMCMP(pBuf1 := IN_Addr, pBuf2 := IN_EmptyStruct, n := IN_SIZE)=0;
+
+TON_CMP(IN := bFixed, PT := IN_Duration, Q => OUT_bStatic);
+
+IF NOT bFixed THEN
+	MEMCPY(destAddr := IN_EmptyStruct, srcAddr := IN_Addr, n := IN_Size);
+END_IF
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_DetectFixedValue">
+      <LineId Id="20" Count="1" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="19" Count="0" />
+      <LineId Id="17" Count="0" />
+      <LineId Id="23" Count="1" />
+      <LineId Id="16" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

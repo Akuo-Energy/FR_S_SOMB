@@ -1,0 +1,38 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="ProtectRelay_Siprotec" Id="{e40df581-7f10-4de8-9e53-c8ad0456efe9}">
+    <Declaration><![CDATA[TYPE ProtectRelay_Siprotec :
+STRUCT
+	
+	MesData					: ProtectRelay;
+	
+	MesComutLocal			: BOOL;	(**)
+	MesTCSAlarm				: BOOL; (* Alarme TCS (Supervision circuit de déclenchement) *)
+	MesVrAnomaly			: BOOL; (* Anomalie VR (tension résiduelle) *)
+	MesTripSynthesis		: BOOL; (* Trip Synthesis *)
+	
+	// 3X Variables                 
+	
+	MesI					: REAL; (* (A) Current phase average *)                                
+	MesI1					: REAL; (* (A) Current phase 1*)
+	MesI2					: REAL; (* (A) Current phase 2*)
+	MesI3					: REAL; (* (A) Current phase 3*)
+	MesIn					: REAL; (* (A) Current phase n*)
+	MesV1					: REAL; (* (V) Voltage phase 1*)
+	MesV2					: REAL; (* (V) Voltage phase 2*)
+	MesV3					: REAL; (* (V) Voltage phase 3*)
+	MesU12					: REAL; (* (V) Voltage phase 12*)
+	MesU23					: REAL; (* (V) Voltage phase 23*)
+	MesU31					: REAL; (* (V) Voltage phase 31*)
+	MesUn					: REAL; (* (V) Voltage phase n*)
+	MesP					: REAL; (* (kW) Active Power calculated (from current, power and cosphi because otherwise not precise)*)
+	MesQ					: REAL; (* (kVAr) Reactive Power *)
+	MesS					: REAL; (* (kVA) Apparent Power*)
+	MesFreq					: REAL; (* (Hz) Frequency*)
+	MesCosPhi				: REAL; (* (NA) CosPhi*)
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

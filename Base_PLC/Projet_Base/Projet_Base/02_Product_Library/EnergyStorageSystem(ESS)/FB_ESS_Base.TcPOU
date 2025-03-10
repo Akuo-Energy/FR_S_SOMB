@@ -1,0 +1,377 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_ESS_Base" Id="{31bb1ca0-be24-4659-8dfd-66b00545ca60}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_ESS_Base
+//////////////////
+// ESS base product  
+//////////////////
+VAR CONSTANT
+	// Characteristics of the object (Same for all instances)
+	
+END_VAR
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance specific) 
+	ParamESSVersion				: STRING := 'ESS' ;	(* ESS Version*)
+	
+	ParamTempoComAlarm			: TIME := T#5S ; 	(* (s) Config : Tempo to detect LOC Alarm*)
+	ParamTimeOutStart			: TIME := T#3M;		(* (min)Config : Tempo for starting before timeout warning*)
+	ParamTimeOutShutdown		: TIME := T#1M;		(* (min)Config : Tempo for stoping before timeout warning*)
+	ParamTimeOutChangeMaster	: TIME := T#3M;		(* (s)  Config : Tempo for changing master before timeout warning*)
+
+	ParamSoCVeryVeryLow			: REAL := 7 ; 	(* (%) SoC at which the ESS creates an alarm and disable discharging the batteries the batteries.*)
+	ParamSoCVeryVeryHigh		: REAL := 92 ; 	(* (%) SoC at Which the ESS creates an alarm and disable Charging  the batteries . *)
+	
+	ParamNbPcs					: UINT := 2;
+	ParamNbBat_Pcs				: UINT := 3 ; 		(* (NA) Config :Number of Pcs controlled .*)
+	ParamNbRacks				: UINT  ; 		(* (NA) Config :Number of racks controlled .*)
+	ParamEssNum					: UINT:=1 ; 			(* (NA) Config :Numerous of the ESS in the PP*)
+
+	//M_INIT VARIABLES // 	        	
+	bInit						: BOOL ; 			// (NA) Initialize object parameters at first cycle 
+	
+	
+END_VAR
+
+VAR_INPUT
+	//Child objects
+		IN_SetptP				: REAL ;			//(kW)   [P,H] Active Power  setpoint 
+		IN_SetptP_Old			: REAL ;			//(kW)   [P,H] Active Power  setpoint 
+		IN_SetptQ				: REAL ;			//(kVAr) [P,H] Reactive Power setpoint 
+		IN_SetptQ_Old			: REAL ;			//(kVAr) [P,H] Reactive Power setpoint 
+		IN_SetptU				: REAL ;			//(V) [P,H] Reactive Power setpoint 
+		//SetptU_Old			: REAL ;			//(V) [P,H] Reactive Power setpoint 
+		IN_SetptF				: REAL ;			//(Hz) [P,H] Reactive Power setpoint 
+		//SetptF_Old			: REAL ;			//(Hz) [P,H] Reactive Power setpoint 
+
+		
+		IN_CmdReset 			: BOOL ;  			// (NA) [P,H]  Reset Command .  
+		IN_CmdReset_IO 			: BOOL ;  			// (NA) [P,H]  Reset Command .  
+		IN_CmdStart				: BOOL;				// (NA) [P,H] External Start Command
+		IN_CmdStop 				: BOOL; 			// (NA) [P,H] External Stop CommAND 
+		//IN_CmdMasterMode		: BOOL ; 			// (NA) [P,H] External ESS Master mode selection (islanding) 
+END_VAR
+
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//
+
+		TON_ComAlarm					: TON ; 					// Tempo before deteting loss of communication. 	
+	
+		TON_ESsOn						: TON; 						// (NA) Let time to ESS to restart and charge after SoC very very Low Alarm
+		PermanentAlarmSoCVeryVeryLow	: SR;						// Maintain SoC Very Low alarm 
+		PermanentAlarmSoCVeryVeryHigh	: SR;						// Maintain SoC Very Low alarm 
+		
+		//MesAlarmCode					: WORD ;  					// (NA) [P,H,B] Alarm Word . 0: Synthesis , 1: CTRLPCs Alarm, 2:BBMS Alarm  , 3:Smoke detector Alarm , 4:Warning Hygro>HygroMax in ESS area, 5:Communication Error with CTRL PCS or CTRLBat, 6:, 7:, 8:, 9:, 10:, 11:, 12:, 13:, 14:, 15:, 16:
+		//MesWarningCode				: WORD ;  					// (NA) [P,H,B] Warning Word . 0: Synthesis , 1: CtrLPCS Warning , 2: BBMS Warning , 3:Detector Alarm Synthesis , 4:Detector Warning Synthesis, 5:Start Failure, 6:Stop Failure, 7:Change Master Failure, 8:, 9:, 10:, 11:, 12:, 13:, 14:, 15:, 16:
+   		//MesEventCode					: WORD; 					// (NA) [P,H,B] Event Code. Acknowledgable.
+                                                                
+
+		//MesAlarmCom					: BOOL ; 					// (NA) [P,H]  Communication Error with all ESS  (= PMS Socomec) 
+		//MesWarningCom					: BOOL ; 					// Communication Error with at least one equipement of ESS
+		//CmdAlarmIntervention			: BOOL; 					//(NA) Command Alarm in case of intervention
+
+	//M_STATEMANAGER  VARIABLES//
+
+		MesState 						: BYTE ; 					// (NA) [P,H,B]  Bit 0: OFF , Bit 1 : Grid feeding, Bit 2 : Grid forming
+	                                	
+	//M_STARTSTOP VARIABLES//			
+		FB_CheckCommandStart			: FB_CheckCommand ; 		// Check if Start Command Successful
+		FB_CheckCommandStop				: FB_CheckCommand ;			// Check if Stop Command Successful
+	                                	
+
+		CalCompareWarningStart			: BOOL;						// (NA) Start not performed warning
+		CalStartInProgress				: BOOL;                     // (NA) [H,B] Start in Progress
+		CalCompareWarningStop			: BOOL;                     // (NA) Stop not performed warning
+		CalStopInProgress				: BOOL;                     // (NA) [H,B] Stop in Progress
+
+		TRIG_StartHVAC1					: R_TRIG;
+		                            	
+	//M_CHANGEMODE VARIABLES//      	
+		FB_CheckCommandMaster			: FB_CheckCommand ; 		// Check if Change Master Command Successful
+	                        	
+
+		CalCompareWarningMasterChange	: BOOL;                     // (NA) Change Master not performed warning
+		CalMasterChangeInProgress		: BOOL;                     // (NA) [H,B] Change Master  in Progress
+		                            	
+	//M_EVALUATE VARIABLES//        	
+//	MesDataExd					: ESS; 						// (NA) [P,H,B] ESS concept Data structure 
+	                                	
+		MesPDischargeAvailable			: REAL;  					// (kW) [P,H] Available (no alarm) discharging active Power in the PTR product
+		MesPChargeAvailable				: REAL;  					// (kW) [P,H] Available (no alarm) charging active Power in the PTR product 
+		MesPChargeConnected		 		: REAL ; 					// (kW) [P,H] Connected charge active Power in the PTR product 
+		MesPDischargeConnected 			: REAL ; 					// (kW) [P,H] Connected Discharge active Power in the PTR product 
+                                    	
+
+
+		                            	
+	//GET/SET PROPERTY MANAGEMENT// 	
+		R_TRIG_Reset					: R_TRIG ;					// (NA) Rising Edge Detection for Reset 
+                                    	
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{3f2e10da-6376-4086-949a-c6174daeed9b}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Generates object alarms and manages resets. 
+//////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_ChangeMode" Id="{9e84f453-8383-489f-aa87-4fbc714f7b71}">
+      <Declaration><![CDATA[METHOD M_ChangeMode
+//////////////////
+// Change AMS Mode (P,Q) <-> (U,f) .   Only from (P,Q) to (U,f) with PMS Socomec . 
+//////////////////
+
+VAR
+	// Method local variables (reinitialized at each cycle) 
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_EquipmentCalls" Id="{13db570a-ae9e-4a59-aab3-d611a52ca38f}">
+      <Declaration><![CDATA[METHOD M_EquipmentCalls
+//////////////////
+// Evaluate AMS characteristics
+//////////////////
+
+VAR
+	// Method local variables (reinitialized at each cycle) 
+
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Evaluate" Id="{6c87c8c6-e4dd-4c86-9233-9007a018b46a}">
+      <Declaration><![CDATA[METHOD M_Evaluate
+//////////////////
+// Evaluate AMS characteristics
+//////////////////
+
+VAR
+	// Method local variables (reinitialized at each cycle) 
+
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{3a04c6f1-1487-481e-81ae-9b55f8a95f69}">
+      <Declaration><![CDATA[METHOD M_Execute
+/////////////////////
+// Action Calls and Object Calls
+/////////////////////
+VAR
+
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// INITIALIZE // 
+	IF NOT bInit THEN
+		M_Init() ; 
+		TRIG_StartHVAC1		(CLK := bInit);
+
+		bInit:= TRUE ; 
+		
+
+	ELSIF CmdInit_G THEN 
+		bInit:= FALSE ;
+		
+	ELSE
+		TRIG_StartHVAC1		(CLK :=  bInit);
+
+	END_IF
+	
+	// OBJECT CALLS //
+		M_EquipmentCalls() ; 
+	
+	// METHODS CALLS //
+		M_ChangeMode() ;
+		M_WriteSetpoints();
+		M_StartStop(); 
+		M_Evaluate();
+		M_StateManager() ; 
+		M_AlarmManagement(); 	]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{6696155d-f5b2-4453-a42b-a20694665513}">
+      <Declaration><![CDATA[METHOD M_Init
+
+VAR
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[	
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_StartStop" Id="{ff847dde-48a3-48df-a080-96f22b338ec8}">
+      <Declaration><![CDATA[METHOD M_StartStop
+//////////////////
+// Start and Stop Management of the AMS (battery and PCS) .
+//////////////////
+VAR
+	// Method local variables (reinitialized at each cycle) 
+
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+// CHECK CONSISTENCY //
+	FB_CheckCommandStart(
+		T					:= ParamTimeOutStart ,
+		bCmd				:= IN_CmdStart, 
+		bMes				:= NOT MesState.0,
+		bImpulsion			:= TRUE , 
+		bReset 				:= CmdClearFault_G OR IN_CmdStop, 
+		bWarning 			=> CalCompareWarningStart,
+		bInProgress			=> CalStartInProgress); 
+			
+	FB_CheckCommandStop(
+		T					:= ParamTimeOutShutdown ,
+		bCmd				:= IN_CmdStop, 
+		bMes				:= MesState.0,
+		bImpulsion			:= TRUE , 
+		bReset 				:= CmdClearFault_G OR IN_CmdStart, 
+		bWarning 			=> CalCompareWarningStop,
+		bInProgress			=> CalStopInProgress); 
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_StateManager" Id="{6c9a9092-2fa0-435d-8a63-a1aa99e01f38}">
+      <Declaration><![CDATA[METHOD M_StateManager
+//////////////////
+// Manages AMS state . 
+//////////////////
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+(*
+// TRANSITION STATE//
+	IF CalStartInProgress THEN 
+	MesDataExd.MesData.MesStateTrans	:= 1 ; // Start
+		
+	ELSIF CalStopInProgress THEN 
+	MesDataExd.MesData.MesStateTrans 	:= 2 ; // Stop 
+		
+	ELSIF CalMasterChangeInProgress THEN 
+	MesDataExd.MesData.MesStateTrans 	:= 3 ; // Master Change 
+		
+	ELSE
+	MesDataExd.MesData.MesStateTrans 	:= 0 ; // Idle
+		
+	END_IF
+	*)
+  
+		]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_WriteSetpoints" Id="{47bfc8ef-3260-4b02-952e-f8498972a615}">
+      <Declaration><![CDATA[METHOD M_WriteSetpoints
+//////////////////
+// Write P and Q setpoints to PCS controller when AMS in (P,Q) Mode . 
+//////////////////
+VAR
+	// Method local variables (reinitialized at each cycle) 
+
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_ESS_Base">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ESS_Base.M_AlarmManagement">
+      <LineId Id="1164" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ESS_Base.M_ChangeMode">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ESS_Base.M_EquipmentCalls">
+      <LineId Id="49" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ESS_Base.M_Evaluate">
+      <LineId Id="49" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ESS_Base.M_Execute">
+      <LineId Id="53" Count="2" />
+      <LineId Id="153" Count="0" />
+      <LineId Id="147" Count="0" />
+      <LineId Id="106" Count="0" />
+      <LineId Id="150" Count="0" />
+      <LineId Id="149" Count="0" />
+      <LineId Id="57" Count="0" />
+      <LineId Id="107" Count="0" />
+      <LineId Id="58" Count="0" />
+      <LineId Id="137" Count="0" />
+      <LineId Id="151" Count="1" />
+      <LineId Id="108" Count="0" />
+      <LineId Id="61" Count="0" />
+      <LineId Id="138" Count="8" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ESS_Base.M_Init">
+      <LineId Id="18" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ESS_Base.M_StartStop">
+      <LineId Id="71" Count="18" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ESS_Base.M_StateManager">
+      <LineId Id="14" Count="1" />
+      <LineId Id="27" Count="1" />
+      <LineId Id="78" Count="0" />
+      <LineId Id="29" Count="1" />
+      <LineId Id="79" Count="0" />
+      <LineId Id="31" Count="0" />
+      <LineId Id="37" Count="0" />
+      <LineId Id="80" Count="0" />
+      <LineId Id="38" Count="0" />
+      <LineId Id="32" Count="0" />
+      <LineId Id="81" Count="0" />
+      <LineId Id="33" Count="0" />
+      <LineId Id="82" Count="0" />
+      <LineId Id="16" Count="0" />
+      <LineId Id="83" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ESS_Base.M_WriteSetpoints">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

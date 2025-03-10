@@ -1,0 +1,56 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="ESS_MADI" Id="{4b2c984b-a717-4a77-a13a-6edc2414b1ae}">
+    <Declaration><![CDATA[{attribute 'pack_mode' := '1'}
+TYPE ESS_MADI :
+STRUCT
+	
+		MesData						: ESS ; (* MesData*)
+		
+		AX_PCS 						: ARRAY[1..CstNbPcs_ESS_G] OF PCS_Jema_IBX3;			(* PCS Object *) 			
+		AX_Bat						: ARRAY[1..CstNbBAT_Ess_G] OF BAT_SAMS;                            		
+		AX_HVAC						: ARRAY[1..CstNbHvac_ESS_G] OF HVAC_MADI ;                   			
+		AX_TempSensor				: ARRAY[1..CstNbTempSensor_ESS_G] OF ANA_Standard;               		
+		AX_HygroSensor				: ARRAY[1..CstNbTempSensor_ESS_G] OF ANA_Standard;               		
+		DS_Bat						: TOR_Standard;                                                  		
+		Ds_Pcs						: TOR_Standard;                                                  			
+		Spd							: TOR_Standard;                                                 				
+		FSS							: FSS_Standard ;                                                 					
+		Cb_Q31						: TOR_CB;     
+		ToS							: TOR_Standard;    
+		MainLVCB					: TOR_CB;                                                       				
+		ES							: TOR_Standard;										             				
+		EM							: EM_Standard;                                                   				
+		SD_Pcs						: TOR_Standard ;                                                			
+		Transfo						: Transfo_MV ; 
+		UPS_24V						: UPS_Eneris ; 									                 				
+										                			
+		AX_CB_ChainDcSwitchBank		: ARRAY[1..2] OF TOR_Standard;     
+		AX_CB_ChainFanBank			: ARRAY[1..2] OF TOR_Standard;     
+		CB_RackCtrl24V				: TOR_Standard;     
+		CB_PLC24V				: TOR_Standard;     
+
+											
+
+
+		System1StopOperation	: WORD ;// BESS 1 Alarm Word details 
+		System1ReducePower		: WORD ;// BESS 1 Alarm Word details 
+		System1ReducePower2		: WORD ;// BESS 1 Alarm Word details 
+		System1StopOperation1	: WORD ;// BESS 1 Alarm Word details 
+		System1StopOperation2	: WORD ;// BESS 1 Alarm Word details		
+		System1StopOperation3	: WORD ;// BESS 1 Alarm Word details
+		System2StopOperation	: WORD ;// BESS 1 Alarm Word details 		
+		System2ReducePower		: WORD ;// BESS 2 Alarm Word details 
+		System2ReducePower2		: WORD ;// BESS 2 Alarm Word details 
+		System2StopOperation1	: WORD ;// BESS 2 Alarm Word details 
+		System2StopOperation2	: WORD ;// BESS 2 Alarm Word details		
+		System2StopOperation3	: WORD ;// BESS 2 Alarm Word details
+		MesPDischargeMax_FreqReg	: REAL ; (* (kW) Maximal Discharge Power for frequency regulation *) 
+		MesPChargeMin_FreqReg	: REAL ; (* (kW) Maximal Discharge Power for frequency regulation *)		
+		
+		
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

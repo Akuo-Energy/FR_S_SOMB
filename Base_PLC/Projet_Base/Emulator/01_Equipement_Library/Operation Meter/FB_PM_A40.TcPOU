@@ -1,0 +1,128 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_PM_A40" Id="{3f164ae8-cfd5-4112-afe2-21d4763e02c8}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_PM_A40 EXTENDS FB_PM_Base
+//////////////////
+// Measurement Solution based on Digiware, but access through PMS Socomec
+//////////////////
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance specific) 
+	ParamUnitID					: BYTE := 22; 							// (NA) All unit ID For the Device (I35 + 1 U20)                                                                    			
+	                                                                            			
+	ParamIPAddress			   	: STRING := '192.168.20.15'; 								// (NA) IP Adress of D50 .
+	ParamTCPPort				: UINT := 502;		// Modbus TCP Port
+
+
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	
+END_VAR
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//
+		
+	//M_READ VARIABLES//
+		FB_ModbusRead_I1			: ARRAY[1..2] OF  FB_ModbusRead ; 			// (NA) FB for Modbus Reading
+	                                                                                    	
+		MesBlock1_Temp 				: ARRAY[1..2] 	OF ARRAY[0..124] OF WORD;		//(NA) Temporary Block with multiple modbus reading (U30 + I35)
+		MesModbusReadAlarm 		  	: ARRAY[1..2] OF BOOL ; 						// (NA) Modbus Read Alarm for communication 
+		
+		
+		MesModbusAlarmCode			: ARRAY[1..2] OF UDINT;						// (NA) Modbus Read Alarm Code	
+		
+	//M_INIT VARIABLES //
+		
+	// M_EXECUTE VARIABLES //
+		   	MesDataExd AT %Q*			: PM_Standard ;               
+
+
+ 
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_Execute" Id="{073bb3a9-5db4-4476-a702-0d95a11fd20b}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+VAR 
+MesDataExd.MesData.dl 		: PDL_Exd;
+	MesStateCB 		: BOOL;
+MesDataExd.MesData.ull		: PM;
+	
+	KK: INT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[ MesDataExd.MesData.dl := A1_SUBMV.MesDataExd.MesData.
+
+MesStateCB := A1_SUBMV.A1_MainMVCB.MesDataExd.MesData.MesClosed ; 
+MesData.MesP := 0 ;
+MesData.MesQ := 0 ; 
+
+
+IF MesStateCB THEN
+MesDataExd.MesData.MesU 	:= 230;
+MesDataExd.MesData.MesU12 	:= 230;
+MesDataExd.MesData.MesU23 	:= 230;
+MesDataExd.MesData.MesU31 	:= 230;
+MesDataExd.MesData.MesV 	:= A1_PP.MesDataExd.MesData.MesU/SQRT(3);
+MesDataExd.MesData.MesV1 	:= A1_PP.MesDataExd.MesData.MesU/SQRT(3);
+MesDataExd.MesData.MesV2 	:= A1_PP.MesDataExd.MesData.MesU/SQRT(3);
+MesDataExd.MesData.MesV3 	:= A1_PP.MesDataExd.MesData.MesU/SQRT(3);
+MesDataExd.MesData.MesFreq := A1_PP.MesDataExd.MesData.MesFreq;
+	
+	
+
+MesDataExd.MesData.MesP 	:= 120  ;
+MesDataExd.MesData.MesQ 	:= -20 ;
+	
+	
+MesDataExd.MesData.MesP1 	:= MesDataExd.MesData.MesP ;
+MesDataExd.MesData.MesP2 	:= 0 ;
+MesDataExd.MesData.MesP3 	:= 0 ;
+
+MesDataExd.MesData.MesQ1 	:= MesDataExd.MesData.MesQ;
+MesDataExd.MesData.MesQ2 	:= 0;
+MesDataExd.MesData.MesQ3 	:= 0;
+MesDataExd.MesData.MesS := SQRT( MesDataExd.MesData.MesP * MesDataExd.MesData.MesP + MesDataExd.MesData.MesQ.MesDataExd.MesData.MesQ ) ; 
+	
+MesDataExd.MesData.MesI 	:= MesDataExd.MesData.MesS/(SQRT(3)*A1_PP.MesDataExd.MesData.MesU);
+MesDataExd.MesData.MesI1 	:= MesDataExd.MesData.MesS/(SQRT(3)*A1_PP.MesDataExd.MesData.MesU);
+
+ELSE 
+MesDataExd.MesData.:= MesDataExd.MesData.ull;
+END_IF
+
+IF MesDataExd.MesData.MesP > 0 THEN
+MesDataExd.MesData.MesE_AcDel := MesDataExd.MesData.MesE_AcDel + MesDataExd.MesData.MesP*ParamCycleTime_Emul/3600000	;
+END_IF
+IF MesDataExd.MesData.MesP < 0 THEN
+MesDataExd.MesData.MesE_AcRec := MesDataExd.MesData.MesE_AcRec -.MesDataExd.MesData.MesP*ParamCycleTime_Emul/3600000	;
+END_IF
+IF MesDataExd.MesData.MesQ > 0 THEN
+MesDataExd.MesData.MesE_ReacDel := MesDataExd.MesData.MesE_ReacDel + MesDataExd.MesData.MesQ*ParamCycleTime_Emul/3600000	;
+END_IF
+IF MesDataExd.MesData.MesQ < 0 THEN
+MesDataExd.MesData.MesE_ReacRec := MesDataExd.MesData.MesE_ReacRec -.MesDataExd.MesData.MesQ*ParamCycleTime_Emul/3600000	;
+END_IF
+
+MesDataNull.MesE_ReacRec := MesDataExd.MesData.MesE_ReacRec;	
+MesDataNull.MesE_ReacDel := MesDataExd.MesData.MesE_ReacDel;	
+MesDataNull.MesE_AcRec := MesDataExd.MesData.MesE_AcRec;		
+MesDataNull.MesE_AcDel := MesDataExd.MesData.MesE_AcDel;		
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_PM_A40">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PM_A40.M_Execute">
+      <LineId Id="560" Count="56" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

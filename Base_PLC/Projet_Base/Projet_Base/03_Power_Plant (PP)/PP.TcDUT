@@ -1,0 +1,70 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1">
+  <DUT Name="PP" Id="{97c73279-eef7-4294-b56f-8c13e2c0cfc3}">
+    <Declaration><![CDATA[///////////
+// Structure For Hybrid Power Plant  . Main Operating Data to be saved ( ex: OPC ) .  
+//////////
+TYPE PP :
+STRUCT
+	// Statistics	
+		MesStartTime				: STRING ; 	(* (Day) Cal: Time of last code start							*)
+		MesPsol						: REAL ; 	(* (kW) 	Total Solar   Active   Power                            *)
+		MesQsol						: REAL ; 	(* (kVAr) 	Total Solar   Reactive Power                        *)
+		MesPbat						: REAL ; 	(* (kW) 	Total Battery Active   Power                            *)
+		MesQbat						: REAL ; 	(* (kVAr) 	Total Battery Reactive Power                        *)
+		MesPgen						: REAL ; 	(* (kW) 	Total Genset  Active   Power                            *)
+		MesQgen						: REAL ; 	(* (kVAr) Total Genset  Reactive Power                        	*)
+        MesPload					: REAL ; 	(* (kW) 	 Total Load Active Power                            	*)
+        MesQload					: REAL ; 	(* (kVAr) Total Load	  Reactive Power                        	*)
+		MesU						: REAL ; 	(* (V)   Mean Phase to Phase grid voltage                       *)
+		MesFreq						: REAL ; 	(* (Hz)  Grid Frequency                                         *)
+		MesSetptTanPhi				: REAL ; 	(* (p.u) Tanphi setpoint                                        *)
+		MesPsol_Available			: REAL ; 	(* (kW) Cal: Total Available Solar   Active   Power              *)
+		MesPbatCharge_Available		: REAL ; 	(* (kW) Cal : Total Available Battery Active   Charging 	 Power  *)
+		MesPbatDischarge_Available	: REAL ; 	(* (kW) Cal :Total Available Battery Active   Discharging Power  *)
+	    MesPgen_Available			: REAL ; 	(* (kW) Cal : Total Available Genset  Active   Power             *)
+        MesPload_Available			: REAL ; 	(* (kW) Cal : Total Available Load	Active   Power              *)
+		MesPsol_Connected			: REAL ; 	(* (kW) Cal : Total Connected Solar   Active   Power             *)
+		MesPbatCharge_Connected		: REAL ; 	(* (kW) Cal : Total Connected Battery Active   Charging 	 Power  *)
+		MesPbatDischarge_Connected	: REAL ; 	(* (kW) Cal : Total Connected Battery Active   Discharging Power *)
+	    MesPgen_Connected			: REAL ; 	(* (kW) Cal : Total Connected Genset  Active   Power             *)
+        MesPload_Connected			: REAL ; 	(* (kW) Cal : Total Connected Load	Active   Power              *)
+		MesState					: WORD ; 	(* (NA) Cal State                                               *)
+		MesPP_Unavailable			: BOOL ; 	(* (NA) Cal : Powerplant is unavailable .                       *)
+		MesNbInv_Connected			: UINT ; 	(* (NA) Cal : Number of inverter connected to the grid.     *)
+		MesNbPcs_Connected			: UINT ; 	(* (NA) Cal : Number of PCS connected to the grid.     *)
+		OUT_SetptP					: REAL ;	(* (kW) Active power setpoint for plant after calculations      *)
+		OUT_SetptQ					: REAL ;	(* (kVAr) Reactive power setpoint for plant after calculations  *)
+		
+		MesAlarmCode				: WORD ;	(* (NA) Internal Akuo AlarmCode		*)
+		MesWarningCode				: WORD ;    (* (NA) Internal Akuo WarningCode   *)
+		MesWarningCode2				: WORD ;    (* (NA) Internal Akuo WarningCode	*)	
+		MesEventCode				: WORD ;	(* (NA) Internal Akuo EventCode     *)
+		
+		ParamIpPublic 				: STRING(255);	(* (NA) Cal : IP public of the powerplant	  *)
+		MesUsageCpu_PLC				: UDINT ; 		(* (NA) Cal : CPU Usage of the PLC            *)
+		MesSizeCdrive_PLC			: REAL ; 		(* (Mo) Cal: Remaining Disk space         *)
+		MesSizeCdrive_IndusPC		: REAL ; 		(* (Mo)Cal : Remaining Disk space PC	  *) 
+		
+		MesToS                      : BOOL;         (* (NA) Technician on site*)
+		
+	// Setpoint U entrées
+		IN_SetptU_PID					: REAL;
+		
+	// Setpoint TanPhi entrées
+		IN_SetptTanPhi_PID				: REAL;
+		
+	// Setpoints P et Q entrées PID 
+
+		IN_SetptP_PID				: REAL; (* (kW) Setpoint P in input of the PID *)
+		IN_SetptQ_PID				: REAL;	(* (kVAr) Setpoint Q in input of the PID *)
+		
+	// Setpoints P et Q sorties PID  
+		OUT_SetptP_PID				: REAL; (* (kW)  Setpoint P in output of the PID *)
+    	OUT_SetptQ_PID            	: REAL; (* (kVAr) Setpoint Q in  output of the PID *)
+		
+
+END_STRUCT
+END_TYPE]]></Declaration>
+  </DUT>
+</TcPlcObject>

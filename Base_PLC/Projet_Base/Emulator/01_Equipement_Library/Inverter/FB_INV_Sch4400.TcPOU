@@ -1,0 +1,274 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_INV_Sch4400" Id="{ecb766cb-4bae-4b44-b8af-60c7496fa57f}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_INV_Sch4400 EXTENDS FB_INV_Base
+
+
+VAR_INPUT PERSISTENT
+	ParamTcpPort						: UINT		:= 502;			//	(NA) TCP port
+	ParamQn								: REAL;						// (kVar) Q nominal
+	ParamIPAddress						: STRING; 					// (NA)Config: IP Adress of PV INverter	
+	ParamUnitID 						: BYTE; 					// (NA)   SMA Modbus Unit ID. 
+	ParamNumInv							: BYTE;             		// (NA) number of inverters
+	                        			
+	ParamPTRNum							: BYTE;             		// (NA)Associated PTR
+END_VAR
+
+
+VAR_INPUT 
+	IN_Emul_VacPresent					: BOOL; 		// State = True => presence of voltage, state = False => absence of voltage (to be modified from PTR state)
+	IN_Emul_VdcPresent					: BOOL; 		// State = True => presence of voltage, state = False => absence of voltage (to be modified from PTR state)
+END_VAR
+VAR	
+	// M_ALARMMNGMT VARIABLES //
+	// M_READ VARIABLES//
+	MesDataExd	AT %Q*		: INV_Sch4400;
+	MesDataExd_IN					: INV_Sch4400;
+	
+		bInit							: BOOL := TRUE;
+	// M_STATEMANAGER//
+	
+	//M_EXECUTE VARIABLES //
+		Emul_SR							: SR; 
+		Emul_ComError					: BOOL ; 
+		Emul_MesModbusReadAlarm			: ARRAY[1..2] OF BOOL;
+		Emul_AlarmINV					: BOOL ; 
+		Emul_Test_AC 					: BOOL;	
+		Emul_INV_Offline 				: BOOL;
+		Emul_INV_Disable				: BOOL;
+		Emul_Online_Var					: BOOL;
+		Emul_FaultGnd					: BOOL;
+		Emul_StateCBac					: BOOL; // true = CBac is closed, false = CBac is opened 
+		Emul_StateCBdc					: BOOL; // true = CBdc is closed, false = CBdc is opened  
+		Emul_Event_ID   				: INT;		
+							
+END_VAR	
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+
+]]></ST>
+    </Implementation>
+    <Method Name="M_Execute" Id="{c6d0fae0-5b59-4987-8e8a-a95acdd8fd4f}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	SppNum			: UINT;
+
+	SetTempSlope	: REAL;
+	KK 				: INT;
+	MesEActProd		: INT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+// Emulated variables 
+MesDataExd.MesFaultGnd			:= Emul_FaultGnd; 
+
+IN_CmdStop_Local 				:= MesDataExd_IN.MesData.OUT_CmdStop;
+IN_CmdStart_Local 				:= MesDataExd_IN.MesData.OUT_CmdStart;
+
+Emul_SR(SET1:= IN_CmdStop OR IN_CmdStop_Local, RESET:=IN_CmdStart OR IN_CmdStart_Local); 
+
+// SppNum:= SEL(ParamUnitID>11 ,1 , 2) ; 
+
+// Inverter's State
+IF Emul_INV_Offline THEN 
+MesDataExd.MesState		:= 8 ; // Inverter is offline : lost of production
+ELSIF Emul_SR.Q1 OR NOT MesDataExd.MesStateCBac THEN   
+MesDataExd.MesState		:= 5 ; // Inverter is disabled 	
+ELSIF Emul_INV_Disable  THEN
+MesDataExd.MesState				:= 5 ; // Inverter is disabled 
+ELSIF MesP_INVmppt=0 THEN 
+MesDataExd.MesState		:= 8;  // Inverter is offline : lost of production( Night time)
+ELSIF Emul_Test_AC THEN
+MesDataExd.MesState		:= 7 ; // AC test mode
+ELSIF Emul_Online_Var THEN
+MesDataExd.MesState		:= 20 ; // Lost of production Online var 
+ELSE
+MesDataExd.MesState		:= 23; // Online PV. Inverter is online in PV.
+END_IF	
+
+// Varibles' values
+///MesDataExd.MesData.ParamPn				:= 1200  ; 
+MesDataExd.MesData.MesUdc					:= 200 ;
+MesDataExd.MesData.MesInsuResistor 			:= 150 ;
+MesDataExd.MesEDay							:= 1000; 
+MesDataExd.MesData.MesCosPhi				:= 0.95; 
+MesDataExd.MesData.MesTemp					:= 32;  
+MesDataExd.MesTempExt						:= 25;
+MesDataExd.MesSetptCosPhi_CC 				:= 0.98;
+
+MesDataExd.MesSetptP_CC 			:=MesDataExd_IN.MesData.OUT_SetptP; //AX_PTR[ParamPTRNum].IN_SetptPlimit/AX_PTR[ParamPTRNum].ParamNbINV ;		
+MesDataExd.MesSetptQ_CC 			:= MesDataExd_IN.MesData.OUT_SetptQ; //AX_PTR[ParamPTRNum].IN_SetptQlimit/AX_PTR[ParamPTRNum].ParamNbINV ;	 	
+
+
+///MesDataExd.MesData.ParamTP_RampP 		:= ;    	
+///MesDataExd.MesData.ParamTP_RampQ 		:= ;    	
+///MesDataExd.MesData.ParamTP_RampCosPhi 	:= ;  
+MesDataExd.MesStartDisabledPersis   := TRUE; 	// By default enable inverter after a power on
+
+// Evaluated variables	
+//MesDataExd.MesData.ParamPn 		:= ParamPn; 
+MesDataExd.MesData.MesAlarmCom					:= TON_ComAlarm.Q; 					 // find the modbus variable that coresponds to this 
+MesDataExd.MesStateCom  			:= NOT MesDataExd.MesData.MesAlarmCom; 
+	
+SetTempSlope 						:= SEL(MesDataExd.MesData.MesAlarmCom, MesDataExd.MesSetptP_CC, MesDataExd_IN.MesData.ParamPn); 
+
+MesDataExd.MesData.MesP 			:= SEL((A1_PP.MesState =9) OR Emul_AlarmINV OR NOT(AX_PTR[ParamPTRNum].A1_Datalogger.MesDataExd.MesState_MVCB) OR MesDataExd.MesState=5 OR MesDataExd.MesState=8, MIN(SetTempSlope, MesP_INVmppt), 0); 
+IN_SetptQlimit						:= MesDataExd_IN.MesData.OUT_SetptQ; 
+MesDataExd.MesData.MesQ 			:= IN_SetptQlimit; 
+MesDataExd.MesData.MesPdc 			:= MesDataExd.MesData.MesP/0.95; 
+MesDataExd.MesData.MesIdc 			:= MesDataExd.MesData.MesPdc/MesDataExd.MesData.MesUdc; 
+
+MesDataExd.MesData.MesU 			:= SEL(MesDataExd.MesState =5 OR MesDataExd.MesState =8 OR NOT IN_Emul_VacPresent, 400, 0); 
+MesDataExd.MesData.MesV			    := MesDataExd.MesData.MesU/SQRT(3)*2 ; 
+MesDataExd.MesData.MesI			    := SEL(MesDataExd.MesData.MesU = 0 , MesDataExd.MesData.MesP*1000 / MesDataExd.MesData.MesU /SQRT(3) ,0 ) ; 
+MesDataExd.MesData.MesFreq			:= A1_SUBMV.A1_PM.MesDataExd.MesData.Mesfreq; 
+MesDataExd.MesData.MesS			    := SQRT(MesDataExd.MesData.MesP*MesDataExd.MesData.MesP+MesDataExd.MesData.MesQ*MesDataExd.MesData.MesQ) ; 
+
+// Properties update 
+//MesDataExd.MesData.MesAlarmCom		:= MesDataExd.MesData.MesIDState =  ;
+
+MesDataExd.MesI1					:= MesDataExd.MesData.MesI; 
+MesDataExd.MesI2					:= MesDataExd.MesData.MesI; 
+MesDataExd.MesI3					:= MesDataExd.MesData.MesI; 
+MesDataExd.MesU12					:= MesDataExd.MesData.MesU ; 
+MesDataExd.MesU23					:= MesDataExd.MesData.MesU ; 
+MesDataExd.MesU31					:= MesDataExd.MesData.MesU ; 
+MesDataExd.MesV1					:= MesDataExd.MesData.MesV; 
+MesDataExd.MesV2					:= MesDataExd.MesData.MesV;  
+MesDataExd.MesV3					:= MesDataExd.MesData.MesV; 
+
+MesDataExd.MesData.MesI 			:= (MesDataExd.MesI1 + MesDataExd.MesI2 + MesDataExd.MesI3)/3;
+MesDataExd.MesData.MesV 			:= (MesDataExd.MesV1 + MesDataExd.MesV2 + MesDataExd.MesV3)/3;
+MesDataExd.MesData.MesS 			:= SQRT(MesDataExd.MesData.MesP*MesDataExd.MesData.MesP + MesDataExd.MesData.MesQ*MesDataExd.MesData.MesQ);
+
+
+// Energy
+IF MesDataExd.MesData.MesP > 0 THEN
+MesDataExd.MesEActProd := MesDataExd.MesEActProd + MesDataExd.MesData.MesP*ParamCycleTime_Emul/3600000;
+END_IF
+IF MesDataExd.MesData.MesP < 0 THEN
+MesDataExd.MesEActCons := MesDataExd.MesEActCons - MesDataExd.MesData.MesP*ParamCycleTime_Emul/3600000;
+END_IF
+IF MesDataExd.MesData.MesQ > 0 THEN
+MesDataExd.MesEReactProd := MesDataExd.MesEReactProd + MesDataExd.MesData.MesQ*ParamCycleTime_Emul/3600000;
+END_IF
+IF MesDataExd.MesData.MesQ < 0 THEN
+MesDataExd.MesEReactCons := MesDataExd.MesEReactCons - MesDataExd.MesData.MesQ*ParamCycleTime_Emul/3600000;
+END_IF
+	                                
+MesDataExd.MesStateCBac			:= Emul_StateCBac OR IN_Emul_VacPresent;
+MesDataExd.MesStateCBdc			:= Emul_StateCBdc OR IN_Emul_VdcPresent;
+	///MesDataExd.MesData.MesStateNoAlert	:=  SEL(Emul_FaultGnd OR ..,1,0); // 1: no alert                                     
+	///MesDataExd.MesData.MesBdrigeCtlMod	:= 
+
+// Strings 
+
+
+
+MesDataExd.STR[5].MesIdc	:= MesDataExd.MesData.MesIdc/9;  	
+MesDataExd.STR[6].MesIdc	:= MesDataExd.MesData.MesIdc/9;	
+MesDataExd.STR[7].MesIdc	:= MesDataExd.MesData.MesIdc/9;	
+MesDataExd.STR[8].MesIdc 	:= MesDataExd.MesData.MesIdc/9;	
+MesDataExd.STR[9].MesIdc	:= MesDataExd.MesData.MesIdc/9;	
+MesDataExd.STR[10].MesIdc	:= MesDataExd.MesData.MesIdc/9;	 
+
+		
+
+	
+MesDataExd.MesStartDisabled := SEL(MesDataExd.MesState=5 OR MesDataExd.MesState=8 , TRUE, FALSE);
+
+	///MesDataExd.MesData.MesEvendID	    	:= Emul_Event_ID;		  
+	///MesDataExd.MesData.MesEventID_Stop		:= ;	  
+	///MesDataExd.MesData.MesStateID_Recovery   := ;	  
+MesDataExd.MesEventID_AbnormalOff 	:= SEL(MesDataExd.MesState=8 OR MesDataExd.MesState=5,0,Emul_Event_ID);
+
+	]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_INV_Sch4400">
+      <LineId Id="3" Count="1" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_INV_Sch4400.M_Execute">
+      <LineId Id="378" Count="0" />
+      <LineId Id="376" Count="0" />
+      <LineId Id="375" Count="0" />
+      <LineId Id="421" Count="0" />
+      <LineId Id="377" Count="0" />
+      <LineId Id="422" Count="1" />
+      <LineId Id="342" Count="0" />
+      <LineId Id="406" Count="0" />
+      <LineId Id="379" Count="0" />
+      <LineId Id="407" Count="0" />
+      <LineId Id="176" Count="0" />
+      <LineId Id="149" Count="0" />
+      <LineId Id="315" Count="0" />
+      <LineId Id="151" Count="0" />
+      <LineId Id="310" Count="0" />
+      <LineId Id="316" Count="1" />
+      <LineId Id="153" Count="0" />
+      <LineId Id="155" Count="0" />
+      <LineId Id="313" Count="1" />
+      <LineId Id="318" Count="1" />
+      <LineId Id="161" Count="0" />
+      <LineId Id="312" Count="0" />
+      <LineId Id="83" Count="0" />
+      <LineId Id="322" Count="1" />
+      <LineId Id="327" Count="2" />
+      <LineId Id="326" Count="0" />
+      <LineId Id="344" Count="0" />
+      <LineId Id="343" Count="0" />
+      <LineId Id="380" Count="0" />
+      <LineId Id="391" Count="0" />
+      <LineId Id="469" Count="0" />
+      <LineId Id="472" Count="0" />
+      <LineId Id="470" Count="1" />
+      <LineId Id="468" Count="0" />
+      <LineId Id="389" Count="1" />
+      <LineId Id="388" Count="0" />
+      <LineId Id="392" Count="0" />
+      <LineId Id="175" Count="0" />
+      <LineId Id="84" Count="0" />
+      <LineId Id="383" Count="2" />
+      <LineId Id="382" Count="0" />
+      <LineId Id="85" Count="0" />
+      <LineId Id="87" Count="1" />
+      <LineId Id="437" Count="0" />
+      <LineId Id="89" Count="2" />
+      <LineId Id="94" Count="5" />
+      <LineId Id="107" Count="2" />
+      <LineId Id="124" Count="9" />
+      <LineId Id="136" Count="3" />
+      <LineId Id="451" Count="0" />
+      <LineId Id="370" Count="0" />
+      <LineId Id="274" Count="0" />
+      <LineId Id="357" Count="10" />
+      <LineId Id="356" Count="0" />
+      <LineId Id="287" Count="2" />
+      <LineId Id="292" Count="0" />
+      <LineId Id="386" Count="0" />
+      <LineId Id="354" Count="0" />
+      <LineId Id="296" Count="0" />
+      <LineId Id="466" Count="1" />
+      <LineId Id="465" Count="0" />
+      <LineId Id="345" Count="5" />
+      <LineId Id="306" Count="0" />
+      <LineId Id="275" Count="0" />
+      <LineId Id="212" Count="0" />
+      <LineId Id="216" Count="0" />
+      <LineId Id="223" Count="0" />
+      <LineId Id="225" Count="0" />
+      <LineId Id="229" Count="3" />
+      <LineId Id="235" Count="0" />
+      <LineId Id="387" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

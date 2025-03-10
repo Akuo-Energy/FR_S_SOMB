@@ -1,0 +1,96 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="PCS" Id="{011b59f9-4cad-45fb-a9d6-9b8aa22ab174}">
+    <Declaration><![CDATA[///////////
+// Structure for CtrlPcs Jema .  
+//////////
+TYPE PCS :
+STRUCT
+
+// PCS Controller  Measures
+
+
+
+	MesState_Precharge			: BOOL;			(* (NA) Precharge indicator   - True = precharge in progress  *)
+	MesOpened_Dc				: BOOL;			(* (NA) Dc Breaker status     *)
+    MesOpened_Ac				: BOOL; 		(* (NA) Ac Breaker status*)
+
+	MesAlarmCom					: BOOL; 		(* (NA) PCS Controller Communication fault*)
+	MesWarningCom				: BOOL;			(* (NA) PCS Controller Communication warning*)
+
+
+	
+// PCS Controller  Measures
+	MesP 						: REAL;  		(* (kW)  Active Power *)
+	MesQ 						: REAL;  		(* (kVAr) Reactive Power*)
+	MesS 						: REAL;  		(* (kVA)  Apparent Power *)
+	MesPdc 						: REAL;  		(* (kW)  DC Power *)
+	MesCosPhi 					: REAL;  		(* (p.u) Power factor*)
+	MesU 						: REAL;  		(* (V) 	AC Voltage measure*)
+	MesFreq						: REAL;			(* (Hz) Main Bus Freq*)
+	MesUdc 						: REAL;  		(* (V) 	DC Voltage measure*)
+	MesI 						: REAL; 		(* (A) 	Total AC current *)
+	MesIdc 						: REAL; 		(* (A) 	Total DC current from batteries (+ = discharge)*)
+	MesState					: WORD;			(* (NA) [P,H,B] Bit0: 1 = Not Available (AC or DC breaker open or AllAcContactorsOpened), Bit1: GridMode: 1=grid*)
+	MesTemp						: REAL;			(* (°C) Temperature sensor. INV: SV4.1.4 *)
+
+
+	MesSmax_ChargeFromBat		: REAL;			(* (kVA) Max apparent power available for Charge based on load factor*)
+	MesSmax_DischargeFromBat	: REAL;			(* (kVA) Max apparent power available for discharge based on load factor*)
+
+	MesPmax_ChargeFromBat		: REAL;
+	
+	MesPmax_DischargeFromBat	: REAL;
+	
+	MesID_State_Inv				: UINT;			(* (NA) Operation flag from PCS*)
+
+	MesNbPowerColConnected		: UINT; 		(* (NA) Number of online Power Columns . SV9.1.2*)
+	MesALOPowerCol_Connected	: BOOL; 		(* (NA) At least one Power Column is connected and not in alarm*)
+
+	MesAlarm					: BOOL ; 		(* (NA) PCS Controller general Alarm*)
+	MesWarning 					: BOOL; 		(* (NA) PCS Controller general Warning *)
+
+	MesOnGrid 					: BOOL; 		(* (NA) TRUE if AFE in ONgrid Mode.*)
+	MesOffGrid 					: BOOL; 		(* (NA) TRUE if AFE in Offgrid Mode.                 	*)
+	MesFreqReg_Active			: BOOL; 		(* (NA) Is the frequency regulation active : True = FreqReg Active*)
+	MesUReg_Active				: BOOL; 		(* (NA) Is the voltage regulation active : True = UReg Active*)
+	MesSnom						: REAL; 		(* (kW) Nominal power read on Controller*)
+	MesAvailability				: REAL; 		(* (%) Availability of the inverter*)
+
+	MesAlarmCode				: WORD;			(* (NA) Internal Akuo AlarmCode*)
+	MesWarningCode				: WORD; 		(* (NA) Internal Akuo WarningCode*)
+	MesEventCode				: WORD;			(* (NA) Internal Akuo EventCode*)
+	MesID_OpSttAlarm					: WORD ; (* SMA Operation State ENUM *)
+	MesID_OpStt1Alarm				: WORD ; (* SMA Operation State 2  ENUM *)
+	MesID_DrtSttAlarm				: WORD ; (* SMA Power Derating  ENUM *)
+	MesID_PwrOffReas1Alarm			: WORD ; (* SMA Power Off Reason 1 ENUM *)
+	MesID_PwrOffReas2Alarm 			: WORD ; (* SMA Power Off Reason 2 ENUM *)	
+	
+	OUT_CmdStop					: BOOL; 		(* (NA) Stop  sent to the Controller*)
+	OUT_CmdStart				: BOOL;			(* (NA) Start sent to the Controller*)
+	OUT_CmdStandby				: BOOL;			(* (NA) Soft stop sent to the Controller*)
+	OUT_CmdPcsLocal				: BOOL;			(* (NA) If true, INV is excluded from regulation*)
+
+	OUT_SetptP					: REAL; 		(* (kW) Active power setpoint *)
+
+	OUT_SetptSMax				: REAL;			(* (kVA) Maximum Apparent Power setpoint*)
+	OUT_SetptPMax				: REAL;			(* (kW) Upper range of the Active Power setpoint*)
+	OUT_SetptPMin				: REAL;			(* (kW) Lower range of the Active Power setpoint*)
+
+	OUT_SetptQ					: REAL; 		(* (kVAr) Reactive power setpoint *)
+	OUT_SetptQMax				: REAL;			(* (kVAr) Upper range of the Reactive Power setpoint*)
+	OUT_SetptQMin				: REAL;			(* (kVAr) Lower range of the Reactive Power setpoint*)
+
+	OUT_CmdReset				: BOOL ; 		(* (NA) Reset Command *) 
+	
+	MesHeartbeat				: BOOL ;		(*	NA) Heartbit of PCS*)
+	MesCP_Read					: BOOL := TRUE;	(* (NA) CP to read values from PCS*)
+	MesCP_Write					: BOOL := TRUE;	(* (NA) CP to write values from PCS*)
+	
+	
+END_STRUCT
+END_TYPE
+
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

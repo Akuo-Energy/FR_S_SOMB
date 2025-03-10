@@ -1,0 +1,39 @@
+﻿{
+  "function": {
+    "name": "GetBitMask",
+    "displayName": "GetBitMask",
+    "visible": true,
+    "category": "",
+    "waitMode": "Synchronous",
+    "injectContextObject": false,
+    "description": "",
+    "returnValue": {
+      "type": "tchmi:general#/definitions/BOOL"
+    },
+    "arguments": [
+      {
+        "name": "WordTest",
+        "displayName": "WordTest",
+        "type": "tchmi:general#/definitions/WORD",
+        "description": "This is an important Parameter which does... This text is used in a tooltip.",
+        "defaultValue": "0",
+        "required": true,
+        "bindable": true,
+        "restParameter": false,
+        "asReference": false
+      },
+      {
+        "name": "BitNum",
+        "displayName": "BitNum",
+        "type": "tchmi:general#/definitions/UINT",
+        "description": "",
+        "defaultValue": "0",
+        "required": true,
+        "bindable": true,
+        "restParameter": false,
+        "asReference": false
+      }
+    ]
+  },
+  "$schema": "../../../../Packages/Beckhoff.TwinCAT.HMI.Framework.12.742.5/runtimes/native1.12-tchmi/Schema/FunctionDescription.Schema.json"
+}

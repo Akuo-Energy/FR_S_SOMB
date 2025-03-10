@@ -1,0 +1,257 @@
+﻿{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "definitions": {
+    "BESS_2Units": {
+      "properties": {},
+      "type": "object",
+      "frameworkControlNamespace": "TcHmi.Controls.Beckhoff",
+      "frameworkControlType": "TcHmi.Controls.System.TcHmiUserControl",
+      "frameworkInstanceOf": "TcHmi.Controls.System.TcHmiControl",
+      "frameworkUserControlConfig": "HMI\\UserControls\\BESS_2Units.usercontrol.json",
+      "id": "tchmi:project#/definitions/BESS_2Units"
+    },
+    "BESS_Unit": {
+      "properties": {},
+      "type": "object",
+      "frameworkControlNamespace": "TcHmi.Controls.Beckhoff",
+      "frameworkControlType": "TcHmi.Controls.System.TcHmiUserControl",
+      "frameworkInstanceOf": "TcHmi.Controls.System.TcHmiControl",
+      "frameworkUserControlConfig": "HMI\\UserControls\\BESS_Unit.usercontrol.json",
+      "id": "tchmi:project#/definitions/BESS_Unit"
+    },
+    "Button_": {
+      "frameworkControlNamespace": "TcHmi.Controls.Beckhoff",
+      "frameworkControlType": "TcHmi.Controls.System.TcHmiUserControl",
+      "frameworkInstanceOf": "TcHmi.Controls.System.TcHmiControl",
+      "frameworkUserControlConfig": "HMI\\UserControls\\Button_.usercontrol.json",
+      "id": "tchmi:project#/definitions/Button_",
+      "type": "object"
+    },
+    "HMI_UserControls_CaseOnduleur": {
+      "properties": {},
+      "type": "object",
+      "frameworkControlNamespace": "TcHmi.Controls.Beckhoff",
+      "frameworkControlType": "TcHmi.Controls.System.TcHmiUserControl",
+      "frameworkInstanceOf": "TcHmi.Controls.System.TcHmiControl",
+      "frameworkUserControlConfig": "HMI\\UserControls\\CaseOnduleur.usercontrol.json",
+      "id": "tchmi:project#/definitions/HMI_UserControls_CaseOnduleur"
+    },
+    "HMI_UserControls_CaseTechnoPays": {
+      "properties": {},
+      "type": "object",
+      "frameworkControlNamespace": "TcHmi.Controls.Beckhoff",
+      "frameworkControlType": "TcHmi.Controls.System.TcHmiUserControl",
+      "frameworkInstanceOf": "TcHmi.Controls.System.TcHmiControl",
+      "frameworkUserControlConfig": "HMI\\UserControls\\CaseTechnoPays.usercontrol.json",
+      "id": "tchmi:project#/definitions/HMI_UserControls_CaseTechnoPays"
+    },
+    "HMI_UserControls_Disjoncteur": {
+      "properties": {},
+      "type": "object",
+      "frameworkControlNamespace": "TcHmi.Controls.Beckhoff",
+      "frameworkControlType": "TcHmi.Controls.System.TcHmiUserControl",
+      "frameworkInstanceOf": "TcHmi.Controls.System.TcHmiControl",
+      "frameworkUserControlConfig": "HMI\\UserControls\\Disjoncteur.usercontrol.json",
+      "id": "tchmi:project#/definitions/HMI_UserControls_Disjoncteur"
+    },
+    "HMI_UserControls_Disjoncteur_V2": {
+      "properties": {},
+      "type": "object",
+      "frameworkControlNamespace": "TcHmi.Controls.Beckhoff",
+      "frameworkControlType": "TcHmi.Controls.System.TcHmiUserControl",
+      "frameworkInstanceOf": "TcHmi.Controls.System.TcHmiControl",
+      "frameworkUserControlConfig": "HMI\\UserControls\\Disjoncteur_V2.usercontrol.json",
+      "id": "tchmi:project#/definitions/HMI_UserControls_Disjoncteur_V2"
+    },
+    "HMI_UserControls_DisjoncteurMotorisé": {
+      "properties": {},
+      "type": "object",
+      "frameworkControlNamespace": "TcHmi.Controls.Beckhoff",
+      "frameworkControlType": "TcHmi.Controls.System.TcHmiUserControl",
+      "frameworkInstanceOf": "TcHmi.Controls.System.TcHmiControl",
+      "frameworkUserControlConfig": "HMI\\UserControls\\DisjoncteurMotorisé.usercontrol.json",
+      "id": "tchmi:project#/definitions/HMI_UserControls_DisjoncteurMotorisé"
+    },
+    "HMI_UserControls_Fusible": {
+      "properties": {},
+      "type": "object",
+      "frameworkControlNamespace": "TcHmi.Controls.Beckhoff",
+      "frameworkControlType": "TcHmi.Controls.System.TcHmiUserControl",
+      "frameworkInstanceOf": "TcHmi.Controls.System.TcHmiControl",
+      "frameworkUserControlConfig": "HMI\\UserControls\\Fusible.usercontrol.json",
+      "id": "tchmi:project#/definitions/HMI_UserControls_Fusible"
+    },
+    "HMI_UserControls_Sectionneur": {
+      "properties": {},
+      "type": "object",
+      "frameworkControlNamespace": "TcHmi.Controls.Beckhoff",
+      "frameworkControlType": "TcHmi.Controls.System.TcHmiUserControl",
+      "frameworkInstanceOf": "TcHmi.Controls.System.TcHmiControl",
+      "frameworkUserControlConfig": "HMI\\UserControls\\Sectionneur.usercontrol.json",
+      "id": "tchmi:project#/definitions/HMI_UserControls_Sectionneur"
+    },
+    "HVAC": {
+      "properties": {},
+      "type": "object",
+      "frameworkControlNamespace": "TcHmi.Controls.Beckhoff",
+      "frameworkControlType": "TcHmi.Controls.System.TcHmiUserControl",
+      "frameworkInstanceOf": "TcHmi.Controls.System.TcHmiControl",
+      "frameworkUserControlConfig": "HMI\\UserControls\\HVAC.usercontrol.json",
+      "id": "tchmi:project#/definitions/HVAC"
+    },
+    "Inverter": {
+      "frameworkControlNamespace": "TcHmi.Controls.Beckhoff",
+      "frameworkControlType": "TcHmi.Controls.System.TcHmiUserControl",
+      "frameworkInstanceOf": "TcHmi.Controls.System.TcHmiControl",
+      "frameworkUserControlConfig": "HMI\\UserControls\\Inverter.usercontrol.json",
+      "id": "tchmi:project#/definitions/Inverter",
+      "type": "object"
+    },
+    "LED2Colors": {
+      "properties": {},
+      "type": "object",
+      "frameworkControlNamespace": "TcHmi.Controls.Beckhoff",
+      "frameworkControlType": "TcHmi.Controls.System.TcHmiUserControl",
+      "frameworkInstanceOf": "TcHmi.Controls.System.TcHmiControl",
+      "frameworkUserControlConfig": "HMI\\UserControls\\LED2Colors.usercontrol.json",
+      "id": "tchmi:project#/definitions/LED2Colors"
+    },
+    "Shape": {
+      "type": "string",
+      "format": "locale",
+      "enum": [
+        "Circle",
+        "Square",
+        "Rectangle",
+        ""
+      ]
+    },
+    "Table_Params_2Columns": {
+      "frameworkControlNamespace": "TcHmi.Controls.Beckhoff",
+      "frameworkControlType": "TcHmi.Controls.System.TcHmiUserControl",
+      "frameworkInstanceOf": "TcHmi.Controls.System.TcHmiControl",
+      "frameworkUserControlConfig": "HMI\\UserControls\\Table_Params_2Columns.usercontrol.json",
+      "id": "tchmi:project#/definitions/Table_Params_2Columns",
+      "type": "object"
+    },
+    "Table_Validation": {
+      "frameworkControlNamespace": "TcHmi.Controls.Beckhoff",
+      "frameworkControlType": "TcHmi.Controls.System.TcHmiUserControl",
+      "frameworkInstanceOf": "TcHmi.Controls.System.TcHmiControl",
+      "frameworkUserControlConfig": "HMI\\UserControls\\Table_Validation.usercontrol.json",
+      "id": "tchmi:project#/definitions/Table_Validation",
+      "type": "object"
+    },
+    "Table_Values": {
+      "properties": {},
+      "type": "object",
+      "frameworkControlNamespace": "TcHmi.Controls.Beckhoff",
+      "frameworkControlType": "TcHmi.Controls.System.TcHmiUserControl",
+      "frameworkInstanceOf": "TcHmi.Controls.System.TcHmiControl",
+      "frameworkUserControlConfig": "HMI\\UserControls\\Table_Values.usercontrol.json",
+      "id": "tchmi:project#/definitions/Table_Values"
+    },
+    "Table_Values_2_Column": {
+      "properties": {},
+      "type": "object",
+      "frameworkControlNamespace": "TcHmi.Controls.Beckhoff",
+      "frameworkControlType": "TcHmi.Controls.System.TcHmiUserControl",
+      "frameworkInstanceOf": "TcHmi.Controls.System.TcHmiControl",
+      "frameworkUserControlConfig": "HMI\\UserControls\\Table_Values_2_Column.usercontrol.json",
+      "id": "tchmi:project#/definitions/Table_Values_2_Column"
+    },
+    "Table_Values_2Columns_3Labels": {
+      "frameworkControlNamespace": "TcHmi.Controls.Beckhoff",
+      "frameworkControlType": "TcHmi.Controls.System.TcHmiUserControl",
+      "frameworkInstanceOf": "TcHmi.Controls.System.TcHmiControl",
+      "frameworkUserControlConfig": "HMI\\UserControls\\Table_Values_2Columns_3Labels.usercontrol.json",
+      "id": "tchmi:project#/definitions/Table_Values_2Columns_3Labels",
+      "type": "object"
+    },
+    "Transformer2": {
+      "properties": {},
+      "type": "object",
+      "frameworkControlNamespace": "TcHmi.Controls.Beckhoff",
+      "frameworkControlType": "TcHmi.Controls.System.TcHmiUserControl",
+      "frameworkInstanceOf": "TcHmi.Controls.System.TcHmiControl",
+      "frameworkUserControlConfig": "HMI\\UserControls\\Transformer2.usercontrol.json",
+      "id": "tchmi:project#/definitions/Transformer2"
+    },
+    "Transformer3": {
+      "properties": {},
+      "type": "object",
+      "frameworkControlNamespace": "TcHmi.Controls.Beckhoff",
+      "frameworkControlType": "TcHmi.Controls.System.TcHmiUserControl",
+      "frameworkInstanceOf": "TcHmi.Controls.System.TcHmiControl",
+      "frameworkUserControlConfig": "HMI\\UserControls\\Transformer3.usercontrol.json",
+      "id": "tchmi:project#/definitions/Transformer3"
+    },
+    "ColorsGreenOrangeRed": {
+      "type": "string",
+      "format": "locale",
+      "enum": [
+        "Green",
+        "Orange",
+        "Red"
+      ]
+    },
+    "Color_Green_White": {
+      "type": "string",
+      "format": "locale",
+      "enum": [
+        "Green",
+        "White"
+      ]
+    },
+    "Table_Params_Var": {
+      "properties": {
+        "TagPart1_bool": {
+          "$ref": "tchmi:general#/definitions/BOOL"
+        },
+        "TagPart1": {
+          "$ref": "tchmi:general#/definitions/String"
+        },
+        "TagPart2_bool": {
+          "$ref": "tchmi:general#/definitions/BOOL"
+        },
+        "TagPart2": {
+          "$ref": "tchmi:general#/definitions/String"
+        },
+        "TagPart3_bool": {
+          "$ref": "tchmi:general#/definitions/BOOL"
+        },
+        "TagPart3": {
+          "$ref": "tchmi:general#/definitions/String"
+        },
+        "SelectVariable_indx": {
+          "$ref": "tchmi:framework#/definitions/PositiveNumber"
+        },
+        "Parameters_list": {
+          "$ref": "tchmi:server#/definitions/PLC1.ARRAY (1..6) OF STRING(80)"
+        }
+      },
+      "type": "object"
+    },
+    "Format_Text": {
+      "type": "string",
+      "enum": [
+        "A",
+        "V",
+        "W",
+        "kW",
+        "VAr",
+        "kVAr",
+        "VA",
+        "kVA",
+        "°C",
+        "°",
+        "Hz",
+        "pu ",
+        "%",
+        ".0",
+        ".00",
+        ".000"
+      ]
+    }
+  }
+}

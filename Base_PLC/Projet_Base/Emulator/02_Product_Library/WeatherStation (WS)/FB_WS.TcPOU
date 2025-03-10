@@ -1,0 +1,188 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_WS" Id="{8197deac-5e88-4115-a652-14622dcb9634}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_WS EXTENDS FB_WS_Base
+//////////////////
+//  WS product
+//////////////////
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance specific) 
+		ParamDurationIntegerGTI : TIME := T#10S ; (* (s) Duration on which the irradiation is integered*)
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+END_VAR
+
+VAR_INPUT
+	// I/O Inputs 
+	Ax_Pyrano		: ARRAY [1..CstNbPyrano] OF FB_ANA_IO ;		
+	A1_Temp_Ext 	: FB_ANA_IO ; 
+	A1_Hygro_Ext 	: FB_ANA_IO ; 
+	A1_WindDir		: FB_ANA_IO ;
+ 	A1_WindSp   	: FB_ANA_IO ; 
+	
+	AX_Temp_Panel	: ARRAY [1..CstNbPanTmp] OF FB_ANA_IO ;	
+	
+END_VAR
+
+VAR
+	TON : TON;
+	ClockCal 		: BOOL;
+	
+	MesDataExd			: WS_AGMA ; 
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_EquipmentCalls" Id="{8acd1915-730f-4e6b-88c5-508c2ce196dd}">
+      <Declaration><![CDATA[METHOD M_EquipmentCalls
+//////////////////
+// Evaluate AMS characteristics
+//////////////////
+
+VAR
+	// Method local variables (reinitialized at each cycle) 
+
+	KK : UINT ;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[FOR KK := 1 TO CstNbPyrano DO
+	AX_Pyrano[KK].M_Execute();
+END_FOR
+
+FOR KK:=1 TO CstNbPyrano DO 
+	Ax_Pyrano[KK].M_Execute() ; 
+END_FOR
+
+FOR KK:=1 TO CstNbPanTmp DO 
+	AX_Temp_Panel[KK].M_Execute() ; 
+END_FOR
+
+
+A1_Temp_Ext.M_Execute() ;  	
+A1_Hygro_Ext.M_Execute() ;  
+A1_WindDir.M_Execute() ; 		
+A1_WindSp.M_Execute()  ;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Evaluate" Id="{129b11cd-8dc2-49cc-9af9-64221e0e208f}">
+      <Declaration><![CDATA[METHOD M_Evaluate
+//////////////////
+// Evaluate available Powers and AMG characteristics 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	KK : UINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[FOR KK := 1 TO CstNbPanTmp DO
+	AX_Temp_Panel[KK].IN_MesValue1_IO := 25;
+END_FOR]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{c9da7d6a-3a6f-44ac-8f53-68cf156d4520}">
+      <Declaration><![CDATA[METHOD M_Init 
+VAR
+	KK 				: UINT;
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[A1_Temp_Ext.ParamNbSensors := 1  ;
+A1_Temp_Ext.ParamForced_4_20 := FALSE ; 
+A1_Temp_Ext.ParamDiffMax := 10 ; // not used 
+A1_Temp_Ext.ParamFix:=1 ; // not used ; 
+A1_Temp_Ext.ParamPT100 := FALSE ; 
+A1_Temp_Ext.ParamScaleMax := 60  ;	// to be changed .  
+A1_Temp_Ext.ParamScaleMin := 15 ; 	// to be changed 
+A1_Temp_Ext.ParamVarMaxAlarm := 50 ; 
+A1_Temp_Ext.ParamVarMaxWarning := 40; 
+A1_Temp_Ext.ParamVarMinAlarm := 0 ; 
+A1_Temp_Ext.ParamVarMinWarning := 5; 
+
+A1_Hygro_Ext.ParamNbSensors := 1  ;
+A1_Hygro_Ext.ParamForced_4_20 := FALSE ; 
+A1_Hygro_Ext.ParamDiffMax := 10 ; // not used 
+A1_Hygro_Ext.ParamFix:=1 ; // not used ; 
+A1_Hygro_Ext.ParamPT100 := FALSE ; 
+A1_Hygro_Ext.ParamScaleMax := 100  ; 
+A1_Hygro_Ext.ParamScaleMin := 0 ; 
+A1_Hygro_Ext.ParamVarMaxAlarm := 100 ; 
+A1_Hygro_Ext.ParamVarMaxWarning := 100; 
+A1_Hygro_Ext.ParamVarMinAlarm := -5 ; 
+A1_Hygro_Ext.ParamVarMinWarning := -5; 
+
+A1_WindSp.ParamNbSensors := 1  ;
+A1_WindSp.ParamForced_4_20 := FALSE ; 
+A1_WindSp.ParamDiffMax := 10 ; // not used 
+A1_WindSp.ParamFix:=1 ; // not used ; 
+A1_WindSp.ParamPT100 := FALSE ; 
+A1_WindSp.ParamScaleMax := 30  ; 
+A1_WindSp.ParamScaleMin := 0 ; 
+A1_WindSp.ParamVarMaxAlarm := 120 ; 
+A1_WindSp.ParamVarMaxWarning := 100; 
+A1_WindSp.ParamVarMinAlarm := -5 ; 
+A1_WindSp.ParamVarMinWarning := -5; 
+
+A1_WindDir.ParamNbSensors := 1  ;
+A1_WindDir.ParamForced_4_20 := FALSE ; 
+A1_WindDir.ParamDiffMax := 10 ; // not used 
+A1_WindDir.ParamFix:=1 ; // not used ; 
+A1_WindDir.ParamPT100 := FALSE ; 
+A1_WindDir.ParamScaleMax := 30  ; 
+A1_WindDir.ParamScaleMin := 0 ; 
+A1_WindDir.ParamVarMaxAlarm := 120 ; 
+A1_WindDir.ParamVarMaxWarning := 100; 
+A1_WindDir.ParamVarMinAlarm := -5 ; 
+A1_WindDir.ParamVarMinWarning := -5; 
+
+
+
+
+
+FOR KK:=1 TO CstNbPyrano DO 
+	Ax_Pyrano[KK].ParamRangeMax := 1200 ; 
+	Ax_Pyrano[KK].ParamRangeMin := 0 ; 	
+	Ax_Pyrano[KK].ParamVarMaxAlarm := 1500 ; 
+	Ax_Pyrano[KK].ParamVarMinAlarm := -10 ;	
+
+	
+END_FOR
+
+FOR KK:=1 TO CstNbPanTmp DO 
+
+	AX_Temp_Panel[KK].ParamRangeMax := 90 ; 
+	AX_Temp_Panel[KK].ParamRangeMin := -10 ; 	
+	AX_Temp_Panel[KK].ParamVarMaxAlarm := 70 ; 
+	AX_Temp_Panel[KK].ParamVarMinAlarm := 0 ;	
+	AX_Temp_Panel[KK].ParamNbSensors := 2 ; 
+	AX_Temp_Panel[KK].ParamDiffMax := 5 ; 	
+	
+END_FOR
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_WS">
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_WS.M_EquipmentCalls">
+      <LineId Id="235" Count="15" />
+      <LineId Id="126" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_WS.M_Evaluate">
+      <LineId Id="183" Count="1" />
+      <LineId Id="83" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_WS.M_Init">
+      <LineId Id="154" Count="70" />
+      <LineId Id="115" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

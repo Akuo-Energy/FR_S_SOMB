@@ -1,0 +1,190 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.9">
+  <POU Name="FB_INV_Sun2000KtlMo" Id="{333d6cce-8f33-47f1-9cc3-076851c8b719}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_INV_Sun2000KtlMo EXTENDS FB_INV_Base
+VAR 
+		KK_ModbusRead					: BYTE;	
+		
+		Emul_MesModbusReadAlarm			: ARRAY[1..2] OF BOOL;
+		Emul_AlarmINV					: BOOL ; 
+		Emul_Smooth						: FB_Smooth ;
+END_VAR
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance specific) 
+	ParamIPAdress	   : STRING := '127.0.0.1'; 	// (NA)Config: IP Adress of PV INverter
+	ParamnTcpPort		: UINT := 502;	
+	ParamUnitID 		: BYTE  := 1; 	  			// (NA)   SMA Modbus Unit ID. 
+	ParamID_INV			: BYTE ; 		        	// (NA) Config :Numerous of the ESS in the PP
+
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+
+END_VAR
+
+VAR
+	//M_Acknowledge
+		
+	// M_ALARMMNGMT VARIABLES //
+	MesAlarmCode1			: WORD ; 
+	MesAlarmCode2			: WORD ; 
+	
+	// M_READ VARIABLES//
+		Trig_Read					: R_TRIG;
+
+		FB_ModbusRead_I2          	: FB_ModbusRead ; 	// (NA) FB for Modbus Reading
+		FB_ModbusRead_I3          	: FB_ModbusRead ; 	// (NA) FB for Modbus Reading
+
+		MesBlock_Temp 				: ARRAY[1..2] OF ARRAY [1..125] OF WORD ; 			// (NA) Temporary Block with multiple modbus reading (Caution : Double Word variables)
+
+		AX_Busy						: ARRAY[1..2] OF BOOL;
+		AX_Error					: ARRAY[1..2] OF BOOL;
+		AX_ErrorID					: ARRAY[1..2] OF UDINT;
+
+	MesDataExd		AT %Q*	: INV_Huawei ; 
+	
+	// M_INIT //
+		bInit						: BOOL;
+
+
+	// M_CP
+
+		
+	// M_STATEMANAGER//
+	
+	//M_EXECUTE VARIABLES //
+		TP_READ						: LTP;  //Tempo de cadencement FB Modbus
+		RTrig						: R_Trig; //Front montant sur TP_READ.Q
+		ReadBusy					: BOOL;	//FB Modbus en busy
+
+
+
+	
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+
+]]></ST>
+    </Implementation>
+    <Method Name="M_Execute" Id="{3985b34c-61b6-4e1e-8d84-ce858cb33090}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+	SppNum: UINT;
+MesDataExd.MesData.NV: INT;
+	SetTempSlope: REAL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+FOR KK_ModbusRead:=1 TO 2 DO
+	AX_Error[KK_ModbusRead] 			:= Emul_MesModbusReadAlarm[KK_ModbusRead] ;
+	
+END_FOR
+
+// INV 
+SppNum:= SEL(ParamUnitID>11 ,1 , 2) ; 
+		
+			AX_PTR[SppNum].A1_INV_Smartlogger.Emul_RS(SET1:= IN_CmdStop, RESET:=IN_CmdStart ) ; 
+			IF Emul_AlarmINV  THEN 
+			MesDataExd.MesData.MesIDState :=16#0300 ;
+
+			ELSIF AX_PTR[SppNum].A1_INV_Smartlogger.Emul_RS.Q1 THEN 
+			MesDataExd.MesData.MesIDState:=16#0304 ;
+
+			ELSIF MesP_INVmppt=0 THEN 
+			MesDataExd.MesData.MesIDState:=16#A000 ;
+	
+			ELSIF IN_SetptPlimit < ParamPn THEN 
+			MesDataExd.MesData.MesIDState:=16#0202 ;
+
+			ELSIF AX_PTR[SppNum].A1_INV_Smartlogger.Emul_ComError THEN 
+			MesDataExd.MesData.MesIDState:=16#B000 ;
+
+			ELSE
+			MesDataExd.MesData.MesIDState:=16#0200 ;
+
+			END_IF	
+	// Pas de pente dans les onduleurs . 		
+//			Emul_Smooth(Setpoint:= AX_SPP[SppNum].A1_SmartLogger.SetptPlimit/AX_SPP[SppNum].A1_SmartLogger.ParamNbINV , Slope :=5,DeadBand:=2,Range:= ParamPnom,CycleTime:=CstCycleTime_G,InitialValue:=0, Reset:=(A1_HPP.CalState =9) OR Emul_AlarmINV OR NOT(AX_SPP[SppNum].A1_TGBT.MesDataExd.MesData.MesMainCB), OutValue=> SetTempSlope ) ;
+			SetTempSlope :=SEL( MesDataExd.MesData.MesAlarmCom ,  AX_PTR[SppNum].A1_INV_Smartlogger.IN_SetptPlimit/AX_PTR[SppNum].A1_INV_Smartlogger.ParamNbINV , AX_PTR[SppNum].A1_INV_Smartlogger.ParamPnomINV )  ; 
+
+		MesDataExd.MesData.MesP 			:=SEL((A1_PP.MesState =9) OR AX_PTR[SppNum].A1_INV_Smartlogger.Emul_AlarmINV OR NOT(AX_PTR[SppNum].A1_MainMVCB_PTR.MesDataExd.MesData.MesClosed) , MIN(SetTempSlope , MesP_INVmppt),  0)  ; 
+		MesDataExd.MesData.MesQ 			:= AX_PTR[SppNum].A1_INV_Smartlogger.IN_SetptQlimit/AX_PTR[SppNum].A1_INV_Smartlogger.ParamNbINV  ; 
+		MesDataExd.MesData.MesPdc 			:= MesDataExd.MesData.MesP/AX_PTR[SppNum].A1_INV_Smartlogger.MesDataExd.MesData.MesEff; 
+		MesDataExd.MesData.MesIdc 			:= MesDataExd.MesData.MesPdc 	MesDataExd.MesData.MesUdc; 
+
+
+
+MesDataExd.MesData.MesU 			:= AX_PTR[SppNum].A1_INV_Smartlogger.MesDataExd.MesData.MesU12 ; 
+MesDataExd.MesData.MesV			    := MesDataExd.MesData.MesU/SQRT(3)*2 ; 
+MesDataExd.MesData.MesI			    := SEL.MesDataExd.MesData.MesU = 0 , MesDataExd.MesData.MesP*1000 MesDataExd.MesData.MesU /SQRT(3) ,0 ) ; 
+MesDataExd.MesData.MesFreq			:=  A1_SUBMV.A1_PM.MesDataExd.MesData.Mesfreq; 
+MesDataExd.MesData.MesS			    := SQRT.MesDataExd.MesData.MesP.MesDataExd.MesData.MesP.MesDataExd.MesData.MesQ.MesDataExd.MesData.MesQ) ; 
+
+MesDataExd.MesData.MesCosPhi			:=  0.95  ; 
+MesDataExd.MesData.MesTemp			:= 32 ;  
+
+
+// Other Variables
+//MesDataExd.MesData.MesInsuResistor			:= 1220 ; 	
+
+// Properties update. 
+MesDataExd.MesData.MesAlarmCom	:= MesDataExd.MesData.MesIDState = 16#B000 ; 
+
+//MesDataExd.MesData.MesAlm1		:= MesDataExd.MesData.MesIDState = 16#0300 ;
+MesDataExd.MesData.ParamPn		:= 60  ; 
+
+//MesDataExd.MesData.CalCurtailing	:= MesDataExd.MesData.MesStatus = 16#0201 OR MesDataExd.MesData.MesStatus = 16#0202; 
+	
+
+MesDataExd.MesData.MesUdc			:= 200 ;
+MesDataExd.MesData.MesInsuResistor 	:= 150 ;
+//MesDataExd.MesData.MesPF			:=0.97 ; 
+
+
+//INV Exd
+MesDataExd.MesEDay			:= 1000 ; 
+MesDataExd.MesETot			:=  1100; 
+MesDataExd.MesI1			:= MesDataExd.MesData.MesI; 
+MesDataExd.MesI2			:= MesDataExd.MesData.MesI; 
+MesDataExd.MesI3			:= MesDataExd.MesData.MesI; 
+MesDataExd.MesU12			:=  AX_PTR[SppNum].A1_INV_Smartlogger.MesDataExd.MesData.MesU12; 
+MesDataExd.MesU23			:=   AX_PTR[SppNum].A1_INV_Smartlogger.MesDataExd.MesData.MesU23; 
+MesDataExd.MesU31			:=   AX_PTR[SppNum].A1_INV_Smartlogger.MesDataExd.MesData.MesU31; 
+MesDataExd.MesV1			:= MesDataExd.MesData.MesV; 
+MesDataExd.MesV2			:= MesDataExd.MesData.MesV;  
+MesDataExd.MesV3			:= MesDataExd.MesData.MesV; 
+
+
+// Properties update.
+MesDataExd.MesData.MesI := MesDataExd.MesData.MesI1 + MesDataExd.MesData.MesI2 + MesDataExd.MesData.MesI3)/3;
+MesDataExd.MesData.MesV := MesDataExd.MesData.MesV1 + MesDataExd.MesData.MesV2 + MesDataExd.MesData.MesV3)/3;
+MesDataExd.MesData.MesS := SQRT.MesDataExd.MesData.MesP.MesDataExd.MesData.MesP + MesDataExd.MesData.MesQ.MesDataExd.MesData.MesQ);
+
+MesDataExd.MesData.MesCurtl := MesDataExd.MesData.MesIDState=16#0202 OR MesDataExd.MesData.MesIDState=16#0203 ; 
+//MesDataExd.MesData.ParamPnom := ParamPnom ;
+
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_INV_Sun2000KtlMo">
+      <LineId Id="3" Count="1" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_INV_Sun2000KtlMo.M_Execute">
+      <LineId Id="565" Count="4" />
+      <LineId Id="571" Count="84" />
+      <LineId Id="563" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

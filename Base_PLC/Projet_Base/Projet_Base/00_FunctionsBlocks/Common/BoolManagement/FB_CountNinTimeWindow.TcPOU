@@ -1,0 +1,61 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_CountNinTimeWindow" Id="{9cc0cb01-aff0-4582-8ff8-8e132369af3a}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_CountNinTimeWindow
+VAR_INPUT
+	IN_CountMax			: UINT := 3 ; 
+	IN_bInput				: BOOL;
+	IN_bReset			: BOOL;
+END_VAR
+VAR_OUTPUT
+	OUT_FlagNinT		: BOOL;		// Output : if CountMax Input occured in the last T min, this variable = TRUE;
+END_VAR
+VAR
+	TimeFault1			: TIME;		// Temps du troisième défaut GTE (chronologiquement parlant)
+	TimeFault2			: TIME;		// Temps du deuxième défaut GTE (chronologiquement parlant)
+	TimeFault3			: TIME;		// Temps du premier défaut GTE (chronologiquement parlant)
+	TriggerGTE			: R_TRIG;	
+	
+	TestDiff			: TIME;
+END_VAR
+VAR_INPUT PERSISTENT
+	ParamTimeToMeasure	: TIME := T#30M; // Time during which the 3 GTE are measured. Used for testing.
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[TriggerGTE(CLK:= IN_bInput);
+
+ IF IN_bReset THEN
+		OUT_FlagNinT := FALSE;
+		TimeFault1 := T#0S;
+		TimeFault2 := T#0S;
+		TimeFault3 := T#0S;
+END_IF
+
+IF TriggerGTE.Q AND TimeFault3 = T#0S THEN
+	TimeFault3 := TIME();
+ELSIF TriggerGTE.Q AND TimeFault2 = T#0S THEN
+	TimeFault2 := TIME();
+ELSIF TriggerGTE.Q AND TimeFault1 = T#0S THEN
+	TimeFault1 := TIME();
+ELSIF TriggerGTE.Q THEN
+	TimeFault3 := TimeFault2;
+	TimeFault2 := TimeFault1;
+	TImeFault1 := TIME();
+END_IF
+
+
+IF TimeFault1 - TimeFault3 < ParamTimeToMeasure AND TimeFault1 <> T#0S THEN
+	OUT_FlagNinT := TRUE;
+ELSE 
+	OUT_FlagNinT := FALSE;
+END_IF
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_CountNinTimeWindow">
+      <LineId Id="333" Count="27" />
+      <LineId Id="28" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

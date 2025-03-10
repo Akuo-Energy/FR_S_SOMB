@@ -1,0 +1,774 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1">
+  <POU Name="FUN_Alarms" Id="{674b57e9-996d-4990-b953-0f51308090ce}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM FUN_Alarms
+VAR_INPUT
+	IN_Directory					: STRING := 'C:\Users\Administrator\Documents\Historisation\';	// Directory where the alarms are saved in csv
+	ParamDisableSMS					: BOOL ;	// True : SMS Serveur is disabled 
+	AX_MesAlarmCode				: ARRAY [0..CstNbAlarmCode] OF WORD;    // Tableau de Word avec tous les AlarmCode 
+
+	
+	ParamDelayForceAlarm : TIME := T#2S ; 
+	bTriggerCount	: BOOL;
+	nCountSequence	: INT := 1;
+	bTestForceAlarms 	: BOOL;
+	MesAlarmWordTestJulienDecouple	: ARRAY[1..CstNbAlarmCode+1] OF WORD;
+		
+END_VAR
+
+VAR_INPUT PERSISTENT
+	AX_Journal						: ARRAY [0..CstNbAlarmCode] OF ARRAY[0..15] OF ST_ValuesAlarms; //Journal d'envoi, contient destinataire et message, et gestion de l'envois ou pas du sms
+	bFactoryReset					: BOOL:= TRUE ;
+END_VAR
+
+
+
+VAR
+	AX_RecupWord 					: ARRAY [0..CstNbAlarmCode] OF WORD;
+
+	
+	// M_ALARMPROCESSING	
+
+
+
+		
+	//	FB_Flicker					: ARRAY [0..CstNbAlarmCode] OF ARRAY[0..15] OF FB_DetectFlicker ; 
+		
+	// CSV
+
+	
+	//MAIL
+
+	//SMS
+	
+
+
+	TON_TriggerCount	: TON;
+	F_TRIG_TriggerCount	: F_TRIG;
+
+	
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF bFactoryReset THEN
+	M_Init();
+	///////// 
+END_IF
+
+M_AlarmManager();
+M_AlarmProcessing();
+	
+// Ici, on prend surtout en compte les alarmes 
+FUN_Alarms_CSV(ParamSeparateur := ';',ParamExtension := '.csv');
+
+IF MAIN.OUT_CalRunningPLC_IO THEN
+	FUN_SendMail();
+	SMS_Server (IN_AX_Journal := AX_Journal);
+	InfluxDb_AlarmsManagement() ; 
+	//Firebird_WriteAlarms(ParamTimeBetweenReconnect:= T#1M);
+END_IF
+
+
+]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManager" Id="{61512a6f-33d8-4736-9154-1648dc42b5e4}">
+      <Declaration><![CDATA[METHOD M_AlarmManager : BOOL
+VAR_INPUT
+END_VAR
+
+VAR
+	KK : UINT;
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[		
+		
+		
+		
+// initialisation des AlarmCode et des RecupWord		
+	AX_RecupWord[ 1] := A1_PP.MesData.MesAlarmCode; 	
+	AX_RecupWord[ 2] := A1_PP.MesData.MesWarningCode; 	
+	AX_RecupWord[ 3] := A1_PP.MesData.MesWarningCode2; 	
+	AX_RecupWord[ 4] := A1_PP.MesData.MesEventCode; 	
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_AlarmProcessing" Id="{ca022809-b122-4568-8a03-956ed39c5e0a}">
+      <Declaration><![CDATA[METHOD M_AlarmProcessing : BOOL
+////////////////// 
+// Process alarms, detect changes and segregate if the alarm has to be logged in csv, send by mail, or send by sms
+//////////////////
+
+
+VAR
+	LL : UINT;
+	KK : UINT;
+	
+	MesXorWord 		: WORD;
+	MesAlarmWord	: WORD;
+
+
+	IN_AlarmInflux : ST_InfluxAlarmsInsert;
+	MesRolAlarmWord: WORD;
+	MesRolXoRWord: WORD;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//Retrieve all Alarms word and detect if a change occured. 
+FOR KK := 1 TO CstNbAlarmCode DO
+	MesXorWord := AX_MesAlarmCode[KK] XOR AX_RecupWord[KK];
+	IF MesXorWord > 0 THEN  // Compare si il y a eu des changements dans les alarmes word
+		FOR LL := 0 TO 15 DO 
+			MesRolXoRWord 	:= ROR(MesXorWord, LL);
+			MesRolAlarmWord := ROR(AX_RecupWord[KK], LL);
+			
+			IF MesRolXoRWord.0 THEN  // Si il y a eu un changement sur le bit
+				AX_Journal[KK][LL].Value := MesRolAlarmWord.0; // 
+				AX_Journal[KK][LL].TimeStamp_Act:= SYSTEMTIME_TO_STRING(CalLocalTimeStruct);	// On ecrit l'heure du changement
+	
+				IF (AX_Journal[KK][LL].Value AND AX_Journal[KK][LL].Groupe > 0) OR ( NOT(AX_Journal[KK][LL].Value) AND  AX_Journal[KK][LL].Groupe = 2)  THEN// Il s'agit d'une alarme qu'on doit écrire sur activation
+
+					// CSV alarms :  on ecrit l'alarme
+					FUN_Alarms_CSV.FIFO.In := AX_Journal[KK][LL];
+					FUN_Alarms_CSV.FIFO.A_Add();
+					
+					//MAIl alarms
+					IF AX_Journal[KK][LL].Alarms_LVL.3 THEN
+						FUN_SendMail.FIFO.In := AX_Journal[KK][LL];
+						FUN_SendMail.FIFO.A_Add();
+					END_IF
+					
+					InfluxDb_AlarmsManagement.IN_FIFO.In :=  AX_Journal[KK][LL];
+					InfluxDb_AlarmsManagement.IN_FIFO.A_Add();
+					
+					// SMS Alarms. On ecrit si Serveur SMS n'est pas descativé
+					IF NOT ParamDisableSMS  AND AX_Journal[KK][LL].Alarms_LVL.4 THEN 
+						SMS_Server.IN_DataSetFifo_SendSMS.In.IndexWord		:= KK;
+						SMS_Server.IN_DataSetFifo_SendSMS.IN.IndexBit		:= LL;
+						SMS_Server.IN_DataSetFifo_SendSMS.IN.Num_tel 		:= '';
+						SMS_Server.IN_DataSetFifo_SendSMS.In.ID				:= AX_Journal[KK][LL].ID;
+						SMS_Server.IN_DataSetFifo_SendSMS.In.TimeStamp_Act	:= AX_Journal[KK][LL].TimeStamp_Act;						
+						SMS_Server.IN_DataSetFifo_SendSMS.IN.Active			:= AX_Journal[KK][LL].Value;	// TRUE si activation. 
+						SMS_Server.IN_DataSetFifo_SendSMS.IN.Alarms_LVL		:= AX_Journal[KK][LL].Alarms_LVL ;
+						SMS_Server.IN_DataSetFifo_SendSMS.A_Add();
+					END_IF 
+				END_IF
+			END_IF
+		END_FOR
+		memcpy(destAddr := ADR(AX_MesAlarmCode[KK]), srcAddr :=ADR(AX_RecupWord[KK]), n := SIZEOF(AX_RecupWord[KK])); //On écrase la valeur par la dernière valeur.	
+	END_IF
+END_FOR	
+
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_ForceAlarms" Id="{e6ecd3d2-0af7-45ed-8cda-18084fec42ea}">
+      <Declaration><![CDATA[METHOD M_ForceAlarms : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Compteur pour séquencer l'activation des alarmes 		
+		
+TON_TriggerCount(IN := bTriggerCount, PT := ParamDelayForceAlarm);		
+		
+F_TRIG_TriggerCount(CLK := bTriggerCount);		
+		
+IF nCountSequence <= CstNbAlarmCode+1 THEN		
+	IF F_TRIG_TriggerCount.Q = TRUE THEN	
+		bTriggerCount := TRUE;
+	END_IF	
+END_IF		
+		
+IF TON_TriggerCount.Q THEN
+	IF nCountSequence < CstNbAlarmCode +1 THEN 
+		MesAlarmWordTestJulienDecouple[nCountSequence] := 65535;
+	END_IF
+	IF nCountSequence-1 > 0 THEN 	
+		MesAlarmWordTestJulienDecouple[nCountSequence-1] := 0;
+	END_IF	
+	nCountSequence := nCountSequence + 1;	
+	bTriggerCount := FALSE;	
+END_IF		
+
+
+A1_PP.MesData.MesAlarmCode:= MesAlarmWordTestJulienDecouple[1];
+A1_PP.MesData.MesWarningCode:= MesAlarmWordTestJulienDecouple[2];
+A1_PP.MesData.MesWarningCode2:= MesAlarmWordTestJulienDecouple[3];
+A1_PP.MesData.MesEventCode:= MesAlarmWordTestJulienDecouple[4];
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_G7_SMS" Id="{a20c568f-d290-4a3b-b1f4-b74cbb88ba7e}">
+      <Declaration><![CDATA[METHOD M_G7_SMS : BOOL
+VAR_IN_OUT
+	DataSetFifo_ReadSMS		: FB_SMSDatasetFifo_Read;	
+    IN_DataSetFifo_SendSMS		: FB_SMSDatasetFifo_Send;
+	CPT_Message				: CTU;
+	InStruct 				: ST_ValuesAlarms;
+	G7_Etape 				: SINT;
+	AX_Numtel				: ARRAY[1..CstNbUser] OF STRING(26);	//Contient tous les numéros des utilisateurs
+	AX_Subscribed			: ARRAY[1..CstNbUser] OF BOOL;			//Contient tous les états d'abonnements des utilisateurs aux SMS
+	AX_MesAlarmCode_Bool	: ARRAY [1..CstNbAlarmCode] OF ARRAY[1..15] OF BOOL; //Tableau de tous les alarmesCode en Bool
+	AX_Cmd_SMS				: ARRAY[1..CstNbCMD] OF STRING(26);
+END_VAR
+
+VAR
+	Message : STRING(255);
+	SUB_MVcalstate			: BYTE;
+	SUB_MVData				: SUBMV;
+	KK					: INT;
+	MM					: INT;
+	LL					: INT;
+	JJ					: INT;
+	ii					: SINT;
+	Id_Num				: INT;
+	sState				: STRING;
+
+	Etat    			: STRING(255);
+	EtatDp1				: STRING(255);
+	EtatMainMVCB				: STRING(255);
+	FbFormat			: FB_FormatString;
+	RestartGsm			: BOOL;
+	
+	bLocal				: STRING(255);
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[CPT_Message(PV:=16,CU:=TRUE,RESET:=CPT_Message.Q);
+CPT_Message(CU:=FALSE,RESET:=CPT_Message.Q);
+CASE G7_Etape OF
+	
+	1://Commande INFO
+
+		//IF A1_SUBMV.MesDataExd.MesData.MesState.2 THEN 
+		//	Etat := 'Decouple, ';
+		//ELSIF A1_SUBMV.MesDataExd.MesData.MesState.1 THEN
+		//	Etat := 'Couplee, ';
+		//ELSIF A1_SUBMV.MesDataExd.MesData.MesState.0 THEN
+		//	Etat := 'Effacee, ';
+		//END_IF
+        //
+		//fbFormat(
+		//	sFormat:= 'LHERM: %s ; P:%.1f kW; P_PT1: %.1f kW; P_PT2: %.1f kW; P_PT3: %.1f kW; P_PT4: %.1f kW ',
+		//	arg1:= F_STRING(Etat), 
+		//	arg2:= F_REAL(A1_PP.MesData.MesPsol),  
+		//	arg3:= F_REAL(AX_PTR[1].MesDataExd.MesData.MesP), 
+		//	arg4:= F_REAL(AX_PTR[2].MesDataExd.MesData.MesP),
+		//	arg5:= F_REAL(AX_PTR[3].MesDataExd.MesData.MesP), 
+		//	arg6:= F_REAL(AX_PTR[4].MesDataExd.MesData.MesP),
+		//	sOut=> Message);
+	    //
+		//FUN_Alarms.AX_Journal[0][CPT_Message.CV].Message := Message;	
+		//IN_DataSetFifo_SendSMS.In.Num_tel:=DataSetFifo_ReadSMS.Out.Num;
+		//IN_DataSetFifo_SendSMS.In.IndexWord:=0;
+		//IN_DataSetFifo_SendSMS.In.IndexBit:=WORD_TO_SINT(CPT_Message.CV);
+		//IN_DataSetFifo_SendSMS.A_Add();
+		////DataSetFifo_ReadSMS.A_Remove();
+		////2eme message
+		//
+		//CPT_Message(CU:=TRUE,RESET:=CPT_Message.Q);
+		//CPT_Message(CU:=FALSE,RESET:=CPT_Message.Q);
+		//fbFormat(
+		//	sFormat:= 'Irradiation :PT1GHI: %.1f W/m2; PT1GTI1: %.1f W/m2; PT4GTI_1: %.1f W/m2; PT4GTI_2: %.1f W/m2 ',
+		//	arg1:= F_REAl(A1_WS.AX_Pyrano[1].MesData.Value), 
+		//	arg2:= F_REAl(A1_WS.AX_Pyrano[2].MesData.Value),   
+		//	arg3:= F_REAl(A1_WS.AX_Pyrano[3].MesData.Value), 
+		//	arg4:= F_REAl(A1_WS.AX_Pyrano[4].MesData.Value), 
+		//	sOut=> Message);
+		//	
+		//FUN_Alarms.AX_Journal[0][CPT_Message.CV].Message := Message;	
+		//IN_DataSetFifo_SendSMS.In.Num_tel:=DataSetFifo_ReadSMS.Out.Num;
+		//IN_DataSetFifo_SendSMS.In.IndexWord:=0;
+		//IN_DataSetFifo_SendSMS.In.IndexBit:=WORD_TO_SINT(CPT_Message.CV);
+		//IN_DataSetFifo_SendSMS.A_Add();
+		//
+		//////3eme message
+		//
+		//CPT_Message(CU:=TRUE,RESET:=CPT_Message.Q);
+		//CPT_Message(CU:=FALSE,RESET:=CPT_Message.Q);
+		//
+		//AX_HV_Cel_PDL[1]:= SEL(A1_SUBMV.A1_MainMVCB.MesDataExd.MesData.MesClosed,'Ouvert','Ferme');
+		//AX_HV_Cel_PDL[2]:= SEL(A1_SUBMV.AX_FeederMVCB[1].MesDataExd.MesData.MesClosed,'Ouvert','Ferme');
+		//AX_HV_Cel_PDL[3]:= SEL(A1_SUBMV.AX_FeederMVCB[1].MesDataExd.MesData.MesClosed,'Ouvert','Ferme');
+		//Ax_ETAT_DM1[1]	:= SEL(AX_PTR[1].A1_MainMVCB_PTR.MesDAtaExd.MesData.MesClosed,'Ouvert','Ferme');
+		//Ax_ETAT_DM1[2]	:= SEL(AX_PTR[2].A1_MainMVCB_PTR.MesDAtaExd.MesData.MesClosed,'Ouvert','Ferme');
+		//Ax_ETAT_DM1[3]	:= SEL(AX_PTR[3].A1_MainMVCB_PTR.MesDAtaExd.MesData.MesClosed,'Ouvert','Ferme');
+		//Ax_ETAT_DM1[4]	:= SEL(AX_PTR[4].A1_MainMVCB_PTR.MesDAtaExd.MesData.MesClosed,'Ouvert','Ferme');
+		//
+		//fbFormat(
+		//	sFormat:= 'MainMVCB: %s;  FeederMVCB_1: %s ; FeederMVCB_2: %s; MainMVCB_PTR1: %s;  MainMVCB_PTR2: %s;  MainMVCB_PTR3: %s;  MainMVCB_PTR4: %s  ',
+		//	arg1:= F_STRING(AX_HV_Cel_PDL[1]), 
+		//	arg2:= F_STRING(AX_HV_Cel_PDL[2]),  
+		//	arg3:= F_STRING(AX_HV_Cel_PDL[3]), 
+		//	arg4:= F_STRING(Ax_ETAT_DM1[1]), 
+		//	arg5:= F_STRING(Ax_ETAT_DM1[2]), 
+		//	arg6:= F_STRING(Ax_ETAT_DM1[3]), 
+		//	arg7:= F_STRING(Ax_ETAT_DM1[4]), 
+		//	sOut=> Message);
+	    //
+		//FUN_Alarms.AX_Journal[0][CPT_Message.CV].Message := Message;
+	    //
+		//IN_DataSetFifo_SendSMS.In.Num_tel:=DataSetFifo_ReadSMS.Out.Num;
+		//IN_DataSetFifo_SendSMS.In.IndexWord:=0;
+		//IN_DataSetFifo_SendSMS.In.IndexBit:=WORD_TO_SINT(CPT_Message.CV);
+		//IN_DataSetFifo_SendSMS.A_Add();
+		//
+		//DataSetFifo_ReadSMS.A_Remove();
+		//		
+		//InStruct.ID := 975;
+		//InStruct.Message :=concat(concat('Le numero de telephone ', IN_DataSetFifo_SendSMS.In.Num_tel), 'a fait une demande Infos par SMS') ;
+		//InStruct.TimeStamp_Act := SYSTEMTIME_TO_STRING(CalLocalTimeStruct);
+		////FUN_Alarms_CSV.M_AddAction_FIFO(InStruct := InStruct); // Alarme sur activation du code
+		//FUN_Alarms_CSV.FIFO.In := InStruct ;
+		//FUN_Alarms_CSV.FIFO.A_Add() ;
+		
+	2://Restart Routeur ADSL
+		RestartGsm							:= TRUE;
+		OpcUa.AllDataWPulse.CmdReset_Router_ADSL		:= TRUE;
+		Message :='Le Routeur Adsl va redemarer';
+		FUN_Alarms.AX_Journal[0][CPT_Message.CV].Message := Message;	
+		IN_DataSetFifo_SendSMS.In.Num_tel:=DataSetFifo_ReadSMS.Out.Num;
+		IN_DataSetFifo_SendSMS.In.IndexWord:=0;
+		IN_DataSetFifo_SendSMS.In.IndexBit:=WORD_TO_SINT(CPT_Message.CV);
+		IN_DataSetFifo_SendSMS.A_Add();
+		DataSetFifo_ReadSMS.A_Remove();
+	
+		InStruct.ID := 976;
+		InStruct.Message := concat(concat('Le numero de telephone ', IN_DataSetFifo_SendSMS.In.Num_tel), 'a Restart le routeur ADSL') ;
+		InStruct.TimeStamp_Act := SYSTEMTIME_TO_STRING(CalLocalTimeStruct);
+		//FUN_Alarms_CSV.M_AddAction_FIFO(InStruct := InStruct); // Alarme sur activation du code
+		FUN_Alarms_CSV.FIFO.In := InStruct ;
+		FUN_Alarms_CSV.FIFO.A_Add() ;
+		
+	3://Puissance des onduleurs
+		// 1er message 
+		fbFormat(
+		sFormat:= 'Onduleur PT1O1: %.1f, PT1O2: %.1f, PT2O1: %.1f, PT2O2: %.1f, PT3O1: %.1f, PT3O2: %.1f, PT4O1: %.1f, PT4O2: %.1f',
+		arg1:= F_REAL(Ax_PTR[1].AX_INV[1].MesDataExd.MesData.MesP),
+		arg2:= F_REAL(Ax_PTR[1].AX_INV[2].MesDataExd.MesData.MesP),
+		arg3:= F_REAL(Ax_PTR[2].AX_INV[1].MesDataExd.MesData.MesP),
+		arg4:= F_REAL(Ax_PTR[2].AX_INV[2].MesDataExd.MesData.MesP),
+		arg5:= F_REAL(Ax_PTR[3].AX_INV[1].MesDataExd.MesData.MesP),
+		arg6:= F_REAL(Ax_PTR[3].AX_INV[2].MesDataExd.MesData.MesP),
+		arg7:= F_REAL(Ax_PTR[4].AX_INV[1].MesDataExd.MesData.MesP),
+		arg8:= F_REAL(Ax_PTR[4].AX_INV[2].MesDataExd.MesData.MesP),
+		sOut=> Message);
+		
+		FUN_Alarms.AX_Journal[0][CPT_Message.CV].Message := Message;	
+		IN_DataSetFifo_SendSMS.In.Num_tel:=DataSetFifo_ReadSMS.Out.Num;
+		IN_DataSetFifo_SendSMS.In.IndexWord:=0;
+		IN_DataSetFifo_SendSMS.In.IndexBit:= WORD_TO_SINT(CPT_Message.CV);
+		IN_DataSetFifo_SendSMS.A_Add();		
+
+		DataSetFifo_ReadSMS.A_Remove();
+		
+		InStruct.ID := 977;
+		InStruct.Message := concat(concat('Le numero de telephone ', IN_DataSetFifo_SendSMS.In.Num_tel), 'a demandé la puissance des onduleurs'); 
+		InStruct.TimeStamp_Act := SYSTEMTIME_TO_STRING(CalLocalTimeStruct);
+		//FUN_Alarms_CSV.M_AddAction_FIFO(InStruct := InStruct); // Alarme sur activation du code
+		FUN_Alarms_CSV.FIFO.In := InStruct ;
+		FUN_Alarms_CSV.FIFO.A_Add() ;
+		
+	4://Mise en pause des alarmes
+		ParamDisableSMS := TRUE;
+		Message :='Les alarmes SMS sont desactivees';
+		FOR MM := 1 TO CstNbUser DO	
+			IF AX_Numtel[MM]<>'' THEN
+				FUN_Alarms.AX_Journal[0][CPT_Message.CV].Message := Message;	
+				IN_DataSetFifo_SendSMS.In.Num_tel:=AX_Numtel[MM];
+				IN_DataSetFifo_SendSMS.In.IndexWord:=0;
+				IN_DataSetFifo_SendSMS.In.IndexBit:= WORD_TO_SINT(CPT_Message.CV);
+				IN_DataSetFifo_SendSMS.A_Add();
+				DataSetFifo_ReadSMS.A_Remove();
+			END_IF
+		END_FOR
+		
+		InStruct.ID := 978;
+		InStruct.Message := concat(concat('Le numero de telephone ', IN_DataSetFifo_SendSMS.In.Num_tel), 'a désactivé les alarmes SMS'); 
+		InStruct.TimeStamp_Act := SYSTEMTIME_TO_STRING(CalLocalTimeStruct);
+		//FUN_Alarms_CSV.M_AddAction_FIFO(InStruct := InStruct); // Alarme sur activation du code
+		FUN_Alarms_CSV.FIFO.In := InStruct ;
+		FUN_Alarms_CSV.FIFO.A_Add() ;
+	
+	5://Start SMS
+		ParamDisableSMS := FALSE;
+		Message :='Les alarmes SMS sont activees';
+		FOR MM := 1 TO CstNbUser DO	
+			IF AX_Numtel[MM]<>'' THEN
+				FUN_Alarms.AX_Journal[0][CPT_Message.CV].Message := Message;	
+				IN_DataSetFifo_SendSMS.In.Num_tel:=AX_Numtel[MM];
+				IN_DataSetFifo_SendSMS.In.IndexWord:=0;
+				IN_DataSetFifo_SendSMS.In.IndexBit:= WORD_TO_SINT(CPT_Message.CV);
+				IN_DataSetFifo_SendSMS.A_Add();
+				DataSetFifo_ReadSMS.A_Remove();
+			END_IF
+		END_FOR
+		
+		InStruct.ID := 979;
+		InStruct.Message := concat(concat('Le numero de telephone ', IN_DataSetFifo_SendSMS.In.Num_tel), 'a réactivé les alarmes SMS'); 
+		InStruct.TimeStamp_Act := SYSTEMTIME_TO_STRING(CalLocalTimeStruct);
+		//FUN_Alarms_CSV.M_AddAction_FIFO(InStruct := InStruct); // Alarme sur activation du code
+		FUN_Alarms_CSV.FIFO.In := InStruct ;
+		FUN_Alarms_CSV.FIFO.A_Add() ;
+	
+
+ 	6:// Unsubscribe
+		FOR LL := 1 TO CstNbUser DO
+			IF DataSetFifo_ReadSMS.Out.Num = AX_Numtel[LL] THEN
+				Id_Num := LL;
+				EXIT;
+			END_IF
+		END_FOR
+		AX_Subscribed[Id_Num] := NOT AX_Subscribed[Id_Num];
+		sState := SEL(AX_Subscribed[Id_Num], 'Unsubscribed', 'Subscribed');
+		Message := Concat('You have toggled your subscription, state =', sState);
+		FUN_Alarms.AX_Journal[0][CPT_Message.CV].Message := Message ;
+		IN_DataSetFifo_SendSMS.In.Num_tel:=DataSetFifo_ReadSMS.Out.Num;
+		IN_DataSetFifo_SendSMS.In.IndexWord:=0;
+		IN_DataSetFifo_SendSMS.In.IndexBit:= WORD_TO_SINT(CPT_Message.CV);
+		IN_DataSetFifo_SendSMS.A_Add();
+		DataSetFifo_ReadSMS.A_Remove();
+		
+		InStruct.ID := 980;
+		InStruct.Message := concat(concat('Le numero de telephone ', IN_DataSetFifo_SendSMS.In.Num_tel), 'a modifie son inscription') ;
+		InStruct.TimeStamp_Act := SYSTEMTIME_TO_STRING(CalLocalTimeStruct);
+		//FUN_Alarms_CSV.M_AddAction_FIFO(InStruct := InStruct); // Alarme sur activation du code
+		FUN_Alarms_CSV.FIFO.In := InStruct ;
+		FUN_Alarms_CSV.FIFO.A_Add() ;
+		
+	7 : 	//Get Public IP 
+		fbFormat(
+			sFormat:= 'IP publique de la centrale : %s',
+			arg1:= F_STRING(ParamIpPublic),
+			sOut=> Message);
+		
+		FUN_Alarms.AX_Journal[0][CPT_Message.CV].Message := Message;	
+		IN_DataSetFifo_SendSMS.In.Num_tel:=DataSetFifo_ReadSMS.Out.Num;
+		IN_DataSetFifo_SendSMS.In.IndexWord:=0;
+		IN_DataSetFifo_SendSMS.In.IndexBit:= WORD_TO_SINT(CPT_Message.CV);
+		IN_DataSetFifo_SendSMS.A_Add();
+		DataSetFifo_ReadSMS.A_Remove();
+		CPT_Message(CU:=TRUE,RESET:=CPT_Message.Q);
+		CPT_Message(CU:=FALSE,RESET:=CPT_Message.Q);
+		
+		InStruct.ID := 981;
+		InStruct.Message := concat(concat('Le numero de telephone ', IN_DataSetFifo_SendSMS.In.Num_tel), 'a demandé l IP public ');  
+		InStruct.TimeStamp_Act := SYSTEMTIME_TO_STRING(CalLocalTimeStruct);
+		//FUN_Alarms_CSV.M_AddAction_FIFO(InStruct := InStruct); // Alarme sur activation du code
+		FUN_Alarms_CSV.FIFO.In := InStruct ;
+		FUN_Alarms_CSV.FIFO.A_Add() ; 
+		
+	8: // All Active Alarms
+		FOR jj := 1 TO CstNbAlarmCode DO
+			FOR ii :=1 TO 15 DO 
+				IF(AX_Journal[jj][ii].Value AND (AX_Journal[jj][ii].Alarms_LVL.0 OR AX_Journal[jj][ii].Alarms_LVL.1) AND AX_Journal[jj][ii].Groupe > 0 AND NOT ParamDisableSMS ) THEN // Il s'agit d'une alarme qu'on doit notifier par sms
+					IN_DataSetFifo_SendSMS.In.IndexWord	:= jj;
+					IN_DataSetFifo_SendSMS.IN.IndexBit		:= ii;
+					IN_DataSetFifo_SendSMS.In.Num_tel		:= DataSetFifo_ReadSMS.Out.Num;
+					IN_DataSetFifo_SendSMS.IN.Active		:= TRUE;
+					IN_DataSetFifo_SendSMS.A_Add();
+					CPT_Message(CU:=TRUE,RESET:=CPT_Message.Q);
+					CPT_Message(CU:=FALSE,RESET:=CPT_Message.Q);
+				END_IF
+			END_FOR
+		END_FOR
+		DataSetFifo_ReadSMS.A_Remove();
+		
+		InStruct.ID := 982;
+		InStruct.Message := concat(concat('Le numero de telephone ', IN_DataSetFifo_SendSMS.In.Num_tel), 'a demandé la liste des alarmes actives');  
+		InStruct.TimeStamp_Act := SYSTEMTIME_TO_STRING(CalLocalTimeStruct);
+		//FUN_Alarms_CSV.M_AddAction_FIFO(InStruct := InStruct); // Alarme sur activation du code
+		FUN_Alarms_CSV.FIFO.In := InStruct ;
+		FUN_Alarms_CSV.FIFO.A_Add() ;
+		
+	9: // Help
+		Message :='Les commandes disponibles sont :Infos ';
+		FOR KK := 2 TO MIN(7,CstNbCMD) DO // Nbr_CMD-1 DO //pas besoin du Help
+			Message := concat(Message, concat('", "',  AX_Cmd_SMS[KK]));
+		END_FOR
+		FUN_Alarms.AX_Journal[0][CPT_Message.CV].Message := Message;	
+		IN_DataSetFifo_SendSMS.In.Num_tel:=DataSetFifo_ReadSMS.Out.Num;
+		IN_DataSetFifo_SendSMS.In.IndexWord:=0;
+		IN_DataSetFifo_SendSMS.In.IndexBit:=WORD_TO_SINT(CPT_Message.CV);
+		IN_DataSetFifo_SendSMS.A_Add();
+		
+		IF CstNbCMD >7 THEN
+			CPT_Message(CU:=TRUE,RESET:=CPT_Message.Q);
+			CPT_Message(CU:=FALSE,RESET:=CPT_Message.Q);
+
+			Message :='';
+			FOR KK := 8 TO MIN(14,CstNbCMD) DO // Nbr_CMD-1 DO //pas besoin du Help
+				Message := concat(Message, concat('", "',  AX_Cmd_SMS[KK]));
+			END_FOR	
+			FUN_Alarms.AX_Journal[0][CPT_Message.CV].Message := Message;	
+			IN_DataSetFifo_SendSMS.In.Num_tel:=DataSetFifo_ReadSMS.Out.Num;
+			IN_DataSetFifo_SendSMS.In.IndexWord:=0;
+			IN_DataSetFifo_SendSMS.In.IndexBit:=WORD_TO_SINT(CPT_Message.CV);
+			IN_DataSetFifo_SendSMS.A_Add();				
+		END_IF
+		
+		IF CstNbCMD >14 THEN
+			CPT_Message(CU:=TRUE,RESET:=CPT_Message.Q);
+			CPT_Message(CU:=FALSE,RESET:=CPT_Message.Q);
+
+			Message :='';
+			FOR KK := 14 TO CstNbCMD DO // Nbr_CMD-1 DO //pas besoin du Help
+				Message := concat(Message, concat('", "',  AX_Cmd_SMS[KK]));
+			END_FOR	
+			FUN_Alarms.AX_Journal[0][CPT_Message.CV].Message := Message;	
+			IN_DataSetFifo_SendSMS.In.Num_tel:=DataSetFifo_ReadSMS.Out.Num;
+			IN_DataSetFifo_SendSMS.In.IndexWord:=0;
+			IN_DataSetFifo_SendSMS.In.IndexBit:=WORD_TO_SINT(CPT_Message.CV);
+			IN_DataSetFifo_SendSMS.A_Add();				
+		END_IF
+		
+		DataSetFifo_ReadSMS.A_Remove();
+			
+		InStruct.ID := 983;
+		InStruct.Message := concat(concat('Le numero de telephone ', IN_DataSetFifo_SendSMS.In.Num_tel), 'a demandé la commande Help'); 
+		InStruct.TimeStamp_Act := SYSTEMTIME_TO_STRING(CalLocalTimeStruct);
+		//FUN_Alarms_CSV.M_AddAction_FIFO(InStruct := InStruct); // Alarme sur activation du code
+		FUN_Alarms_CSV.FIFO.In := InStruct ;
+		FUN_Alarms_CSV.FIFO.A_Add() ;
+	
+10: // test d'envois sms
+		OPCUA.AllDataWPulse.CmdTestSms := TRUE;
+		DataSetFifo_ReadSMS.A_Remove();
+		
+		InStruct.ID := 984;
+		InStruct.Message := concat(concat('Le numero de telephone ', IN_DataSetFifo_SendSMS.In.Num_tel), 'a envoyé une cmd test sms et mail'); 
+		InStruct.TimeStamp_Act := SYSTEMTIME_TO_STRING(CalLocalTimeStruct);
+		//FUN_Alarms_CSV.M_AddAction_FIFO(InStruct := InStruct); // Alarme sur activation du code
+		FUN_Alarms_CSV.FIFO.In := InStruct ;
+		FUN_Alarms_CSV.FIFO.A_Add() ;
+		
+	11: //Forced stay connect Toggle
+		A1_PP.ParamForcedStayConnect := NOT A1_PP.ParamForcedStayConnect;
+		sState := SEL(A1_PP.ParamForcedStayConnect, 'False', 'True');
+		Message := Concat('You have toggled the Variable ForcedStayConnect, state =', sState);
+		FUN_Alarms.AX_Journal[0][CPT_Message.CV].Message := Message ;
+		IN_DataSetFifo_SendSMS.In.Num_tel:=DataSetFifo_ReadSMS.Out.Num;
+		IN_DataSetFifo_SendSMS.In.IndexWord:=0;
+		IN_DataSetFifo_SendSMS.In.IndexBit:= WORD_TO_SINT(CPT_Message.CV);
+		IN_DataSetFifo_SendSMS.A_Add();
+		DataSetFifo_ReadSMS.A_Remove();
+		
+		InStruct.ID := 985;
+		InStruct.Message := concat(concat('Le numero de telephone ', IN_DataSetFifo_SendSMS.In.Num_tel), 'a modifie la variable ForceStauConnect') ;
+		InStruct.TimeStamp_Act := SYSTEMTIME_TO_STRING(CalLocalTimeStruct);
+		//FUN_Alarms_CSV.M_AddAction_FIFO(InStruct := InStruct); // Alarme sur activation du code
+		FUN_Alarms_CSV.FIFO.In := InStruct ;
+		FUN_Alarms_CSV.FIFO.A_Add() ;
+	
+	12: // Restart HH
+		OPCUA.AllDataWPulse.CmdRestart_Telegraf := TRUE;
+		Message := 'Telegraf is restarting';
+		FUN_Alarms.AX_Journal[0][CPT_Message.CV].Message := Message ;
+		IN_DataSetFifo_SendSMS.In.Num_tel:=DataSetFifo_ReadSMS.Out.Num;
+		IN_DataSetFifo_SendSMS.In.IndexWord:=0;
+		IN_DataSetFifo_SendSMS.In.IndexBit:= WORD_TO_SINT(CPT_Message.CV);
+		IN_DataSetFifo_SendSMS.A_Add();
+		DataSetFifo_ReadSMS.A_Remove();
+		
+		InStruct.ID := 986;
+		InStruct.Message := concat(concat('Le numero de telephone ', IN_DataSetFifo_SendSMS.In.Num_tel), 'a redemarre le service Telegraf') ;
+		InStruct.TimeStamp_Act := SYSTEMTIME_TO_STRING(CalLocalTimeStruct);
+		//FUN_Alarms_CSV.M_AddAction_FIFO(InStruct := InStruct); // Alarme sur activation du code
+		FUN_Alarms_CSV.FIFO.In := InStruct ;
+		FUN_Alarms_CSV.FIFO.A_Add() ;
+	
+	13: // Restart PLC
+		OPCUA.AllDataWPulse.CmdRestart_PLC := TRUE;
+		Message := 'PLC is restarting Now !';
+		FUN_Alarms.AX_Journal[0][CPT_Message.CV].Message := Message ;
+		IN_DataSetFifo_SendSMS.In.Num_tel:=DataSetFifo_ReadSMS.Out.Num;
+		IN_DataSetFifo_SendSMS.In.IndexWord:=0;
+		IN_DataSetFifo_SendSMS.In.IndexBit:= WORD_TO_SINT(CPT_Message.CV);
+		IN_DataSetFifo_SendSMS.A_Add();
+		DataSetFifo_ReadSMS.A_Remove();
+		
+		InStruct.ID := 987;
+		InStruct.Message := concat(concat('Le numero de telephone ', IN_DataSetFifo_SendSMS.In.Num_tel), 'a redemarre le PLC') ;
+		InStruct.TimeStamp_Act := SYSTEMTIME_TO_STRING(CalLocalTimeStruct);
+		//FUN_Alarms_CSV.M_AddAction_FIFO(InStruct := InStruct); // Alarme sur activation du code
+		FUN_Alarms_CSV.FIFO.In := InStruct ;
+		FUN_Alarms_CSV.FIFO.A_Add() ;
+		
+	14: // autorisation de couplage
+		OpcUa.AllDataWPulse.CmdAutCpl := TRUE;
+		
+		Message := 'Autorisation de couplage recu';
+		FUN_Alarms.AX_Journal[0][CPT_Message.CV].Message := Message ;
+		IN_DataSetFifo_SendSMS.In.Num_tel:=DataSetFifo_ReadSMS.Out.Num;
+		IN_DataSetFifo_SendSMS.In.IndexWord:=0;
+		IN_DataSetFifo_SendSMS.In.IndexBit:= WORD_TO_SINT(CPT_Message.CV);
+		IN_DataSetFifo_SendSMS.A_Add();
+		DataSetFifo_ReadSMS.A_Remove();
+		
+		InStruct.ID := 988;
+		InStruct.Message := concat(concat('Le numero de telephone ', IN_DataSetFifo_SendSMS.In.Num_tel), 'a envoye une autorisation de couplage') ;
+		InStruct.TimeStamp_Act := SYSTEMTIME_TO_STRING(CalLocalTimeStruct);
+		//FUN_Alarms_CSV.M_AddAction_FIFO(InStruct := InStruct); // Alarme sur activation du code
+		FUN_Alarms_CSV.FIFO.In := InStruct ;
+		FUN_Alarms_CSV.FIFO.A_Add() ;
+		
+	15: // Disconnect order
+		OPCUA.AllDataWPulse.CmdDisconnect  := TRUE;
+		Message := 'Ordre de decouplage recu';
+		FUN_Alarms.AX_Journal[0][CPT_Message.CV].Message := Message ;
+		IN_DataSetFifo_SendSMS.In.Num_tel:=DataSetFifo_ReadSMS.Out.Num;
+		IN_DataSetFifo_SendSMS.In.IndexWord:=0;
+		IN_DataSetFifo_SendSMS.In.IndexBit:= WORD_TO_SINT(CPT_Message.CV);
+		IN_DataSetFifo_SendSMS.A_Add();
+		DataSetFifo_ReadSMS.A_Remove();
+		
+		InStruct.ID := 989;
+		InStruct.Message := concat(concat('Le numero de telephone ', IN_DataSetFifo_SendSMS.In.Num_tel), ' a fait une demande de decouplage') ;
+		InStruct.TimeStamp_Act := SYSTEMTIME_TO_STRING(CalLocalTimeStruct);
+		//InStruct
+		//FUN_Alarms_CSV.M_AddAction_FIFO(InStruct := InStruct); // Alarme sur activation du code
+		FUN_Alarms_CSV.FIFO.In := InStruct ;
+		FUN_Alarms_CSV.FIFO.A_Add() ;
+	16: // Connect VPN
+		OpcUa.AllDataWPulse.CmdStart_Vpn := TRUE;
+		Message := 'Starting VPN';
+		FUN_Alarms.AX_Journal[0][CPT_Message.CV].Message := Message ;
+		IN_DataSetFifo_SendSMS.In.Num_tel:=DataSetFifo_ReadSMS.Out.Num;
+		IN_DataSetFifo_SendSMS.In.IndexWord:=0;
+		IN_DataSetFifo_SendSMS.In.IndexBit:= WORD_TO_SINT(CPT_Message.CV);
+		IN_DataSetFifo_SendSMS.A_Add();
+		DataSetFifo_ReadSMS.A_Remove();
+		
+		InStruct.ID := 990;
+		InStruct.Message := concat(concat('Le numero de telephone ', IN_DataSetFifo_SendSMS.In.Num_tel), ' a lance le VPN') ;
+		InStruct.TimeStamp_Act := SYSTEMTIME_TO_STRING(CalLocalTimeStruct);
+		//InStruct
+		//FUN_Alarms_CSV.M_AddAction_FIFO(InStruct := InStruct); // Alarme sur activation du code
+		FUN_Alarms_CSV.FIFO.In := InStruct ;
+		FUN_Alarms_CSV.FIFO.A_Add() ;
+	
+	17: // Disconnect VPN
+		OpcUa.AllDataWPulse.CmdStop_Vpn := TRUE;
+		Message := 'Stopping VPN';
+		FUN_Alarms.AX_Journal[0][CPT_Message.CV].Message := Message ;
+		IN_DataSetFifo_SendSMS.In.Num_tel:=DataSetFifo_ReadSMS.Out.Num;
+		IN_DataSetFifo_SendSMS.In.IndexWord:=0;
+		IN_DataSetFifo_SendSMS.In.IndexBit:= WORD_TO_SINT(CPT_Message.CV);
+		IN_DataSetFifo_SendSMS.A_Add();
+		DataSetFifo_ReadSMS.A_Remove();
+		
+		InStruct.ID := 991;
+		InStruct.Message := concat(concat('Le numero de telephone ', IN_DataSetFifo_SendSMS.In.Num_tel), ' a arrete le VPN') ;
+		InStruct.TimeStamp_Act := SYSTEMTIME_TO_STRING(CalLocalTimeStruct);
+		//InStruct
+		FUN_Alarms_CSV.FIFO.In := InStruct ;
+		FUN_Alarms_CSV.FIFO.A_Add() ;
+		
+	18: // Reboot IPC
+		OpcUa.AllDataWPulse.CmdReset_IPC := TRUE;
+		Message :='Le PC industriel va redemarer';
+		FUN_Alarms.AX_Journal[0][CPT_Message.CV].Message := Message;	
+		IN_DataSetFifo_SendSMS.In.Num_tel:=DataSetFifo_ReadSMS.Out.Num;
+		IN_DataSetFifo_SendSMS.In.IndexWord:=0;
+		IN_DataSetFifo_SendSMS.In.IndexBit:=WORD_TO_SINT(CPT_Message.CV);
+		IN_DataSetFifo_SendSMS.A_Add();
+		DataSetFifo_ReadSMS.A_Remove();		
+END_CASE
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{78151bdd-a974-4a1d-9b17-013b66cce2df}">
+      <Declaration><![CDATA[METHOD M_Init : BOOL
+VAR_INPUT
+END_VAR
+
+VAR
+
+	KK: INT;
+	NbrAlarmCodeCSV: INT;
+	LL: INT;
+	AX_Jou: INT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Minit 
+
+
+FOR KK := 0 TO CstNbAlarmCode DO			
+	FOR LL := 0 TO 15 DO		
+		AX_Journal[KK][LL].ID := INT_TO_UINT((KK)*16 + LL);	
+		AX_Journal[KK][LL].Message := '';	
+		AX_Journal[KK][LL].Groupe := 0;	
+		AX_Journal[KK][LL].Alarms_LVL := 0;	
+	END_FOR		
+END_FOR			
+			
+			
+	AX_Journal[ 1][ 1].Message := 'PP : Impossible to disconnect the power plant';	AX_Journal[ 1][1].Groupe := 1;	AX_Journal[ 1][1].Alarms_LVL := 25;
+	AX_Journal[ 1][ 2].Message := 'PP : Redundancy is forced on the other PLC        ';	AX_Journal[ 1][2].Groupe := 1;	AX_Journal[ 1][2].Alarms_LVL := 281;
+	AX_Journal[ 1][ 3].Message := 'PP : This PLC is forced in RUN ( redundancy inhibited )     ';	AX_Journal[ 1][3].Groupe := 1;	AX_Journal[ 1][3].Alarms_LVL := 281;
+	AX_Journal[ 1][ 4].Message := 'PP : IEC 104 LOC is inhibited. It does not trigger change of PLC   ';	AX_Journal[ 1][4].Groupe := 1;	AX_Journal[ 1][4].Alarms_LVL := 281;
+	AX_Journal[ 1][ 5].Message := 'PP : Code is in Test Mode ( Writing order by COM and IO inhibited )   ';	AX_Journal[ 1][5].Groupe := 1;	AX_Journal[ 1][5].Alarms_LVL := 281;
+	AX_Journal[ 2][ 1].Message := 'PP : Ping Host Error         ';	AX_Journal[ 2][1].Groupe := 1;	AX_Journal[ 2][1].Alarms_LVL := 266;
+	AX_Journal[ 2][ 2].Message := 'PP : SMS server is disabled';	AX_Journal[ 2][2].Groupe := 1;	AX_Journal[ 2][2].Alarms_LVL := 10;
+	AX_Journal[ 2][ 3].Message := 'PP : SMS server is enabled';	AX_Journal[ 2][3].Groupe := 1;	AX_Journal[ 2][3].Alarms_LVL := 10;
+	AX_Journal[ 2][ 5].Message := 'PP : C drive almost full       ';	AX_Journal[ 2][5].Groupe := 1;	AX_Journal[ 2][5].Alarms_LVL := 266;
+	AX_Journal[ 2][ 6].Message := 'PP : Max time reached for decoupling request';	AX_Journal[ 2][6].Groupe := 1;	AX_Journal[ 2][6].Alarms_LVL := 10;
+	AX_Journal[ 2][ 7].Message := 'PP : Force Stay connect active      ';	AX_Journal[ 2][7].Groupe := 1;	AX_Journal[ 2][7].Alarms_LVL := 266;
+	AX_Journal[ 2][ 8].Message := 'PP : License dongle is missing      ';	AX_Journal[ 2][8].Groupe := 1;	AX_Journal[ 2][8].Alarms_LVL := 266;
+	AX_Journal[ 2][ 9].Message := 'PP : PLC CPU usage is above 50%      ';	AX_Journal[ 2][9].Groupe := 1;	AX_Journal[ 2][9].Alarms_LVL := 266;
+	AX_Journal[ 2][ 10].Message := 'PP : Force Stay connect is deactivated     ';	AX_Journal[ 2][10].Groupe := 1;	AX_Journal[ 2][10].Alarms_LVL := 266;
+	AX_Journal[ 2][ 12].Message := 'PP : Test mode is disabled (outputs reactivated)  ';	AX_Journal[ 2][12].Groupe := 1;	AX_Journal[ 2][12].Alarms_LVL := 266;
+	AX_Journal[ 2][ 13].Message := 'PP : Child Warning Synthesis';	AX_Journal[ 2][13].Groupe := 1;	AX_Journal[ 2][13].Alarms_LVL := 10;
+	AX_Journal[ 2][ 14].Message := 'PP : Test mode enable (outputs inhibited)   ';	AX_Journal[ 2][14].Groupe := 1;	AX_Journal[ 2][14].Alarms_LVL := 266;
+	AX_Journal[ 2][ 15].Message := 'PP : Test SMS';	AX_Journal[ 2][15].Groupe := 1;	AX_Journal[ 2][15].Alarms_LVL := 10;
+	AX_Journal[ 3][ 1].Message := 'PP : No internet access  ';	AX_Journal[ 3][1].Groupe := 1;	AX_Journal[ 3][1].Alarms_LVL := 33034;
+	AX_Journal[ 3][ 2].Message := 'PP : Router not reachable  ';	AX_Journal[ 3][2].Groupe := 1;	AX_Journal[ 3][2].Alarms_LVL := 33034;
+	AX_Journal[ 3][ 3].Message := 'PP : SMS Router not reachable  ';	AX_Journal[ 3][3].Groupe := 1;	AX_Journal[ 3][3].Alarms_LVL := 33034;
+	AX_Journal[ 3][ 4].Message := 'PP : Industrial PC not reachable  ';	AX_Journal[ 3][4].Groupe := 1;	AX_Journal[ 3][4].Alarms_LVL := 33034;
+	AX_Journal[ 3][ 6].Message := 'PP : HMI server not running ';	AX_Journal[ 3][6].Groupe := 1;	AX_Journal[ 3][6].Alarms_LVL := 266;
+	AX_Journal[ 3][ 7].Message := 'PP : Open VPN not running  ';	AX_Journal[ 3][7].Groupe := 1;	AX_Journal[ 3][7].Alarms_LVL := 266;
+	AX_Journal[ 3][ 8].Message := 'PP : Teamviewer not running ';	AX_Journal[ 3][8].Groupe := 1;	AX_Journal[ 3][8].Alarms_LVL := 266;
+	AX_Journal[ 3][ 9].Message := 'PP : OPC UA not running ';	AX_Journal[ 3][9].Groupe := 1;	AX_Journal[ 3][9].Alarms_LVL := 266;
+	AX_Journal[ 3][ 10].Message := 'PP : Chronograf not running ';	AX_Journal[ 3][10].Groupe := 1;	AX_Journal[ 3][10].Alarms_LVL := 266;
+	AX_Journal[ 3][ 11].Message := 'PP : Telegraf not running ';	AX_Journal[ 3][11].Groupe := 1;	AX_Journal[ 3][11].Alarms_LVL := 266;
+	AX_Journal[ 3][ 12].Message := 'PP : InfluxDB not running  ';	AX_Journal[ 3][12].Groupe := 1;	AX_Journal[ 3][12].Alarms_LVL := 266;
+	AX_Journal[ 3][ 14].Message := 'PP : Modbus Server not running  ';	AX_Journal[ 3][14].Groupe := 1;	AX_Journal[ 3][14].Alarms_LVL := 266;
+	AX_Journal[ 4][ 14].Message := 'PP : Global Init Command';	AX_Journal[ 4][14].Groupe := 1;	AX_Journal[ 4][14].Alarms_LVL := 4;
+	AX_Journal[ 4][ 15].Message := 'PP : Global Fault Clear command';	AX_Journal[ 4][15].Groupe := 1;	AX_Journal[ 4][15].Alarms_LVL := 4;
+	]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FUN_Alarms">
+      <LineId Id="566" Count="11" />
+      <LineId Id="579" Count="6" />
+      <LineId Id="265" Count="0" />
+    </LineIds>
+    <LineIds Name="FUN_Alarms.M_AlarmManager">
+      <LineId Id="1542" Count="9" />
+      <LineId Id="103" Count="0" />
+    </LineIds>
+    <LineIds Name="FUN_Alarms.M_AlarmProcessing">
+      <LineId Id="3213" Count="45" />
+      <LineId Id="93" Count="0" />
+    </LineIds>
+    <LineIds Name="FUN_Alarms.M_ForceAlarms">
+      <LineId Id="6" Count="12" />
+      <LineId Id="997" Count="2" />
+      <LineId Id="20" Count="5" />
+      <LineId Id="591" Count="5" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FUN_Alarms.M_G7_SMS">
+      <LineId Id="4250" Count="439" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FUN_Alarms.M_Init">
+      <LineId Id="25218" Count="2" />
+      <LineId Id="25166" Count="41" />
+      <LineId Id="25155" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

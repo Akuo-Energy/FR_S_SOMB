@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.9">
+  <DUT Name="STR" Id="{3b877ebf-7a65-4916-96e9-6019742f5ba8}">
+    <Declaration><![CDATA[TYPE STR :
+STRUCT
+		MesIdc			: REAL;   						(* (A) DC current *)
+		MesUdc			: REAL;							(* (V) DC voltage *)
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>
+
+
+
+

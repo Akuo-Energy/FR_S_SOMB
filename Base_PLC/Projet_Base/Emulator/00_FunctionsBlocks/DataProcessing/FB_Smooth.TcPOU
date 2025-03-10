@@ -1,0 +1,80 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_Smooth" Id="{faa410b8-158c-423e-90cf-a9490701e731}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Smooth
+////////////////// 
+// Smooth Variable Change.
+//////////////////	
+
+VAR_INPUT
+	Setpoint 		: REAL	:=0.0; 		// Setpoint variable
+	Slope 			: REAL	:=5.0; 		// Slope in % of Range per seconds
+	DeadBand 		: REAL 	:=2; 		// Deadband in % of Range
+	Range 			: REAL; 			// Scale in which the value can evolve 
+	CycleTime 		: REAL 	:= 1.0 ; 	// Cycle Time in ms.
+	InitialValue 	: REAL ; 			// Initial Value of Slope after Reset
+	
+	Reset 			: BOOL ; 			// Reset initial Value at rising edge
+	
+END_VAR
+
+VAR_OUTPUT
+	OutValue 		: REAL; 			// Output Value
+	
+END_VAR
+
+VAR 
+	TP_Reset 		: TP;				// Maintain reset for 3 seconds
+	
+	InValue 		: REAL:=0.0 ; 		//  Input Value
+ 
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// RESET //
+	TP_Reset(IN := Reset, PT := T#3S);
+	
+	IF TP_Reset.Q THEN 
+		InValue := InitialValue;
+		
+	END_IF
+
+
+
+// RAMP UP //
+	IF (Setpoint<(InValue + DeadBand/100*Range)) AND (SetPoint > (InValue-DeadBand/100*Range)) THEN
+		// IF values is inside setpoint deadband 
+		OutValue :=SetPoint ; 
+		
+	ELSIF Setpoint > InValue THEN
+		// If value is under setpoint value
+		OutValue := MIN(InValue + Slope/100*Range * CycleTime/1000, SetPoint) ; 
+		
+	ELSE
+		// If value is above setpoint value
+		OutValue := MAX(InValue - Slope/100*Range * CycleTime/1000, SetPoint) ; 	
+		
+	END_IF
+
+InValue :=OutValue ;]]></ST>
+    </Implementation>
+    <LineIds Name="FB_Smooth">
+      <LineId Id="3" Count="3" />
+      <LineId Id="87" Count="0" />
+      <LineId Id="7" Count="1" />
+      <LineId Id="49" Count="2" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="56" Count="0" />
+      <LineId Id="10" Count="0" />
+      <LineId Id="52" Count="0" />
+      <LineId Id="11" Count="0" />
+      <LineId Id="57" Count="0" />
+      <LineId Id="13" Count="0" />
+      <LineId Id="53" Count="0" />
+      <LineId Id="14" Count="0" />
+      <LineId Id="58" Count="0" />
+      <LineId Id="16" Count="4" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

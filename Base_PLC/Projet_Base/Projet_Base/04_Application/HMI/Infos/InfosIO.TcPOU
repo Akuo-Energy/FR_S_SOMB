@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="InfosIO" Id="{a8d3494d-5c55-42a4-bf25-6ce483a1cea0}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM InfosIO
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+
+	
+	bInit: BOOL := TRUE;
+	KK: INT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <LineIds Name="InfosIO">
+      <LineId Id="266" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

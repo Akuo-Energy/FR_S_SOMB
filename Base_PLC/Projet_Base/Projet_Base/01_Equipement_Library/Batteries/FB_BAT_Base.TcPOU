@@ -1,0 +1,294 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1">
+  <POU Name="FB_BAT_Base" Id="{a28671d8-0c88-4119-9606-dfe9f7717a27}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_BAT_Base
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance specific) 
+	ParamTempoComAlarm				: TIME 		:= T#15S ; 				(* (s) Config : Tempo to detect LOC Alarm*)
+	ParamTimeOutStart           	: TIME 		:= T#1M ;				(* (s) Config : Tempo to start before Timeout warning*)
+	ParamTimeOutStop        		: TIME 		:= T#30S ;				(* (s) Config : Tempo to start before Timeout warning*)
+                                	
+	ParamEnomRack					: REAL 		:= 76.1904 ;  	  	(* (kWh) Nominal Energy Capacity of one Rack *)
+	                            	
+	ParamClockReadTime 				: TIME 		:= TIME#1S;	  			(* (Time) Read Modbus Frequency .   *)
+	ParamClockWriteTime 			: TIME 		:= TIME#1S;   			(* (Time) Write Modbus Frequency .         *)
+	ParamTimeout					: TIME  	:= T#1S ;		  			(* (Time) Timeout for modbus reading*)
+	ParamTimeWatchdog				: TIME 		:= T#3S;						(* (Time) Time after which a fixed watchdog raises an alarm*)
+	                            	
+	                            	
+	ParamNbRacks					: BYTE 	:= 12 ; 					(* (NA) Number of racks controlled .*)
+	ParamEssNum						: UINT 	:= 1;						(* (NA) ID number of the SystemBms' father PCS*)
+	ParamSystemBmsNum				: BYTE 	:= 1;						(* Ctrl Bat Index in case of several CtrlBat 						*)
+                                	
+END_VAR
+VAR_INPUT
+	IN_CmdReset					: BOOL;
+    IN_CmdToggleRead				: BOOL;
+    IN_CmdToggleWrite				: BOOL;
+	
+	IN_CmdStart					: BOOL;									// (NA) [P,H] External Start Command
+	IN_CmdStop 					: BOOL; 								// (NA) [P,H] External Stop CommAND  
+	
+	
+	
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+		
+END_VAR
+
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//
+		TON_ComAlarm				: TON ; 								// Tempo before deteting loss of communication. 
+		TON_ComWarning				: TON ; 								// Tempo before deteting loss of communication. 
+		TON_WatchdogWarning			: TON ; 								// Tempo before deteting loss of communication. 
+                                                        					
+                                                        					
+		                                                					
+		MesComWarning				: BOOL ; 								// (NA) [P,H]  True if bad communication or LOC with at least one rack
+		MesComAlarm					: BOOL ;								// True if complete loss of communication with BBMS 			
+		CmdAlarmIntervention		: BOOL ; 								// (NA) Command Alarm in case of intervention
+		Watchdog_Old				: BOOL ;
+		
+	//M_READ VARIABLES//
+	///MesDataExd.MesData.acks				: ARRAY [1..CstNbRack_BBMS] OF RACK ; 	// (NA) [H,B] 	Racks  Data Structure  
+
+//	MesDataExd		AT%Q*	: BAT ;							// (NA) [P,H,B] CTRLbat  Data Structure
+		Trig_Cmd_Read				: R_TRIG;                                                                                        
+		Trig_Cmd_Write				: R_TRIG;                                                                                        
+	
+	//M_CONNECT VARIABLES// 
+		FB_CheckCommand1			: FB_CheckCommand ; 					// (NA) Functionnal Block to check if Connect Writing Successful
+		FB_CheckCommand2			: FB_CheckCommand ;						// (NA) Functionnal Block to check if Disconnect  Writing Successful
+	                                                            			
+
+		CalCompareWarningConnect	: BOOL ;								// (NA) Connect failed alarm
+		CalCompareWarningDisconnect	: BOOL ;								// (NA) Disconnect failed alarm
+		                                                        			
+	//M_STATEMANAGER VARIABLES//                                			
+		FB_OperationIndex			: FB_OperationIndex ;       			
+		CalLastStart				: STRING ;			 					// Datetime of the last Start
+		                                                        			
+		CalRunningTime				: INT ; 								// Total Running Time
+		CalNbMove					: WORD ;								// Total Number of Start;
+		                                                        			
+		MesState 					: BYTE ; 								// (NA) [P,H,B]  Bit 0: Disconnected , Bit 1 : Ready, Bit 2 : Connected
+		                                                        			
+	//M_INIT VARIABLES //                                       			
+		bInit						: BOOL := TRUE ; 						// (NA) Initialize object parameters at first cycle 
+	                                                            			
+	//M_EXECUTE VARIABLES//                                     			
+		TP1							: TP ; 									// (NA) Tempo to define Modbus Reading Frequency 
+		TP2 						: TP ; 									// (NA) Tempo to define Modbus Writing Frequency
+		ClockRead					: BOOL;									// (NA) Modbus reading Clock
+		ClockWrite 					: BOOL;									// (NA) Modbus writing Clock 	
+
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{3b35924a-ec3b-4baf-b680-a96938952337}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+//  Battery Area  Alarm Management 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_CP" Id="{68aed7e2-cdfb-46e9-8dc0-8055bf716792}">
+      <Declaration><![CDATA[METHOD M_CP
+//////////////////
+//  Permanent conditions 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Evaluate" Id="{261718ba-3540-4056-bf84-f32882886c58}">
+      <Declaration><![CDATA[METHOD M_Evaluate : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{5e85a632-522a-4a1c-bc94-287bf945daec}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	KK		: INT;
+
+	MesModbusReadAlarm: INT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// READING AND WRITING CLOCK //
+	TP1(IN:=NOT TP1.Q , PT:= ParamClockReadTime);
+	ClockRead 	:= TP1.Q ;
+	
+	TP2(IN:=NOT TP2.Q , PT:= ParamClockWriteTime);
+	ClockWrite 	:= TP2.Q;	
+	
+// PERMANENT CONDITIONS //
+	M_CP() ; 
+
+// METHODS CALLS//
+	IF bInit THEN
+		M_Init() ; 
+		bInit	:= FALSE ; 
+	ELSIF CmdInit_G  OR IN_CmdReset THEN 
+		bInit:= TRUE ;
+	END_IF
+	
+	M_Read();
+	
+	M_Evaluate();
+		
+	M_StateManager() ; 
+	M_Write();
+	M_StartStop() ; 
+	
+
+	
+	M_AlarmManagement(); 
+	]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{f1d976e7-cb4a-4899-b1f8-9a91df24c56c}">
+      <Declaration><![CDATA[METHOD M_Init
+VAR 
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Read" Id="{99d137e3-efde-45f9-9f43-f79f9c683a0f}">
+      <Declaration><![CDATA[METHOD M_Read
+//////////////////
+//  Read Modbus Variable for racks and BBMS .  
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_StartStop" Id="{cd8e7950-8881-4399-87fd-9d29c26a8bc3}">
+      <Declaration><![CDATA[METHOD M_StartStop
+//////////////////
+//  Read Modbus Variable for racks and BBMS .  
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+	
+	ParamTimeOutCurtail: TIME;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_StateManager" Id="{fe216916-bc9a-44a0-8fc9-423a335f0a06}">
+      <Declaration><![CDATA[METHOD M_StateManager
+//////////////////
+// Detect which is the state of the PCS system . 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+	
+END_VAR
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[	
+
+	
+	]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Write" Id="{fd7e0688-1c7e-4b14-a5fa-31b239881836}">
+      <Declaration><![CDATA[METHOD M_Write
+VAR_INPUT
+END_VAR
+VAR
+	AX_ADDR 	: ARRAY[1..1] OF UINT := [1];
+	AX_QTY		: ARRAY[1..1] OF BYTE := [3];
+	AX_UnitID	: ARRAY[1..1] OF BYTE := [1];
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_BAT_Base">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_BAT_Base.M_AlarmManagement">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_BAT_Base.M_CP">
+      <LineId Id="24" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_BAT_Base.M_Evaluate">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_BAT_Base.M_Execute">
+      <LineId Id="491" Count="15" />
+      <LineId Id="508" Count="3" />
+      <LineId Id="517" Count="5" />
+      <LineId Id="526" Count="2" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_BAT_Base.M_Init">
+      <LineId Id="3" Count="1" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_BAT_Base.M_Read">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_BAT_Base.M_StartStop">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_BAT_Base.M_StateManager">
+      <LineId Id="38" Count="0" />
+      <LineId Id="23" Count="1" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_BAT_Base.M_Write">
+      <LineId Id="7" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

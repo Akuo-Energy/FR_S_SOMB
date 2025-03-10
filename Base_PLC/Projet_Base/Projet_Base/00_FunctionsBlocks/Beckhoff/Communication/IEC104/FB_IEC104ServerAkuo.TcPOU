@@ -1,0 +1,804 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_IEC104ServerAkuo" Id="{f31c0703-a676-4075-aef1-073f9fdf66b4}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_IEC104ServerAkuo
+VAR_INPUT
+	protPara  		: ST_IEC870_5_104ProtocolParams ;	// protocol parameters 
+	sysPara	  		: ST_IEC870_5_101SystemParams ; 	// system parameters. 
+	akuoPara		: ST_IEC104AkuoParam;				// akuo parameters. 
+	
+	IN_bEnable		: BOOL := TRUE ;					// enable or disable IEC 104 Server  .
+	IN_Local		: BOOL ;  							// Server in local. Data flow is inhibated in control direction, allow in monitor direction.  
+	IN_CmdReset		: BOOL ;							// Reset after a change in the protPara , or  sysPara
+	
+	memory 			: PVOID ; 							// ADR() . Pointer to starting address. 	
+	AODB 			: ARRAY[0..GVL_Cst.CstNbAOEntries] OF ST_IEC870_5_101AODBEntry ;	// AODB	
+END_VAR
+
+VAR_OUTPUT
+	eConnState		: E_SocketConnectionState := eSOCKET_DISCONNECTED;
+	eDTState		: E_IEC870_5_104DataTransferState := eIEC870_STOPDT ;
+END_VAR
+VAR
+// M_INIT 
+	bInit					: BOOL := TRUE;
+
+//M_PREPAREAO // 
+	nBytesRead				: ARRAY[0..GVL_Cst.CstNbAOEntries] OF UDINT;		// Number of bytes taken by the raw data ( float = 4  SIQ = 1 , ...)
+	Mask					: ARRAY[0..GVL_Cst.CstNbAOEntries] OF  DWORD;		// Mask corresponding to number of byte above . 
+	MesCmd_old				: ARRAY[0..GVL_Cst.CstNbAOEntries] OF DWORD ; 		// Value in the memory space ( after bytes and bit offset ). 
+	MesDword_Old			: ARRAY[0..GVL_Cst.CstNbAOEntries] OF DWORD;		// Raw dword value in memory space . 
+	FB_Flicker				: ARRAY[0..GVL_Cst.CstNbAOEntries] OF FB_DetectFlicker ; 	// Function to detect flickering 
+
+// M_CONNECT //
+	hServer					: T_HSERVER; // TCP/IP server handle
+	eComState				: E_ComState	:= INIT;
+	fbConnection			: FB_ServerClientConnection;
+	fbProtocol				: FB_IEC870_5_104TProtocol;
+
+// TIME MANAGEMEMENT //
+	systemTime_CP56Time2a			: T_CP56Time2a;
+	FB_LocalSystTime				: FB_LocalSystemTime;
+	CalLocalTimeStruct				: TIMESTRUCT ; 
+	
+// PROCESS DATA 
+	stBuffer				: ST_IEC870_5_101TBuffer;		// Buffer of data to send in monitoring direction
+	fbBuffer				: FB_IEC870_5_101TBufferCtrl;	// Buffer of data to send in control direction . 
+	
+	stTxAsdu 				: ST_IEC870_5_101AOGen; 	// asdu to be send . Copied from current AO . 
+	KK						: INT ;	// loop 
+	JJ						: INT;	// loop
+	
+// M_READCMD //
+	stRxAsdu 				: ST_IEC870_5_101AOGen; // received asdu 
+	nQOI					: BYTE;		// general interrogation data
+	fbsetLocalTime			: NT_SetLocalTime; //clock synchronisation time apply
+
+// M_CYCLIC // 
+	fbCyclicTime				: TON;	// Cyclic trigger
+
+//M_CHANGE DATA//
+	CmdOldValue				: ARRAY[0..GVL_Cst.CstNbAOEntries] OF DWORD;		// Value of predecessing commAND  
+
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF bInit OR IN_CmdReset THEN 
+	M_Init() ;
+	bInit := FALSE ; 
+END_IF
+
+M_PrepareAO(); 
+
+// GET LOCAL TIME AND CONVERT TO CP56Time 
+FB_LocalSystTime(
+	bEnable := TRUE,
+	dwCycle := 1,
+	systemTime => CalLocalTimeStruct);
+		 
+systemTime_CP56Time2a := SYSTEMTIME_TO_CP56Time2a(TIMESTR := CalLocalTimeStruct, SU := FALSE);
+
+// Connexion management 
+M_Connect();
+
+// Read Command in control direction//
+M_ReadCmd() ;
+
+// Cyclic Data in monitoring direction//
+fbCyclicTime(IN:= sysPara.bPerCyclic XOR fbCyclicTime.Q, PT:= sysPara.tPerCyclicBase);
+IF sysPara.bPerCyclic AND fbCyclicTime.Q AND (eComState = DATATRANSFER) THEN
+	M_Cyclic();
+END_IF
+
+// On change data in monitoring direction//
+IF (eComState = DATATRANSFER) THEN
+	M_ChangeData();
+END_IF
+
+
+		
+]]></ST>
+    </Implementation>
+    <Method Name="M_ChangeData" Id="{e3705bb8-b713-48d3-9bcc-fa9189f0ac5f}">
+      <Declaration><![CDATA[METHOD M_ChangeData : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[FOR KK := 0 TO akuoPara.iAOnb DO 
+	IF AODB[KK].aObj.obj.ident.eType = 30 OR AODB[KK].aObj.obj.ident.eType = 31 THEN 
+		// Get value of corresponding byte .
+		IF CmdOldValue[KK]<> MesCmd_old[KK] THEN 
+			CmdOldValue[KK] := MesCmd_old[KK] ;
+			stTxAsdu :=  AODB[KK].aObj.obj ; 
+			stTxAsdu.ident.eCOT		:= eIEC870_COT_SPONTAN;	// cause of transmission - spontaneous
+			stTxAsdu.ident.nORG		:= sysPara.orgAddr;				// originator address
+
+			fbBuffer.TxAddObj(putObj := stTxAsdu,buffer := stBuffer);
+			IF NOT fbBuffer.bOk THEN
+				// code for buffer overflow
+				RETURN; 
+			END_IF	 		
+		END_IF
+	END_IF
+END_FOR]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Connect" Id="{98c9c374-c144-42ed-b09e-0b30dc550518}">
+      <Declaration><![CDATA[METHOD M_Connect : BOOL
+VAR_INPUT
+END_VAR
+
+VAR
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// connection management
+CASE eComState OF
+INIT: 
+	// INIT protocol parameter
+	fbConnection.eMode		:= eACCEPT_ALL;	// accept all incomming connections
+	fbConnection.tReconnect	:= T#2S;
+	
+	fbProtocol.sSrvNetID				:= '';		
+	fbProtocol.protPara.bPackFrames		:= TRUE;
+	fbProtocol.protPara.bThrottleMode	:= protPara.bThrottleMode;
+	fbProtocol.bOutDbg					:= FALSE;	// disable debug output
+
+
+	// INIT RX/TX buffer parameter
+	stBuffer.eDbg					:= eIEC870_FIFO_DBG_ALL;
+	stBuffer.asduFmt.eCOTSize		:= eIEC870_COT_TwoOctets;		// cause of transfer size
+	stBuffer.asduFmt.eAsduAddrSize	:= eIEC870_AsduAddr_TwoOctets;	// common asdu addr size
+	stBuffer.asduFmt.eObjAddrSize	:= eIEc870_ObjAddr_ThreeOctets;	// object address size
+
+	eComState := IDLE;
+	
+	
+IDLE:	
+	IF IN_bEnable THEN
+		F_CreateServerHnd(	bEnable		:= FALSE,
+							sSrvNetID	:= '',			// own (server) NetID
+							sLocalHost	:= akuoPara.sLocalHost ,
+							
+							nLocalPort	:= akuoPara.iLocalPort,
+							nMode		:= LISTEN_MODE_CLOSeALL OR CONNECT_MODE_ENABLEDBG, // Close all previous opened and not closed sockets and enable debug messages on socket creation/connect/close
+							hServer		:= hServer );	// create server connection handle
+						
+		stBuffer.asduSize := F_iecApdu104ToAsduLen(fbProtocol.protPara.APDULength);
+		eComState := CONNECT;
+	END_IF
+
+	
+CONNECT: 
+	fbConnection( 	bEnable := IN_bEnable,
+					hServer	:= hServer );		
+			
+	CASE fbConnection.eState OF 
+		eSOCKET_CONNECTED:
+		
+			fbProtocol.INIT( 	hSocket	:= fbConnection.hSocket, // reset fbProtocol and restart data transfer
+								buffer	:= stBuffer );
+			eComState := DATATRANSFER;			
+		eSOCKET_DISCONNECTED:
+			eComState := IDLE;	
+		eSOCKET_SUSPENDED:
+			; // wait for connection	
+	END_CASE		
+		eConnState := fbConnection.eState ;
+
+DATATRANSFER: 
+	IF IN_bEnable THEN
+		fbProtocol(buffer := stBuffer);
+		 eDTState := fbProtocol.eDTState ;
+		IF NOT fbProtocol.bError THEN
+			IF fbProtocol.eDTState = eIEC870_STARTDT THEN	
+				;// exchange data
+			END_IF
+		ELSE // error occured - log error msg. and close socket
+			(*ADSLOGSTR(	ADSLOG_MSGTYPE_ERROR OR ADSLOG_MSGTYPE_LOG,		// log errors
+						'IEC60870-5-104 Transport Interface error: %s',
+						DWORD_TO_HEXSTR(fbProtocol.nErrID,0,TRUE)); *)
+			eComState := DISCONNECT;
+		END_IF
+	ELSE // stop data transfer
+		eComState := DISCONNECT;
+	END_IF
+
+	
+DISCONNECT: 
+	fbProtocol(buffer := stBuffer);	
+	fbConnection(	hServer := hServer,
+					bEnable := FALSE );
+					
+	IF fbConnection.eState = eSOCKET_DISCONNECTED 
+	AND fbProtocol.eDTState = eIEC870_STOPDT THEN
+		eComState := IDLE;
+	END_IF
+END_CASE
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Cyclic" Id="{243e7fe1-43a0-4bce-8962-a6bb2c47a265}">
+      <Declaration><![CDATA[METHOD M_Cyclic : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Data, cyclic	
+//##############################################################################################################################################//	
+
+FOR KK := 0 TO akuoPara.iAOnb DO 
+	IF AODB[KK].aObj.cfg.group.30 AND AODB[KK].aObj.obj.ident.eType<>0 THEN 
+		stTxAsdu :=  AODB[KK].aObj.obj ; 
+
+		stTxAsdu.ident.eCOT		:= eIEC870_COT_CYCLIC;	// cause of transmission - spontaneous
+		stTxAsdu.ident.nORG		:= sysPara.orgAddr;				// originator address
+		fbBuffer.TxAddObj(	putObj := stTxAsdu,buffer := stBuffer);
+		IF NOT fbBuffer.bOk THEN
+			// code for buffer overflow
+			RETURN; 
+		END_IF
+	END_IF
+END_FOR 	
+	
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{ca774862-0e04-427e-bf49-abfb3cf943a5}">
+      <Declaration><![CDATA[METHOD M_Init : BOOL
+VAR_INPUT
+END_VAR
+
+VAR
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_PrepareAO" Id="{6688fa65-4e2b-4bfa-a8c5-4ade5edee944}">
+      <Declaration><![CDATA[METHOD M_PrepareAO : BOOL
+VAR_INPUT
+END_VAR
+VAR
+	bAddCPTime		: BOOL;		// IF CP56Time is attached
+	bAddQDS			: BOOL;		// If QDS is in a separate BYTE 
+	QDS				: BYTE;		// QDS Value ( Quality descriptor )
+	IV				: BOOL;		// INvalid
+	SB				: BOOL;		//
+	NT				: BOOL;		// Not topical
+	BL				: BOOL;		// Blocked
+
+	bFlicker		: BOOL;		// detect if data is flickering 
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[FOR KK := 0 TO akuoPara.iAOnb DO 
+	AODB[KK].aObj.obj.ident.asduAddr	:= sysPara.asduAddr;
+	AODB[KK].aObj.obj.ident.eClass		:= eIEC870_Class_1;
+	
+	// Get value in memory space. 
+	F_iecResetStream(0,AODB[KK].aObj.obj.info.stream);
+	MEMCPY( destAddr := ADR(MesDword_Old[KK]) , srcAddr := memory+ULINT_TO_DWORD(AODB[KK].aObj.cfg.byteOffs) , n := nBytesRead[KK]);
+	MesCmd_old[KK] := SHR(MesDword_Old[KK] , AODB[KK].aObj.cfg.bitOffs) AND Mask[KK] ;
+
+	CASE AODB[KK].aObj.obj.ident.eType OF 
+		30:	// 
+			AODB[KK].aObj.obj.ident.nObj		:= 1;
+			nBytesRead[KK] := 1 ; 
+			Mask[KK] := 2#1 ;
+			bAddCPTime := TRUE ;
+			bAddQDS		:= FALSE ;
+
+			FB_Flicker[KK](IN_VAR:= MesCmd_old[KK].0	, IN_Window := akuoPara.tFlickerWindow , IN_COUNT:= akuoPara.uFlickerNumber , OUT_bFlicker => bFlicker );
+
+			IF bFlicker AND akuoPara.bEnableFlicker THEN 
+				BL := TRUE ;
+				IV := TRUE ;
+				MesCmd_old[KK].0 := 0 ;	// Freeze value .
+			ELSE 
+				BL := FALSE ;
+				IV := FALSE ;
+			END_IF
+			
+			
+		31:
+			AODB[KK].aObj.obj.ident.nObj		:= 1;
+			nBytesRead[KK] := 1 ; 
+			Mask[KK] := 2#11;
+			bAddCPTime := TRUE ;
+			bAddQDS		:= FALSE ;
+		36:
+			AODB[KK].aObj.obj.ident.nObj		:= 1;
+			nBytesRead[KK] := 4 ; 
+			Mask[KK] := 16#FFFFFFFF;	
+			bAddCPTime := TRUE ;
+			bAddQDS		:= TRUE ;
+		13:
+			AODB[KK].aObj.obj.ident.nObj		:= 1;
+			nBytesRead[KK] := 4 ; 
+			Mask[KK] := 16#FFFFFFFF;	
+			bAddCPTime := FALSE ;
+			bAddQDS		:= TRUE ;
+		58:
+			AODB[KK].aObj.obj.ident.nObj		:= 1;
+			nBytesRead[KK] := 1 ; 
+			Mask[KK] := 16#1;	
+			bAddCPTime := TRUE ;		
+			bAddQDS		:= FALSE ;	
+	
+		59:
+			AODB[KK].aObj.obj.ident.nObj		:= 1;
+			nBytesRead[KK] := 1 ; 
+			Mask[KK] := 2#11;	
+			bAddCPTime := TRUE ;
+			bAddQDS		:= TRUE ;
+			
+		63:		// C_SE_TC_1 - Short floating point . 
+			AODB[KK].aObj.obj.ident.nObj		:= 1;
+			nBytesRead[KK] := 4 ; 
+			Mask[KK] := 16#FFFFFFFF;	
+			bAddCPTime := FALSE ;	
+			bAddQDS		:= TRUE ;		
+		
+	END_CASE
+	
+	// Set Quality descriptor
+	QDS:= 0;
+	QDS.7 :=  IV OR AODB[KK].aObj.sts.bIV_Internal; 
+	QDS.6 :=  NT ;
+	QDS.5 := SB ; 
+	QDS.4 := BL ;
+	
+	IF 	bAddQDS THEN
+		F_iecCopyBufferToStream(ADR(MesCmd_old[KK]),nBytesRead[KK],AODB[KK].aObj.obj.info.stream);	// copy values TO transmit stream
+		F_iecCopyBufferToStream(ADR(QDS),SIZEOF(QDS),AODB[KK].aObj.obj.info.stream);	// copy values TO transmit stream
+	ELSE	
+		MesCmd_old[KK] :=  MesCmd_old[KK] OR QDS ;
+		F_iecCopyBufferToStream(ADR(MesCmd_old[KK]),nBytesRead[KK],AODB[KK].aObj.obj.info.stream);	// copy values TO transmit stream
+	END_IF
+
+	IF 	bAddCPTime THEN 
+		F_iecCopyBufferToStream(ADR(systemTime_CP56Time2a),SIZEOF(systemTime_CP56Time2a),AODB[KK].aObj.obj.info.stream);	// copy values TO transmit stream
+	END_IF
+END_FOR]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_ReadCmd" Id="{6da36f78-3ee1-4002-8f72-fe5cce11c22d}">
+      <Declaration><![CDATA[METHOD M_ReadCmd : BOOL
+VAR_INPUT
+END_VAR
+VAR
+		MesCmd					: DWORD ;	// Processed command
+		TempData_bis			: DWORD ;	// Intermediate variable
+
+		nDCO_Cmd				: BYTE;		// Temporary variable for Double Command
+		nSCO_Cmd				: BYTE ;	// Temporary variable for Single Command
+		nSCO_Val				: DWORD ;	// Temporary variable for Float Command
+		tActTime				: T_CP56Time2a ;
+		CountAO 				: BYTE  ;	// detect if wrong IOA received
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// -----------------------------------------------------------------------------------
+// process received data
+REPEAT
+	fbBuffer.RxRemoveObj(	getObj => stRxAsdu,
+ 							buffer := stBuffer);						
+	IF fbBuffer.bOk THEN
+		CASE stRxAsdu.ident.eType OF
+			C_IC_NA_1: 
+				// General Interrogation
+				F_iecCopyStreamToBuffer (ADR(nQOI),SIZEOF(nQOI), stRxAsdu.info.stream); //Copy value to local varialbe
+				// create general interrogation confirmation asdu
+				stTxAsdu := stRXAsdu;
+				stTxAsdu.ident.eCOT := eIEC870_COT_ACT_CON; // cause of transfer -> activation confirmation
+				fbBuffer.TxAddObj(	putObj := stTxAsdu,
+									buffer := stBuffer);
+				IF NOT fbBuffer.bOk THEN
+					// code for buffer overflow (send overflow response) 
+
+					EXIT; 
+				END_IF
+			
+				FOR KK := 0 TO akuoPara.iAOnb DO 
+				
+					IF AODB[KK].aObj.cfg.group.0 AND AODB[KK].aObj.obj.ident.eType<>0 THEN 
+						// create first asdu (bSlaveToMaster)
+						AODB[KK].aObj.obj.ident.eCOT		:= BYTE_TO_INT(nQOI);
+						AODB[KK].aObj.obj.ident.nORG		:= stRxAsdu.ident.nORG;
+						stTxAsdu := AODB[KK].aObj.obj ;
+	
+						fbBuffer.TxAddObj(	putObj:= stTxAsdu,
+											buffer:= stBuffer);
+						IF NOT fbBuffer.bOk THEN
+							// code for buffer overflow
+							EXIT;
+						END_IF	
+					END_IF				
+				END_FOR
+				
+				// create general interrogation activation termination asdu
+				stTxAsdu := stRxAsdu;
+				stTxAsdu.ident.eCOT := eIEC870_COT_ACT_TERM;	// cause of transfer -> activation termination
+				fbBuffer.TxAddObj(	putObj:= stTxAsdu,
+									buffer:= stBuffer);
+				IF NOT fbBuffer.bOk THEN
+					// code for buffer overflow
+					EXIT; 
+				END_IF			
+			
+			C_DC_TA_1:	// Commande Double		26 -> 43 ;	27 ->44
+				CountAO := 0 ; 
+				FOR KK:=1 TO akuoPara.iAOnb DO 
+					IF stRxAsdu.info.objAddr = AODB[KK].aObj.obj.info.objAddr AND stRxAsdu.ident.eType = AODB[KK].aObj.obj.ident.eType THEN 
+						CountAO := CountAO +1 ; ;
+						F_iecCopyStreamToBuffer(ADR(nDCO_Cmd),SIZEOF(nDCO_Cmd),stRxAsdu.info.stream);
+						// Get value of corresponding byte .
+						TempData_bis := MesDword_Old[KK] XOR SHL(MesCmd_old[KK] ,AODB[KK].aObj.cfg.bitOffs )  ; 	// We set to zero here the bits that will be replaced
+						TempData_bis := SHL(nDCO_Cmd AND Mask[KK] , AODB[KK].aObj.cfg.bitOffs) OR TempData_bis ;	// We insert the new bits 
+						
+						IF NOT IN_Local	THEN	
+							// Apply read only if not in local . 	
+							MEMCPY( destAddr := memory+ULINT_TO_DWORD(AODB[KK].aObj.cfg.byteOffs) , srcAddr := ADR(TempData_bis) , n := nBytesRead[KK]);
+							MesCmd := nDCO_Cmd AND Mask[KK] ;
+						ELSE
+							// in local overwrite the command by the former value .
+							nDCO_Cmd	:= DWORD_TO_BYTE(MesCmd_old[KK])	;
+						END_IF										
+						
+						IF nDCO_Cmd.7 THEN
+							// (1)SELECT / (0) EXECUTE STATE ( not used ) 
+							; // code for select bit 
+						END_IF
+					
+						// create activation confirmation asdu
+						stTxAsdu := stRxAsdu;
+						stTxAsdu.info.stream.data[0] := nDCO_Cmd;	// Permet de mettre à jour que si pas en local
+						stTxAsdu.ident.eCOT := eIEC870_COT_ACT_CON; //cause of transfer -> activation confirmation
+						IF IN_Local THEN
+							stTxAsdu.ident.bPN :=  TRUE;
+						ELSE 
+							stTxAsdu.ident.bPN := FALSE;
+						END_IF	
+						
+						fbBuffer.TxAddObj(	putObj := stTxAsdu,
+											buffer := stBuffer);
+						IF NOT fbBuffer.bOk THEN
+							// code for buffer overflow
+							EXIT; 
+						END_IF
+						
+						IF NOT nDCO_Cmd.7 AND NOT IN_Local THEN	
+	
+							IF NOT (MesCmd = MesCmd_old[KK] OR IN_Local) THEN
+								// Gets corresponding data type.
+								stTxAsdu := AODB[KK].aObj.obj ;
+								FOR JJ:= 1 TO GVL_Cst.CstNbAOEntries DO 
+									IF KK<>JJ AND AODB[KK].aObj.cfg.byteOffs = AODB[JJ].aObj.cfg.byteOffs AND AODB[KK].aObj.cfg.bitOffs = AODB[JJ].aObj.cfg.bitOffs THEN
+										stTxAsdu := AODB[jj].aObj.obj ;
+										EXIT;
+									END_IF
+								END_FOR
+							
+								stTxAsdu.ident.eCOT		:= eIEC870_COT_RETREM;	// cause of transmission - spontaneous
+								stTxAsdu.ident.nORG		:= sysPara.orgAddr;				// originator address
+								
+								F_iecResetStream(0,stTxAsdu.info.stream);
+								F_iecCopyBufferToStream(ADR(nDCO_Cmd),SIZEOF(nDCO_Cmd),stTxAsdu.info.stream);	// copy values TO transmit stream
+								fbBuffer.TxAddObj(	putObj := stTxAsdu,
+													buffer := stBuffer);
+								IF NOT fbBuffer.bOk THEN
+									// code for buffer overflow
+									RETURN; 
+								END_IF	
+							END_IF					
+						END_IF
+	
+						IF NOT nDCO_Cmd.7 AND NOT IN_Local THEN	
+							// code for execute function
+							//create command activation termination asdu
+							stTxAsdu := stRxAsdu;
+							stTxAsdu.ident.eCOT := eIEC870_COT_ACT_TERM; // cause of transfer -> activation termination
+							IF MesCmd = MesCmd_old[KK] THEN
+								stTxAsdu.ident.bPN :=  TRUE;
+							ELSE 
+								stTxAsdu.ident.bPN := FALSE;
+							END_IF						
+					
+							fbBuffer.TxAddObj(	putObj := stTxAsdu,
+												buffer := stBuffer);
+							IF NOT fbBuffer.bOk THEN
+								// code for buffer overflow
+								EXIT; 
+							END_IF				
+						END_IF
+					END_IF
+				END_FOR
+				
+				IF CountAO = 0 THEN 
+					// code for invalid object address	IOA : return command with invalid data . 
+						stTxAsdu := stRxAsdu;
+						IF stRxAsdu.info.objAddr = AODB[KK].aObj.obj.info.objAddr THEN
+							stTxAsdu.ident.eCOT := eIEC870_COT_UNKNOWN_TYPE; // cause of transfer -> Wrong TYPE for this IoA .  
+						ELSE
+							stTxAsdu.ident.eCOT := eIEC870_COT_UNKNOWN_OBJECT_ADDRESS; // cause of transfer -> unknown IOA 
+						END_IF
+						
+						stTxAsdu.ident.bPN :=  TRUE;					
+						fbBuffer.TxAddObj(	putObj := stTxAsdu,
+											buffer := stBuffer);
+						IF NOT fbBuffer.bOk THEN
+							// code for buffer overflow
+							EXIT; 
+						END_IF				
+					EXIT;  
+				END_IF
+				
+			C_SC_TA_1: // single command with time tag 	30-32-33
+				CountAO := 0 ; 
+				FOR KK:=1 TO akuoPara.iAOnb DO 
+					IF stRxAsdu.info.objAddr = AODB[KK].aObj.obj.info.objAddr THEN 
+						CountAO := CountAO +1 ; ;
+						F_iecCopyStreamToBuffer(ADR(nSCO_Cmd),SIZEOF(nSCO_Cmd),stRxAsdu.info.stream);
+						// Get value of corresponding byte .
+						TempData_bis := MesDword_Old[KK] XOR SHL(MesCmd_old[KK] ,AODB[KK].aObj.cfg.bitOffs )  ; 	// We set to zero here the bits that will be replaced
+						TempData_bis := SHL(nSCO_Cmd AND Mask[KK] , AODB[KK].aObj.cfg.bitOffs) OR TempData_bis ;	// We insert the new bits 
+						
+						IF NOT IN_Local	THEN				// Permet de mettre à jour la commande que si pas en local
+				
+							MEMCPY( destAddr := memory+ULINT_TO_DWORD(AODB[KK].aObj.cfg.byteOffs) , srcAddr := ADR(TempData_bis) , n := nBytesRead[KK]);
+							MesCmd := nSCO_Cmd AND Mask[KK] ;
+						ELSE
+							// in local overwrite the command by the former value .
+							nSCO_Cmd	:= DWORD_TO_BYTE(MesCmd_old[KK])	;
+	
+						END_IF	
+						
+						IF nSCO_Cmd.7 THEN
+							; // code for select bit
+						END_IF
+						
+						// create activation confirmation asdu
+						stTxAsdu := stRxAsdu;
+						stTxAsdu.info.stream.data[0] := nSCO_Cmd;	// Permet de mettre à jour que si pas en local
+						stTxAsdu.ident.eCOT := eIEC870_COT_ACT_CON; //cause of transfer -> activation confirmation
+						
+						IF IN_Local THEN
+							stTxAsdu.ident.bPN :=  TRUE;
+						ELSE 
+							stTxAsdu.ident.bPN := FALSE;
+						END_IF						
+						
+						fbBuffer.TxAddObj(	putObj := stTxAsdu,
+											buffer := stBuffer);
+						IF NOT fbBuffer.bOk THEN
+							// code for buffer overflow
+							EXIT; 
+						END_IF
+						
+						
+						IF NOT nSCO_Cmd.7 AND NOT IN_Local THEN
+							stTxAsdu := stRxAsdu;
+							stTxAsdu.ident.eCOT := eIEC870_COT_ACT_TERM; // cause of transfer -> activation termination
+							stTxAsdu.ident.bPN := FALSE;
+							fbBuffer.TxAddObj(	putObj := stTxAsdu,
+												buffer := stBuffer);
+							IF NOT fbBuffer.bOk THEN
+								// code for buffer overflow
+								EXIT; 
+							END_IF				
+						END_IF
+							
+					END_IF
+				END_FOR
+				
+				IF CountAO = 0 THEN 
+				// code for invalid object address	IOA : return command with invalid data . 
+					stTxAsdu := stRxAsdu;
+					IF stRxAsdu.info.objAddr = AODB[KK].aObj.obj.info.objAddr THEN
+						stTxAsdu.ident.eCOT := eIEC870_COT_UNKNOWN_TYPE; // cause of transfer -> Wrong TYPE for this IoA .  
+					ELSE
+						stTxAsdu.ident.eCOT := eIEC870_COT_UNKNOWN_OBJECT_ADDRESS; // cause of transfer -> unknown IOA 
+					END_IF
+					stTxAsdu.ident.bPN :=  TRUE;					
+					fbBuffer.TxAddObj(	putObj := stTxAsdu,
+										buffer := stBuffer);
+					IF NOT fbBuffer.bOk THEN
+						// code for buffer overflow
+						EXIT; 
+					END_IF		 
+					EXIT;
+				END_IF
+				
+				
+			C_SE_TC_1: // Télévaleurs	
+				CountAO := 0 ; 
+				FOR KK:=1 TO akuoPara.iAOnb DO 
+					IF stRxAsdu.info.objAddr = AODB[KK].aObj.obj.info.objAddr THEN 
+						CountAO := CountAO +1 ; ;
+						F_iecCopyStreamToBuffer(ADR(nSCO_Val),SIZEOF(nSCO_Val),stRxAsdu.info.stream);
+						// Get value of corresponding byte .
+						TempData_bis := MesDword_Old[KK] XOR SHL(MesCmd_old[KK] ,AODB[KK].aObj.cfg.bitOffs )  ; 	// We set to zero here the bits that will be replaced
+						TempData_bis := SHL(nSCO_Val AND Mask[KK] , AODB[KK].aObj.cfg.bitOffs) OR TempData_bis ;	// We insert the new bits 
+			
+						IF NOT IN_Local	THEN				// Permet de mettre à jour la commande que si pas en local
+							MEMCPY( destAddr := memory+ULINT_TO_DWORD(AODB[KK].aObj.cfg.byteOffs) , srcAddr := ADR(TempData_bis) , n := nBytesRead[KK]);
+							MesCmd := nSCO_Val AND Mask[KK] ;
+					
+						ELSE
+							nSCO_Val := MesCmd_old[KK] ;
+						END_IF	
+					
+						// create activation confirmation asdu
+						stTxAsdu := stRxAsdu;
+						F_iecCopyStreamToBufferByOffset(ADR(nSCO_Val),SIZEOF(nSCO_Val),0,stTxAsdu.info.stream);// Permet de mettre à jour que si pas en local	
+						stTxAsdu.ident.eCOT := eIEC870_COT_ACT_CON; 				//cause of transfer -> activation confirmation
+						
+						IF IN_Local THEN
+							stTxAsdu.ident.bPN :=  TRUE;
+						ELSE 
+							stTxAsdu.ident.bPN := FALSE;
+						END_IF						
+						
+						fbBuffer.TxAddObj(	putObj := stTxAsdu,	buffer := stBuffer);
+						IF NOT fbBuffer.bOk THEN
+							// code for buffer overflow
+							EXIT; 
+						END_IF
+						
+						IF NOT IN_Local THEN
+							stTxAsdu := stRxAsdu;
+							stTxAsdu.ident.eCOT := eIEC870_COT_ACT_TERM; // cause of transfer -> activation termination
+							stTxAsdu.ident.bPN := FALSE;
+							fbBuffer.TxAddObj(	putObj := stTxAsdu,	buffer := stBuffer);
+							IF NOT fbBuffer.bOk THEN
+								// code for buffer overflow
+								EXIT; 
+							END_IF				
+						END_IF
+						
+					END_IF
+				END_FOR
+				
+				IF CountAO = 0 THEN 
+				// code for invalid object address	IOA : return command with invalid data . 
+					stTxAsdu := stRxAsdu;
+					IF stRxAsdu.info.objAddr = AODB[KK].aObj.obj.info.objAddr THEN
+						stTxAsdu.ident.eCOT := eIEC870_COT_UNKNOWN_TYPE; // cause of transfer -> Wrong TYPE for this IoA .  
+					ELSE
+						stTxAsdu.ident.eCOT := eIEC870_COT_UNKNOWN_OBJECT_ADDRESS; // cause of transfer -> unknown IOA 
+					END_IF
+					stTxAsdu.ident.bPN :=  TRUE;					
+					fbBuffer.TxAddObj(	putObj := stTxAsdu,
+										buffer := stBuffer);
+					IF NOT fbBuffer.bOk THEN
+						// code for buffer overflow
+						EXIT; 
+					END_IF		 
+					EXIT;
+				END_IF
+			
+			C_CS_NA_1: 
+				// clock synchronisation
+				F_iecCopyStreamToBuffer(ADR(tActTime),SIZEOF(tActTime),stRxAsdu.info.stream);	
+	
+				// create clock sync confirmation asdu
+				stTxAsdu := stRXAsdu;
+				stTxAsdu.ident.eCOT := eIEC870_COT_ACT_CON; // cause of transfer -> activation confirmation
+				fbBuffer.TxAddObj(	putObj := stTxAsdu,
+									buffer := stBuffer);
+				IF NOT fbBuffer.bOk THEN
+					// code for buffer overflow
+					EXIT; 
+				END_IF
+				// set local computer time
+				fbsetLocalTime( START	:= TRUE,
+								NETID	:= '', 
+								TIMESTR	:= CP56Time2a_TO_SYSTEMTIME(tActTime,20) );
+				fbsetLocalTime( START	:= FALSE);
+		ELSE
+				// code for invalid asdu types 
+				stTxAsdu := stRxAsdu;
+				stTxAsdu.ident.eCOT := eIEC870_COT_UNKNOWN_TYPE; // cause of transfer -> unknown Type ASDU 
+				stTxAsdu.ident.bPN :=  TRUE;					
+				fbBuffer.TxAddObj(	putObj := stTxAsdu,
+									buffer := stBuffer);
+				IF NOT fbBuffer.bOk THEN
+					// code for buffer overflow
+					EXIT; 
+				END_IF		
+			
+			EXIT;
+		END_CASE
+	END_IF
+
+UNTIL NOT fbBuffer.bOk // RX fifo is empty
+END_REPEAT
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_IEC104ServerAkuo">
+      <LineId Id="2228" Count="0" />
+      <LineId Id="1453" Count="0" />
+      <LineId Id="2230" Count="0" />
+      <LineId Id="2229" Count="0" />
+      <LineId Id="2226" Count="1" />
+      <LineId Id="1455" Count="1" />
+      <LineId Id="1458" Count="4" />
+      <LineId Id="1464" Count="0" />
+      <LineId Id="2223" Count="0" />
+      <LineId Id="1465" Count="1" />
+      <LineId Id="2222" Count="0" />
+      <LineId Id="2217" Count="0" />
+      <LineId Id="1467" Count="0" />
+      <LineId Id="2220" Count="0" />
+      <LineId Id="1777" Count="0" />
+      <LineId Id="2216" Count="0" />
+      <LineId Id="1782" Count="0" />
+      <LineId Id="2219" Count="0" />
+      <LineId Id="2004" Count="0" />
+      <LineId Id="2009" Count="1" />
+      <LineId Id="2224" Count="0" />
+      <LineId Id="2221" Count="0" />
+      <LineId Id="2060" Count="0" />
+      <LineId Id="2057" Count="0" />
+      <LineId Id="2052" Count="1" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_IEC104ServerAkuo.M_ChangeData">
+      <LineId Id="6" Count="15" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_IEC104ServerAkuo.M_Connect">
+      <LineId Id="195" Count="82" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_IEC104ServerAkuo.M_Cyclic">
+      <LineId Id="6" Count="16" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_IEC104ServerAkuo.M_Init">
+      <LineId Id="7" Count="0" />
+      <LineId Id="181" Count="1" />
+      <LineId Id="180" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_IEC104ServerAkuo.M_PrepareAO">
+      <LineId Id="6" Count="22" />
+      <LineId Id="101" Count="2" />
+      <LineId Id="29" Count="61" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_IEC104ServerAkuo.M_ReadCmd">
+      <LineId Id="9" Count="16" />
+      <LineId Id="306" Count="0" />
+      <LineId Id="26" Count="119" />
+      <LineId Id="308" Count="0" />
+      <LineId Id="353" Count="1" />
+      <LineId Id="356" Count="1" />
+      <LineId Id="355" Count="0" />
+      <LineId Id="309" Count="0" />
+      <LineId Id="311" Count="0" />
+      <LineId Id="316" Count="4" />
+      <LineId Id="307" Count="0" />
+      <LineId Id="146" Count="61" />
+      <LineId Id="362" Count="1" />
+      <LineId Id="372" Count="3" />
+      <LineId Id="364" Count="7" />
+      <LineId Id="330" Count="0" />
+      <LineId Id="210" Count="52" />
+      <LineId Id="331" Count="1" />
+      <LineId Id="376" Count="3" />
+      <LineId Id="333" Count="7" />
+      <LineId Id="264" Count="21" />
+      <LineId Id="343" Count="9" />
+      <LineId Id="342" Count="0" />
+      <LineId Id="287" Count="5" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

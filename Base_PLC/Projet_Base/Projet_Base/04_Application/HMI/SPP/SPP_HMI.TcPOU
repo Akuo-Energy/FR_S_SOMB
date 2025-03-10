@@ -1,0 +1,38 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="SPP_HMI" Id="{eda67bac-6f6b-466c-a1ff-5a8439f0ffae}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM SPP_HMI
+VAR
+	AX_INV_Eday 		: ARRAY[1..CstNbInv_PTR_G] OF REAL;
+	AX_INV_P	 		: ARRAY[1..CstNbInv_PTR_G] OF REAL;
+	
+	HMI_NameInvPtr		: ARRAY[1..CstNbInv_PTR_G] OF STRING(255);
+	IN_NumSppDisplayed	: UINT := 1;
+	
+	KK, LL : UINT;
+	ID_PTR_Displayed: UINT;
+	ID_INV_PTR_Displayed: UINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+
+
+// Ici, le premier élément est le PCS, on récupère le diviseur
+ID_PTR_Displayed := DINT_TO_UINT(TRUNC((IN_NumSppDisplayed-1)/CstNbInv_PTR_G))+ 1;
+ID_INV_PTR_Displayed := ((IN_NumSppDisplayed-1) MOD CstNbInv_PTR_G) + 1;
+
+FOR LL := 1 TO CstNbInv_PTR_G DO
+	HMI_NameInvPtr[LL] := concat('PTR', CONCAT(INT_TO_STRING(ID_PTR_Displayed), concat(' - INV', INT_TO_STRING(LL))));
+END_FOR
+
+HMI.PTR_Display 		:= AX_PTR[ID_PTR_Displayed].MesDataExd;
+HMI.INV_Display			:= AX_PTR[ID_PTR_Displayed].AX_INV[ID_INV_PTR_Displayed].MesDataExd;
+]]></ST>
+    </Implementation>
+    <LineIds Name="SPP_HMI">
+      <LineId Id="24" Count="12" />
+      <LineId Id="13" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <DUT Name="ANA_DevStd_Prom" Id="{527d27b4-63b2-47bd-a2ec-fc52f5c90934}">
+    <Declaration><![CDATA[TYPE ANA_DevStd_Prom :
+STRUCT
+	Value_Mean				: REAL ;	(* (-) Analogic mean value			*)
+	Value_Devstd			: REAL ;	(* (-) Standard deviation value		*)
+	
+	MesAlarmCode			: WORD ;	(* (NA) Internal Akuo AlarmCode     *)
+	MesWarningCode			: WORD ;    (* (NA) Internal Akuo WarningCode   *)
+	MesEventCode			: WORD ;    (* (NA) Internal Akuo EventCode		*)
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

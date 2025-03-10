@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="RackString" Id="{821d53a4-bf6b-424c-8b3d-03169df2af3e}">
+    <Declaration><![CDATA[///////////
+// Structure For Battery Racks. Main Operating Data to be saved ( ex: OPC ) .  
+//////////
+TYPE RackString :
+STRUCT
+	
+//Model Li Ion
+MesNbModuleTot				: WORD  ; //(NA) Module Count [StrNMod]                         
+MesIDState                  : DWORD  ; //(NA) String Status [StrSt]                          
+MesIDConnectAlarm           : UINT  ; //(NA) Connection Failure Reason [StrConFail]         
+MesSoC                      : REAL  ; //(%) String State of Charge [StrSoC]                 
+MesSoH                      : REAL  ; //(%) String State of Health [StrSoH]                 
+MesIdc                      : REAL  ; //(A) String Current [StrA]                            
+MesUdc                      : REAL  ; //(V) String Voltage [V]                           
+MesUdcMax_Cell              : REAL  ; //(V) Max Cell Voltage [StrCellVMax]                  
+MesIDModule_UdcMax_Cell     : WORD  ; //(NA) Max Cell Voltage Module [StrCellVMaxMod]       
+MesUdcMin_Cell              : REAL  ; //(V) Min Cell Voltage [StrCellVMin]                  
+MesIDModule_UdcMin_Cell     : WORD  ; //(NA) Min Cell Voltage Module [StrCellVMinMod]       
+MesUdc_Cell                 : REAL  ; //(V) Average Cell Voltage [StrCellVAvg]              
+MesTempMax_Module           : REAL  ; //(C) Max Module Temperature [StrModTmpMax]           
+MesIDModule_TempMax_Module  : WORD  ; //(NA) Max Module Temperature Module [StrModTmpMaxMod]
+MesTempMin_Module           : REAL  ; //(C) Min Module Temperature [StrModTmpMin]           
+MesIDModule_TempMin_Module  : WORD  ; //(NA) Min Module Temperature Module [StrModTmpMinMod]
+MesTemp_Module              : REAL  ; //(C) Average Module Temperature [StrModTmpAvg]       
+MesIDDisableReason          : WORD  ; //(NA) Disabled Reason [StrDisRsn]                    
+MesIDState_DCSwitch         : WORD  ; //(NA) Contactor Status [StrConSt]                    
+MesIDAlarm                  : DWORD  ; //(NA) String Event 1 [StrEvt1]     
+
+MesIDAlarm_Vendor1          : DWORD  ;//(NA) Vendor Event Bitfield 1 [StrEvtVnd1]           
+     
+MesSoC_Uncertainty			: REAL  ;//(%) SOC Uncertainty [SOC Uncertainty]       
+
+MesID_String				:WORD  ;//(NA) STRING Index [Idx]                          	
+MesNbCellbalancing          :WORD  ;//(NA) String Cell Balancing Count [NCellBal]      
+MesDoD                      :REAL  ;//(%) String Depth of Discharge [DoD]         
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

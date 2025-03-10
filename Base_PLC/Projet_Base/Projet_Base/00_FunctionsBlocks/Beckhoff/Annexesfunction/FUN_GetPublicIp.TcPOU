@@ -1,0 +1,52 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FUN_GetPublicIp" Id="{3a6eb6ff-b433-4150-9b58-eb3d7443ee7e}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM FUN_GetPublicIp
+
+VAR_INPUT
+	ParamNetID				: STRING :='' ; // Unit ID of the PC with internet connexion
+	IN_CmdStart 			: BOOL;
+	IN_DirExe				: STRING;
+END_VAR
+VAR_OUTPUT
+	OUT_Completed			: BOOL;
+END_VAR
+
+VAR
+	RS_Start				: RS;
+	TRIG_Completed			: R_TRIG;
+	TRIG_Start				: R_TRIG;
+	start_process			: NT_StartProcess;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+TRIG_Start(ClK := IN_CmdStart);
+TRIG_Completed(CLK := OUT_Completed);
+
+
+RS_Start(SET := TRIG_Start.Q, RESET1 := TRIG_Completed.Q);
+
+IF RS_Start.Q1 THEN
+	IN_CmdStart := FALSE;
+	start_process
+	(
+		NETID := ParamNetID,
+		PATHSTR := Concat(IN_DirExe, 'GetPublicIp.exe'),
+		DIRNAME := IN_DirExe,
+		COMNDLINE := '',
+		Start := TRUE
+	);
+ELSE
+	start_process(START := FALSE);
+END_IF
+
+IF TRIG_Completed.Q THEN
+	OUT_Completed := FALSE;
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="FUN_GetPublicIp">
+      <LineId Id="114" Count="22" />
+      <LineId Id="78" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

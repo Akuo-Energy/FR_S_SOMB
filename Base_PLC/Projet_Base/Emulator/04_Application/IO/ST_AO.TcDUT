@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="ST_AO" Id="{2efd917f-7e09-4159-8e17-5729738de2c2}">
+    <Declaration><![CDATA[TYPE ST_AO :
+STRUCT
+		Value		  AT %Q*	: INT	;
+		Description 			: STRING	;
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,81 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_ProtectRelay_SepamT20" Id="{da6aab01-96de-4f5d-a990-5a1abc545ca5}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_ProtectRelay_SepamT20 EXTENDS FB_ProtectRelay_Base
+//////////////////
+// SEPAM system for High Voltage or Low Voltage Grid Protection . 
+//////////////////
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance/model specific) 
+	 
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	OutFBCompleteted						: BOOL;
+END_VAR
+
+VAR_INPUT
+	InUnitID            : DINT;			// (NA)   ID FOR SEPAM T20 Modbus Unit ID. 
+
+	// I/O Inputs		
+END_VAR
+
+VAR
+	//M_Read
+	FB_ModbusRead_I1						: FB_ReadModbusRTU_V2; 				// (NA) FB for Modbus Reading
+	FB_ModbusRead_I2						: FB_ReadModbusRTU_V2; 				// (NA) FB for Modbus Reading
+	FB_ModbusRead_I3						: FB_ReadModbusRTU_V2; 				// (NA) FB for Modbus Reading
+	ParamTimeoutRTU							: TIME:=T#10S;
+	MesBlock1_Temp							: ARRAY [0..36] OF WORD;
+	MesBlock2_Temp							: WORD;
+	MesBlock3_Temp							: WORD;
+	MesModbusAlarmCode						: UDINT;							// (NA) Modbus Read Alarm Code
+	MesModbusAlarmCode2						: UDINT;							// (NA) Modbus Read Alarm Code
+	MesModbusAlarmCode3						: UDINT;							// (NA) Modbus Read Alarm Code
+	ModbusReadAlarm 						: BOOL;								// (NA) Modbus Read Alarm for communications
+	ModbusReadAlarm2 						: BOOL;	
+	ModbusReadAlarm3 						: BOOL;	
+	AX_bRead 								: ARRAY [1..3] OF BOOL;
+	CalAllCompleted							: BOOL;
+	//M_ALARMMANAGEMENT VARIABLES//
+
+	//M_Execute
+	AllNotBusy								: BOOL;
+	TP_Read									: TP;
+	RTrig									: R_TRIG;
+//	ClockRead								: BOOL;
+	
+	//EValuate//
+MesDataExd					AT %Q* 		: ProtectRelay_T20;
+	
+
+		
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_Execute" Id="{289cab3c-96f3-4ec9-9074-7d2605d11c7b}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SUPER^.M_Execute();]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_ProtectRelay_SepamT20">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ProtectRelay_SepamT20.M_Execute">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

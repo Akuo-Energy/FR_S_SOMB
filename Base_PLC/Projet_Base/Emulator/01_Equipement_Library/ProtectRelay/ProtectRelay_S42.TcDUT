@@ -1,0 +1,35 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.9">
+  <DUT Name="ProtectRelay_S42" Id="{5f2648b2-5b85-4b06-885a-bf3d1ea73912}">
+    <Declaration><![CDATA[TYPE ProtectRelay_S42 :
+STRUCT
+	
+	MesData							: ProtectRelay ; 	(* Object *)
+
+	MesAlarm_Phase1					: BOOL ;(* Default Phase 1*)		
+	MesAlarm_Phase2				    : BOOL ;(*Default Phase 2*)
+	MesAlarm_Phase3				    : BOOL ;(*Default Phase 3*)
+	MesAlarm_PhaseRpt			    : BOOL ;(*Default Phase RPT (relai presence tension ? ) *)
+	MesAlarm_Ground				    : BOOL ;(*Default Ground*)
+	MesAlarm_GroundRpt			    : BOOL ;(*Default Ground RPT (relai presence tension ? )*)
+	MesAlarm_MaxUInverse			: BOOL ;(*Default Max UI Inverse*)
+	MesAlarm_MaxP				    : BOOL ;(*Default Max P *)
+	MesAlarm_CB		   			 	: BOOL ;(*Default Circuit breaker *)
+	MesAlarm_Watchdog				: BOOL ;(* Défault watchdog*)						
+	OUT_CmdOpen	   			 		: BOOL ;(* Circuit breaker Open Command*)
+	OUT_CmdClose	    			: BOOL ;(*Circuit breaker Close Command*) 
+                      
+	MesU0					    	: REAL ;(*(V) Residual Voltage*)
+	MesP							: REAL ;(*(kW) Active Power*)
+	MesQ							: REAL ;(*(kVAr) Reactive Power*)
+	MesCosPhi						: REAL ;(*(p.u) CospPhi*)
+	
+	MesAlarm_CablesOvercharge 		: BOOL; (*Cables Overcharge*) 		
+    MesAlarm_FaultFrom225kV			: BOOL; (*Fault From 225 kV*)		
+	
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

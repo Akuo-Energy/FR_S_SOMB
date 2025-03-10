@@ -1,0 +1,26 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_SplitRealToWords_IEEE754" Id="{3bf9f8d9-4111-4420-ba48-a1f10d5d14bb}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_SplitRealToWords_IEEE754
+VAR_INPUT
+	IN_Real : REAL;
+END_VAR
+VAR_OUTPUT
+	OUT_WordStrong :  WORD;
+	OUT_WordWeak :  WORD;
+
+END_VAR
+VAR
+
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[MEMCPY(destAddr := ADR(OUT_WordStrong), srcAddr := ADR(IN_Real), n := 2);
+MEMCPY(destAddr := ADR(OUT_WordWeak), srcAddr := ADR(IN_Real) + 2, n := 2);]]></ST>
+    </Implementation>
+    <LineIds Name="FB_SplitRealToWords_IEEE754">
+      <LineId Id="5" Count="0" />
+      <LineId Id="16" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

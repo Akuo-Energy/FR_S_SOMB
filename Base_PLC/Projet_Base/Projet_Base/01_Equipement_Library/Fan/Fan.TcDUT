@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <DUT Name="Fan" Id="{f2d768e2-4e11-47a9-8e1b-a2ef5c9dac2e}">
+    <Declaration><![CDATA[TYPE Fan :
+STRUCT
+		MesModeRun			: BOOL ;	(* (NA) Fan is running. 1 = running, 0 = not running (alarm) *)
+		MesModeAuto			: BOOL ;	(* (NA) 1 = fan in in auto mode, 0 = fan is in manual mode 	 *)
+		MesTemp				: REAL ; 	(* (C) Temperature // fTmp_Max	  							 *)
+        MesStartTime 		: WORD ;	(* (Time) Cal: starting Time	  							 *)
+        MesStopTime 		: WORD ;	(* (Time) Cal: stopping Time	  							 *)
+		                                                                  							
+		MesAlarmCode		: WORD ;    (* (NA) Internal Akuo AlarmCode   							 *)
+		MesWarningCode		: WORD ;    (* (NA) Internal Akuo WarningCode 							 *)
+		MesEventCode		: WORD ;    (* (NA) Internal Akuo EventCode   	 						 *)		
+		
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>
+

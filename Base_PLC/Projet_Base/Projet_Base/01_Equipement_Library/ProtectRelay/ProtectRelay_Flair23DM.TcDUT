@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.9">
+  <DUT Name="ProtectRelay_Flair23DM" Id="{67ff7e56-e2b8-41a6-8fb4-70460fbf653a}">
+    <Declaration><![CDATA[TYPE ProtectRelay_Flair23DM :
+STRUCT
+		MesData						: ProtectRelay;		(* (NA) Protection relay			  *)
+               
+		MesV1						: REAL ; 			(* (V) Output Phase Voltage Phase 1   *)
+		MesV2						: REAL ; 			(* (V) Output Phase Voltage Phase 2   *)
+		MesV3						: REAL ; 			(* (V) Output Phase Voltage Phase 3   *)
+		MesV0						: REAL ; 		    (* (V) Residual Voltage				  *)
+		
+		MesStateCom					: BOOL ; 			(* (NA) False=NotOK. Device did not respond successfully to most recent read/write request. True= Device is responding normally *)
+	  	
+		ControlWord					: WORD ; 			(* (NA) Control Word				 *)
+	   	StatusWord					: WORD ; 			(* (NA) Status Word                  *)
+		CalToggleWrite				: BOOL ;			(* (NA) True := read authorised      *)
+		CalToggleRead				: BOOL ;			(* (NA) True := Write authorised     *)
+		       
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>
+
+
+
+
+
+

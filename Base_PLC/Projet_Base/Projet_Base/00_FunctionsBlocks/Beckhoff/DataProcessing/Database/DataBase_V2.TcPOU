@@ -1,0 +1,561 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="DataBase_V2" Id="{1cdb53ab-b3b0-47ac-afff-80e8daea1699}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM DataBase_V2
+// Cette fois, plutôt qu'1 base avec 3 tables, faire 3 bases par jour (100ms, 1s, 1m)
+// Nouvelle architecture : fichiers minute dans le même fichier qu'historisation, les autres dans Database
+ 
+VAR
+	ParamBaseDir					: T_MAXString := 'C:\TwinCAT\Functions\Database\SQLite\';
+	ParamHistDir					: T_MaxString := 'C:\TwinCAT\Functions\Historisation\';
+	
+	ParamDbType						: UINT;
+	                        		
+	DBID_GLOBAL						: ARRAY[1..3] OF UDINT;
+	DBID_ToDelete					: ARRAY[1..3] OF UDINT;
+	
+	bTest							: BOOL;
+	
+    AX_DirDB						: ARRAY[1..3] OF T_MaxString :=[ParamBaseDir, ParamBaseDir, ParamBaseDir] ;
+	                   		
+	MesAlarmCode 					: WORD;
+	MesWarningCode					: WORD;
+	// INIT
+		
+                            		
+	// CheckConfig          		
+		bCheckConfig				: BOOL := TRUE;
+		TrigCheckConfig				: R_TRIG;
+		TrigInit					: F_TRIG;
+		RS_CheckConfig				: RS;
+		                    		
+		ConfigTcDBSrvEvt  			: FB_ConfigTcDBSrvEvt(sNetId := '', tTimeout:=T#5S);
+		                    		
+		aDBConfig         			: ARRAY[0..MAX_CONFIGURATIONS] OF ST_ConfigDB;
+		aAutoGrpConfig    			: ARRAY[0..MAX_CONFIGURATIONS] OF ST_ConfigAutoLogGrp;
+		AX_NameBase					: ARRAY[0..MAX_CONFIGURATIONS] OF T_MaxString;
+		AX_hDBID					: ARRAY[0..MAX_CONFIGURATIONS] OF BOOL;
+		AX_hDBIDNull				: ARRAY[0..MAX_CONFIGURATIONS] OF BOOL;
+		                    		
+		nDbCount          			: UDINT;
+		nAutoGrpCount     			: UDINT;
+		tcMessage         			: I_TcMessage;
+	
+	// DayTrig 
+		Trig_CreateFolder			: R_TRIG;
+		RS_CreateFolder				: RS;
+		RS_CreateDbDay				: RS;
+		RS_DeleteConf				: RS;
+		RS_DeleteFiles				: RS;
+		RS_CompressOldFiles			: RS;
+		bDayTrig					: BOOL:= TRUE;
+		bCreateDirErr				: BOOL;
+		bCreateDbErr				: BOOL;
+		bDeleteConfErr				: BOOL;
+		bDeleteFileErr				: BOOL;
+		bCompressFileErr			: BOOL;
+		CreateDir					: FB_CreateDir_V2;
+        AX_Name						: ARRAY[1..3] OF STRING;    
+		DeleteFile30Days			: FB_DeleteFile;          
+		DeleteFile3Days				: FB_DeleteFile;          
+		StartProcess 				: NT_StartProcess;
+		
+	// CreateDb Init        		
+		bCreateDb					: BOOL := TRUE;
+		DbidCreated					: UDINT := 1;
+		DbCreated_Trig				: F_TRIG;
+		AX_ColArray					: ARRAY[0..3] OF ST_ColumnInfo;
+	                            	
+	// One hour has elapsed
+		Trig1hour					: R_TRIG;
+		Rs1hour						: RS;
+		OldDBID						: UDINT := 1;
+		bDbCreated					: BOOL;
+		bDbDelete					: BOOL;
+		sReqCmd						: T_MAXSTRING;
+		
+	// New day 
+		TrigJour					: R_TRIG;
+		RsJour						: RS;
+		b1jourSpDoing				: BOOL;
+		TimeStruct3days				: TIMESTRUCT;
+		TimeStruct1month			: TIMESTRUCT;
+		Requete						: T_MaxString;
+		sTimeStamp1					: STRING(255);
+		sTimeStamp2					: STRING(255);
+		Format						: FB_FormatString;
+	
+		
+	// Insert	
+	SQLExpert_InsertBuffer_1s		: FB_SQLExpert_InsertBuffer;
+	SQLExpert_InsertBuffer_1m		: FB_SQLExpert_InsertBuffer;
+	SQLExpert_InsertBuffer_100ms	: FB_SQLExpert_InsertBuffer;
+
+	TON_100ms						: TON;
+	TON_1m							: TON;
+	TON_1s							: TON;
+	
+
+	
+	bInit 							: BOOL := TRUE;
+	KK								: UDINT;
+	LL								: UDINT := 1;
+
+	bTest1 							: BOOL;
+	bTest2 							: BOOL;
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// Trigger pour détecter nouvelle journée -> lance un check config + DayTrig pour faire les proc stockées
+TrigJour(CLK := CalLocalTimeStruct.wHour = 0);
+bCheckConfig := TrigJour.Q;
+Trig_CreateFolder(CLK := TrigJour.Q OR binit);
+RS_CreateFolder(SET := Trig_CreateFolder.Q);
+
+// Methode pour vérifier la configuration actuellement activée sur front montant de bCheckConfig
+M_Checkconfig();
+
+IF NOT bCheckConfig THEN
+	M_DayTrig();
+END_IF 
+
+IF bInit THEN
+	M_Init();
+END_IF
+
+M_AlarmManagement();
+(*--------------------------------------------------------------------------------------------*)
+(*--------------------------------------------------------------------------------------------*)
+// ICI JE LANCE LES ADD BUFFER POUR LES 3 TABLES
+IF NOT bInit THEN
+	SQLExpert_InsertBuffer_100ms(NomTable := 'Table100ms', hDBID := DBID_GLOBAL[1]);
+	SQLExpert_InsertBuffer_1s(NomTable := 'Table1s', hDBID := DBID_GLOBAL[2]);
+	SQLExpert_InsertBuffer_1m(NomTable := 'Table1m', hDBID := DBID_GLOBAL[3]);
+	
+	
+	TON_100ms(IN := NOT bInit, PT := T#100MS);
+	IF TON_100ms.Q THEN
+		FOR KK := 1 TO 100 DO
+			SQLExpert_InsertBuffer_100ms.M_AddLine(InStruct := GVL_DataBaseStructures.AX_Struct_100ms[KK]);
+		END_FOR
+		TON_100ms(IN := FALSE);
+		TON_100ms(IN := TRUE);
+	END_IF
+	
+	TON_1s(IN := NOT bInit, PT := T#1S);
+	IF TON_1s.Q THEN
+		FOR KK := 1 TO 1000 DO
+			SQLExpert_InsertBuffer_1s.M_AddLine(InStruct := GVL_DataBaseStructures.AX_Struct_1s[KK]);
+		END_FOR
+		TON_1s(IN := FALSE);
+		TON_1s(IN := TRUE);
+	END_IF
+	
+	TON_1m(IN := NOT bInit, PT := T#1M);
+	IF TON_1m.Q THEN
+		FOR KK := 1 TO 1000 DO
+			SQLExpert_InsertBuffer_1m.M_AddLine(InStruct := GVL_DataBaseStructures.AX_Struct_1m[KK]);
+		END_FOR
+		TON_1m(IN := FALSE);
+		TON_1m(IN := TRUE);
+	END_IF	
+
+END_IF
+(*--------------------------------------------------------------------------------------------*)
+(*--------------------------------------------------------------------------------------------*)
+
+
+]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{576ed5fd-aee6-429a-b536-cb80b3361920}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement : BOOL
+VAR
+		FB_AlarmCodeManager : FB_AlarmCodeManager;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[FB_AlarmCodeManager
+(
+	bAlarm1 := bCreateDirErr,
+	bAlarm2 := bCreateDbErr,
+	bAlarm3 := bDeleteConfErr,
+	bAlarm4 := bDeleteFileErr,
+	bAlarm5 := bCompressFileErr,
+	wAlarmCode => MesAlarmCode
+);]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_CheckConfig" Id="{6373df0c-565c-454e-ac31-6903180c85a9}">
+      <Declaration><![CDATA[METHOD M_CheckConfig : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[TrigCheckConfig(CLK := bCheckConfig OR binit);
+RS_CheckConfig(SET := TrigCheckConfig.Q);
+	
+IF RS_CheckConfig.Q1 THEN
+	IF ConfigTcDBSrvEvt.Read(
+		pDBConfig := ADR(aDBConfig), 
+		cbDBConfig := SIZEOF(aDBConfig), 
+		pAutologGrpConfig := ADR(aAutoGrpConfig),
+		cbAutoLogGrpConfig := SIZEOF(aAutoGrpConfig),
+		pDBCount := ADR(nDbCount),
+		pAutoLogGrpCount := ADR(nAutoGrpCount))
+	 THEN
+		IF ConfigTcDBSrvEvt.bError THEN
+			tcMessage := ConfigTcDBSrvEvt.ipTcResult;
+			bCheckConfig := FALSE; 
+		ELSE
+			bCheckConfig := FALSE; 
+			FOR KK := 0 TO MAX_CONFIGURATIONS DO
+				AX_hDBID[aDBConfig[KK].hDBID] := aDBConfig[KK].hDBID <> 0;
+				AX_NameBase[KK] :=  aDBConfig[KK].sName;
+			END_FOR
+		END_IF  
+		TrigCheckConfig(CLK := FALSE OR binit);
+		RS_CheckConfig(RESET1 := TRUE);
+		RS_CheckConfig(RESET1 := FALSE);
+	END_IF
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_DayTrig" Id="{37fc04ed-48bb-4557-85f7-0c685ebbce64}">
+      <Declaration><![CDATA[METHOD M_DayTrig : BOOL
+VAR_INPUT
+END_VAR
+VAR
+	DirTemp			: ARRAY[1..3] OF T_MaxString;
+	AX_NameTemp		: ARRAY[1..3] OF STRING := ['Table100ms', 'Table1s', 'Table1m']; 	
+	Dir30Days		: T_MaxString;
+	Dir3Days		: T_MaxString; 	
+	Dir3DaysComp1	: T_MaxString; 	
+	Dir3DaysComp2	: T_MaxString; 	
+
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+
+TimeStruct3days := DT_TO_SYSTEMTIME( SYSTEMTIME_TO_DT (CalLocalTimeStruct) - T#3D);
+TimeStruct1month := DT_TO_SYSTEMTIME( SYSTEMTIME_TO_DT (CalLocalTimeStruct) - T#30D);
+
+// D'abord je commence par créer tous les dossiers
+IF RS_CreateFolder.Q1 THEN
+	DirTemp[1] := ParamHistDir;
+	DirTemp[2] := Concat(STR1 := Concat(STR1 := ParamHistDir, STR2 := WORD_TO_STRING(CalLocalTimeStruct.wYear)), STR2 := '\');
+	DirTemp[3] := CONCAT(STR1 := CONCAT(STR1 := Concat(STR1 := Concat(STR1 := ParamHistDir, STR2 := WORD_TO_STRING(CalLocalTimeStruct.wYear)), STR2 := '\'), STR2 := WORD_TO_STRING(CalLocalTimeStruct.wMonth)), STR2 := '\');
+	
+	AX_DirDB[1] := ParamBaseDir;
+	AX_DirDB[2] := ParamBaseDir;
+	AX_DirDB[3] := DirTemp[3];
+	FOR KK := 1 TO 3 DO 
+		AX_Name[KK] := CONCAT(STR1 := CONCAT(STR1 := CONCAT(STR1 := CONCAT(STR1 := CONCAT(STR1 := Concat(STR1 := WORD_TO_STRING(CalLocalTimeStruct.wYear), STR2 := ''), STR2 := WORD_TO_STRING(CalLocalTimeStruct.wMonth)), STR2:= ''), STR2:= WORD_TO_STRING(CalLocalTimeStruct.wDay)), STR2:= '_'), STR2:= AX_NameTemp[KK]);
+	END_FOR
+	
+	IF LL < 4 THEN
+		CreateDir(InPath := DirTemp[LL], InExe := LL < 4);
+		IF NOT CreateDir.OutBusy THEN
+			IF CreateDir.OutError AND NOT CreateDir.OutErrorId =1827 (*Dossier existe déjà*) THEN
+				CreateDir(InExe := FALSE);
+				bCreateDirErr := TRUE;
+			ELSE
+				bCreateDirErr := FALSE;
+				CreateDir(InExe := FALSE);
+				LL := LL + 1;
+			END_IF
+			CreateDir(InPath := DirTemp[LL], InExe := FALSE);
+		END_IF
+	ELSE
+		RS_CreateFolder(RESET1 := TRUE);
+		RS_CreateFolder(RESET1 := FALSE);
+		RS_CreateDbDay(SET := TRUE);
+		RS_CreateDbDay(SET := FALSE);
+		LL := 1;
+	END_IF
+END_IF
+
+// Ensuite je créée les bases 
+IF RS_CreateDbDay.Q1 THEN
+	IF LL < 4 THEN
+		SQLite_CreateDb_V2(IN_DbType := 1, IN_Dir := AX_DirDB[LL],IN_Name := AX_Name[LL], IN_TableName := AX_NameTemp[LL], IN_hDBID := DBID_GLOBAL[LL], IN_Start := bCreateDb, IN_ConfigDbActuelle := aDBConfig);
+		IF NOT SQLite_CreateDb_V2.OUT_Busy THEN
+			SQLite_CreateDb_V2(IN_Start := FALSE, IN_hDBID := DBID_GLOBAL[LL]);
+			IF SQLite_CreateDb_V2.OUT_Error THEN
+				SQLite_CreateDb_V2(IN_Start := FALSE, IN_hDBID := DBID_GLOBAL[LL]);
+				bCreateDbErr := TRUE;
+			ELSE
+				SQLite_CreateDb_V2(IN_Start := FALSE, IN_hDBID := DBID_GLOBAL[LL]);
+				LL := LL + 1;
+				bCreateDbErr := FALSE;
+			END_IF
+		END_IF
+	ELSE
+		LL := 1;
+		RS_CreateDbDay(RESET1 := TRUE);
+		RS_CreateDbDay(RESET1 := FALSE);
+		RS_DeleteConf(SET := TRUE AND NOT bInit);
+		RS_DeleteConf(SET := FALSE);
+		bDayTrig := False;
+	END_IF
+END_IF
+
+// Ensuite je supprime les vieilles tables de la conf précédente
+IF RS_DeleteConf.Q1 THEN
+	IF LL < 4 THEN
+		DBID_ToDelete[LL] := SEL(DBID_GLOBAL[LL] = LL, LL, LL+3);
+		// CELA NE SUPPRIME QUE LES CONFS
+		SQLite_DeleteConfDb(IN_DbType := 1, IN_hDBID := DBID_ToDelete[LL], IN_Start := TRUE);
+		IF NOT SQLite_DeleteConfDb.OUT_Busy THEN
+			IF SQLite_DeleteConfDb.OUT_Error THEN
+				SQLite_DeleteConfDb(IN_Start := FALSE);
+				bDeleteConfErr := TRUE;
+			ELSE
+				bDeleteConfErr := FALSE;
+				SQLite_DeleteConfDb(IN_Start := FALSE);
+				LL := LL + 1;
+			END_IF
+		END_IF
+	ELSE
+		LL := 1;
+		RS_DeleteConf(RESET1 := TRUE);
+		RS_DeleteConf(RESET1 := FALSE);
+		RS_DeleteFiles(SET := TRUE);
+		RS_DeleteFiles(SET := FALSE);
+	END_IF
+END_IF
+
+// Et enfin, je supprime les vieux fichiers : plus de 30 jours pour les 1s, plus de 3 jours pour les 100ms
+IF RS_DeleteFiles.Q1 THEN
+	Dir30Days := CONCAT(STR1:=CONCAT(STR1:=CONCAT(STR1 := CONCAT(STR1 := CONCAT(STR1 := CONCAT(STR1 := CONCAT(STR1 := Concat(STR1 := ParamBaseDir, STR2 := WORD_TO_STRING(TimeStruct1month.wYear)), STR2 := ''), STR2 := WORD_TO_STRING(TimeStruct1month.wMonth)), STR2:= ''), STR2:= WORD_TO_STRING(TimeStruct1month.wDay)), STR2:= '_'), STR2:= AX_NameTemp[LL]), STR2 := '.db');
+	Dir3Days := CONCAT(STR1:=CONCAT(STR1:=CONCAT(STR1 := CONCAT(STR1 := CONCAT(STR1 := CONCAT(STR1 := CONCAT(STR1 := Concat(STR1 := ParamBaseDir, STR2 := WORD_TO_STRING(TimeStruct3days.wYear)), STR2 := ''), STR2 := WORD_TO_STRING(TimeStruct3days.wMonth)), STR2:= ''), STR2:= WORD_TO_STRING(TimeStruct3days.wDay)), STR2:= '_'), STR2:= AX_NameTemp[LL]), STR2 := '.db');
+	
+	DeleteFile30Days(IN_Dir := Dir30Days, IN_Start := TRUE);
+	DeleteFile3Days(IN_Dir := Dir3Days, IN_Start := TRUE);
+	
+	IF NOT DeleteFile3Days.OUT_Busy AND NOT DeleteFile30Days.OUT_Busy AND LL < 2 THEN
+		IF NOT DeleteFile30Days.OUT_Error AND NOT DeleteFile3Days.OUT_Error THEN
+			LL := LL + 1;
+			DeleteFile30Days(IN_Start := FALSE);
+			DeleteFile3Days(IN_Start := FALSE);
+			bDeleteFileErr := FALSE;
+		ELSE
+			bDeleteFileErr := TRUE;
+			DeleteFile30Days(IN_Start := FALSE);
+			DeleteFile3Days(IN_Start := FALSE);
+		END_IF
+	ELSIF NOT DeleteFile3Days.OUT_Busy AND NOT DeleteFile30Days.OUT_Busy AND LL = 2 THEN
+		IF NOT DeleteFile30Days.OUT_Error AND NOT DeleteFile3Days.OUT_Error THEN
+			LL := 1;
+			bDeleteFileErr := FALSE;
+			DeleteFile30Days(IN_Start := FALSE);
+			DeleteFile3Days(IN_Start := FALSE);
+			RS_DeleteFiles(reset1 := TRUE);
+			RS_DeleteFiles(reset1 := FALSE);
+			RS_CompressOldFiles(set := TRUE);
+			RS_CompressOldFiles(Set := FALSE);
+		ELSE
+			bDeleteFileErr := TRUE;
+			DeleteFile30Days(IN_Start := FALSE);
+			DeleteFile3Days(IN_Start := FALSE);
+		END_IF
+	END_IF
+END_IF
+
+IF RS_CompressOldFiles.Q1 THEN
+	Dir3DaysComp1 := CONCAT(STR1:=CONCAT(STR1:=CONCAT(STR1 := CONCAT(STR1 := CONCAT(STR1 := CONCAT(STR1 := CONCAT(STR1 := Concat(STR1 := ParamBaseDir, STR2 := WORD_TO_STRING(TimeStruct3days.wYear)), STR2 := ''), STR2 := WORD_TO_STRING(TimeStruct3days.wMonth)), STR2:= ''), STR2:= WORD_TO_STRING(TimeStruct3days.wDay)), STR2:= '_'), STR2:= AX_NameTemp[1]), STR2 := '.db');
+	Dir3DaysComp2 := CONCAT(STR1:=CONCAT(STR1:=CONCAT(STR1 := CONCAT(STR1 := CONCAT(STR1 := CONCAT(STR1 := CONCAT(STR1 := Concat(STR1 := ParamBaseDir, STR2 := WORD_TO_STRING(TimeStruct3days.wYear)), STR2 := ''), STR2 := WORD_TO_STRING(TimeStruct3days.wMonth)), STR2:= ''), STR2:= WORD_TO_STRING(TimeStruct3days.wDay)), STR2:= '_'), STR2:= AX_NameTemp[2]), STR2 := '.db');
+	StartProcess
+	(
+		NETID := '',
+		PATHSTR := 'C:\Windows\System32\compact.exe',
+		DIRNAME := 'C:\Windows\System32',
+		COMNDLINE :=  CONCAT(STR1:=CONCAT(STR1:=CONCAT(STR1:=CONCAT(STR1:=' /c "',STR2:=Dir3DaysComp1), str2:='"  "'), STR2:=Dir3DaysComp2),str2:='"'),
+		Start := RS_CompressOldFiles.Q1,
+		TMOUT := T#3M
+	);
+	IF NOT StartProcess.BUSY THEN
+		IF NOT StartProcess.ERR THEN
+			StartProcess(Start := FALSE);
+			bCompressFileErr := FALSE;
+			RS_CompressOldFiles(RESET1:= TRUE);
+			RS_CompressOldFiles(RESET1:= FALSE);
+		ELSE
+			StartProcess(Start := FALSE);
+			bCompressFileErr := TRUE;
+		END_IF
+	END_IF	
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{63be955e-106c-4cee-b8cf-ef315156a0bc}">
+      <Declaration><![CDATA[METHOD M_Init : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+bInit := (bCheckConfig) OR (bDayTrig);
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="DataBase_V2">
+      <LineId Id="1146" Count="58" />
+      <LineId Id="153" Count="0" />
+    </LineIds>
+    <LineIds Name="DataBase_V2.M_AlarmManagement">
+      <LineId Id="8" Count="2" />
+      <LineId Id="12" Count="3" />
+      <LineId Id="11" Count="0" />
+      <LineId Id="6" Count="0" />
+    </LineIds>
+    <LineIds Name="DataBase_V2.M_CheckConfig">
+      <LineId Id="6" Count="13" />
+      <LineId Id="49" Count="0" />
+      <LineId Id="23" Count="0" />
+      <LineId Id="48" Count="0" />
+      <LineId Id="24" Count="3" />
+      <LineId Id="33" Count="0" />
+      <LineId Id="45" Count="2" />
+      <LineId Id="34" Count="1" />
+    </LineIds>
+    <LineIds Name="DataBase_V2.M_DayTrig">
+      <LineId Id="99" Count="0" />
+      <LineId Id="15" Count="0" />
+      <LineId Id="33" Count="0" />
+      <LineId Id="32" Count="0" />
+      <LineId Id="16" Count="0" />
+      <LineId Id="103" Count="0" />
+      <LineId Id="34" Count="0" />
+      <LineId Id="14" Count="0" />
+      <LineId Id="57" Count="0" />
+      <LineId Id="59" Count="0" />
+      <LineId Id="58" Count="0" />
+      <LineId Id="63" Count="0" />
+      <LineId Id="89" Count="2" />
+      <LineId Id="80" Count="1" />
+      <LineId Id="79" Count="0" />
+      <LineId Id="60" Count="1" />
+      <LineId Id="17" Count="0" />
+      <LineId Id="66" Count="2" />
+      <LineId Id="254" Count="0" />
+      <LineId Id="69" Count="0" />
+      <LineId Id="255" Count="0" />
+      <LineId Id="86" Count="0" />
+      <LineId Id="76" Count="0" />
+      <LineId Id="78" Count="0" />
+      <LineId Id="85" Count="0" />
+      <LineId Id="47" Count="0" />
+      <LineId Id="65" Count="0" />
+      <LineId Id="83" Count="1" />
+      <LineId Id="87" Count="1" />
+      <LineId Id="82" Count="0" />
+      <LineId Id="20" Count="0" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="104" Count="0" />
+      <LineId Id="38" Count="0" />
+      <LineId Id="35" Count="0" />
+      <LineId Id="8" Count="0" />
+      <LineId Id="50" Count="0" />
+      <LineId Id="40" Count="0" />
+      <LineId Id="54" Count="0" />
+      <LineId Id="44" Count="1" />
+      <LineId Id="256" Count="0" />
+      <LineId Id="51" Count="0" />
+      <LineId Id="93" Count="0" />
+      <LineId Id="52" Count="0" />
+      <LineId Id="257" Count="0" />
+      <LineId Id="46" Count="0" />
+      <LineId Id="43" Count="0" />
+      <LineId Id="94" Count="0" />
+      <LineId Id="98" Count="0" />
+      <LineId Id="95" Count="0" />
+      <LineId Id="97" Count="0" />
+      <LineId Id="96" Count="0" />
+      <LineId Id="108" Count="0" />
+      <LineId Id="148" Count="0" />
+      <LineId Id="41" Count="0" />
+      <LineId Id="39" Count="0" />
+      <LineId Id="109" Count="0" />
+      <LineId Id="101" Count="0" />
+      <LineId Id="105" Count="0" />
+      <LineId Id="119" Count="0" />
+      <LineId Id="118" Count="0" />
+      <LineId Id="134" Count="0" />
+      <LineId Id="110" Count="0" />
+      <LineId Id="112" Count="0" />
+      <LineId Id="127" Count="0" />
+      <LineId Id="135" Count="0" />
+      <LineId Id="258" Count="0" />
+      <LineId Id="130" Count="0" />
+      <LineId Id="259" Count="0" />
+      <LineId Id="132" Count="1" />
+      <LineId Id="129" Count="0" />
+      <LineId Id="114" Count="0" />
+      <LineId Id="120" Count="1" />
+      <LineId Id="123" Count="1" />
+      <LineId Id="138" Count="0" />
+      <LineId Id="140" Count="0" />
+      <LineId Id="122" Count="0" />
+      <LineId Id="111" Count="0" />
+      <LineId Id="136" Count="0" />
+      <LineId Id="102" Count="0" />
+      <LineId Id="137" Count="0" />
+      <LineId Id="141" Count="0" />
+      <LineId Id="146" Count="1" />
+      <LineId Id="211" Count="1" />
+      <LineId Id="189" Count="0" />
+      <LineId Id="174" Count="0" />
+      <LineId Id="193" Count="0" />
+      <LineId Id="260" Count="0" />
+      <LineId Id="197" Count="0" />
+      <LineId Id="214" Count="0" />
+      <LineId Id="264" Count="0" />
+      <LineId Id="205" Count="0" />
+      <LineId Id="265" Count="0" />
+      <LineId Id="261" Count="0" />
+      <LineId Id="263" Count="0" />
+      <LineId Id="262" Count="0" />
+      <LineId Id="183" Count="0" />
+      <LineId Id="266" Count="0" />
+      <LineId Id="210" Count="0" />
+      <LineId Id="274" Count="0" />
+      <LineId Id="267" Count="1" />
+      <LineId Id="199" Count="1" />
+      <LineId Id="225" Count="1" />
+      <LineId Id="269" Count="0" />
+      <LineId Id="273" Count="0" />
+      <LineId Id="270" Count="0" />
+      <LineId Id="272" Count="0" />
+      <LineId Id="271" Count="0" />
+      <LineId Id="216" Count="0" />
+      <LineId Id="142" Count="0" />
+      <LineId Id="228" Count="0" />
+      <LineId Id="227" Count="0" />
+      <LineId Id="229" Count="0" />
+      <LineId Id="235" Count="0" />
+      <LineId Id="240" Count="7" />
+      <LineId Id="236" Count="1" />
+      <LineId Id="248" Count="0" />
+      <LineId Id="278" Count="0" />
+      <LineId Id="277" Count="0" />
+      <LineId Id="250" Count="0" />
+      <LineId Id="253" Count="0" />
+      <LineId Id="275" Count="0" />
+      <LineId Id="279" Count="0" />
+      <LineId Id="276" Count="0" />
+      <LineId Id="251" Count="0" />
+      <LineId Id="249" Count="0" />
+      <LineId Id="230" Count="0" />
+      <LineId Id="100" Count="0" />
+    </LineIds>
+    <LineIds Name="DataBase_V2.M_Init">
+      <LineId Id="7" Count="1" />
+      <LineId Id="5" Count="1" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

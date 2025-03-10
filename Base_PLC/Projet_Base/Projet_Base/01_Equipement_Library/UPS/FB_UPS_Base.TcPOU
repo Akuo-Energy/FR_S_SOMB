@@ -1,0 +1,142 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_UPS_Base" Id="{3666d37b-1d48-47bd-98a6-c1ac777f9c72}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_UPS_Base
+//////////////////
+// UPS 
+//////////////////
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance/model specific) 
+		ParamTimeOut					: TIME := T#2S;		(* (s) Modbus Timeout*)
+		ParamClockReadTime				: TIME := T#1S;		(* (s) Modbus Reading Frequency *)
+		ParamNC							: BOOL := FALSE; 	(* (NA)False: TRUE = Closed, True : TRUE = opened*)
+		                                
+		ParamTempoComAlarm				: TIME := T#2S;		(* (s) Tempo before raising a communication alarm*)
+		ParamTempoComWarning			: TIME := T#1S;		(* (s) Tempo before raising a communication warning*)
+		ParamTP_Impulsion				: TIME := T#5S;		(* (s) TP Impulsion = 5s *)
+END_VAR                                 
+                                        
+VAR_OUTPUT                              
+	//Child objects                     
+		OUT_CmdRelance_IO				: BOOL;
+END_VAR                                 
+                                        
+VAR_INPUT                               
+	// I/O Inputs                       
+		IN_MesDischarging_IO		  	: BOOL;
+		IN_MesBatLow_IO		   			: BOOL;
+		IN_MesFault_IO					: BOOL;
+
+		IN_CmdReStartUPS				: BOOL;
+		
+		IN_CmdToggleRead				: BOOL;
+		IN_CmdReset_L					: BOOL; 
+END_VAR
+
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//
+		TON_ComAlarm					: TON;
+		TON_ComWarning					: TON;	
+
+		MesWarningCom					: BOOL ; 			// (NA) [P,H] True if bad modbus communication 
+			
+	//M_READ//
+//	MesDataExd					: UPS ; 
+
+	//M_EXECUTE //
+		TP1								: TP;
+		ClockRead			AT %Q*		: BOOL;
+   		
+    //M_CP VARIABLES//
+		Trig_Cmd_Read					: R_TRIG;                                                                                        
+                                                                                       
+		CmdRelanceChargeur				: BOOL;
+		CP_Relance						: BOOL;
+		TP_Relance						: TP;
+		MesCP_Read					: BOOL := TRUE;	(* Read function enable *)
+		MesCP_Write					: BOOL := TRUE;	(* Write function enable *)   
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{1e76f4e6-2953-429c-a3b3-a8e1579a7485}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Manages Sepam Alarms. Alarms opens HT CB until Sepam manual Reset . Warning Opens CB-L but does not maintain warning
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager 	: FB_AlarmCodeManager ; 
+
+ 
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{d904a97b-4a18-4fa8-8817-af95c41483e9}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+// METHODS CALLS // 
+CP_Relance	:= IN_CmdReStartUPS ; 	
+
+
+	TP1(IN:=NOT TP1.Q , PT:= ParamClockReadTime);
+	ClockRead 		:= TP1.Q;
+
+	TP_Relance(IN:= CP_Relance , PT:=ParamTP_Impulsion) ;
+	OUT_CmdRelance_IO	 := TP_Relance.Q ;
+	
+	M_Read(); 
+	M_AlarmManagement() ; ]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Read" Id="{bd58a7a3-3944-46e7-858a-c18b130418dd}">
+      <Declaration><![CDATA[METHOD M_Read
+//////////////////
+//  Read Modbus Variable for PCS . 
+/////////////////
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+		
+
+END_VAR
+
+
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_UPS_Base">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_UPS_Base.M_AlarmManagement">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_UPS_Base.M_Execute">
+      <LineId Id="85" Count="2" />
+      <LineId Id="89" Count="0" />
+      <LineId Id="93" Count="0" />
+      <LineId Id="95" Count="2" />
+      <LineId Id="100" Count="4" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_UPS_Base.M_Read">
+      <LineId Id="453" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

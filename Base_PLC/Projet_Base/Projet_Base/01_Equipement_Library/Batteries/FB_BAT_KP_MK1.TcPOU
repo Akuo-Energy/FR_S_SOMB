@@ -1,0 +1,938 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_BAT_KP_MK1" Id="{24dc5ea6-dedd-4209-9582-651a76eeff0e}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_BAT_KP_MK1 EXTENDS FB_BAT_Base
+// Code for the KorePower Mark1 battery system
+// Architecture : 	MsBMS (1 - 40 racks per MsBMS)
+//						Racks (2 - 17 modules per racks)
+// 							Cells (32 per modules : 2P16S)
+
+VAR_INPUT PERSISTENT
+		ParamIpAddress 			: STRING 	:='192.168.127.133' ; 		(* IP¨Address*)
+		ParamUnitID				: BYTE  	:= 1 ; 					(* Modbus Unit ID*)
+		ParamTcpPort			: UINT 		:= 502;					(* Modbus TCP Port*)
+	
+
+END_VAR
+
+VAR_INPUT
+	//Child objects
+	
+	
+		IN_CmdOpenDC						: BOOL;
+		IN_CmdCloseDC 						: BOOL;
+		
+		MesDataExd							: BAT_KP;
+END_VAR
+
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//
+	
+		CalModbusWriteAlarm			: BOOL;		// Modbus Write alarm
+		ComWarning					: BOOL;		// Aggregated Communication warning
+		ComAlarm					: BOOL;		// Aggregated communication Alarm
+	
+		TON_BatteriesCharging		: TON ;
+		TON_BatteriesDischarging	: TON ;
+		
+		
+	//M_READ VARIABLES//
+		ModbusRead802			: FB_ModbusRead;
+		ModbusRead803_Fix		: FB_ModbusRead;
+		
+		MesModbusReadAlarm 		  	: ARRAY[1..2] OF BOOL ; 			// (NA) Modbus Read Alarm for all modbus frames		
+		MesModbusReadAlarmRacks		: ARRAY[1..CstNbRack_BAT_G] OF ARRAY[1..2] OF BOOL ; 			// (NA) Modbus Read Alarm for all modbus frames
+		
+		
+		// Au max, 40 strings, avec 32 registres : Je vais pouvoir faire 3 strings par requête (=96 reg/requetes) donc au max il y aura 13 requêtes
+		ModbusRead803_Rep		: ARRAY[1..40] OF FB_ModbusRead;
+		NbRead					: UDINT;
+		
+		StartAddr 				: UINT := 102;
+	
+		// Les blocks fixes du 804 ne sont jamais à la suite les uns des autres, donc il en faut au max 40.
+		ModbusRead804_Fix		: ARRAY[1..40] OF FB_ModbusRead;
+		// les blocs qui se répètent du 804 dépendent du nombre de modules par string : le nombre max est 17, avec 16 registres = 272 registres
+		// je vais donc lire 112 registres 2 fois et 48 registres 1 fois
+	
+		                    	
+		                    	
+		MesBlock_802			: ARRAY[1..120] OF WORD;
+		MesBlock_803_Fix		: ARRAY[1..120] OF WORD;
+		MesBlock_803_Rep		: ARRAY[1..40] OF ARRAY[1..32*3] OF WORD;
+		MesBlock_804_Fix		: ARRAY[1..40] OF ARRAY[1..48] OF WORD;
+		                    	
+		Cal_StartRead803_Fix	: UINT;
+		Cal_StartRead804_Fix	: UINT;
+	
+	        
+		MesChargeStatus			: UINT ; // temp charge status used before putting it in words
+		MesIDState				: UINT ; // temp status used before putting it in words
+		MesAHRtg_SF_802 		: REAL ; // Scale factor for charge capacity.
+		MesWHRtg_SF_802 		: REAL ; // Scale factor for energy capacity.
+		MesWChaDisChaMax_SF_802 : REAL ; // Scale factor for maximum charge and discharge rate.
+		MesDisChaRte_SF_802 	: REAL ; // Scale factor for self discharge rate.
+		MesSoC_SF_802 			: REAL ; // Scale factor for state of charge values.
+		MesDoD_SF_802 			: REAL ; // Scale factor for depth of discharge.
+		MesSoH_SF_802 			: REAL ; // Scale factor for state of health.
+		MesV_SF_802 			: REAL ; // Scale factor for DC bus voltage.
+		MesCellV_SF_802 		: REAL ; // Scale factor for cell voltage.
+		MesA_SF_802 			: REAL ; // Scale factor for DC current.
+		MesAMax_SF_802 			: REAL ; // Scale factor for instantaneous DC charge/discharge current.
+		MesW_SF_802 			: REAL ; // Scale factor for AC power request.
+		
+		MesCellV_SF_803 		: REAL ; // Scale factor for cell voltage.
+		MesModTmp_SF_803		: REAL ; // Scale factor for module temperatures.
+		MesA_SF_803 			: REAL ; // Scale factor for string currents.
+		MesSoH_SF_803 			: REAL ; // Scale factor for string state of health.
+		MesSoC_SF_803 			: REAL ; // Scale factor for string state of charge.
+		MesV_SF_803 			: REAL ; // Scale factor for string voltage.
+	
+		MesCellV_SF_804 		: REAL ; // Scale factor for cell voltage.
+		MesModTmp_SF_804		: REAL ; // Scale factor for module temperatures.
+		MesA_SF_804 			: REAL ; // Scale factor for string currents.
+		MesSoH_SF_804 			: REAL ; // Scale factor for string state of health.
+		MesSoC_SF_804 			: REAL ; // Scale factor for string state of charge.
+		MesDoD_SF_804 			: REAL ; // Scale factor for string state of charge.
+		MesV_SF_804 			: REAL ; // Scale factor for string voltage.
+
+		                    	
+	//M_WRITE VARIABLES //  	
+		AX_Cmd	AT%Q* 			: ARRAY[1..3] OF WORD;
+		AX_ModbusWrite			: ARRAY[1..4] OF FB_ModbusWriteSingleRegister;
+		AX_bAlarmWrite			: ARRAY[1..4] OF BOOL;
+		AX_uAlarmWrite			: ARRAY[1..4] OF UDINT ; 
+		Trig_CmdOpenDC			: R_TRIG;
+		Trig_CmdCloseDC			: R_TRIG;
+		Trig_CmdReset			: R_TRIG;
+	
+	//M_STATEMANAGER VARIABLES//
+	
+	//M_INIT VARIABLES //
+	//M_EVALUATE VARIABLES //
+	
+		
+	
+	//M_EXECUTE VARIABLES//
+		
+	//Test//	
+		Xtest				: BOOL;
+		xTestReal			: REAL;
+		xTestReal1			: REAL;
+		xTestInt			: INT;
+		xTestWord			: WORD;
+		
+		
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{7bd6b459-3582-4017-a616-28503283f422}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+//  Battery Area  Alarm Management 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager 		: FB_AlarmCodeManager ; 
+                            	
+	KK							: UINT;				// For Loop 
+	                 
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//COMMUNICATION//
+	CalModbusWriteAlarm := AX_bAlarmWrite[1] OR AX_bAlarmWrite[2] OR AX_bAlarmWrite[3] ; 
+	
+	ComWarning 			:= CalModbusWriteAlarm ;			// At least one modbus trame did not work
+	ComAlarm			:= TRUE;						// All modbus trame did not work
+	
+	FOR KK:=1 TO 2 DO // nb of trame = 4
+		ComWarning 	:= ComWarning OR MesModbusReadAlarm[KK] ;
+		ComAlarm	:= ComAlarm AND MesModbusReadAlarm[KK];
+	END_FOR
+	
+	FOR KK:=1 TO ParamNbRacks DO // nb of trame = 4
+		ComWarning 	:= ComWarning OR MesModbusReadAlarmRacks[KK][1] OR MesModbusReadAlarmRacks[KK][2] ;
+		ComAlarm	:= ComAlarm AND MesModbusReadAlarmRacks[KK][1] AND MesModbusReadAlarmRacks[KK][2];
+	END_FOR	
+	
+	//Warning
+	MesDataExd.MesData.MesWarningCom := ComWarning ; 
+	//Alarm
+	TON_ComAlarm(IN:= ComAlarm , PT:= ParamTempoComAlarm, Q=>MesDataExd.MesData.MesAlarmCom) ;	// Alarms if ALL TRAM MODBUS did not work and timeout of 15s
+	
+
+
+TON_ComAlarm(IN:= ComAlarm , PT:= ParamTempoComAlarm, Q=>MesDataExd.MesData.MesAlarmCom) ;	// Alarms if ALL TRAM MODBUS did not work and timeout of 15s
+	
+
+
+
+	FB_AlarmCodeManager(	
+		bAlarm1			:= MesDataExd.MesData.MesAlarmCom, 									// Com alarm
+		bAlarm2			:= FALSE,									// 
+		bAlarm3			:= FALSE, 													//                  
+		bAlarm4			:= FALSE, 													//                      
+		bAlarm5			:= FALSE, 													//                 
+		bAlarm6			:= FALSE, 													//          
+		bAlarm7			:= FALSE, 													//          
+		bAlarm8			:= FALSE, 													//          
+		bAlarm9			:= FALSE,   												//         
+		bAlarm10		:= FALSE,   												//         
+		bAlarm11		:= FALSE,   												//          
+		bAlarm12		:= FALSE, 													//  						                
+		bAlarm13		:= FALSE, 													//  						                 
+		bAlarm14		:= FALSE, 													//  						                 
+		bAlarm15		:= FALSE, 													//  						
+		wAlarmCode		=> MesDataExd.MesData.MesAlarmCode);
+
+
+// WARNING CODE //
+	FB_AlarmCodeManager(	
+		bAlarm1			:= MesComWarning, 											// Communication warning 
+		bAlarm2			:= FALSE, 													//
+		bAlarm3			:= FALSE, 													//
+		bAlarm4			:= FALSE, 													//      
+		bAlarm5			:= FALSE, 													//      
+		bAlarm6			:= FALSE, 													//      
+		bAlarm7			:= FALSE, 													//      
+		bAlarm8			:= FALSE,   												//         
+		bAlarm9			:= FALSE,   												//         
+		bAlarm10		:= FALSE,   												//         
+		bAlarm11		:= FALSE,   												//         
+		bAlarm12		:= FALSE,   												//         
+		bAlarm13		:= FALSE,  													//         
+		bAlarm14		:= FALSE,  													//         
+		bAlarm15		:= FALSE,	    											// 
+		wAlarmCode		=> MesDataExd.MesData.MesWarningCode);          
+		
+
+
+// EVENT CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= TON_BatteriesCharging.Q ,								//Batteries charging
+		bAlarm2			:= TON_BatteriesDischarging.Q,								//Batteries discharging
+		bAlarm3			:= FALSE,													//
+		bAlarm4			:= FALSE,													//		
+		bAlarm5			:= IN_CmdOpenDC,                                            // Open DC command
+		bAlarm6			:= IN_CmdCloseDC,                                           // Close DC Command
+		bAlarm7			:= FALSE,                                                   //
+		bAlarm8			:= FALSE,                                                   //
+		bAlarm9			:= FALSE,                                                   //
+		bAlarm10		:= FALSE,                                                   //
+		bAlarm11		:= FALSE,                                                   //
+		bAlarm12		:= FALSE,                                                   //
+		bAlarm13		:= FALSE,                                                   //
+		bAlarm14		:= FALSE,                                                   //
+		bAlarm15		:= FALSE,                                                   //
+		wAlarmCode		=> MesDataExd.MesData.MesEventCode);
+
+
+	FB_AlarmCodeManager(	
+        bAlarm1			:= MesDataExd.MesChargeStatus= 1,  									// Charge Status  -  OFF
+        bAlarm2			:= MesDataExd.MesChargeStatus= 2,  									// Charge Status  -  EMPTY
+        bAlarm3			:= MesDataExd.MesChargeStatus= 3,  									// Charge Status  -  DISCHARGING
+        bAlarm4			:= MesDataExd.MesChargeStatus= 4,  									// Charge Status  -  CHARGING
+        bAlarm5			:= MesDataExd.MesChargeStatus= 5,  									// Charge Status  -  FULL
+        bAlarm6			:= MesDataExd.MesChargeStatus= 6,  									// Charge Status  -  HOLDING
+        bAlarm7			:= MesDataExd.MesChargeStatus= 7,  									// Charge Status  -  TESTING
+		bAlarm8			:= FALSE,                                                   //
+		bAlarm9			:= FALSE,                                                   //
+		bAlarm10		:= FALSE,                                                   //
+		bAlarm11		:= FALSE,                                                   //
+		bAlarm12		:= FALSE,                                                   //
+		bAlarm13		:= FALSE,                                                   //
+		bAlarm14		:= FALSE,                                                   //
+		bAlarm15		:= FALSE,                                                   //
+		wAlarmCode		=> MesDataExd.MesChargeStatus);
+
+		
+
+	FB_AlarmCodeManager(	
+        bAlarm1			:= MesIDState= 1,  				// State of the Battery Bank  -  DISCONNECTED
+        bAlarm2			:= MesIDState= 2,  				// State of the Battery Bank  -  INITIALIZING
+        bAlarm3			:= MesIDState= 3,  				// State of the Battery Bank  -  CONNECTED
+        bAlarm4			:= MesIDState= 4,  				// State of the Battery Bank  -  STANDBY
+        bAlarm5			:= MesIDState= 5,  				// State of the Battery Bank  -  SOC PROTECTION
+        bAlarm6			:= MesIDState= 6,  				// State of the Battery Bank  -  SUSPENDING
+        bAlarm7			:= MesIDState= 99,  			// State of the Battery Bank  -  FAULT
+		bAlarm8			:= FALSE,                       //
+		bAlarm9			:= FALSE,                       //
+		bAlarm10		:= FALSE,                       //
+		bAlarm11		:= FALSE,                       //
+		bAlarm12		:= FALSE,                       //
+		bAlarm13		:= FALSE,                       //
+		bAlarm14		:= FALSE,                       //
+		bAlarm15		:= FALSE,                       //
+		wAlarmCode		=> MesDataExd.MesData.MesIDState
+);
+(*
+	FB_AlarmCodeManager(	
+        bAlarm1		:= MesData.MesEvt1.0,  			// Battery Event 1 -  COMMUNICATION_ERROR
+        bAlarm2		:= MesData.MesEvt1.1,  			// Battery Event 1 -  OVER_TEMP_ALARM
+        bAlarm3		:= MesData.MesEvt1.2,  			// Battery Event 1 -  OVER_TEMP_WARNING
+        bAlarm4		:= MesData.MesEvt1.3,  			// Battery Event 1 -  UNDER_TEMP_ALARM
+        bAlarm5		:= MesData.MesEvt1.4,  			// Battery Event 1 -  UNDER_TEMP_WARNING
+        bAlarm6		:= MesData.MesEvt1.5,  			// Battery Event 1 -  OVER_CHARGE_CURRENT_ALARM
+        bAlarm7		:= MesData.MesEvt1.6,  			// Battery Event 1 -  OVER_CHARGE_CURRENT_WARNING
+        bAlarm8		:= MesData.MesEvt1.7,  			// Battery Event 1 -  OVER_DISCHARGE_CURRENT_ALARM
+        bAlarm9		:= MesData.MesEvt1.8,  			// Battery Event 1 -  OVER_DISCHARGE_CURRENT_WARNING
+        bAlarm10	:= MesData.MesEvt1.9,  			// Battery Event 1 -  OVER_VOLT_ALARM
+        bAlarm11	:= MesData.MesEvt1.10,  		// Battery Event 1 -  OVER_VOLT_WARNING
+        bAlarm12	:= MesData.MesEvt1.11,  		// Battery Event 1 -  UNDER_VOLT_ALARM
+        bAlarm13	:= MesData.MesEvt1.12,  		// Battery Event 1 -  UNDER_VOLT_WARNING
+        bAlarm14	:= MesData.MesEvt1.13,  		// Battery Event 1 -  UNDER_SOC_MIN_ALARM
+        bAlarm15	:= MesData.MesEvt1.14,  		// Battery Event 1 -  UNDER_SOC_MIN_WARNING
+		wAlarmCode	=> MesData.MesAlarmCode_MesEvt1_1
+);
+
+	FB_AlarmCodeManager(	
+        bAlarm1		:= MesData.MesEvt1.15,  		// Battery Event 1 -  OVER_SOC_MAX_ALARM
+        bAlarm2		:= MesData.MesEvt1.16,  		// Battery Event 1 -  OVER_SOC_MAX_WARNING
+        bAlarm3		:= MesData.MesEvt1.17,  		// Battery Event 1 -  VOLTAGE_IMBALANCE_WARNING
+        bAlarm4		:= MesData.MesEvt1.18,  		// Battery Event 1 -  TEMPERATURE_IMBALANCE_ALARM
+        bAlarm5		:= MesData.MesEvt1.19,  		// Battery Event 1 -  TEMPERATURE_IMBALANCE_WARNING
+        bAlarm6		:= MesData.MesEvt1.20,  		// Battery Event 1 -  CONTACTOR_ERROR
+        bAlarm7		:= MesData.MesEvt1.21,  		// Battery Event 1 -  FAN_ERROR
+        bAlarm8		:= MesData.MesEvt1.22,  		// Battery Event 1 -  GROUND_FAULT
+        bAlarm9		:= MesData.MesEvt1.23,  		// Battery Event 1 -  OPEN_DOOR_ERROR
+        bAlarm10	:= MesData.MesEvt1.24,  		// Battery Event 1 -  CURRENT_IMBALANCE_WARNING
+        bAlarm11	:= MesData.MesEvt1.25,  		// Battery Event 1 -  OTHER_ALARM
+        bAlarm12	:= MesData.MesEvt1.26,  		// Battery Event 1 -  OTHER_WARNING
+        bAlarm13	:= MesData.MesEvt1.27,  		// Battery Event 1 -  RESERVED_1
+        bAlarm14	:= MesData.MesEvt1.28,  		// Battery Event 1 -  CONFIGURATION_ALARM
+        bAlarm15	:= MesData.MesEvt1.29,  		// Battery Event 1 -  CONFIGURATION_WARNING
+		wAlarmCode	=> MesData.MesAlarmCode_MesEvt1_2
+);
+
+	FB_AlarmCodeManager(	
+        bAlarm1			:= MesData.MesEvtVnd1.0,  		// Battery Vendor Event 1   -  Cell Over Voltage Warning   
+        bAlarm2			:= MesData.MesEvtVnd1.1,  		// Battery Vendor Event 1   -  Cell Under Voltage Warning  
+        bAlarm3			:= MesData.MesEvtVnd1.2,  		// Battery Vendor Event 1   -  Cell Voltage Imbalance      
+        bAlarm4			:= MesData.MesEvtVnd1.3,  		// Battery Vendor Event 1   -  Cell Over Voltage Alarm     
+        bAlarm5			:= MesData.MesEvtVnd1.4,  		// Battery Vendor Event 1   -  Cell Under Voltage Alarm    
+        bAlarm6			:= MesData.MesEvtVnd1.5,  		// Battery Vendor Event 1   -  Cell Voltage Imbalance Alarm
+        bAlarm7			:= MesData.MesEvtVnd1.6,  		// Battery Vendor Event 1   -  Cell Over Voltage Fault     
+        bAlarm8			:= MesData.MesEvtVnd1.7,  		// Battery Vendor Event 1   -  Cell Under Voltage Fault    
+        bAlarm9			:= MesData.MesEvtVnd1.8,  		// Battery Vendor Event 1   -  Cell Voltage Imbalance Fault
+        bAlarm10		:= MesData.MesEvtVnd1.9,  		// Battery Vendor Event 1   -  Over Temperature Fault      
+        bAlarm11		:= MesData.MesEvtVnd1.10,  	// Battery Vendor Event 1   -  Under Temperature Fault     
+        bAlarm12		:= MesData.MesEvtVnd1.11,  	// Battery Vendor Event 1   -  Temperature Imbalance Fault 
+        bAlarm13		:= MesData.MesEvtVnd1.12,  	// Battery Vendor Event 1   -  Over Voltage Fault          
+        bAlarm14		:= MesData.MesEvtVnd1.13,  	// Battery Vendor Event 1   -  Under Voltage Fault         
+        bAlarm15		:= MesData.MesEvtVnd1.14,  	// Battery Vendor Event 1   -  Over Charge Current Fault   
+		wAlarmCode		=>MesData.MesAlarmCode_MesEvtVnd1_1
+);
+
+	FB_AlarmCodeManager(	
+        bAlarm1			:= MesData.MesEvtVnd1.15,  	// Battery Vendor Event 1  -  Over Discharge Current Fault      
+        bAlarm2			:= MesData.MesEvtVnd1.16,  	// Battery Vendor Event 1  -  String Connection Failure         
+        bAlarm3			:= MesData.MesEvtVnd1.17,  	// Battery Vendor Event 1  -  RBMS to MBMS Communication Failure
+        bAlarm4			:= MesData.MesEvtVnd1.18,  	// Battery Vendor Event 1  -  Temperature Sensor Failure       
+        bAlarm5			:= MesData.MesEvtVnd1.19,  	// Battery Vendor Event 1  -  Main Relay Open Failure          
+        bAlarm6			:= MesData.MesEvtVnd1.20,  	// Battery Vendor Event 1  -  Bus Voltage Imbalance             
+        bAlarm7			:= MesData.MesEvtVnd1.21,  	// Battery Vendor Event 1  -  Fan Failure                       
+        bAlarm8			:= MesData.MesEvtVnd1.22,  	// Battery Vendor Event 1  -  Voltage Sensor Failure            
+        bAlarm9			:= MesData.MesEvtVnd1.23,  	// Battery Vendor Event 1  -  Insulation Detection Warning      
+        bAlarm10		:= MesData.MesEvtVnd1.24,  	// Battery Vendor Event 1  -  Insulation Detection Fault        
+		bAlarm11		:= FALSE,                                                   //
+		bAlarm12		:= FALSE,                                                   //
+		bAlarm13		:= FALSE,                                                   //
+		bAlarm14		:= FALSE,                                                   //
+		bAlarm15		:= FALSE,                                                   //
+		wAlarmCode		=> MesData.MesAlarmCode_MesEvtVnd1_2
+);
+*)]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_CP" Id="{1bde59aa-6d74-49fc-842f-6b72d7c7e515}">
+      <Declaration><![CDATA[METHOD M_CP
+//////////////////
+//  Permanent conditions 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+SUPER^.M_CP() ; 
+
+
+
+
+Trig_Cmd_Read(CLK:=IN_CmdToggleRead);
+Trig_Cmd_Write(CLK:=IN_CmdToggleWrite);
+	
+IF Trig_Cmd_Read.Q THEN
+	IN_CmdToggleRead := FALSE;
+	MesDataExd.MesData.MesCP_Read := NOT MesDataExd.MesData.MesCP_Read;
+END_IF
+
+
+IF Trig_Cmd_Write.Q THEN
+	IN_CmdToggleWrite := FALSE;
+	MesDataExd.MesData.MesCP_Write := NOT MesDataExd.MesData.MesCP_Write;
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Evaluate" Id="{fc3ccf30-cb54-4915-b573-0138a91c157e}">
+      <Declaration><![CDATA[METHOD M_Evaluate : BOOL
+VAR_INPUT
+END_VAR
+VAR
+	KK : UINT;
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[MesDataExd.MesNbRackConnected := 0;
+MesDataExd.MesData.MesEnomConnected := 0;
+//MesDataExd.MesData.MesSoC_Max := MesDataExd.AX_RACK[1].MesSoC;
+//MesDataExd.MesData.MesSoC_Min := MesDataExd.AX_RACK[1].MesSoC;
+
+// Initialisation des valeurs min et max
+//--------------------------------------------------------------------
+MesDataExd.MesData.MesSoC_Max :=0;
+MesDataExd.MesData.MesSoC_Min :=0;
+MesDataExd.MesSoCConnected:=0;
+
+FOR KK := 1 TO CstNbRack_BAT_G DO		
+	IF MesDataExd.AX_RACK[KK].MesData.MesIDState = 5 THEN
+		MesDataExd.MesData.MesSoC_Min:=MesDataExd.AX_RACK[KK].MesData.MesSoC;
+		MesDataExd.MesData.MesSoC_Max:=MesDataExd.AX_RACK[KK].MesData.MesSoC;
+	END_IF
+END_FOR
+//--------------------------------------------------------------------
+
+FOR KK := 1 TO CstNbRack_BAT_G DO
+		
+	IF MesDataExd.AX_RACK[KK].MesData.MesIDState = 5 THEN
+		IF MesDataExd.MesData.MesSoC_Min = 0 THEN
+			MesDataExd.MesData.MesSoC_Min := MesDataExd.AX_RACK[KK].MesData.MesSoC;
+		END_IF
+		MesDataExd.MesData.MesSoC_Max := MAX(MesDataExd.MesData.MesSoC_Max, MesDataExd.AX_RACK[KK].MesData.MesSoC);
+		MesDataExd.MesData.MesSoC_Min := MIN(MesDataExd.MesData.MesSoC_Min, MesDataExd.AX_RACK[KK].MesData.MesSoC);
+	END_IF
+	MesDataExd.MesNbRackConnected := MesDataExd.MesNbRackConnected + SEL(MesDataExd.AX_RACK[KK].MesData.MesIDState = 5, 0, 1);
+	MesDataExd.MesData.MesEnomConnected := MesDataExd.MesData.MesEnomConnected + SEL(MesDataExd.AX_RACK[KK].MesData.MesIDState = 5, 0, ParamEnomRack) ;
+	MesDataExd.MesSoCConnected := MesDataExd.MesSoCConnected + SEL(MesDataExd.AX_RACK[KK].MesData.MesIDState = 5, 0, MesDataExd.AX_RACK[KK].MesData.MesSoC);
+END_FOR
+
+
+	
+	MesDataExd.MesSoCConnected := SEL(MesDataExd.MesNbRackConnected>1 , 0 , MesDataExd.MesSoCConnected / MesDataExd.MesNbRackConnected ) ;
+
+	
+	
+	(* EN DOUBLE AVEC CODE PCS 
+// Gestion des Start/Stop par SOC Low
+	TRIG_SocOpenDC(clk := MesDataExd.MesData.MesState.0 AND NOT MesDataExd.MesData.MesState.4 AND (MesDataExd.MesUdcMin_Cell <= ParamVdcL OR MesDataExd.MesUdcMin_Cell >= ParamVdcH));
+	IF TRIG_SocOpenDC.Q THEN
+		MesDataExd.MesData.MesState.4 := TRUE;
+	END_IF
+	
+	
+	TRIG_SocOpenDc_Again(CLK := Time_Discharge_LowSoc > ParamTimeLowSocToRecharge);
+	IF MesDataExd.MesData.MesState.0 AND MesDataExd.MesData.MesState.4 AND MesDataExd.MesData.MesPdc > 0 THEN
+		Time_Discharge_LowSoc := Time_Discharge_LowSoc + TIME() - Time_Start_Discharge_LowSoc;
+	ELSIF NOT MesDataExd.MesData.MesState.0 AND (NOT MesDataExd.MesData.MesState.4 OR Time_Discharge_LowSoc >= ParamTimeLowSocToRecharge) THEN
+		Time_Discharge_LowSoc := T#0S;
+	END_IF
+	Time_Start_Discharge_LowSoc := TIME();
+	
+	TRIG_BackToNormalSoc(CLK := MesDataExd.MesData.MesState.4 AND MesDataExd.MesData.MesSoC >= ParamSocStop);
+	IF TRIG_BackToNormalSoc.Q THEN
+		MesDataExd.MesData.MesState.4 := 0;
+	END_IF
+*) ]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{59e497cb-8588-4c85-a05d-66d324802d99}">
+      <Declaration><![CDATA[METHOD M_Init
+VAR 
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Read" Id="{20e8e114-c51e-4401-89b2-519957a2c19a}">
+      <Declaration><![CDATA[METHOD M_Read
+//////////////////
+//  Ici, la lecture est séparée en Modèles Sunspec : 802 est le modèle de base pour le MsBMS
+// 803 est le modèle de base pour les strings : une partie fixe pour l'ensemble + partie variable par string
+// 804 est le modèle de base pour les modules : une partie fixe par rack + partie variable par string 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	MW1 	: FB_MergeWordsToFloat ; 
+	MW2		: FB_MergeWordsToUint;
+	MW 		: FB_MergeWordsToDint;
+	JJ			: DINT;
+	KK			: DINT;
+	LL			: DINT;
+	MM			: DINT;
+	MW_U	: FB_MergeWordsToUint ;
+
+	IDState_UINT : UINT;
+	IDAlarm			: UINT;
+	ID_Evt1			: UINT;
+	ID_Evt2			: UINT;
+	ID_EvtVnd1		: UINT;
+	ID_EvtVnd2		: UINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+IF MesDataExd.MesData.MesCP_Read  THEN	
+	ModbusRead802
+	(
+		pDestAddr 	:= ADR(MesBlock_802),
+		sIPAddr 	:= ParamIpAddress,
+		tTimeout 	:= ParamTimeout,
+		nTcpPort 	:= 8694,
+		nQuantity 	:= 64,
+		nMBAddr 	:= StartAddr,
+		cbLength 	:= SIZEOF(MesBlock_802),
+		nUnitID		:= 1,
+		ClockRead	:= ClockRead,
+		ModbusReadAlarm => MesModbusReadAlarm[1] , 
+		OUT_NbRead	=> NbRead
+	);
+	
+	Cal_StartRead803_Fix := StartAddr + 64;
+	ModbusRead803_Fix
+	(
+		pDestAddr 	:= ADR(MesBlock_803_Fix),
+		sIPAddr 	:= ParamIpAddress,
+		tTimeout 	:= ParamTimeout,
+		nTcpPort 	:= 8694,
+		nQuantity 	:= 28,
+		nMBAddr 	:= Cal_StartRead803_Fix,
+		cbLength 	:= SIZEOF(MesBlock_803_Fix),
+		nUnitID		:= 1,
+		ModbusReadAlarm => MesModbusReadAlarm[2] , 
+		ClockRead	:= ClockRead
+	);
+	
+	
+	
+	FOR KK := 1 TO ParamNbRacks DO
+		
+		ModbusRead803_Rep[KK]
+		(
+			pDestAddr 	:= ADR(MesBlock_803_Rep[KK]),
+			sIPAddr 	:= ParamIpAddress,
+			tTimeout 	:= ParamTimeout,
+			nTcpPort 	:= 8694,
+			nQuantity 	:= 32,
+			nMBAddr 	:= Cal_StartRead803_Fix + 28 + DINT_TO_WORD(KK-1)*32,
+			cbLength 	:= SIZEOF(MesBlock_803_Rep[KK]),
+			nUnitID		:= 1,
+			ModbusReadAlarm => MesModbusReadAlarmRacks[KK][1] , 
+			ClockRead	:= ClockRead
+		);	
+	
+	
+		// Début du 804 = Début 803 fixe + nb 803 fix (=28) + nombre de strings * nombre registres dans 803 rep (=32)
+		
+		Cal_StartRead804_Fix := Cal_StartRead803_Fix + 28 + ParamNbRacks*32 ;
+   		//Cal_StartRead804_Fix := 1218;
+		
+		ModbusRead804_Fix[KK]
+		(
+			pDestAddr 	:= ADR(MesBlock_804_Fix[KK]),
+			sIPAddr 	:= ParamIpAddress,
+			tTimeout 	:= ParamTimeout,
+			nTcpPort 	:= 8694, //8694,
+			nQuantity 	:= 46,
+			nMBAddr 	:= Cal_StartRead804_Fix + DINT_TO_WORD(KK - 1)*(48),
+			cbLength 	:= SIZEOF(MesBlock_804_Fix[KK]),
+			nUnitID		:= 1,
+			ModbusReadAlarm => MesModbusReadAlarmRacks[KK][2] , 
+			ClockRead	:= ClockRead
+		);
+		
+    
+	END_FOR
+	
+	
+
+// Attributions
+	MesAHRtg_SF_802					:= EXPT(10, INT_TO_REAL( WORD_TO_INT(MesBlock_802[53])));
+	MesWHRtg_SF_802					:= EXPT(10, INT_TO_REAL( WORD_TO_INT(MesBlock_802[54])));
+	MesWChaDisChaMax_SF_802			:= EXPT(10, INT_TO_REAL( WORD_TO_INT(MesBlock_802[55])));
+	MesDisChaRte_SF_802				:= EXPT(10, INT_TO_REAL( WORD_TO_INT(MesBlock_802[56])));
+	MesSoC_SF_802					:= EXPT(10, INT_TO_REAL( WORD_TO_INT(MesBlock_802[57])));
+	MesDoD_SF_802					:= EXPT(10, INT_TO_REAL( WORD_TO_INT(MesBlock_802[58])));
+	MesSoH_SF_802					:= EXPT(10, INT_TO_REAL( WORD_TO_INT(MesBlock_802[59])));
+	MesV_SF_802						:= EXPT(10, INT_TO_REAL( WORD_TO_INT(MesBlock_802[60])));
+	MesCellV_SF_802					:= EXPT(10, INT_TO_REAL( WORD_TO_INT(MesBlock_802[61])));
+	MesA_SF_802 					:= EXPT(10, INT_TO_REAL( WORD_TO_INT(MesBlock_802[62])));
+	MesAMax_SF_802 					:= EXPT(10, INT_TO_REAL( WORD_TO_INT(MesBlock_802[63])));
+	MesW_SF_802 					:= EXPT(10, INT_TO_REAL( WORD_TO_INT(MesBlock_802[64])));
+	
+	MesSoC_SF_803 	            	:= EXPT(10, INT_TO_REAL( WORD_TO_INT(MesBlock_803_Fix[27])));
+	MesSoH_SF_803 	            	:= EXPT(10, INT_TO_REAL( WORD_TO_INT(MesBlock_803_Fix[26])));
+	MesA_SF_803 	            	:= EXPT(10, INT_TO_REAL( WORD_TO_INT(MesBlock_803_Fix[25])));
+	MesV_SF_803 	            	:= EXPT(10, INT_TO_REAL( WORD_TO_INT(MesBlock_803_Fix[28])));
+	MesCellV_SF_803					:= EXPT(10, INT_TO_REAL( WORD_TO_INT(MesBlock_803_Fix[23]))); 
+	MesModTmp_SF_803            	:= EXPT(10, INT_TO_REAL( WORD_TO_INT(MesBlock_803_Fix[24])));
+	MesSoH_SF_803					:= EXPT(10, INT_TO_REAL( WORD_TO_INT(MesBlock_803_Fix[25])));
+	
+	MesDataExd.MesNbCycle 			:= WORD_TO_UINT(MesBlock_802[15]);
+	MesChargeStatus 				:= WORD_TO_UINT(MesBlock_802[17]);
+	MesDataExd.MesRemoteControl 	:= MesBlock_802[18]=0;
+	MesDataExd.MesHeartBeat 		:= WORD_TO_UINT(mesblock_802[19]);
+	MesDataExd.MesTypeBattery 		:= MesBlock_802[22];
+	MesIDState 						:= WORD_TO_UINT(MesBlock_802[23]);
+	MW_U(word_strong := MesBlock_802[27], word_weak := mesblock_802[28], VAR_OUT:= IDAlarm);
+	MesDataExd.MesIDAlarm := UINT_TO_DWORD(IDAlarm); 
+//	MW(WORD_STRONG:= MesBlock_802[27], SIGNED:=TRUE, FIX:=1 , SIZE:=1, VAR_OUT:=MesDataExd.MesData.MesUdc);
+	
+	MesDataExd.MesIDRack_UdcMax_Cell := WORD_TO_UINT(MesBlock_802[39]);
+	MesDataexd.MesIDModule_UdcMax_Cell := WORD_TO_UINT(MesBlock_802[40]);
+	MesDataExd.MesIDRack_UdcMin_Cell := WORD_TO_UINT(MesBlock_802[42]);
+	MesDataexd.MesIDModule_UdcMin_Cell := WORD_TO_UINT(MesBlock_802[43]);
+	
+
+	
+	IF MesA_SF_802 <> 0 THEN
+		MW(WORD_STRONG := mesblock_802[45], signed := TRUE,	size := 1, fix := REAL_TO_INT(1/MesA_SF_802), var_out := MesDataExd.MesData.MesIdc);
+	END_IF
+	
+	
+	IF MesWChaDisChaMax_SF_802 <> 0 THEN
+		MesDataExd.MesData.MesCPL		:=  WORD_TO_REAL(MesBlock_802[5])/MesWChaDisChaMax_SF_802;
+		MesDataExd.MesData.MesDPL		:=  WORD_TO_REAL(MesBlock_802[6])/MesWChaDisChaMax_SF_802;
+	END_IF
+	
+	
+	IF MesSoC_SF_802 <> 0 THEN
+		// SI aucun string connecté, le SoC passe à 65535
+		IF MesDataExd.MesNbRackTot <> 0 THEN
+			MesDataExd.MesData.MesSoC			:=  WORD_TO_REAL(MesBlock_802[12])*MesSoC_SF_802;
+		ELSE
+		    MesDataExd.MesData.MesSoC			:= 0;
+		END_IF
+	END_IF
+	
+	IF MesDoD_SF_802 <> 0 THEN
+		MesDataExd.MesData.MesDoD :=  WORD_TO_REAL(MesBlock_802[13]) *MesDoD_SF_802;
+	END_IF
+	
+	IF MesSoH_SF_802 <> 0 THEN
+		MesDataExd.MesData.MesSoH :=  WORD_TO_REAL(MesBlock_802[14])*MesSoH_SF_802;
+	END_IF
+	
+	IF MesV_SF_802 <> 0 THEN
+		MesDataExd.MesData.MesUdc 		:=  WORD_TO_REAL(MesBlock_802[35])*MesV_SF_802;
+		//MesDataExd.MesData.MesUdcMax 	:=  WORD_TO_REAL(MesBlock_802[36])*MesV_SF_802;
+		//MesDataExd.MesData.MesUdcMin 	:=  WORD_TO_REAL(MesBlock_802[37])*MesV_SF_802;
+	END_IF
+	
+	IF MesCellV_SF_802 <> 0 THEN
+		MesDataExd.MesUdcMax_Cell :=  WORD_TO_REAL(MesBlock_802[38])*MesCellV_SF_802;
+		MesDataexd.MesUdcMin_Cell :=  WORD_TO_REAL(MesBlock_802[41])*MesCellV_SF_802;
+		//MesDataExd.MesData.MesUdc :=  WORD_TO_REAL(MesBlock_802[44])*MesCellV_SF_802;
+	END_IF
+	
+	
+	IF MesAMax_SF_802 <> 0 THEN
+		MesDataExd.MesData.MesCCL :=  WORD_TO_REAL(MesBlock_802[46])*MesAMax_SF_802;
+		MesDataExd.MesData.MesDCL :=  WORD_TO_REAL(MesBlock_802[47])*MesAMax_SF_802;
+	END_IF
+	
+	IF MesW_SF_802 <> 0 THEN
+		MW(WORD_STRONG := mesblock_802[48], size := 1, SIGNED := TRUE,fix := REAL_TO_INT(1/MesW_SF_802), var_out := MesDataExd.MesData.MesPdc);
+	END_IF
+	
+	//MesDataExd.MesNbRackConnected	 	:= WORD_TO_UINT(MesBlock_803_Fix[3]);
+	MesDataExd.MesNbRackTot 			:= WORD_TO_UINT(MesBlock_803_Fix[4]);
+	
+	MesDataExd.MesIDRack_TempMax_Module 	:= WORD_TO_UINT(MesBlock_803_Fix[6]);
+	MesDataExd.MesIDModule_TempMax_Module 	:= WORD_TO_UINT(MesBlock_803_Fix[7]);
+	MesDataExd.MesIDRack_TempMin_Module 	:= WORD_TO_UINT(MesBlock_803_Fix[9]);
+	MesDataExd.MesIDModule_TempMin_Module 	:= WORD_TO_UINT(MesBlock_803_Fix[10]);
+	
+	MesDataExd.MesIDRack_UdcMax_Rack 		:= WORD_TO_UINT(MesBlock_803_Fix[13]);
+	MesDataExd.MesIDRack_UdcMin_Rack 		:= WORD_TO_UINT(MesBlock_803_Fix[15]);
+	
+	MesDataExd.MesIDRack_Imax_Rack			:= WORD_TO_UINT(MesBlock_803_Fix[18]);
+	MesDataExd.MesIDRack_Imin_Rack			:= WORD_TO_UINT(MesBlock_803_Fix[20]);
+	
+	MesDataExd.MesNbCellbalancing 			:= WORD_TO_UINT(MesBlock_803_Fix[22]);
+	
+	IF MesA_SF_803 <> 0 THEN
+		MesDataExd.MesIdcmax_Rack			:= WORD_TO_REAL(MesBlock_803_Fix[17])*MesA_SF_803;
+		MesDataExd.MesIdcMin_Rack			:= WORD_TO_REAL(MesBlock_803_Fix[19])*MesA_SF_803;
+		MesDataExd.MesIdc_Rack				:= WORD_TO_REAL(MesBlock_803_Fix[21])*MesA_SF_803;
+	END_IF
+	
+	IF MesV_SF_803 <> 0 THEN
+		MesDataExd.MesUdcMax_Rack			:= WORD_TO_REAL(MesBlock_803_Fix[12])*MesV_SF_803;
+		MesDataExd.MesUdcMin_Rack			:= WORD_TO_REAL(MesBlock_803_Fix[14])*MesV_SF_803;
+		MesDataExd.MesUdc_Rack				:= WORD_TO_REAL(MesBlock_803_Fix[16])*MesV_SF_803;
+	END_IF
+	
+	IF MesModTmp_SF_803 <> 0 THEN
+		MesDataExd.MesTempMax_Module		:= WORD_TO_REAL(MesBlock_803_Fix[5])*mesmodtmp_sf_803;
+		MesDataExd.MesTempMin_Module		:= WORD_TO_REAL(MesBlock_803_Fix[8])*mesmodtmp_sf_803;
+		MesDataExd.MesTemp_Module			:= WORD_TO_REAL(MesBlock_803_Fix[11])*mesmodtmp_sf_803;
+	END_IF
+	
+	MesSoC_SF_804 	            :=EXPT(10, INT_TO_REAL(WORD_TO_INT(MesBlock_804_Fix[1][39])));
+	MesSoH_SF_804 	            :=EXPT(10, INT_TO_REAL( WORD_TO_INT(MesBlock_804_Fix[1][40])));
+	MesDoD_SF_804 	            :=EXPT(10, INT_TO_REAL( WORD_TO_INT(MesBlock_804_Fix[1][41])));
+	MesA_SF_804 	            :=EXPT(10, INT_TO_REAL( WORD_TO_INT(MesBlock_804_Fix[1][42])));
+	MesV_SF_804 	            :=EXPT(10, INT_TO_REAL( WORD_TO_INT(MesBlock_804_Fix[1][43])));
+	MesCellV_SF_804				:=EXPT(10, INT_TO_REAL( WORD_TO_INT(MesBlock_804_Fix[1][44]))); 
+	MesModTmp_SF_804            :=EXPT(10, INT_TO_REAL( WORD_TO_INT(MesBlock_804_Fix[1][45])));
+	
+	FOR KK := 1 TO ParamNbRacks DO
+		MesDataExd.AX_Rack[KK].MesData.MesNbModuleTot 			:= WORD_TO_UINT(MesBlock_804_Fix[KK][4]);
+		MW2(word_strong := MesBlock_803_Rep[KK][20], word_weak := MesBlock_803_Rep[KK][19], VAR_OUT := IDState_UINT);
+		MesDataExd.AX_Rack[KK].MesData.MesIDState := UINT_TO_DWORD(IDState_UINT);
+		
+		MesDataExd.AX_RACK[KK].MesData.MesIDConnectAlarm	 	:= MesBlock_804_Fix[KK][7];
+		MesDataExd.AX_RACK[KK].MesData.MesNbCellbalancing	 	:= WORD_TO_UINT(MesBlock_804_Fix[KK][8]);
+		IF MesSoC_SF_804 <> 0 THEN
+			MesDataExd.AX_RACK[KK].MesData.MesSoC			:= WORD_TO_REAL(MesBlock_804_Fix[KK][9])*MesSoC_SF_804;
+		END_IF
+		IF MesDoD_SF_804 <> 0 THEN
+			MesDataExd.AX_RACK[KK].MesData.MesDoD			:= WORD_TO_REAL(MesBlock_804_Fix[KK][10])*MesDoD_SF_804;
+		END_IF
+		IF MesSoH_SF_804 <> 0 THEN
+			MesDataExd.AX_RACK[KK].MesData.MesSoH			:= WORD_TO_REAL(MesBlock_804_Fix[KK][11])*MesSoH_SF_804;
+		END_IF
+		//MW2(WORD_STRONG := MesBlock_804_Fix[KK][12], WORD_STRONG := MesBlock_804_Fix[KK][13], VAR_OUT := MesDataExd.AX_Rack[KK].MesNCyc);
+		
+		IF MesA_SF_804 <> 0 THEN
+		
+			xTestWord:=INT_TO_WORD(xTestInt); // Kore Power 
+			xTestReal			:=  INT_TO_REAL(WORD_TO_INT(xTestWord))*MesA_SF_804;
+			xTestReal1			:=  WORD_TO_REAL(xTestWord)*MesA_SF_804;
+		
+	
+			MesDataExd.AX_RACK[KK].MesData.MesIdc			:=  INT_TO_REAL(WORD_TO_INT(MesBlock_804_Fix[KK][14]))*MesA_SF_804;
+		END_IF                                                                            
+		IF MesV_SF_804 <> 0 THEN                                                          
+			MesDataExd.AX_RACK[KK].MesData.MesUdc			:=  WORD_TO_REAL(MesBlock_804_Fix[KK][15])*MesV_SF_804;
+		END_IF
+		
+		IF MesCellV_SF_804 <> 0 AND MesCellV_SF_804 < 65535 THEN
+			MesDataExd.AX_RACK[KK].MesData.MesUdcMax_Cell	:= WORD_TO_REAL(MesBlock_804_Fix[KK][16])*MesCellV_SF_804;
+			MesDataExd.AX_RACK[KK].MesData.MesUdcMin_Cell	:= WORD_TO_REAL(MesBlock_804_Fix[KK][18])*MesCellV_SF_804;
+			MesDataExd.AX_RACK[KK].MesData.MesUdc_Cell		:= WORD_TO_REAL(MesBlock_804_Fix[KK][20])*MesCellV_SF_804;
+		END_IF
+
+		MesDataExd.AX_RACK[KK].MesData.MesIDModule_UdcMax_Cell	:= WORD_TO_UINT(MesBlock_804_Fix[KK][17]);
+		MesDataExd.AX_RACK[KK].MesData.MesIDModule_UdcMin_Cell	:= WORD_TO_UINT(MesBlock_804_Fix[KK][19]);
+		
+		IF MesModTmp_SF_804 <> 0 THEN
+			MesDataExd.AX_RACK[KK].MesData.MesTempMax_Module	:= WORD_TO_REAL(MesBlock_804_Fix[KK][21])*MesModTmp_SF_804;
+			MesDataExd.AX_Rack[KK].MesData.MesTempMin_Module	:= WORD_TO_REAL(MesBlock_804_Fix[KK][23])*MesModTmp_SF_804;
+			MesDataExd.AX_Rack[KK].MesData.MesTemp_Module		:= WORD_TO_REAL(MesBlock_804_Fix[KK][25])*MesModTmp_SF_804;
+		END_IF			
+		
+		MesDataExd.AX_Rack[KK].MesData.MesIDModule_TempMax_Module		:= WORD_TO_UINT(MesBlock_804_Fix[KK][22]);
+		MesDataExd.AX_Rack[KK].MesData.MesIDModule_TempMin_Module		:= WORD_TO_UINT(MesBlock_804_Fix[KK][24]);
+		MesDataExd.AX_Rack[KK].MesData.MesIDState_DCSwitch				:= MesBlock_804_Fix[KK][(LL-1)*3 + 27];
+		MW2(word_strong := MesBlock_804_Fix[KK][29], word_weak := MesBlock_804_Fix[KK][30], VAR_OUT := ID_Evt1);
+		MesDataExd.AX_RACK[KK].MesData.MesIDAlarm := UINT_TO_DWORD(ID_Evt1);
+		
+		MW2(word_strong := MesBlock_804_Fix[KK][33], word_weak := MesBlock_804_Fix[KK][34], VAR_OUT := ID_EvtVnd1);
+		MesDataExd.AX_RACK[KK].MesData.MesIDAlarm_Vendor1 := UINT_TO_DWORD(ID_EvtVnd1);
+
+	END_FOR
+END_IF
+
+SUPER^.M_Read();]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_StartStop" Id="{490c19c3-0bd3-42b6-b51e-78a082991758}">
+      <Declaration><![CDATA[METHOD M_StartStop
+//////////////////
+//  Start or stop BBMS via CAN bus   
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+SUPER^.M_StartStop();]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_StateManager" Id="{399525c7-f563-48f3-a676-39739b47cbe0}">
+      <Declaration><![CDATA[METHOD M_StateManager
+//////////////////
+// Detect which is the state of the PCS system . 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+	
+END_VAR
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+
+MesDataExd.MesData.MesState.0 := MesDataExd.MesNbRackConnected = 0 ;
+MesDataExd.MesData.MesState.1 :=   MesDataExd.MesNbRackConnected > 0 ;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Write" Id="{5f1d84a0-ff0c-4a07-bad7-84065389e411}">
+      <Declaration><![CDATA[METHOD M_Write
+VAR_INPUT
+END_VAR
+VAR
+	InputAddr: WORD;
+	RTCWord: ARRAY[1..6] OF BYTE;
+	TriggerRTC: BOOL;
+
+	MBWr: INT;
+	
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[Trig_CmdCloseDC(CLK := Xtest);//IN_CmdCloseDC);
+
+
+ //Trig_CmdOpenDC(CLK :=IN_CmdOpenDC);
+IF Trig_CmdCloseDC.Q THEN
+	IN_CmdCloseDC := FALSE;
+	AX_Cmd[1] := 16#0001;
+END_IF
+IF Trig_CmdOpenDC.Q THEN
+	IN_CmdOpenDC := FALSE;
+	AX_Cmd[1] := 16#0002;
+END_IF
+
+AX_ModbusWrite[1]	// Close / Open DC 
+(
+	InputWord	:= AX_Cmd[1],
+	sIPAddr 	:= ParamIpAddress,
+	tTimeout 	:= ParamTimeout,
+	nTCPport 	:= ParamTcpPort,
+	nMBAddr 	:= 152,
+	nUnitID 	:= ParamUnitID,
+	WriteCmd 	:= MesDataExd.Mesdata.MesCP_Write AND (Trig_CmdOpenDC.Q OR Trig_CmdCloseDC.Q),
+	ModbusWriteAlarm => AX_bAlarmWrite[1],
+	ErrorId		=> AX_uAlarmWrite[1]
+);
+
+Trig_CmdReset(CLK := IN_CmdReset);
+IF Trig_CmdReset.Q THEN			// lacth the fault date of events. WE HAVE TO CHECK FIRST THE FAULT BEFORE DOING IT/ 
+	IN_CmdReset := FALSE;
+END_IF
+
+AX_ModbusWrite[2]	// Reset 
+(
+	InputWord	:= 1,
+	sIPAddr 	:= ParamIpAddress,
+	tTimeout 	:= ParamTimeout,
+	nTCPport 	:= ParamTcpPort,
+	nMBAddr 	:= 89,
+	nUnitID 	:= ParamUnitID,
+	WriteCmd 	:= Trig_CmdReset.Q AND MesDataExd.Mesdata.MesCP_Write,
+	ModbusWriteAlarm => AX_bAlarmWrite[2],
+	ErrorId		=> AX_uAlarmWrite[2]
+);
+
+//Trig_Watchdog(CLK := CalLocalTimeStruct.wMilliseconds < 500 );	// watchdog every 5 seconds . 
+//
+//AX_ModbusWrite[3]	// Heartbeat 
+//(
+//	InputWord	:= CalLocalTimeStruct.wSecond,
+//	sIPAddr 	:= ParamIpAddress,
+//	tTimeout 	:= ParamTimeout,
+//	nTCPport 	:= ParamTcpPort,
+//	nMBAddr 	:= 20,
+//	nUnitID 	:= ParamUnitID,
+//	WriteCmd 	:= Trig_Watchdog.Q AND MesDataExd.Mesdata.MesCP_Write,
+//	ModbusWriteAlarm => AX_bAlarmWrite[3],
+//	ErrorId		=> AX_uAlarmWrite[3]
+//);
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_BAT_KP_MK1">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_BAT_KP_MK1.M_AlarmManagement">
+      <LineId Id="1351" Count="9" />
+      <LineId Id="1370" Count="3" />
+      <LineId Id="1368" Count="1" />
+      <LineId Id="1361" Count="5" />
+      <LineId Id="1346" Count="2" />
+      <LineId Id="1154" Count="176" />
+      <LineId Id="1137" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_BAT_KP_MK1.M_CP">
+      <LineId Id="162" Count="1" />
+      <LineId Id="134" Count="1" />
+      <LineId Id="150" Count="2" />
+      <LineId Id="173" Count="12" />
+      <LineId Id="64" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_BAT_KP_MK1.M_Evaluate">
+      <LineId Id="79" Count="31" />
+      <LineId Id="148" Count="2" />
+      <LineId Id="112" Count="0" />
+      <LineId Id="139" Count="0" />
+      <LineId Id="113" Count="0" />
+      <LineId Id="140" Count="1" />
+      <LineId Id="114" Count="18" />
+      <LineId Id="69" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_BAT_KP_MK1.M_Init">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_BAT_KP_MK1.M_Read">
+      <LineId Id="9123" Count="0" />
+      <LineId Id="8835" Count="12" />
+      <LineId Id="9124" Count="0" />
+      <LineId Id="8848" Count="13" />
+      <LineId Id="9125" Count="0" />
+      <LineId Id="8862" Count="16" />
+      <LineId Id="9126" Count="0" />
+      <LineId Id="8879" Count="18" />
+      <LineId Id="9127" Count="0" />
+      <LineId Id="8898" Count="28" />
+      <LineId Id="9153" Count="0" />
+      <LineId Id="8927" Count="166" />
+      <LineId Id="5159" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_BAT_KP_MK1.M_StartStop">
+      <LineId Id="869" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_BAT_KP_MK1.M_StateManager">
+      <LineId Id="115" Count="1" />
+      <LineId Id="111" Count="1" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_BAT_KP_MK1.M_Write">
+      <LineId Id="351" Count="0" />
+      <LineId Id="420" Count="0" />
+      <LineId Id="419" Count="0" />
+      <LineId Id="352" Count="54" />
+      <LineId Id="7" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

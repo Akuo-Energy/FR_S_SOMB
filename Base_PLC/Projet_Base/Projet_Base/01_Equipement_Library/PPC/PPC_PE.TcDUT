@@ -1,0 +1,143 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="PPC_PE" Id="{28f042bb-ac2b-408a-bb79-2301fa14c196}">
+    <Declaration><![CDATA[TYPE PPC_PE :
+STRUCT
+		MesData 								: PPC;   			    (* (NA) MesData				 *)
+		                                                                
+		PM										: PM_PM5XXX;	    (* (NA) PM13EH PLUS			 *)
+		EL3453									: PM_Standard;		    (* (NA) Beckhoff card EL3453 *)
+		MesState								: UINT;				    (* (NA) PPC status. 0: PPC off and not sending commands to inverters, 1: PPC on and sending commands to inverters, 2: PPC on frequency event. 3: PPC in LVRT event. 4: PPC in HVRT event. 5, 6: Reserved *)
+                                                                        	                                                            
+		// Q Regulation                                                                                                                                            		    		
+		ParamQfUQmin							: REAL := -5000;	    (* (kVAr) Voltage Regulation Minimal Reactive Power @ maximal voltage*) 		
+		ParamQfUQmax							: REAL := 5000;  	    (* (kVAr) Voltage Regulation Maximal Reactive Power @ minimal voltage*)    		
+		ParamQfUUHigh							: REAL := 25000; 	    (* (V)    Voltage Regulation Maximal voltage*)    		
+		ParamQfUDdBandHigh						: REAL := 22000; 	    (* (V)    Voltage Regulation Deadband High voltage*)     		
+		ParamQfUDdBandLow						: REAL := 18000; 	    (* (V)    Voltage Regulation Deadband Low voltage*)      	
+		ParamQfUULow							: REAL := 15000; 	    (* (V)    Voltage Regulation Minimal Voltage*)
+		MesAlarmPower							: BOOL; 				(* (NA)   Power alarm due to circuit breaker open										 						*)			
+                                                                                                                                                			 							
+	// PI active power                                                                                                                          			 							
+		//IN_CmdPIDP_LocalMode 					: BOOL;                                                                                         			 							
+		IN_SetptP_PR_Cent						: REAL;					(* (%)  Active power reference  														 						*)
+		IN_SetptP_PR_MW							: REAL;					(* (MW) Active power reference 														 							*)	
+		IN_Feedback_PR_Cent						: REAL;					(* (%)	Active power PI feedback 													 							*)
+		IN_Feedback_PR_MW						: REAL;					(* (MW)	Active power PI feedback 													 							*)
+		MesStateOL_PR							: BOOL;					(* (NA) Open loop activation of P control. 1= Open loop activated					 							*)
+		IN_PIDP_SetptPOpenloop					: REAL;		            (* *)                            	                                    			 							                                                              			 
+		ParamKp_PR								: REAL;					(* (NA) Kp for P regulation 														 							*)
+		ParamKi_PR								: REAL;					(* (NA) Ki for P regulation 	 													 							*)
+	   	ParamPIDP_Inversion						: BOOL;					(* (NA) PI inversion of active power control 										 							*)    
+		ParamPID_PR_Min							: REAL; 				(* (kW) Low limit for PI for active power regulation	   							 							*)     		
+		ParamPID_PR_Max							: REAL;  				(* (kW) High limit for PI for active power regulation 								 							*)          		
+	    OUT_SetpointP_PR						: REAL;					(* (p.u) Active Power PI output per unit 											 							*)                                                                                                                                       			 
+	
+// PI frequency control                                                                                                                     			 							
+		IN_SetptFreq_FR_Unit					: REAL;					(* (p.u) Frequency regulation (FR) reference  										 							*)
+		IN_SetptFreq_FR_MW						: REAL;					(* (MW) Frequency regulation (FR) reference 										 							*) 
+		IN_Feedback_FR_Unit						: REAL;					(* (p.u) Frequency regulation (FR) PI feedback 										 							*)
+		IN_Feedback_FR_MW						: REAL;					(* (MW)	Frequency regulation (FR) PI feedback 										 							*)	
+        ParamKp_FR								: REAL;					(* (NA) Kp for frequency regulation													 							*)
+		ParamKi_FR								: REAL;					(* (NA) Ki for frequency regulation 		 										 							*)
+	    ParamFreqnom							: REAL;					(* (NA) Nominal frequency for frequency response									 							*) 
+		ParamStatism_OverFreq_Primary			: REAL; 				(* (NA) Slope for the Primary point Over Frequency in Frequency Response			 							*) 
+		ParamStatism_OverFreq_Secundary			: REAL;					(* (NA) Slope for the Secundary point Over Frequency in Frequency Response 			 							*)
+        ParamStatism_UnderFreq_Primary			: REAL; 				(* (NA) Slope for the Primary point under Frequency in Frequency Response			 							*) 
+		ParamStatism_UnderFreq_Secundary		: REAL;					(* (NA) Slope for the Secundary point under Frequency in Frequency Response 		 							*)
+		ParamDeltaPmax_OverFR					: REAL; 				(* (kW) Maximum power to be injected during under frequency regulation 		 		 							*)
+        ParamDeltaPmax_UnderFR					: REAL; 				(* (kW) Maximum power to be reduced during over frequency regulation 		 		 							*)
+		ParamDeadBand_FR						: REAL;					(* (mHz) Frequency regulation dead band axis Y										 							*) 
+		MesEventID_FR							: UINT;					(* (NA) Frequency Response Event State. 0: No Event, 1: Over Frequency Primary Band, 2: Over Frequency Secondary Band, 3: Over Frequency Terciary Band, 4: Under Frequency Primary Band, 5: Under Frequency Secondary Band, 6: Under Frequency Terciary Band *)
+ 		MesStateID_FR							: BOOL;					(* (NA) Frequency Mode Selector. Calculation basis: 0: unitary base, 1: Power freeze 							*)		
+		MesState_FR								: BOOL;					(* (NA) Activation/deactivation of frequency regulation. 1= activated				 							*)
+		                               
+	// PID Q direct                               	
+		IN_SetptQ_QR_Cent					    : REAL;					(* (%) Reactive power reference  													 							*)
+		IN_SetptQ_QR_MW							: REAL;					(* (MVAr) Reactive power reference 													 							*)	
+		IN_Feedback_QR_Cent						: REAL;					(* (%) Reactive power PI feedback 													 							*)
+		IN_Feedback_QR_MW						: REAL;					(* (MVAr) Reactive power PI feedback 												 							*)
+		MesStateOL_QR							: BOOL;					(* (NA) Open loop activation of Q control. 1= Open loop activated					 							*)
+		ParamKp_QR								: REAL;					(* (NA) Kp pour régulation Q 										 				 							*)
+		ParamKi_QR								: REAL; 				(* (NA) Ki pour régulation Q 														 							*)
+ 		ParamPID_QR_Min							: REAL; 				(* (kVAr) Low limit for PID of reactive Power  										 							*)     		
+		ParamPID_QR_Max							: REAL;  				(* (kVAr) High limit for PID of active Power										 							*)
+		ParamPIDQ_Inversion						: BOOL;					(* (NA) PI inversion of RPCF control												 							*)  
+		OUT_SetpointQ_QR						: REAL;					(* (p.u) Reactive Power PI output per unit 											 							*)
+		
+	// Cos(phi)
+		ParamCosPhiMax							: REAL;				    (* (p.u)TanPhi Max limit for Q regulation																		*)
+		ParamCosPhiMin							: REAL;				    (* (p.u)TanPhiMin limit for Q regulation 																		*)
+		ParamCosPhiLagging						: BOOL;				    (* (NA) Lagging/inductive [soutirer]= 1: Q absorption Q-.  Leading/Capacitive = 0: Q injection Q+ 				*)
+		ParamCosPhi								: REAL; 				(* (p.u) Desired cosPhi setpoint 																				*)                                                                
+		MesState_PFR							: BOOL;				    (* (NA) CosPhi Regulation is activated	     																	*)
+		MesSetptCosPhi							: REAL;				    (* (p.u) Measured setpoint Cos Phi				 																*)
+		ParamKp_PFR								: REAL;					(* (NA) Kp for cos(phi) regulation													 							*)
+		ParamKi_PFR								: REAL; 				(* (NA) Ki for cos(phi) regulation										 			 							*)
+ 		ParamPID_PFR_Min						: REAL; 				(* (kVAr) Low limit for PID of cos(phi) regulation  								 							*)     		
+		ParamPID_PFR_Max						: REAL;  				(* (kVAr) High limit for PID of cos(phi) regulation									 							*)
+		ParamPID_PFR_Inversion					: BOOL;					(* (NA) PI inversion of cos(phi) regulation											 							*)  
+		OUT_Setpoint_PFR						: REAL;					(* (p.u) cos(phi) regulation PI output per unit 											 					*)
+		
+	// V regulation
+		IN_SetpointV_VR_kV						: REAL;					(* (kV) Voltage reference																						*)
+		IN_SetpointV_VR_Cent					: REAL; 				(* (%) Voltage reference																						*)                                                                
+		IN_Feedback_VR_Cent						: REAL;					(* (%) Voltage PI feedback 													 									*)
+		IN_Feedback_VR_kV						: REAL;					(* (kV) Voltage PI feedback 												 									*)
+		
+		ParamKp_VR								: REAL;					(* (NA) Kp for voltage regulation													 							*)
+		ParamKi_VR								: REAL; 				(* (NA) Ki for voltage regulation										 			 							*)
+ 		ParamPID_VR_Min							: REAL; 				(* (kV) Low limit for PID of voltage regulation  								 								*)     		
+		ParamPID_VR_Max							: REAL;  				(* (kV) High limit for PID of voltage regulation									 							*)
+    	ParamPID_VR_Inversion					: BOOL;					(* (NA) PI inversion of voltage regulation											 							*)  
+		OUT_Setpoint_VR							: REAL;					(* (p.u) Voltage regulation PI output per unit 											 						*)
+		ParamStatism_V_VR						: REAL; 				(* (NA) Droop V for voltage regulation 			 																*) 
+		ParamStatism_Q_VR						: REAL; 				(* (NA) Droop Q for voltage regulation 			 																*)
+	
+	// Q(V)
+		IN_SetpointQ_QRV_Cent					: REAL; 				(* (%) Q(V) reference																							*)                                                                
+		IN_Feedback_QRV_Cent					: REAL;					(* (%) Q(V) PI feedback 													 									*)
+		MesSetptQ_QRV							: REAL;				    (* (p.u) Measured Q setpoint for Q(V)			 																*)
+		ParamKp_QRV								: REAL;					(* (NA) Kp for Q(V)																	 							*)
+		ParamKi_QRV								: REAL; 				(* (NA) Ki for Q(V)														 			 							*)
+ 		ParamPID_QRV_Min						: REAL; 				(* (kV) Low limit for PID of Q(V)				  								 								*)     		
+		ParamPID_QRV_Max						: REAL;  				(* (kV) High limit for PID of Q(V)													 							*)
+    	ParamPID_QRV_Inversion					: BOOL;					(* (NA) PI inversion of Q(V)														 							*)  
+		OUT_Setpoint_QRV						: REAL;					(* (p.u) Reactive power depending of Voltage output per cent							 						*)
+
+// Regulation status and modes
+		MesLocalMode							: BOOL; 			    (* (NA) In Local mode, the DEIE is inhibated  																	*)
+		
+		MesIDState_QReg							: UINT;				    (* (NA) Q control selection. 0: no Q control. 1: Q_ref / RPCF. 2: Reserved. 3: cos(phi) control. 4: VRS control. 5: PF - VRS. 6: cos-phi(P). 7: Q(V). 8: dQ(V). 9: dQ(eV). 10: Reserved *)                                                   
+		MesState_PR								: BOOL;					(* (NA) Enabling of P_REF control		  *)
+		MesState_PRDelta						: BOOL;					(* (NA) Enabling of P_delta control		  *)
+		CmdState_FR								: BOOL;					(* (NA) Enabling of freq response control *)
+		CmdState_PR								: BOOL;					(* (NA) Enabling of P_REF control		  *)
+		MesState_QR 							: BOOL;					(* (NA) Q_reference control selection. WS only *)
+		CmdState_PFR							: BOOL;					(* (NA)  COS(phi) control selection. WS only *)
+		MesState_VRS							: BOOL;					(* (NA) VRS control selection. WS only *)
+		MesState_PFRP							: BOOL;					(* (NA) cosphi(P) control selection. WS only *)
+		MesState_QRV							: BOOL;					(* (NA) Q(V) control selection. WS only *)
+		MesState_QRamp							: BOOL;					(* (NA) Q ramps. 1 enable, 0 disable *)
+		MesState_PRamp							: BOOL;					(* (NA) P ramps. 1 enable, 0 disable *)
+	    MesState_PQPriority						: BOOL;					(* (NA) Status. 0: No priority acting, 1: P priority acting, 2: Q priority acting *)
+		MesPlimit_PQPriority					: BOOL;					(* (NA) P REFERENCE LIMIT due TO PQ priority in p.u. *)
+		MesQlimit_PQPriority					: BOOL;					(* (NA) Q reference limit due to PQ priority in p.u. *)
+		
+		MesPnom									: REAL;					(* (kW) Defined nominal plant power in kW *)
+		MesFreqnom								: REAL;					(* (Hz) Defined nominal plant freq in Hz *)
+		MesUnom									: REAL;					(* (V)  Defined nominal plant voltage in V *)
+		MesNbINV								: UINT;					(* (NA) Number OF inverters installed on site *) 
+
+		MesCPWrite								: BOOL;					(* (NA) 0: PPC not sending frames to inverters. 1: PPC sending frames to inverters *)
+		MesState_QDistribAlgo					: BOOL;					(* (NA) activate Q distribution algorithm. 0: disable. 1: enable *)
+		
+// Inverter Status Words
+
+		MesInvStatus							: ARRAY[1..11] OF WORD;	(* (NA) Status Words of Inverters *)
+
+END_STRUCT	
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

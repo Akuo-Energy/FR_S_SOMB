@@ -1,0 +1,80 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="IEC104_PLAN" Id="{d0186a6f-09d6-40dc-8914-c29721ef7b1a}">
+    <Declaration><![CDATA[///////////
+// Structure For DEIECommand. Main Operating Data to be saved ( ex: OPC ) .  
+//////////
+TYPE IEC104_PLAN :
+STRUCT
+
+
+
+
+
+	(* Double points *)
+	(* 	Bit 0..1 = MesStartOn,
+		Bit 2..3 = MesComTest_ON, 
+		Bit 4..5 = MesCentraleCpl, 
+		Bit 6..7 = MesCentrale_Ind*)
+	OUT_MesLocal						: BOOL;
+	OUT_MesDouble			AT%MB13		: BYTE;
+	OUT_MesPosCB_SubMV					: BOOL; (*100*)
+	OUT_MesPosSec_SubMV					: BOOL; (*101*)
+	OUT_MesPosEarth_SubMV				: BOOL; (*102*)
+	OUT_CmdPvF_On						: BOOL; (*103*)
+	
+	OUT_MesDouble2			AT%MB14		: BYTE; (**)
+	OUT_CmdP							: UINT; (*105 - 0 : programado, 1: programado + regulacion primera*)
+	OUT_CmdQ_On							: BOOL; (*107*)
+	OUT_MesPosInter_33kV				: BOOL; (*106 - IT-PRC5020*)
+	
+	OUT_MesDouble3			AT%MB15		: BYTE; (**)
+	OUT_MesPosSecLinea_33kV				: BOOL; (*108 - IT-PRC5021*)
+	OUT_MesPosSec_33kV					: BOOL; (*109 - SC-PRC5025*)
+	OUT_MesPosEarth_33kV				: BOOL; (*110 - SC-PRC5021*)
+	OUT_MesPosInter_110kV				: BOOL; (*111 - IT-PRC7020*)	
+                                                  
+	OUT_MesDouble4			AT%MB16		: BYTE;
+	OUT_MesPosSecLinea_110kV			: BOOL; (*112 - IT-PRC7027*)
+ 	
+	
+	
+	(* Measured values, short floating point values *)
+	OUT_MesP_33kV		 	AT%MB22		: REAL; (*IOA 1000*)
+	OUT_MesQ_33kV			AT%MB26		: REAL; (*IOA 1001*)
+	OUT_MesU12_33kV			AT%MB30		: REAL; (*IOA 1002*)
+	OUT_MesI2_33kV 			AT%MB34		: REAL; (*IOA 1003*)
+	OUT_MesP_110kV		 	AT%MB38		: REAL; (*IOA 1004*)
+	OUT_MesQ_110kV			AT%MB42		: REAL; (*IOA 1005*)
+	OUT_MesU12_110kV		AT%MB46		: REAL; (*IOA 1006*)
+	OUT_MesI2_110kV 		AT%MB50		: REAL; (*IOA 1007*)
+	OUT_SetptU				AT%MB54		: REAL; (*IOA 1008*)
+	OUT_SetptPF				AT%MB58		: REAL; (*IOA 1009*)
+	OUT_SetptQ				AT%MB62		: REAL; (*IOA 1010*)
+	OUT_MesAvailability		AT%MB66		: REAL; (*IOA 1011*)
+	OUT_MesPMax				AT%MB70		: REAL; (*IOA 1012*)
+	OUT_MesGTI				AT%MB74		: REAL; (*IOA 1013*)
+	OUT_MesTempPan			AT%MB82		: REAL; (*IOA 1014*)
+	OUT_MesGHI				AT%MB86		: REAL; (*IOA 1015*)
+	OUT_MesTempAmb			AT%MB90		: REAL; (*IOA 1016*)
+	OUT_MesP_33kV_1			AT%MB94		: REAL; (*IOA 1017*)
+	OUT_MesQ_33kV_1			AT%MB98		: REAL; (*IOA 1018*)
+	OUT_MesU_33kV_1			AT%MB102	: REAL; (*IOA 1019*)
+	OUT_MesI_33kV_1			AT%MB106	: REAL; (*IOA 1020*)
+	OUT_MesTapPos			AT%MB110	: REAL; (*IOA 1021*)
+	OUT_CmdQ				AT%MB114	: REAL; (*IOA 104 - 0 : desactivado, 1: QvU, 2: QvPF, 3: Q*)
+	                                                     
+
+	//TVC
+	IN_SetptP1 				AT%MB150 	: REAL ;	(*IOA  CONSIGNE P*)
+	IN_SetptU 				AT%MB154 	: REAL ;	(*IOA 1 CONSIGNE P*)
+	IN_SetptPF 				AT%MB158 	: REAL ;	(*IOA 2 CONSIGNE P*)
+	IN_SetptQ 				AT%MB162 	: REAL ;	(*IOA 3 CONSIGNE P*)
+	IN_CmdQ 				AT%MB166 	: REAL ;	(*IOA 4 CONSIGNE P*)
+
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

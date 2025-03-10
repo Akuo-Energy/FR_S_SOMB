@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.9">
+  <DUT Name="PM_ION9200" Id="{89465405-5c3e-4d53-8bc7-b2a79c03b846}">
+    <Declaration><![CDATA[///////////
+// Structure For I35. Main Operating Data to be saved (ex: OPC).  
+//////////
+TYPE PM_ION9200 :
+STRUCT
+		MesData						: PM ; (* Object *) 
+		MesSeconds					: REAL;
+		
+		
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

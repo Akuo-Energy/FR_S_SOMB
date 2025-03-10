@@ -1,0 +1,74 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="IEC104_MADI" Id="{33b9d11c-89a8-4895-85e1-1703e3bdea2c}">
+    <Declaration><![CDATA[///////////
+// Structure For DEIECommand. Main Operating Data to be saved ( ex: OPC ) .  
+//////////
+TYPE IEC104_MADI :
+STRUCT
+
+	(* Memory offset 0..99 unused *)
+	(* Single points *)// MAx 8 bit per register . 0..7
+	OUT_MesLocal			AT%MX10.0 	: BOOL;			(* IOA 12 BAT.LOCAL*)
+	OUT_MesModeManuel_on	AT%MX10.1 	: BOOL; 		(* IOA 13 MANUAL*)
+	OUT_MesModeAuto_on		AT%MX10.2 	: BOOL; 		(* IOA 14 AUTO*)
+	OUT_MesCharging			AT%MX10.3 	: BOOL;			(* IOA 15 CHARGE.BAT*)
+	OUT_MesDischarging		AT%MX10.4 	: BOOL;			(* IOA 16 DESCHARGE.BAT*)
+	OUT_MesEs				AT%MX10.5 	: BOOL; 		(* IOA 20 ARRET.URGENCE*)
+	OUT_MesToS				AT%MX10.6 	: BOOL; 		(* IOA 21 PRESENCE*)
+	OUT_MesIncident			AT%MX10.7 	: BOOL;			(* IOA 19 INCIDENT*)
+	OUT_MesFaultTeleMes		AT%MX11.0 	: BOOL;			(* IOA 37 DEFAUT CARTE TM*)
+	OUT_MesFaultTeleCmd		AT%MX11.1 	: BOOL;			(* IOA 38 DEF FUNC TC*)
+	OUT_MesFaultTeleSgnl	AT%MX11.2 	: BOOL;			(* IOA 39 DEF FONC TS*)
+	OUT_MesIECServerFault	AT%MX11.3 	: BOOL;			(* IOA 41 DEF LIAISON 104*)
+	
+	(* Double points *)
+	(* 	Bit 0..1 = MesStartOn,
+		Bit 2..3 = MesComTest_ON, 
+		Bit 4..5 = MesCentraleCpl, 
+		Bit 6..7 = MesCentrale_Ind*)
+	OUT_MesDouble			AT%MB12		: BYTE;
+	MesDJOpen							: BOOL; 		(* IOA 51 DJ OPEN*)
+	MesSoutirage_on						: BOOL;			(* IOA 43 ARRET.BAT*)
+	MesComTest_on						: BOOL; 		(* IOA 44 TC.SOUTIRAGE *)
+	MesCentrale_Cpl						: BOOL;			(* IOA 17 COUPL*)
+	MesCentrale_indispo					: BOOL;			(* IOA 22 DISPO*)
+	
+	(* Measured values, short floating point values *)
+	OUT_MesEconnected 		AT%MB42		: REAL;			(*IOA 5 NIVEAU BAT*)
+	OUT_MesEmaxconnected 	AT%MB14		: REAL; 		(*IOA 6 STOCK MAX*)
+	OUT_MesP 				AT%MB18		: REAL; 		(*IOA 1 P.ACTIVE*)
+	OUT_MesQ 				AT%MB22		: REAL; 		(*IOA 2 P.REACTIVE*)
+	OUT_MesU_HTA 			AT%MB26		: REAL; 		(*IOA 3 U.HTA*)
+	OUT_MesFreq 			AT%MB30		: REAL; 		(*IOA 4 FREQUENCE*)
+	OUT_MesPdispo_inj 		AT%MB34		: REAL; 		(*IOA 7 P.INJ MAX*)
+	OUT_MesPdispo_abs 		AT%MB38		: REAL; 		(*IOA 8 P.SOUT MAX*)
+
+	(*#################################################################*)
+	(* TC *)
+	IN_CmdModeManuel		AT%MX60.0 	: BOOL;			(* IOA 30 TC.MANUEL*)
+	IN_CmdModeManuelOff		AT%MX60.1 	: BOOL;			(* Not implemented yet*)
+	IN_CmdAut_Cpl			AT%MX60.2 	: BOOL; 		(* IOA 32 TC.COUPLAGE*)
+	IN_CmdDisconnect		AT%MX60.3 	: BOOL;			(* IOA 33 TC.DECOUPLAGE*)
+	IN_CmdConnect			AT%MX60.4 	: BOOL;			(* Not implemented*)
+	
+	(* TCD *)
+	(* 	Bit 0..1 = command disconnecr,
+		Bit 2..3 = command start, 
+		Bit 4..5 =  command test, 
+		Bit 6..7 = fourth double command *)
+	IN_Cmddouble			AT%MB61		: BYTE;			(**)
+	CmdSoutirage						: BOOL;			(* IOA 26 soutirage*)
+	CmdTest								: BOOL;			(* IOA 27 TC.FICTIVE*)
+
+	//TVC
+	IN_SetptP 				AT%MB72 	: REAL ;		(*IOA 36 CONSIGNE P*)
+	IN_ParamPmax 			AT%MB64 	: REAL ;    	(*IOA 34 CONSIGNE P+MAX *)
+	IN_ParamPmin 			AT%MB68 	: REAL ;		(*IOA 35 CONSIGNE P-MAX *)
+
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

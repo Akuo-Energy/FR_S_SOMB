@@ -1,0 +1,217 @@
+﻿<div id="Content1_24" data-tchmi-type="TcHmi.Controls.System.TcHmiContent" data-tchmi-top="0" data-tchmi-left="0" data-tchmi-width="2000" data-tchmi-height="934" data-tchmi-zindex="11" data-tchmi-visibility="" data-tchmi-creator-viewport-width="1920" data-tchmi-creator-viewport-height="1600" data-tchmi-left-unit="px" data-tchmi-top-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-width-unit="px" data-tchmi-height-unit="px">
+
+div id="TcHmiButton_275" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="50" data-tchmi-height-unit="px" data-tchmi-left="1253" data-tchmi-left-unit="px" data-tchmi-text="Back" data-tchmi-top="566" data-tchmi-top-unit="px" data-tchmi-width="187" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-font-size="25" data-tchmi-text-font-size-unit="px" data-tchmi-zindex="10">
+
+<div id="TcHmi_Controls_Beckhoff_TcHmiImage_22" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="933" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px"  data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-width="1870" data-tchmi-width-unit="px" data-tchmi-src="Imports/Images/SynoptiqueESS.PNG" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-zindex="0">
+
+</div>
+
+<div id="TcHmi_Controls_Beckhoff_TcHmiImage_23" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="54" data-tchmi-height-unit="px" data-tchmi-left="235" data-tchmi-left-unit="px"  data-tchmi-top="73" data-tchmi-top-unit="px" data-tchmi-width="65" data-tchmi-width-unit="px" data-tchmi-src="Imports/Images/warning_rot_pressed.svg" data-tchmi-zindex="12" data-tchmi-is-enabled="%s%PLC1.OpcUa.AllDataR.PT1.AX_HVAC.0.MesComAlarm%/s%">
+
+</div>
+
+<div id="TcHmi_Controls_Beckhoff_TcHmiImage_32" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="54" data-tchmi-height-unit="px" data-tchmi-left="234" data-tchmi-left-unit="px"  data-tchmi-top="200" data-tchmi-top-unit="px" data-tchmi-width="65" data-tchmi-width-unit="px" data-tchmi-src="Imports/Images/warning_rot_pressed.svg" data-tchmi-zindex="12" data-tchmi-is-enabled="%s%PLC1.OpcUa.AllDataR.PT1.AX_PCS.0.MesComAlarm%/s%">
+
+</div>
+
+<div id="TcHmi_Controls_Beckhoff_TcHmiImage_40" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="54" data-tchmi-height-unit="px" data-tchmi-left="234" data-tchmi-left-unit="px"  data-tchmi-top="309" data-tchmi-top-unit="px" data-tchmi-width="65" data-tchmi-width-unit="px" data-tchmi-src="Imports/Images/warning_rot_pressed.svg" data-tchmi-zindex="12" data-tchmi-is-enabled="%s%PLC1.OpcUa.AllDataR.PT1.AX_Bbms.0.MesComAlarm%/s%">
+
+</div>
+
+<div id="TcHmi_Controls_Beckhoff_TcHmiImage_41" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="54" data-tchmi-height-unit="px" data-tchmi-left="234" data-tchmi-left-unit="px"  data-tchmi-top="137" data-tchmi-top-unit="px" data-tchmi-width="65" data-tchmi-width-unit="px" data-tchmi-src="Imports/Images/warning_rot_pressed.svg" data-tchmi-zindex="12" data-tchmi-is-enabled="%s%PLC1.OpcUa.AllDataR.PT1.AX_HVAC.1.MesComAlarm%/s%">
+
+</div>
+
+<div id="TcHmi_Controls_Beckhoff_TcHmiImage_42" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="54" data-tchmi-height-unit="px" data-tchmi-left="234" data-tchmi-left-unit="px"  data-tchmi-top="254" data-tchmi-top-unit="px" data-tchmi-width="65" data-tchmi-width-unit="px" data-tchmi-src="Imports/Images/warning_rot_pressed.svg" data-tchmi-zindex="12" data-tchmi-is-enabled="%s%PLC1.OpcUa.AllDataR.PT1.AX_PCS.1.MesComAlarm%/s%">
+
+</div>
+
+<div id="TcHmi_Controls_Beckhoff_TcHmiImage_43" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="54" data-tchmi-height-unit="px" data-tchmi-left="234" data-tchmi-left-unit="px"  data-tchmi-top="373" data-tchmi-top-unit="px" data-tchmi-width="65" data-tchmi-width-unit="px" data-tchmi-src="Imports/Images/warning_rot_pressed.svg" data-tchmi-zindex="12" data-tchmi-is-enabled="%s%PLC1.OpcUa.AllDataR.PT1.AX_Bbms.1.MesComAlarm%/s%">
+
+</div>
+
+<div id="TcHmi_Controls_Beckhoff_TcHmiImage_44" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="54" data-tchmi-height-unit="px" data-tchmi-left="243" data-tchmi-left-unit="px"  data-tchmi-top="547" data-tchmi-top-unit="px" data-tchmi-width="65" data-tchmi-width-unit="px" data-tchmi-src="Imports/Images/warning_rot_pressed.svg" data-tchmi-zindex="12" data-tchmi-is-enabled="%s%PLC1.OpcUa.AllDataR.PT4.AX_HVAC.0.MesComAlarm%/s%">
+
+</div>
+
+<div id="TcHmi_Controls_Beckhoff_TcHmiImage_45" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="54" data-tchmi-height-unit="px" data-tchmi-left="242" data-tchmi-left-unit="px"  data-tchmi-top="611" data-tchmi-top-unit="px" data-tchmi-width="65" data-tchmi-width-unit="px" data-tchmi-src="Imports/Images/warning_rot_pressed.svg" data-tchmi-zindex="12" data-tchmi-is-enabled="%s%PLC1.OpcUa.AllDataR.PT4.AX_HVAC.1.MesComAlarm%/s%">
+
+</div>
+
+<div id="TcHmi_Controls_Beckhoff_TcHmiImage_46" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="54" data-tchmi-height-unit="px" data-tchmi-left="242" data-tchmi-left-unit="px"  data-tchmi-top="674" data-tchmi-top-unit="px" data-tchmi-width="65" data-tchmi-width-unit="px" data-tchmi-src="Imports/Images/warning_rot_pressed.svg" data-tchmi-zindex="12" data-tchmi-is-enabled="%s%PLC1.OpcUa.AllDataR.PT4.AX_PCS.0.MesComAlarm%/s%">
+
+</div>
+
+<div id="TcHmi_Controls_Beckhoff_TcHmiImage_47" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="54" data-tchmi-height-unit="px" data-tchmi-left="242" data-tchmi-left-unit="px"  data-tchmi-top="728" data-tchmi-top-unit="px" data-tchmi-width="65" data-tchmi-width-unit="px" data-tchmi-src="Imports/Images/warning_rot_pressed.svg" data-tchmi-zindex="12" data-tchmi-is-enabled="%s%PLC1.OpcUa.AllDataR.PT4.AX_PCS.1.MesComAlarm%/s%">
+
+</div>
+
+<div id="TcHmi_Controls_Beckhoff_TcHmiImage_48" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="54" data-tchmi-height-unit="px" data-tchmi-left="242" data-tchmi-left-unit="px"  data-tchmi-top="783" data-tchmi-top-unit="px" data-tchmi-width="65" data-tchmi-width-unit="px" data-tchmi-src="Imports/Images/warning_rot_pressed.svg" data-tchmi-zindex="12" data-tchmi-is-enabled="%s%PLC1.OpcUa.AllDataR.PT4.AX_Bbms.0.MesComAlarm%/s%">
+
+</div>
+
+<div id="TcHmi_Controls_Beckhoff_TcHmiImage_49" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="54" data-tchmi-height-unit="px" data-tchmi-left="242" data-tchmi-left-unit="px"  data-tchmi-top="847" data-tchmi-top-unit="px" data-tchmi-width="65" data-tchmi-width-unit="px" data-tchmi-src="Imports/Images/warning_rot_pressed.svg" data-tchmi-zindex="12" data-tchmi-is-enabled="%s%PLC1.OpcUa.AllDataR.PT4.AX_Bbms.1.MesComAlarm%/s%">
+
+</div>
+
+<div id="TcHmi_Controls_Beckhoff_TcHmiImage_50" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="54" data-tchmi-height-unit="px" data-tchmi-left="896" data-tchmi-left-unit="px"  data-tchmi-top="73" data-tchmi-top-unit="px" data-tchmi-width="65" data-tchmi-width-unit="px" data-tchmi-src="Imports/Images/warning_rot_pressed.svg" data-tchmi-zindex="12" data-tchmi-is-enabled="%s%PLC1.OpcUa.AllDataR.PT2.AX_HVAC.0.MesComAlarm%/s%">
+
+</div>
+
+<div id="TcHmi_Controls_Beckhoff_TcHmiImage_51" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="54" data-tchmi-height-unit="px" data-tchmi-left="895" data-tchmi-left-unit="px"  data-tchmi-top="137" data-tchmi-top-unit="px" data-tchmi-width="65" data-tchmi-width-unit="px" data-tchmi-src="Imports/Images/warning_rot_pressed.svg" data-tchmi-zindex="12" data-tchmi-is-enabled="%s%PLC1.OpcUa.AllDataR.PT2.AX_HVAC.1.MesComAlarm%/s%">
+
+</div>
+
+<div id="TcHmi_Controls_Beckhoff_TcHmiImage_52" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="54" data-tchmi-height-unit="px" data-tchmi-left="895" data-tchmi-left-unit="px"  data-tchmi-top="200" data-tchmi-top-unit="px" data-tchmi-width="65" data-tchmi-width-unit="px" data-tchmi-src="Imports/Images/warning_rot_pressed.svg" data-tchmi-zindex="12" data-tchmi-is-enabled="%s%PLC1.OpcUa.AllDataR.PT2.AX_PCS.0.MesComAlarm%/s%">
+
+</div>
+
+<div id="TcHmi_Controls_Beckhoff_TcHmiImage_53" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="54" data-tchmi-height-unit="px" data-tchmi-left="895" data-tchmi-left-unit="px"  data-tchmi-top="254" data-tchmi-top-unit="px" data-tchmi-width="65" data-tchmi-width-unit="px" data-tchmi-src="Imports/Images/warning_rot_pressed.svg" data-tchmi-zindex="12" data-tchmi-is-enabled="%s%PLC1.OpcUa.AllDataR.PT2.AX_PCS.1.MesComAlarm%/s%">
+
+</div>
+
+<div id="TcHmi_Controls_Beckhoff_TcHmiImage_54" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="54" data-tchmi-height-unit="px" data-tchmi-left="895" data-tchmi-left-unit="px"  data-tchmi-top="309" data-tchmi-top-unit="px" data-tchmi-width="65" data-tchmi-width-unit="px" data-tchmi-src="Imports/Images/warning_rot_pressed.svg" data-tchmi-zindex="12" data-tchmi-is-enabled="%s%PLC1.OpcUa.AllDataR.PT2.AX_Bbms.0.MesComAlarm%/s%">
+
+</div>
+
+<div id="TcHmi_Controls_Beckhoff_TcHmiImage_55" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="54" data-tchmi-height-unit="px" data-tchmi-left="895" data-tchmi-left-unit="px"  data-tchmi-top="373" data-tchmi-top-unit="px" data-tchmi-width="65" data-tchmi-width-unit="px" data-tchmi-src="Imports/Images/warning_rot_pressed.svg" data-tchmi-zindex="12" data-tchmi-is-enabled="%s%PLC1.OpcUa.AllDataR.PT2.AX_Bbms.1.MesComAlarm%/s%">
+
+</div>
+
+<div id="TcHmi_Controls_Beckhoff_TcHmiImage_56" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="54" data-tchmi-height-unit="px" data-tchmi-left="896" data-tchmi-left-unit="px"  data-tchmi-top="547" data-tchmi-top-unit="px" data-tchmi-width="65" data-tchmi-width-unit="px" data-tchmi-src="Imports/Images/warning_rot_pressed.svg" data-tchmi-zindex="12" data-tchmi-is-enabled="%s%PLC1.OpcUa.AllDataR.PT5.AX_HVAC.0.MesComAlarm%/s%">
+
+</div>
+
+<div id="TcHmi_Controls_Beckhoff_TcHmiImage_57" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="54" data-tchmi-height-unit="px" data-tchmi-left="895" data-tchmi-left-unit="px"  data-tchmi-top="611" data-tchmi-top-unit="px" data-tchmi-width="65" data-tchmi-width-unit="px" data-tchmi-src="Imports/Images/warning_rot_pressed.svg" data-tchmi-zindex="12" data-tchmi-is-enabled="%s%PLC1.OpcUa.AllDataR.PT5.AX_HVAC.1.MesComAlarm%/s%">
+
+</div>
+
+<div id="TcHmi_Controls_Beckhoff_TcHmiImage_58" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="54" data-tchmi-height-unit="px" data-tchmi-left="895" data-tchmi-left-unit="px"  data-tchmi-top="674" data-tchmi-top-unit="px" data-tchmi-width="65" data-tchmi-width-unit="px" data-tchmi-src="Imports/Images/warning_rot_pressed.svg" data-tchmi-zindex="12" data-tchmi-is-enabled="%s%PLC1.OpcUa.AllDataR.PT5.AX_PCS.0.MesComAlarm%/s%">
+
+</div>
+
+<div id="TcHmi_Controls_Beckhoff_TcHmiImage_59" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="54" data-tchmi-height-unit="px" data-tchmi-left="895" data-tchmi-left-unit="px"  data-tchmi-top="728" data-tchmi-top-unit="px" data-tchmi-width="65" data-tchmi-width-unit="px" data-tchmi-src="Imports/Images/warning_rot_pressed.svg" data-tchmi-zindex="12" data-tchmi-is-enabled="%s%PLC1.OpcUa.AllDataR.PT5.AX_PCS.1.MesComAlarm%/s%">
+
+</div>
+
+<div id="TcHmi_Controls_Beckhoff_TcHmiImage_60" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="54" data-tchmi-height-unit="px" data-tchmi-left="895" data-tchmi-left-unit="px"  data-tchmi-top="783" data-tchmi-top-unit="px" data-tchmi-width="65" data-tchmi-width-unit="px" data-tchmi-src="Imports/Images/warning_rot_pressed.svg" data-tchmi-zindex="12" data-tchmi-is-enabled="%s%PLC1.OpcUa.AllDataR.PT5.AX_Bbms.0.MesComAlarm%/s%">
+
+</div>
+
+<div id="TcHmi_Controls_Beckhoff_TcHmiImage_61" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="54" data-tchmi-height-unit="px" data-tchmi-left="895" data-tchmi-left-unit="px"  data-tchmi-top="847" data-tchmi-top-unit="px" data-tchmi-width="65" data-tchmi-width-unit="px" data-tchmi-src="Imports/Images/warning_rot_pressed.svg" data-tchmi-zindex="12" data-tchmi-is-enabled="%s%PLC1.OpcUa.AllDataR.PT5.AX_Bbms.1.MesComAlarm%/s%">
+
+</div>
+
+<div id="TcHmi_Controls_Beckhoff_TcHmiImage_62" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="54" data-tchmi-height-unit="px" data-tchmi-left="1544" data-tchmi-left-unit="px"  data-tchmi-top="73" data-tchmi-top-unit="px" data-tchmi-width="65" data-tchmi-width-unit="px" data-tchmi-src="Imports/Images/warning_rot_pressed.svg" data-tchmi-zindex="12" data-tchmi-is-enabled="%s%PLC1.OpcUa.AllDataR.PT3.AX_HVAC.0.MesComAlarm%/s%">
+
+</div>
+
+<div id="TcHmi_Controls_Beckhoff_TcHmiImage_63" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="54" data-tchmi-height-unit="px" data-tchmi-left="1543" data-tchmi-left-unit="px"  data-tchmi-top="137" data-tchmi-top-unit="px" data-tchmi-width="65" data-tchmi-width-unit="px" data-tchmi-src="Imports/Images/warning_rot_pressed.svg" data-tchmi-zindex="12" data-tchmi-is-enabled="%s%PLC1.OpcUa.AllDataR.PT3.AX_HVAC.1.MesComAlarm%/s%">
+
+</div>
+
+<div id="TcHmi_Controls_Beckhoff_TcHmiImage_64" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="54" data-tchmi-height-unit="px" data-tchmi-left="1543" data-tchmi-left-unit="px"  data-tchmi-top="200" data-tchmi-top-unit="px" data-tchmi-width="65" data-tchmi-width-unit="px" data-tchmi-src="Imports/Images/warning_rot_pressed.svg" data-tchmi-zindex="12" data-tchmi-is-enabled="%s%PLC1.OpcUa.AllDataR.PT3.AX_PCS.0.MesComAlarm%/s%">
+
+</div>
+
+<div id="TcHmi_Controls_Beckhoff_TcHmiImage_65" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="54" data-tchmi-height-unit="px" data-tchmi-left="1543" data-tchmi-left-unit="px"  data-tchmi-top="254" data-tchmi-top-unit="px" data-tchmi-width="65" data-tchmi-width-unit="px" data-tchmi-src="Imports/Images/warning_rot_pressed.svg" data-tchmi-zindex="12" data-tchmi-is-enabled="%s%PLC1.OpcUa.AllDataR.PT3.AX_PCS.1.MesComAlarm%/s%">
+
+</div>
+
+<div id="TcHmi_Controls_Beckhoff_TcHmiImage_66" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="54" data-tchmi-height-unit="px" data-tchmi-left="1543" data-tchmi-left-unit="px"  data-tchmi-top="309" data-tchmi-top-unit="px" data-tchmi-width="65" data-tchmi-width-unit="px" data-tchmi-src="Imports/Images/warning_rot_pressed.svg" data-tchmi-zindex="12" data-tchmi-is-enabled="%s%PLC1.OpcUa.AllDataR.PT3.AX_Bbms.0.MesComAlarm%/s%">
+
+</div>
+
+<div id="TcHmi_Controls_Beckhoff_TcHmiImage_67" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="54" data-tchmi-height-unit="px" data-tchmi-left="1543" data-tchmi-left-unit="px"  data-tchmi-top="373" data-tchmi-top-unit="px" data-tchmi-width="65" data-tchmi-width-unit="px" data-tchmi-src="Imports/Images/warning_rot_pressed.svg" data-tchmi-zindex="12" data-tchmi-is-enabled="%s%PLC1.OpcUa.AllDataR.PT3.AX_Bbms.1.MesComAlarm%/s%">
+
+</div>
+
+<div id="TcHmi_Controls_Beckhoff_TcHmiImage_68" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="54" data-tchmi-height-unit="px" data-tchmi-left="1550" data-tchmi-left-unit="px"  data-tchmi-top="547" data-tchmi-top-unit="px" data-tchmi-width="65" data-tchmi-width-unit="px" data-tchmi-src="Imports/Images/warning_rot_pressed.svg" data-tchmi-zindex="12" data-tchmi-is-enabled="%s%PLC1.OpcUa.AllDataR.PT6.AX_HVAC.0.MesComAlarm%/s%">
+
+</div>
+
+<div id="TcHmi_Controls_Beckhoff_TcHmiImage_69" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="54" data-tchmi-height-unit="px" data-tchmi-left="1549" data-tchmi-left-unit="px"  data-tchmi-top="611" data-tchmi-top-unit="px" data-tchmi-width="65" data-tchmi-width-unit="px" data-tchmi-src="Imports/Images/warning_rot_pressed.svg" data-tchmi-zindex="12" data-tchmi-is-enabled="%s%PLC1.OpcUa.AllDataR.PT6.AX_HVAC.1.MesComAlarm%/s%">
+
+</div>
+
+<div id="TcHmi_Controls_Beckhoff_TcHmiImage_70" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="54" data-tchmi-height-unit="px" data-tchmi-left="1549" data-tchmi-left-unit="px"  data-tchmi-top="674" data-tchmi-top-unit="px" data-tchmi-width="65" data-tchmi-width-unit="px" data-tchmi-src="Imports/Images/warning_rot_pressed.svg" data-tchmi-zindex="12" data-tchmi-is-enabled="%s%PLC1.OpcUa.AllDataR.PT6.AX_PCS.0.MesComAlarm%/s%">
+
+</div>
+
+<div id="TcHmi_Controls_Beckhoff_TcHmiImage_71" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="54" data-tchmi-height-unit="px" data-tchmi-left="1549" data-tchmi-left-unit="px"  data-tchmi-top="728" data-tchmi-top-unit="px" data-tchmi-width="65" data-tchmi-width-unit="px" data-tchmi-src="Imports/Images/warning_rot_pressed.svg" data-tchmi-zindex="12" data-tchmi-is-enabled="%s%PLC1.OpcUa.AllDataR.PT6.AX_PCS.1.MesComAlarm%/s%">
+
+</div>
+
+<div id="TcHmi_Controls_Beckhoff_TcHmiImage_72" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="54" data-tchmi-height-unit="px" data-tchmi-left="1549" data-tchmi-left-unit="px"  data-tchmi-top="783" data-tchmi-top-unit="px" data-tchmi-width="65" data-tchmi-width-unit="px" data-tchmi-src="Imports/Images/warning_rot_pressed.svg" data-tchmi-zindex="12" data-tchmi-is-enabled="%s%PLC1.OpcUa.AllDataR.PT6.AX_Bbms.0.MesComAlarm%/s%">
+
+</div>
+
+<div id="TcHmi_Controls_Beckhoff_TcHmiImage_73" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="54" data-tchmi-height-unit="px" data-tchmi-left="1549" data-tchmi-left-unit="px"  data-tchmi-top="847" data-tchmi-top-unit="px" data-tchmi-width="65" data-tchmi-width-unit="px" data-tchmi-src="Imports/Images/warning_rot_pressed.svg" data-tchmi-zindex="12" data-tchmi-is-enabled="%s%PLC1.OpcUa.AllDataR.PT6.AX_Bbms.1.MesComAlarm%/s%">
+
+</div>
+
+<div id="TcHmi_Controls_Beckhoff_TcHmiImage_82" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="54" data-tchmi-height-unit="px" data-tchmi-left="461" data-tchmi-left-unit="px"  data-tchmi-top="191" data-tchmi-top-unit="px" data-tchmi-width="65" data-tchmi-width-unit="px" data-tchmi-src="Imports/Images/warning_gelb_pressed.svg" data-tchmi-zindex="12" data-tchmi-is-enabled="%s%PLC1.OpcUa.AllDataR.PT1.AX_PCS.0.MesComWarning%/s%" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px">
+
+</div>
+
+<div id="TcHmi_Controls_Beckhoff_TcHmiImage_83" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="54" data-tchmi-height-unit="px" data-tchmi-left="461" data-tchmi-left-unit="px"  data-tchmi-top="254" data-tchmi-top-unit="px" data-tchmi-width="65" data-tchmi-width-unit="px" data-tchmi-src="Imports/Images/warning_gelb_pressed.svg" data-tchmi-zindex="13" data-tchmi-is-enabled="%s%PLC1.OpcUa.AllDataR.PT1.AX_PCS.1.MesComWarning%/s%" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px">
+
+</div>
+
+<div id="TcHmi_Controls_Beckhoff_TcHmiImage_84" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="54" data-tchmi-height-unit="px" data-tchmi-left="470" data-tchmi-left-unit="px"  data-tchmi-top="737" data-tchmi-top-unit="px" data-tchmi-width="65" data-tchmi-width-unit="px" data-tchmi-src="Imports/Images/warning_gelb_pressed.svg" data-tchmi-zindex="13" data-tchmi-is-enabled="%s%PLC1.OpcUa.AllDataR.PT4.AX_PCS.1.MesComWarning%/s%" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px">
+
+</div>
+
+<div id="TcHmi_Controls_Beckhoff_TcHmiImage_85" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="54" data-tchmi-height-unit="px" data-tchmi-left="470" data-tchmi-left-unit="px"  data-tchmi-top="674" data-tchmi-top-unit="px" data-tchmi-width="65" data-tchmi-width-unit="px" data-tchmi-src="Imports/Images/warning_gelb_pressed.svg" data-tchmi-zindex="12" data-tchmi-is-enabled="%s%PLC1.OpcUa.AllDataR.PT4.AX_PCS.0.MesComWarning%/s%" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px">
+
+</div>
+
+<div id="TcHmi_Controls_Beckhoff_TcHmiImage_86" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="54" data-tchmi-height-unit="px" data-tchmi-left="1124" data-tchmi-left-unit="px"  data-tchmi-top="200" data-tchmi-top-unit="px" data-tchmi-width="65" data-tchmi-width-unit="px" data-tchmi-src="Imports/Images/warning_gelb_pressed.svg" data-tchmi-zindex="12" data-tchmi-is-enabled="%s%PLC1.OpcUa.AllDataR.PT2.AX_PCS.0.MesComWarning%/s%" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px">
+
+</div>
+
+<div id="TcHmi_Controls_Beckhoff_TcHmiImage_87" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="54" data-tchmi-height-unit="px" data-tchmi-left="1124" data-tchmi-left-unit="px"  data-tchmi-top="263" data-tchmi-top-unit="px" data-tchmi-width="65" data-tchmi-width-unit="px" data-tchmi-src="Imports/Images/warning_gelb_pressed.svg" data-tchmi-zindex="13" data-tchmi-is-enabled="%s%PLC1.OpcUa.AllDataR.PT2.AX_PCS.1.MesComWarning%/s%" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px">
+
+</div>
+
+<div id="TcHmi_Controls_Beckhoff_TcHmiImage_88" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="54" data-tchmi-height-unit="px" data-tchmi-left="1124" data-tchmi-left-unit="px"  data-tchmi-top="674" data-tchmi-top-unit="px" data-tchmi-width="65" data-tchmi-width-unit="px" data-tchmi-src="Imports/Images/warning_gelb_pressed.svg" data-tchmi-zindex="12" data-tchmi-is-enabled="%s%PLC1.OpcUa.AllDataR.PT5.AX_PCS.0.MesComWarning%/s%" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px">
+
+</div>
+
+<div id="TcHmi_Controls_Beckhoff_TcHmiImage_89" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="54" data-tchmi-height-unit="px" data-tchmi-left="1124" data-tchmi-left-unit="px"  data-tchmi-top="737" data-tchmi-top-unit="px" data-tchmi-width="65" data-tchmi-width-unit="px" data-tchmi-src="Imports/Images/warning_gelb_pressed.svg" data-tchmi-zindex="13" data-tchmi-is-enabled="%s%PLC1.OpcUa.AllDataR.PT5.AX_PCS.1.MesComWarning%/s%" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px">
+
+</div>
+
+<div id="TcHmi_Controls_Beckhoff_TcHmiImage_90" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="54" data-tchmi-height-unit="px" data-tchmi-left="1776" data-tchmi-left-unit="px"  data-tchmi-top="665" data-tchmi-top-unit="px" data-tchmi-width="65" data-tchmi-width-unit="px" data-tchmi-src="Imports/Images/warning_gelb_pressed.svg" data-tchmi-zindex="12" data-tchmi-is-enabled="%s%PLC1.OpcUa.AllDataR.PT6.AX_PCS.0.MesComWarning%/s%" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px">
+
+</div>
+
+<div id="TcHmi_Controls_Beckhoff_TcHmiImage_91" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="54" data-tchmi-height-unit="px" data-tchmi-left="1776" data-tchmi-left-unit="px"  data-tchmi-top="728" data-tchmi-top-unit="px" data-tchmi-width="65" data-tchmi-width-unit="px" data-tchmi-src="Imports/Images/warning_gelb_pressed.svg" data-tchmi-zindex="13" data-tchmi-is-enabled="%s%PLC1.OpcUa.AllDataR.PT6.AX_PCS.1.MesComWarning%/s%" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px">
+
+</div>
+
+<div id="TcHmi_Controls_Beckhoff_TcHmiImage_92" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="54" data-tchmi-height-unit="px" data-tchmi-left="1776" data-tchmi-left-unit="px"  data-tchmi-top="191" data-tchmi-top-unit="px" data-tchmi-width="65" data-tchmi-width-unit="px" data-tchmi-src="Imports/Images/warning_gelb_pressed.svg" data-tchmi-zindex="12" data-tchmi-is-enabled="%s%PLC1.OpcUa.AllDataR.PT3.AX_PCS.0.MesComWarning%/s%" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px">
+
+</div>
+
+<div id="TcHmi_Controls_Beckhoff_TcHmiImage_93" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="54" data-tchmi-height-unit="px" data-tchmi-left="1776" data-tchmi-left-unit="px"  data-tchmi-top="254" data-tchmi-top-unit="px" data-tchmi-width="65" data-tchmi-width-unit="px" data-tchmi-src="Imports/Images/warning_gelb_pressed.svg" data-tchmi-zindex="13" data-tchmi-is-enabled="%s%PLC1.OpcUa.AllDataR.PT3.AX_PCS.1.MesComWarning%/s%" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px">
+
+</div>
+
+</div>
+
+
+<script data-tchmi-target-attribute="data-tchmi-border-width" type="application/json">
+{
+  "left": 2,
+  "right": 2,
+  "top": 2,
+  "bottom": 2,
+  "leftUnit": "px",
+  "rightUnit": "px",
+  "topUnit": "px",
+  "bottomUnit": "px"
+}
+</script>
+
+</div>

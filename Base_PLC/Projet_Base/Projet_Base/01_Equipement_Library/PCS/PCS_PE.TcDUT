@@ -1,0 +1,82 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.13">
+  <DUT Name="PCS_PE" Id="{f1a62b6a-00c3-49e8-88d4-f93f697e941b}">
+    <Declaration><![CDATA[{attribute 'pack_mode' := '1'}
+TYPE PCS_PE :
+STRUCT
+// PCS Controller  Measures
+	AX_PowerCol					: ARRAY[1..6] OF PowerCol_PE;		(* PE Module*)
+	
+	MesData						: PCS ; (* MesData*)
+	
+	MesP_ChargeMax				: REAL ;		(* (%)	Max active power setpoint. SV4.2.1a	*)
+	MesP_DischargeMax			: REAL ;		(* (%)	Max active power setpoint. SV4.2.1b	*)
+	MesP_ChargeMax1				: REAL ;		(* (%)	Max active power setpoint1. SV4.2.1a	*)
+	MesP_DischargeMax1			: REAL ;		(* (%)	Max active power setpoint1. SV4.2.1b	*)
+	MesP_ChargeMax2				: REAL ;		(* (%)	Max active power setpoint2. SV4.2.1a	*)
+	MesP_DischargeMax2			: REAL ;		(* (%)	Max active power setpoint2. SV4.2.1b	*)
+	
+	//Electrical Measurements	
+	MesI1						: REAL; (* (A) Current phase 1 (R). INV: SV1.4 Grid current I1 (HEMK)															*)
+	MesI2						: REAL; (* (A) Current phase 2 (S). INV: SV1.5 Grid current I2 (HEMK)															*)
+	MesI3						: REAL; (* (A) Current phase 3 (T). INV: SV1.6 Grid current I3  (HEMK)															*)
+	MesU12						: REAL; (* (V) Phase AB RMS voltage (line to line)at grid side of AC circuit breaker CB501. INV: SV1.1 Grid voltage RS (HEMK)	*)
+	MesU23						: REAL; (* (V) Phase BC RMS voltage (line to line)at grid side of AC circuit breaker CB501. INV: SV1.2 Grid voltage ST(HEMK)	*)
+	MesU31						: REAL; (* (V) Phase CA RMS voltage (line to line)at grid side of AC circuit breaker CB501. INV: SV1.3 Grid voltage TR (HEMK)	*)
+
+	MesHumidity					: REAL;			(* (%) Humidity sensor	*)
+	MesPconnected				: REAL; (* (%) Current available active power. INV: SV4.1.2 P limit inst 														*)  
+	MesQconnected				: REAL; (* (%) Current available reactive power. INV: SV4.2.2 Q limit inst 														*)                                                      									
+
+	MesIDState_InsuResistor_DC	: WORD ; (* (NA) Status of insulation protection. 0 = Idle, 1= Inter measurement quard, 2=measurement in progress, 3=self-test in progress, 4=risk addressed state SV3.1.1 *)
+	MesInsuResistor_AC			: REAL;	(* (Ohms) AC Insulation Resistance. INV: SV3.1.2  Resistor 																*)
+	MesIDState_InsuResistor_AC	: WORD ; (* (NA) Status of insulation protection. 0 = Idle, 1= Inter measurement quard, 2=measurement in progress, 3=self-test in progress, 4=risk addressed state SV3.1.1 *)
+	MesInsuResistor_DC			: REAL;	(* (Ohms) DC Insulation Resistance. INV: SV3.2.2  Resistor 		*)
+	MesInsuResistor_DC2			: REAL; (* (Ohms) DC Insulation Resistance. INV: SV3.3.2  Resistor 		*)
+
+	MesUdc_Input1		 		: REAL ; (* (V) DC Voltage Bus 1 . INV : SV2.1.1 *)
+	MesUdc_Input2		 		: REAL ; (* (V) DC Voltage Bus 2 . INV : SV2.1.2*)
+	MesUdc_Input3		 		: REAL ; (* (V) DC Voltage Bus 3 . INV : SV2.1.3*)
+	MesUdc_Bat1		 			: REAL ; 	(* (V) DC Voltage BESS 1 . INV : SV2.4.1*)
+	MesUdc_Bat2		 			: REAL ; 	(* (V) DC Voltage BESS 2 . INV : SV2.4.2*)
+	MesUdc_Bat3		 			: REAL ; 	(* (V) DC Voltage BESS 3 . INV : SV2.4.3*)
+	MesPdc_Input1		 		: REAL ; (* (V) DC Power Bus 1 . INV : SV2.5a*)
+	MesPdc_Input2		 		: REAL ; (* (V) DC Power Bus 2 . INV : SV2.5b*)
+	MesPdc_Input3		 		: REAL ; (* (V) DC Power Bus 3 . INV : SV2.5c*)
+	MesIdc_RFI_Input1    		: REAL ; (* (V) RFI Current  Bus 1 . INV : SV2.11a*)
+	MesIdc_RFI_Input2    		: REAL ; (* (V) RFI Current  Bus 2 . INV : SV2.11b*)
+	MesIdc_RFI_Input3	 		: REAL ; (* (V) RFI Current  Bus 3 . INV : SV2.11c*)
+	MesIdc_Input1				: REAL; (*(A) SV2.6a DC input current*)
+	MesIdc_Input2				: REAL; (*(A) SV2.6b DC input current*)
+	MesIdc_Input3				: REAL; (*(A) SV2.6c DC input current*)
+
+	//Status Summary
+	MesIDState					: UINT; (* (NA) Current inverter status . INV : SV4.1.3                                                    *)                 	
+	MesAlarmID					: WORD;	(* (NA) Alarm ID of the currently active event.  INV : SV4.1.1    *)
+	MesWarningID				: WORD;	(* (NA) Warning ID of the currently active event.  INV : SV4.1.2    *)
+	MesEventID					: WORD;	(* (NA) Event ID of the currently active event.  INV : SV9.1.1 :Last Event    *)
+                    	
+	// Inverter's Control Cabinet  Status                                                                       											
+	MesTemp_IGBTmax				: REAL; 		 (* (C) Maximum IGBT temperature. INV: SV4.1.5 Max IGBTs temperature											*)
+	MesTemp_PowerColmax			: REAL; 		 (* (C) Maximum power column temperature. INV: SV4.1.6 Max modules temperature									*)
+ 
+	MesReadModule				: UINT;		(* (NA) module read *)
+	MesIDState_PowerCol			: WORD ; 	(* (NA) Running modules (0 = stopped, 1 =running). Module 1 is the first from the right. SV9.1.1															*)
+               	                                                   	                                						
+	// Reset command        	                                                                     	                                						
+	OUT_CmdReset 				: BOOL; 		 (* (NA) OUT reset command. INV: Reset command 43012															*)
+	MesCalibrationState		 	: WORD;			(*(NA) it's a state to know if the calibration is ongoing or not, (0=running, 1=Discharging the batteries started, 2=20min hold finished, starting to send setpt of 0 for 20min, 3=Charging started*)
+	MesBMSSelected				: WORD;
+	OUT_SetptPMax_IMDicharge1	: REAL;
+	OUT_SetptPMax_IMDicharge2	: REAL;
+	OUT_SetptPMax_IMCharge1		: REAL;
+	OUT_SetptPMax_IMCharge2		: REAL;
+	MesSelector 				: BOOL;
+	
+	
+END_STRUCT
+END_TYPE
+
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

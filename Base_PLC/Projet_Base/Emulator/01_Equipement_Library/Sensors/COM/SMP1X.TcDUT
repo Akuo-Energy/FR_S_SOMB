@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="SMP1X" Id="{b15b6c19-9bf1-41cb-a359-6bb53602764b}">
+    <Declaration><![CDATA[TYPE SMP1X :
+STRUCT
+	
+	Value 						: REAL ;		(* (W/m²) Irradiance OF the pyranometer															*)
+	Alarm						: REAL ;		(* Alarm for solar radiation (0=Off, 1 = Lower threshold, 2=Higher threshold)                   *)
+	Description					: STRING ; 		(* Position and comments on the pyranometer                                                     *)
+	                                            (*                                                                                              *)
+	MesAlarmCode				: WORD ;  	    (*                                                                                              *)
+	MesWarningCode				: WORD ;  	    (*                                                                                              *)
+	MesEventCode				: WORD ; 	    (*                                                                                              *)
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

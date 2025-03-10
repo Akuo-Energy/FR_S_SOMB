@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.13">
+  <DUT Name="OUT_EMS" Id="{9211d447-a925-4cc8-8fd8-686d14db520f}">
+    <Declaration><![CDATA[{attribute 'pack_mode' := '1'}
+TYPE OUT_EMS :
+// Output for the SCADA
+STRUCT
+	OUT_Watchdog 							: REAL ; (* Incremented value from EMS. Reinitializes to 1 at 1000. *)
+	OUT_SetptP_GRID 						: REAL ; (* Setpoint received from Grid Manager*)
+	OUT_MesP_GRID 							: REAL ; (* Average of previous minute (in Enercal-granularity sense) injected power*)
+	OUT_CmdRebootEMS 						: BOOL ; (* Command the EMS to reboot : resets all parameters. "1" means True and "0" means False *)
+	OUT_CmdKillEMS 							: BOOL ; (* Command the EMS to stop. "1" means True and "0" means False *)
+	OUT_NoPenalties 						: BOOL ; (* There has been a Defaut GTE during production today. "1" means True and "0" means False. Pour le moment pas sûre que ça soit pertinent pour le CdC des AO CRE ZNI, à confirmer*)
+	OUT_MesP_SPP 							: REAL ; (* At Sub MV (sum of the 2 SPPs), mean over the last minute*)
+	OUT_MesAvailability_SPP 				: REAL ; (* Sum for the 2 SPPs : Pdc_Connected / Pdc_Tot for the inverters*)
+	OUT_MesP_ESS 							: REAL ; (* At Sub MV (sum of the 2 PCSs)*)
+	OUT_Balancing_SoC_Calibration_Required 	: BOOL;	(*(NA) Synthesis of the two Evnt01 signals for the EMS*)
+	OUT_OngoingCalibration					: BOOL; (*(NA) SOC Calibration is ongoing (True) or NOT (False)*)
+	OUT_Ecretage							: REAL;
+END_STRUCT
+END_TYPE
+
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

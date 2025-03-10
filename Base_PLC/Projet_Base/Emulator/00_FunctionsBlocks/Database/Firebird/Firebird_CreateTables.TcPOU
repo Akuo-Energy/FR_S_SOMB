@@ -1,0 +1,92 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="Firebird_CreateTables" Id="{ed046fa2-6415-4d90-8a64-770e6e19e048}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM Firebird_CreateTables
+VAR_INPUT
+	IN_Start				: BOOL;
+	IN_TableNames			: ARRAY[1.. CstNbTables] OF STRING;
+	IN_hDBID         		: UDINT;	
+END_VAR
+VAR_OUTPUT
+	OUT_Error				: BOOL;
+	OUT_Busy				: BOOL;
+	OUT_Result				: INT;
+END_VAR
+VAR
+	Etape					: UINT;
+	
+	TrigStart				: R_TRIG;
+	RsStart					: RS;
+	bCreateTable			: BOOL;
+	TrigCreateTable			: R_TRIG;
+	RsCreateTable			: RS;
+	PLCDBCreateEvt 			: FB_PLCDBCreateEvt(sNetID := '', tTimeout := T#5S);
+	FirebirdConf			: T_DBConfig_Odbc;
+	sExtension				: STRING:= '.db';
+	tcMessage    	 		: I_TcMessage;
+	
+	AX_ColArray				: ARRAY[0..3] OF ST_ColumnInfo;
+	
+	NumTable				: UINT := 1;
+	KK						: UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+AX_ColArray[0].sName := 'TimeStamp';     	AX_ColArray[0].eType := E_ColumnType.DateTime;   	AX_ColArray[0].nLength := 4;    
+AX_ColArray[1].sName := 'TimeStamp_Ms';    	AX_ColArray[1].eType := E_ColumnType.Integer;    	AX_ColArray[1].nLength := 4;
+AX_ColArray[2].sName := 'ParentId';   		AX_ColArray[2].eType := E_ColumnType.Integer;   	AX_ColArray[2].nLength := 4;
+AX_ColArray[3].sName := 'Value';   			AX_ColArray[3].eType := E_ColumnType.Float;   		AX_ColArray[3].nLength := 8;
+
+
+TrigCreateTable(CLK := IN_Start);
+RsCreateTable(SET:= TrigCreateTable.Q);
+
+IF RsCreateTable.Q1 THEN
+	OUT_Busy := TRUE;
+	IF NumTable <= CstNbTables THEN
+		IF PLCDBCreateEvt.Table(hDBID := IN_hDBID, sTableName := IN_TableNames[NumTable],  pTableCfg := ADR(AX_ColArray), cbTableCfg := SIZEOF(AX_ColArray)  ) THEN
+			IF PLCDBCreateEvt.bError THEN
+				Etape := 255;
+				OUT_Error := TRUE;
+				OUT_Result := -2;
+			ELSE
+				IF Numtable = CstNbTables THEN
+					IN_Start := FALSE;
+					Etape := 0;
+					RsCreateTable(RESET1 := TRUE);
+					RsCreateTable(RESET1 := FALSE);	
+					bCreateTable := FALSE;
+					OUT_Result := 1;	
+					TrigStart(CLK := FALSE);
+					OUT_Busy := FALSE;	
+					OUT_Error := FALSE;
+					OUT_Result := 1;
+				ELSE
+					NumTable := NumTable + 1;		
+				END_IF
+			END_IF
+		END_IF
+	END_IF
+END_IF
+
+IF Etape = 255 THEN
+	Etape := 0;
+	bCreateTable := FALSE;
+	IN_Start := FALSE;
+	OUT_Busy := FALSE;	
+	RsCreateTable(RESET1 := TRUE);
+	RsCreateTable(RESET1 := FALSE);
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="Firebird_CreateTables">
+      <LineId Id="468" Count="5" />
+      <LineId Id="513" Count="4" />
+      <LineId Id="555" Count="0" />
+      <LineId Id="518" Count="16" />
+      <LineId Id="552" Count="0" />
+      <LineId Id="535" Count="14" />
+      <LineId Id="140" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

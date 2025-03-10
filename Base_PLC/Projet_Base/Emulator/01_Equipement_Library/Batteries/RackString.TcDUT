@@ -1,0 +1,94 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="RackString" Id="{0017a6eb-c973-4d59-a2cf-c6220401f4a3}">
+    <Declaration><![CDATA[///////////
+// Structure For Battery Racks. Main Operating Data to be saved ( ex: OPC ) .  
+//////////
+TYPE RackString :
+STRUCT
+	
+		MesMode								: UINT;		// (NA) Rack mode: 0: None, 1: Init, 2: Off, DcSwitch On, 3: On, DcSwitch On,
+		MesAlarm1							: WORD;		// (NA) bit0: 
+		MesAlarm2							: WORD;		// (NA) bit0: 
+		MesAlarm3							: WORD;		// (NA) bit0: 
+		MesAlarm4							: WORD;		// (NA) bit0: 
+		MesProtection1						: WORD;		// (NA) bit0: 
+		MesProtection2						: WORD;		// (NA) bit0: 
+		MesProtection3						: WORD;		// (NA) bit0: 
+		MesProtection4						: WORD;		// (NA) bit0: 		
+		MesControlStatus					: WORD ; 	// Control Status
+		MesUdc								: REAL ; 	// String Voltage 
+		MesUdc_ModuleSum					: REAL  ;	// String voltage obtained by summing module voltage 
+		MesUdc_CellSum						: REAL ; 	// String voltage obtained by summing Cell voltage 
+		MesIdc								: REAL;		// (A) Rack Current
+		MesIdc_Avg							: REAL;		// (A) Rack Current ( average of 3 sec) 
+		MesSoC	 							: REAL;  	// (%) SoC on Battery rack 
+		MesSoH	 							: REAL;  	// (%) SoH on Battery rack 
+		MesCCL								: REAL;		// (A) Charge limit of rack
+		MesDCL								: REAL;		// (A) Discharge limit of rack
+		MesCPL								: REAL ; 	// (kW) Charge Power Limit		- To zero if Estop is set . 
+		MesDPL								: REAL ; 	// (kW) Discharge Power Limit - To zero if Estop is set .
+		MesECharge							: REAL ; 	// (kWh) Total Energy charged over time 
+		MesEDischarge						: REAL ; 	// (kWh) Total Energy Discharge over time 
+		MesOff_ModuleID						: UINT; 	// Module ID where the power is off while the other modules are connected . 
+		MesComError_ModuleID				: UINT ; 	// Module ID where there is a LOC while other modules are connected . 
+		MesUdcDiffMax_Cell					: REAL ; 	// (V) 	Max voltage difference between cells . 
+		MesUdc_Cell							: REAL; 	// (V)	Cell voltage. Average
+		MesUdcMax1_Cell						: REAL; 	// (V)	Cell voltage. Max Rank #1
+		MesUdcMax1_Cell_ModuleID			: UINT; 	// (V)	Module ID where Cell voltage  reaches Max value. Rank #1
+		MesUdcMax1_Cell_CellID				: UINT; 	// (V)	Cell ID where Cell voltage reaches Max value. Rank #1
+		MesUdcMin1_Cell						: REAL; 	// (V)	Cell voltage . Min Rank #1
+		MesUdcMin1_Cell_ModuleID			: UINT; 	// (V)	Module ID where Cell voltage  reaches Min value. Rank #1
+		MesUdcMin1_Cell_CellID				: UINT; 	// (V)	Cell ID where Cell voltage reaches Min value. Rank #1
+		MesUdcMax2_Cell						: REAL; 	// (V)	Cell voltage . Max Rank #2
+		MesUdcMax2_Cell_ModuleID			: UINT; 	// (V)	Module ID where Cell voltage  reaches Max value. Rank #2
+		MesUdcMax2_Cell_CellID				: UINT; 	// (V)	Cell ID where Cell voltage reaches Max value. Rank #2
+		MesUdcMin2_Cell						: REAL; 	// (V)	Cell voltage . Min Rank #2
+		MesUdcMin2_Cell_ModuleID			: UINT; 	// (V)	Module ID where Cell voltage  reaches Min value. Rank #2
+		MesUdcMin2_Cell_CellID				: UINT; 	// (V)	Cell ID where Cell voltage reaches Min value. Rank #2		
+		MesTempDiffMax_Cell					: REAL ; 	// (°C) Max Temp difference between cells . 
+		MesTemp_Cell						: REAL; 	// (°C)	Cell Temp . Average
+		MesTempMax1_Cell					: REAL; 	// (°C)	Cell Temp . Max Rank #1
+		MesTempMax1_Cell_ModuleID			: UINT; 	// (°C)	Module ID where Cell Temp  reaches Max value. Rank #1
+		MesTempMax1_Cell_CellID				: UINT; 	// (°C)	Cell ID where Cell Temp reaches Max value. Rank #1
+		MesTempMin1_Cell					: REAL; 	// (°C)	Cell Temp . Min Rank #1
+		MesTempMin1_Cell_ModuleID			: UINT; 	// (°C)	Module ID where Cell Temp  reaches Min value. Rank #1
+		MesTempMin1_Cell_CellID				: UINT; 	// (°C)	Cell ID where Cell Temp reaches Min value. Rank #1
+		MesTempMax2_Cell					: REAL; 	// (°C)	Cell Temp . Max Rank #2
+		MesTempMax2_Cell_ModuleID			: UINT; 	// (°C)	Module ID where Cell Temp  reaches Max value. Rank #2
+		MesTempMax2_Cell_CellID				: UINT; 	// (°C)	Cell ID where Cell Temp reaches Max value. Rank #2
+		MesTempMin2_Cell					: REAL; 	// (°C)	Cell Temp . Min Rank #2
+		MesTempMin2_Cell_ModuleID			: UINT; 	// (°C)	Module ID where Cell Temp  reaches Min value. Rank #2
+		MesTempMin2_Cell_CellID				: UINT; 	// (°C)	Cell ID where Cell Temp reaches Min value. Rank #2		
+		MesTempPCBMax						: REAL ; 	// (°C) Temperature PCB Max
+		MesTempPCBMax_ModuleID				: UINT ;    // (°C) Temperature PCB Max module ID
+		MesTempPCBMin						: REAL ;    // (°C) Temperature PCB Min
+		MesTempPCBMin_ModuleID				: UINT ; 	// (°C) Temperature PCB Min Module ID 	
+		MesSensorStatus						: UINT ; 	//	Register status (only for Samsung diagnosis)
+		MesModuleScanStatus					: UINT ; 	//	Register status (only for Samsung diagnosis)
+		MesModuleBalancingStatus			: UINT ; 	//	Register status (only for Samsung diagnosis)
+		MesModuleAddressStatus				: UINT ; 	//	Register status (only for Samsung diagnosis)
+		MesModuleVoltageStatus				: UINT ; 	//	Register status (only for Samsung diagnosis)	
+		MesModuleTemperatureStatus			: UINT ; 	//	Register status (only for Samsung diagnosis)
+		MesUdcDiffCellMax					: REAL ; 	// (V)[Rack#1][String#1] Difference Voltage (MAX(Cell Sensing Summation))
+		MesUdcDiffModuleMax					: REAL ; 	// (V)[Rack#1][String#1] Difference Voltage (Max(Module Sensing))        
+		MesUdcDiffModuleMax_ModuleID		: UINT ; 	// [Rack#1][String#1] Difference Voltage (Max) Module Position           
+		MesUdcDiffCellMin					: REAL ; 	// (V)[Rack#1][String#1] Difference Voltage (Min(Cell Sensing Summation))
+		MesUdcDiffModuleMin					: REAL ; 	// (V)[Rack#1][String#1] Difference Voltage (Min(Module Sensing))        
+		MesUdcDiffModuleMin_ModuleID		: UINT ; 	// [Rack#1][String#1] Difference Voltage (Min) Module Position           
+		MesState							: UINT ; 	// internal string state machine . 
+		MesCellVDist_under20mV				: REAL ; 	// (%)[Rack#1][String#1] Cell V Distribution (Under 20mV)
+		MesCellVDist_underVimbAlarm 		: REAL ; 	// (%)[Rack#1][String#1] Cell V Distribution (Under V-IMB Alarm Level)
+		MesCellVDist_underVimbProtection 	: REAL ; 	// (%)[Rack#1][String#1] Cell V Distribution (Under V-IMB Protection Level)
+		MesCellVDist_VimbProtection 		: REAL ; 	// (%)[Rack#1][String#1] Cell V Distribution (V-IMB Protection Level or More)
+		MesCellBalancingCntMax				: UINT ; 	// ()[Rack#1][String#1] Cell Balancing Execution Count (Max)
+		MesCellBalancingCntMax_ModuleID		: UINT ; 	// ()[Rack#1][String#1] Cell Balancing Execution Count (Max) Module Position
+		MesCellBalancingCntMax_CellID		: UINT ; 	// ()[Rack#1][String#1] Cell Balancing Execution Count (Max) Cell Position
+		MesMaxBalancingTime					: REAL ; 	// (min)[Rack#1][String#1] Max Balancing Time (minute)
+		
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

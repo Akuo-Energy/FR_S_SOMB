@@ -1,0 +1,45 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="INV_ABB_PVS" Id="{a48a7512-50e1-422b-979e-ead14854c408}">
+    <Declaration><![CDATA[TYPE INV_ABB_PVS :
+STRUCT
+	MesData				: INV;		(* INV Object 									*)
+	
+	AX_STR				: ARRAY[1..12] OF STR;	(* STR Object 						*)
+	
+	MesI1				: REAL;		(* (A) Current Phase 1 							*)
+	MesI2				: REAL;     (* (A) Current Phase 2 							*)
+	MesI3				: REAL;     (* (A) Current Phase 3 							*)
+	MesV1				: REAL;     (* (V) Voltage Phase 1 							*)
+	MesV2				: REAL;     (* (V) Voltage Phase 2 							*)
+	MesV3				: REAL;     (* (V) Voltage Phase 3 							*)
+	MesU12				: REAL;     (* (V) Voltage between Phase 1 and 2 			*)
+	MesU23				: REAL;     (* (V) Voltage between Phase 2 and 3 			*)
+	MesU31				: REAL;     (* (V) Voltage between Phase 1 and 3 			*)
+	MesPF				: REAL;     (* (NA) Power Factor							*)
+	                                                                        		
+	MesTemp_AC_cab		: REAL;		(* (C) Cabinet Temperature						*)
+	MesTemp_HeatSink	: REAL;		(* (C) Heat Sink Temperature					*)
+	MesState_InvWord	: WORD;		(* (NA)											*)
+	MesVndOpeState		: UINT;		(* (NA) 										*)
+	MesGlobalEvt		: WORD;		(* (NA) 										*)
+	MesEacTot			: ULINT;	(* (NA) 										*)	
+	MesEacDay			: LREAL;    (* (NA) 										*)
+	
+	MesEvent1 			: WORD;		(* (NA)											*)
+	MesEventBitFld2 	: WORD;		(* (NA)											*)
+	MesVndEventBitFld1 	: WORD;		(* (NA)											*)
+	MesVndEventBitFld2 	: WORD;		(* (NA)											*)
+	MesVndEventBitFld3 	: WORD;		(* (NA)											*)
+	
+	
+	CmdP_Ack			: BOOL := TRUE;	(* (NA) P Command Acknowledge 				*)
+	CmdQ_Ack			: BOOL := TRUE;	(* (NA) Q Command Acknowledge 				*)
+	CmdPF_Ack			: BOOL;			(* (NA) Power Factor Command Acknowledge 	*)
+	CmdStart_Ack		: BOOL := TRUE;	(* (NA) Start Command Acknowledge 			*)
+	OUT_SetptCosPhi		: REAL := 1;	(* (NA) Power factor SetPoint Acknowledge	*)
+	
+END_STRUCT
+END_TYPE]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,40 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_MergeWordsToUint" Id="{2b87e196-e670-4c79-87d7-33aad1b519aa}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_MergeWordsToUint
+////////////////// 
+// Merge two words or one word into a DINT or UDINT with big endian coding. And finally Output a Real. 
+//////////////////	
+
+VAR_IN_OUT
+	VAR_OUT 		: UINT ; 	
+	
+END_VAR
+
+VAR_INPUT
+	WORD_STRONG 		: WORD; 			// Strong Word. Word to consider if size equals 1.
+	WORD_WEAK	 		: WORD 	:= 0; 		// Weak Word. 
+	
+
+END_VAR
+
+VAR
+	VAR_AUX 		: ULINT ;			
+	
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+MEMCPY(destAddr := ADR(VAR_OUT)+1*SIZEOF(WORD_STRONG), 		srcAddr := ADR(WORD_WEAK), 		n := SIZEOF(WORD_WEAK));
+MEMCPY(destAddr := ADR(VAR_OUT)+0*SIZEOF(WORD_STRONG), 		srcAddr := ADR(WORD_STRONG), 	n := SIZEOF(WORD_WEAK));
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_MergeWordsToUint">
+      <LineId Id="182" Count="0" />
+      <LineId Id="185" Count="0" />
+      <LineId Id="184" Count="0" />
+      <LineId Id="181" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

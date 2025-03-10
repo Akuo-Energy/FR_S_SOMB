@@ -1,0 +1,73 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_PM_Base" Id="{ce9e8853-5a6c-4e94-aaed-19c5bf9e954c}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_PM_Base 
+//////////////////
+// Measurement Solution. Base FB
+//////////////////
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance specific) 
+	ParamTempoComAlarm			: TIME 			:= T#10S ; 						// (s) Config : Tempo to detect LOC Alarm
+	ParamClockReadTime 			: TIME 			:= TIME#200MS;	  				// (ms) Read Modbus Frequency.  
+	ParamTimeout				: TIME  		:= T#2S ;			  			// (s) Timeout for modbus reading
+	
+	
+END_VAR
+
+VAR_INPUT
+	//Child objects
+	IN_CmdToggleRead				: BOOL ; 
+	IN_CmdReset_L					: BOOL ;	// (NA) External Reset Command
+
+END_VAR
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//
+		TON_ComAlarm				: TON ; 												// Tempo before detecting loss of communication. 
+	    TON_ComWarning				: TON ; 												// Tempo before detecting loss of one frame.                                               								
+                                            								
+												//(NA) [P,H] Communication Error with D50 Digiware (all chain ) 
+		MesWarningCom				: BOOL ; 												// True if bad communication .
+
+	//M_READ VARIABLES//
+//	MesDataExd				AT %Q*: PM ; 
+		ClockRead					AT %Q*: BOOL ; 												// Clock Read
+
+	//M_INIT VARIABLES //
+		bInit						: BOOL 				:= TRUE ; 							// (NA) Initialize object parameters at first cycle 
+		
+	// M_EXECUTE VARIABLES //
+		TP1							: TP ; 												// (NA) Tempo to define Modbus Reading Frequency  
+		
+		//MesCP_Read					: BOOL;													// (NA) Permanent conditions to activate method
+        Trig_Cmd_Read				: R_TRIG;                       
+	// EMULATOR //                      
+		
+ 
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_Execute" Id="{830501c0-bf21-4f5d-8124-65df57ad427e}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	// EMULATOR
+
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_PM_Base">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PM_Base.M_Execute">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

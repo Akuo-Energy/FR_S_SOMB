@@ -1,0 +1,602 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="PRG_IO" Id="{b33b6ed7-5c24-409e-8db2-191afb02d26f}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM PRG_IO
+///////////
+// This Program is used as an interface between code variable and the I/O cards
+//////////
+VAR_INPUT
+	
+//PP States //
+
+// EXECUTE VARIABLES //
+	IN_CmdInhibOutput_OPC		: BOOL := TRUE ; 
+	MesData				: IO ; 
+END_VAR
+VAR 	
+
+//M_INIT VARIABLES //
+	bInit						: BOOL	:=TRUE ;			// Initialization variables
+	iTest                       : INT;
+	
+	// WAGO Only 
+		(*
+	xEnable				: 	BOOL := TRUE;
+	uiNumberOfModules	: 	UINT;
+	xBusy				:	BOOL;
+	xError				: 	BOOL;
+	sStatus				: 	STRING;
+	xKbusInit			: 	BOOL;
+	uiNumberOfDO		: 	UINT;
+	uiNumberOfDI		: 	UINT;
+	uiNumberOfAO		: 	UINT;
+	uiNumberOfAI		: 	UINT;
+	*)
+
+END_VAR
+
+VAR_INPUT
+END_VAR
+VAR_INPUT
+END_VAR
+VAR_INPUT
+MesIO_SUBMV_EL1809_1 : ARRAY [1..16] OF ST_DI ; 
+MesIO_SUBMV_EL1809_2 : ARRAY [1..16] OF ST_DI ; 
+MesIO_SUBMV_EL1809_3 : ARRAY [1..16] OF ST_DI ; 
+MesIO_SUBMV_EL2809_4 : ARRAY [1..16] OF ST_DO ; 
+MesIO_SUBMV_EL3024_5 : ARRAY [1..4] OF ST_AI ; 
+MesIO_PTR_1_EL3024_8 : ARRAY [1..4] OF ST_AI ; 
+MesIO_PTR_1_EL1809_9 : ARRAY [1..16] OF ST_DI ; 
+MesIO_PTR_1_EL2809_10 : ARRAY [1..16] OF ST_DO ; 
+MesIO_PTR_2_EL3024_8 : ARRAY [1..4] OF ST_AI ; 
+MesIO_PTR_2_EL1809_9 : ARRAY [1..16] OF ST_DI ; 
+MesIO_PTR_2_EL2809_10 : ARRAY [1..16] OF ST_DO ; 
+MesIO_PTR_3_EL3024_8 : ARRAY [1..4] OF ST_AI ; 
+MesIO_PTR_3_EL1809_9 : ARRAY [1..16] OF ST_DI ; 
+MesIO_PTR_3_EL2809_10 : ARRAY [1..16] OF ST_DO ; 
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// Initializing the static variables //  
+	IF bInit OR CmdInit_G THEN
+		M_Init() ; 
+		bInit		:= FALSE ; 
+		
+	END_IF
+	M_AlarmManagement() ; 
+
+	(* WAGO Application
+	M_Evaluate() ; 
+	
+	
+FR_AppScanKbus.PRG_ScanKbus(
+	xEnable				:= xEnable, 
+	axDO				:= axDO, 
+	aiAO				:= aiAO, 
+	axDI				=> axDI, 
+	aiAI				=> aiAI, 
+	uiNumberOfModules	=> uiNumberOfModules, 
+	atypModule			=> atypModule, 
+	xBusy				=> xBusy, 
+	xError				=> xError, 
+	sStatus				=> sStatus, 
+	xKbusInit			=> xKbusInit, 
+	uiNumberOfDO		=> uiNumberOfDO, 
+	uiNumberOfDI		=> uiNumberOfDI, 
+	uiNumberOfAO		=> uiNumberOfAO, 
+	uiNumberOfAI		=> uiNumberOfAI, 
+	tRefresh			:= T#10MS);
+	*)]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{87c026f4-5757-45b2-9f2a-65b5d12f0534}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Generates object alarms and manages resets. 
+//////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager			: FB_AlarmCodeManager ; 
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+FB_AlarmCodeManager(
+bAlarm1         :=MesIO_SUBMV_EL1809_1[ 1].value , // SUBMV.-EL1809-ID:1-Input:1 : MV Feeder 1 Opened #Interface
+bAlarm2         :=MesIO_SUBMV_EL1809_1[ 2].value , //SUBMV.-EL1809-ID:1-Input:2 : MV Feeder 2 Opened #Interface
+bAlarm3         :=MesIO_SUBMV_EL1809_1[ 3].value , //SUBMV.-EL1809-ID:1-Input:3 : MV Feeder 3 Opened  #Interface
+bAlarm4         :=MesIO_SUBMV_EL1809_1[ 4].value , //SUBMV.-EL1809-ID:1-Input:4 : Main MVCB Opened #Interface
+bAlarm5         :=MesIO_SUBMV_EL1809_1[ 5].value , //SUBMV.-EL1809-ID:1-Input:5 : MainMVCB Tripped #Interface
+bAlarm6         :=MesIO_SUBMV_EL1809_1[ 6].value , //SUBMV.-EL1809-ID:1-Input:6 : MainMVCB Earthing #Interface
+bAlarm7         :=MesIO_SUBMV_EL1809_1[ 7].value , //SUBMV.-EL1809-ID:1-Input:7 : MainMVCB selector in local position #Interface
+bAlarm8         :=MesIO_SUBMV_EL1809_1[ 8].value , //SUBMV.-EL1809-ID:1-Input:8 : MainMVCB motorization in fault #Interface
+bAlarm9         :=MesIO_SUBMV_EL1809_1[ 9].value , //SUBMV.-EL1809-ID:1-Input:9 : MV Feeder 1 Tripped #Interface
+bAlarm10         :=MesIO_SUBMV_EL1809_1[ 10].value , //SUBMV.-EL1809-ID:1-Input:10 : MV Feeder 2 Tripped #Interface
+bAlarm11         :=MesIO_SUBMV_EL1809_1[ 11].value , //SUBMV.-EL1809-ID:1-Input:11 : MV Feeder 3 Tripped  #Interface
+bAlarm12         :=MesIO_SUBMV_EL1809_1[ 12].value , //SUBMV.-EL1809-ID:1-Input:12 : MV Feeder 1 Motorization fault #Interface
+bAlarm13         :=MesIO_SUBMV_EL1809_1[ 13].value , //SUBMV.-EL1809-ID:1-Input:13 : MV Feeder 2 Motorization fault #Interface
+bAlarm14         :=MesIO_SUBMV_EL1809_1[ 14].value , //SUBMV.-EL1809-ID:1-Input:14 : MV Feeder 3 Motorization fault  #Interface
+bAlarm15         :=MesIO_SUBMV_EL1809_1[ 15].value , //SUBMV.-EL1809-ID:1-Input:15 : MV Feeder 1 Earthing #Interface
+wAlarmCode      => MesData.MesEventCode[1]);   
+FB_AlarmCodeManager(
+bAlarm1         :=MesIO_SUBMV_EL1809_1[ 16].value , //SUBMV.-EL1809-ID:1-Input:16 : MV Feeder 2 Earthing #Interface
+bAlarm2         :=MesIO_SUBMV_EL1809_2[ 1].value , //SUBMV.-EL1809-ID:2-Input:1 : MV Feeder 3 Earthing  #Interface
+bAlarm3         :=MesIO_SUBMV_EL1809_2[ 2].value , //SUBMV.-EL1809-ID:2-Input:2 : MV Feeder 1 Selector in local position #Interface
+bAlarm4         :=MesIO_SUBMV_EL1809_2[ 3].value , //SUBMV.-EL1809-ID:2-Input:3 : MV Feeder 2 Selector in local position #Interface
+bAlarm5         :=MesIO_SUBMV_EL1809_2[ 4].value , //SUBMV.-EL1809-ID:2-Input:4 : MV Feeder 3 Selector in local position  #Interface
+bAlarm6         :=MesIO_SUBMV_EL1809_2[ 5].value , //SUBMV.-EL1809-ID:2-Input:5 : Grid MV CB opened #Interface
+bAlarm7         :=MesIO_SUBMV_EL1809_2[ 6].value , //SUBMV.-EL1809-ID:2-Input:6 : Measure MV CB opened  #Interface
+bAlarm8         :=MesIO_SUBMV_EL1809_2[ 7].value , //SUBMV.-EL1809-ID:2-Input:7 : Measure MV CB Fuse is burned #Interface
+bAlarm9         :=MesIO_SUBMV_EL1809_2[ 8].value , //SUBMV.-EL1809-ID:2-Input:8 : Measure MVCB Earthing #Interface
+bAlarm10         :=MesIO_SUBMV_EL1809_2[ 9].value , //SUBMV.-EL1809-ID:2-Input:9 : AuxMVCB opened #Interface
+bAlarm11         :=MesIO_SUBMV_EL1809_2[ 10].value , //SUBMV.-EL1809-ID:2-Input:10 : AuxMVCB fuse is burned #Interface
+bAlarm12         :=MesIO_SUBMV_EL1809_2[ 11].value , //SUBMV.-EL1809-ID:2-Input:11 : AuxMVCB earthing #Interface
+bAlarm13         :=MesIO_SUBMV_EL1809_2[ 12].value , //SUBMV.-EL1809-ID:2-Input:12 : Emergency Stop in LV Area #Interface
+bAlarm14         :=MesIO_SUBMV_EL1809_2[ 13].value , //SUBMV.-EL1809-ID:2-Input:13 : Emergency stop in MV Area #Interface
+bAlarm15         :=MesIO_SUBMV_EL1809_2[ 14].value , //SUBMV.-EL1809-ID:2-Input:14 : Smoke detector in LV Area #Interface
+wAlarmCode      => MesData.MesEventCode[2]);   
+FB_AlarmCodeManager(
+bAlarm1         :=MesIO_SUBMV_EL1809_2[ 16].value , //SUBMV.-EL1809-ID:2-Input:16 : Transformer Alarm synthesis #Interface
+bAlarm2         :=MesIO_SUBMV_EL1809_3[ 1].value , //SUBMV.-EL1809-ID:3-Input:1 : Transformer pressure alarm #Interface
+bAlarm3         :=MesIO_SUBMV_EL1809_3[ 2].value , //SUBMV.-EL1809-ID:3-Input:2 : Transformer gaz alarm  #Interface
+bAlarm4         :=MesIO_SUBMV_EL1809_3[ 3].value , //SUBMV.-EL1809-ID:3-Input:3 : Transformer temperature warning  #Interface
+bAlarm5         :=MesIO_SUBMV_EL1809_3[ 4].value , //SUBMV.-EL1809-ID:3-Input:4 : Transformer temperature alarm #Interface
+bAlarm6         :=MesIO_SUBMV_EL1809_3[ 5].value , //SUBMV.-EL1809-ID:3-Input:5 : UPS Decharge Batterie State #Interface
+bAlarm7         :=MesIO_SUBMV_EL1809_3[ 6].value , //SUBMV.-EL1809-ID:3-Input:6 : UPS alarm synthesis #Interface
+bAlarm8         :=MesIO_SUBMV_EL1809_3[ 7].value , //SUBMV.-EL1809-ID:3-Input:7 : UPS  Low Voltage  #Interface
+bAlarm9         :=MesIO_SUBMV_EL1809_3[ 8].value , //SUBMV.-EL1809-ID:3-Input:8 : ProtectRelay I>>0 Fault #Interface
+bAlarm10         :=MesIO_SUBMV_EL1809_3[ 9].value , //SUBMV.-EL1809-ID:3-Input:9 : ProtectRelay Min U Fault #Interface
+bAlarm11         :=MesIO_SUBMV_EL2809_4[ 1].value , //SUBMV.-EL2809-ID:4-Output:1 : MainMVCB Open order #Interface
+bAlarm12         :=MesIO_SUBMV_EL2809_4[ 2].value , //SUBMV.-EL2809-ID:4-Output:2 : MainMVCB Close order #Interface
+bAlarm13         :=MesIO_SUBMV_EL2809_4[ 3].value , //SUBMV.-EL2809-ID:4-Output:3 : MV Feeder 1 Close Command #Interface
+bAlarm14         :=MesIO_SUBMV_EL2809_4[ 4].value , //SUBMV.-EL2809-ID:4-Output:4 : MV Feeder 2 Close Command #Interface
+bAlarm15         :=MesIO_SUBMV_EL2809_4[ 5].value , //SUBMV.-EL2809-ID:4-Output:5 : MV Feeder 3 Close Command  #Interface
+wAlarmCode      => MesData.MesEventCode[3]);   
+FB_AlarmCodeManager(
+bAlarm1         :=MesIO_SUBMV_EL2809_4[ 6].value , //SUBMV.-EL2809-ID:4-Output:6 : MV Feeder 1 Open Command #Interface
+bAlarm2         :=MesIO_SUBMV_EL2809_4[ 7].value , //SUBMV.-EL2809-ID:4-Output:7 : MV Feeder 2 Open Command #Interface
+bAlarm3         :=MesIO_SUBMV_EL2809_4[ 8].value , //SUBMV.-EL2809-ID:4-Output:8 : MV Feeder 3 Open Command  #Interface
+bAlarm4         :=MesIO_PTR_1_EL1809_9[ 1].value , //PTR.1-EL1809-ID:9-Input:1 : Motorization alarm MainMVCB #Interface
+bAlarm5         :=MesIO_PTR_1_EL1809_9[ 2].value , //PTR.1-EL1809-ID:9-Input:2 : Main MVCB Tripped #Interface
+bAlarm6         :=MesIO_PTR_1_EL1809_9[ 3].value , //PTR.1-EL1809-ID:9-Input:3 : MainMVCB selector in Local position #Interface
+bAlarm7         :=MesIO_PTR_1_EL1809_9[ 4].value , //PTR.1-EL1809-ID:9-Input:4 : MainMVCB connected to the Earth #Interface
+bAlarm8         :=MesIO_PTR_1_EL1809_9[ 5].value , //PTR.1-EL1809-ID:9-Input:5 : Transfo smoke detector 1 #Interface
+bAlarm9         :=MesIO_PTR_1_EL1809_9[ 6].value , //PTR.1-EL1809-ID:9-Input:6 : Inverter smoke detector 2 #Interface
+bAlarm10         :=MesIO_PTR_1_EL1809_9[ 7].value , //PTR.1-EL1809-ID:9-Input:7 : Door sensor Transformer  area #Interface
+bAlarm11         :=MesIO_PTR_1_EL1809_9[ 8].value , //PTR.1-EL1809-ID:9-Input:8 : Door sensor inverter area #Interface
+bAlarm12         :=MesIO_PTR_1_EL1809_9[ 9].value , //PTR.1-EL1809-ID:9-Input:9 : Transformer Alarm synthesis #Interface
+bAlarm13         :=MesIO_PTR_1_EL1809_9[ 10].value , //PTR.1-EL1809-ID:9-Input:10 : Transformer pressure alarm #Interface
+bAlarm14         :=MesIO_PTR_1_EL1809_9[ 11].value , //PTR.1-EL1809-ID:9-Input:11 : Transformer gaz alarm  #Interface
+bAlarm15         :=MesIO_PTR_1_EL1809_9[ 12].value , //PTR.1-EL1809-ID:9-Input:12 : Transformer temperature warning  #Interface
+wAlarmCode      => MesData.MesEventCode[4]);   
+FB_AlarmCodeManager(
+bAlarm1         :=MesIO_PTR_1_EL1809_9[ 13].value , //PTR.1-EL1809-ID:9-Input:13 : Transformer temperature alarm #Interface
+bAlarm2         :=MesIO_PTR_1_EL1809_9[ 14].value , //PTR.1-EL1809-ID:9-Input:14 : Auxiliairy main CB Opened #Interface
+bAlarm3         :=MesIO_PTR_1_EL2809_10[ 1].value , //PTR.1-EL2809-ID:10-Output:1 : Open Command MainMVCB #Interface
+bAlarm4         :=MesIO_PTR_1_EL2809_10[ 2].value , //PTR.1-EL2809-ID:10-Output:2 : Close Command MainMVCB #Interface
+bAlarm5         :=MesIO_PTR_2_EL1809_9[ 1].value , //PTR.2-EL1809-ID:9-Input:1 : Motorization alarm MainMVCB #Interface
+bAlarm6         :=MesIO_PTR_2_EL1809_9[ 2].value , //PTR.2-EL1809-ID:9-Input:2 : Main MVCB Tripped #Interface
+bAlarm7         :=MesIO_PTR_2_EL1809_9[ 3].value , //PTR.2-EL1809-ID:9-Input:3 : MainMVCB selector in Local position #Interface
+bAlarm8         :=MesIO_PTR_2_EL1809_9[ 4].value , //PTR.2-EL1809-ID:9-Input:4 : MainMVCB connected to the Earth #Interface
+bAlarm9         :=MesIO_PTR_2_EL1809_9[ 5].value , //PTR.2-EL1809-ID:9-Input:5 : Transfo smoke detector 1 #Interface
+bAlarm10         :=MesIO_PTR_2_EL1809_9[ 6].value , //PTR.2-EL1809-ID:9-Input:6 : Inverter smoke detector 2 #Interface
+bAlarm11         :=MesIO_PTR_2_EL1809_9[ 7].value , //PTR.2-EL1809-ID:9-Input:7 : Door sensor Transformer  area #Interface
+bAlarm12         :=MesIO_PTR_2_EL1809_9[ 8].value , //PTR.2-EL1809-ID:9-Input:8 : Door sensor inverter area #Interface
+bAlarm13         :=MesIO_PTR_2_EL1809_9[ 9].value , //PTR.2-EL1809-ID:9-Input:9 : Transformer Alarm synthesis #Interface
+bAlarm14         :=MesIO_PTR_2_EL1809_9[ 10].value , //PTR.2-EL1809-ID:9-Input:10 : Transformer pressure alarm #Interface
+bAlarm15         :=MesIO_PTR_2_EL1809_9[ 11].value , //PTR.2-EL1809-ID:9-Input:11 : Transformer gaz alarm  #Interface
+wAlarmCode      => MesData.MesEventCode[5]);   
+FB_AlarmCodeManager(
+bAlarm1         :=MesIO_PTR_2_EL1809_9[ 12].value , //PTR.2-EL1809-ID:9-Input:12 : Transformer temperature warning  #Interface
+bAlarm2         :=MesIO_PTR_2_EL1809_9[ 13].value , //PTR.2-EL1809-ID:9-Input:13 : Transformer temperature alarm #Interface
+bAlarm3         :=MesIO_PTR_2_EL1809_9[ 14].value , //PTR.2-EL1809-ID:9-Input:14 : Auxiliairy main CB Opened #Interface
+bAlarm4         :=MesIO_PTR_2_EL2809_10[ 1].value , //PTR.2-EL2809-ID:10-Output:1 : Open Command MainMVCB #Interface
+bAlarm5         :=MesIO_PTR_2_EL2809_10[ 2].value , //PTR.2-EL2809-ID:10-Output:2 : Close Command MainMVCB #Interface
+bAlarm6         :=MesIO_PTR_3_EL1809_9[ 1].value , //PTR.3-EL1809-ID:9-Input:1 : Motorization alarm MainMVCB #Interface
+bAlarm7         :=MesIO_PTR_3_EL1809_9[ 2].value , //PTR.3-EL1809-ID:9-Input:2 : Main MVCB Tripped #Interface
+bAlarm8         :=MesIO_PTR_3_EL1809_9[ 3].value , //PTR.3-EL1809-ID:9-Input:3 : MainMVCB selector in Local position #Interface
+bAlarm9         :=MesIO_PTR_3_EL1809_9[ 4].value , //PTR.3-EL1809-ID:9-Input:4 : MainMVCB connected to the Earth #Interface
+bAlarm10         :=MesIO_PTR_3_EL1809_9[ 5].value , //PTR.3-EL1809-ID:9-Input:5 : Transfo smoke detector 1 #Interface
+bAlarm11         :=MesIO_PTR_3_EL1809_9[ 6].value , //PTR.3-EL1809-ID:9-Input:6 : Inverter smoke detector 2 #Interface
+bAlarm12         :=MesIO_PTR_3_EL1809_9[ 7].value , //PTR.3-EL1809-ID:9-Input:7 : Door sensor Transformer  area #Interface
+bAlarm13         :=MesIO_PTR_3_EL1809_9[ 8].value , //PTR.3-EL1809-ID:9-Input:8 : Door sensor inverter area #Interface
+bAlarm14         :=MesIO_PTR_3_EL1809_9[ 9].value , //PTR.3-EL1809-ID:9-Input:9 : Transformer Alarm synthesis #Interface
+bAlarm15         :=MesIO_PTR_3_EL1809_9[ 10].value , //PTR.3-EL1809-ID:9-Input:10 : Transformer pressure alarm #Interface
+wAlarmCode      => MesData.MesEventCode[6]);   
+FB_AlarmCodeManager(
+bAlarm1         :=MesIO_PTR_3_EL1809_9[ 11].value , //PTR.3-EL1809-ID:9-Input:11 : Transformer gaz alarm  #Interface
+bAlarm2         :=MesIO_PTR_3_EL1809_9[ 12].value , //PTR.3-EL1809-ID:9-Input:12 : Transformer temperature warning  #Interface
+bAlarm3         :=MesIO_PTR_3_EL1809_9[ 13].value , //PTR.3-EL1809-ID:9-Input:13 : Transformer temperature alarm #Interface
+bAlarm4         :=MesIO_PTR_3_EL1809_9[ 14].value , //PTR.3-EL1809-ID:9-Input:14 : Auxiliairy main CB Opened #Interface
+bAlarm5         :=MesIO_PTR_3_EL2809_10[ 1].value , //PTR.3-EL2809-ID:10-Output:1 : Open Command MainMVCB #Interface
+bAlarm6         :=MesIO_PTR_3_EL2809_10[ 2].value , //PTR.3-EL2809-ID:10-Output:2 : Close Command MainMVCB #Interface
+wAlarmCode      => MesData.MesEventCode[7]);   
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Evaluate" Id="{a7bcb5e4-985c-411f-aa5e-fec8c6a0a306}">
+      <Declaration><![CDATA[METHOD M_Evaluate : BOOL
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[(*
+MesIO_SUBMV_EL1809_1[1].value := axDI[1] ;
+MesIO_SUBMV_EL1809_1[2].value := axDI[2] ;
+MesIO_SUBMV_EL1809_1[3].value := axDI[3] ;
+MesIO_SUBMV_EL1809_1[4].value := axDI[4] ;
+MesIO_SUBMV_EL1809_1[5].value := axDI[5] ;
+MesIO_SUBMV_EL1809_1[6].value := axDI[6] ;
+MesIO_SUBMV_EL1809_1[7].value := axDI[7] ;
+MesIO_SUBMV_EL1809_1[8].value := axDI[8] ;
+MesIO_SUBMV_EL1809_1[9].value := axDI[9] ;
+MesIO_SUBMV_EL1809_1[10].value := axDI[10] ;
+MesIO_SUBMV_EL1809_1[11].value := axDI[11] ;
+MesIO_SUBMV_EL1809_1[12].value := axDI[12] ;
+MesIO_SUBMV_EL1809_1[13].value := axDI[13] ;
+MesIO_SUBMV_EL1809_1[14].value := axDI[14] ;
+MesIO_SUBMV_EL1809_1[15].value := axDI[15] ;
+MesIO_SUBMV_EL1809_1[16].value := axDI[16] ;
+MesIO_SUBMV_EL1809_2[1].value := axDI[17] ;
+MesIO_SUBMV_EL1809_2[2].value := axDI[18] ;
+MesIO_SUBMV_EL1809_2[3].value := axDI[19] ;
+MesIO_SUBMV_EL1809_2[4].value := axDI[20] ;
+MesIO_SUBMV_EL1809_2[5].value := axDI[21] ;
+MesIO_SUBMV_EL1809_2[6].value := axDI[22] ;
+MesIO_SUBMV_EL1809_2[7].value := axDI[23] ;
+MesIO_SUBMV_EL1809_2[8].value := axDI[24] ;
+MesIO_SUBMV_EL1809_2[9].value := axDI[25] ;
+MesIO_SUBMV_EL1809_2[10].value := axDI[26] ;
+MesIO_SUBMV_EL1809_2[11].value := axDI[27] ;
+MesIO_SUBMV_EL1809_2[12].value := axDI[28] ;
+MesIO_SUBMV_EL1809_2[13].value := axDI[29] ;
+MesIO_SUBMV_EL1809_2[14].value := axDI[30] ;
+MesIO_SUBMV_EL1809_2[15].value := axDI[31] ;
+MesIO_SUBMV_EL1809_2[16].value := axDI[32] ;
+MesIO_SUBMV_EL1809_3[1].value := axDI[33] ;
+MesIO_SUBMV_EL1809_3[2].value := axDI[34] ;
+MesIO_SUBMV_EL1809_3[3].value := axDI[35] ;
+MesIO_SUBMV_EL1809_3[4].value := axDI[36] ;
+MesIO_SUBMV_EL1809_3[5].value := axDI[37] ;
+MesIO_SUBMV_EL1809_3[6].value := axDI[38] ;
+MesIO_SUBMV_EL1809_3[7].value := axDI[39] ;
+MesIO_SUBMV_EL1809_3[8].value := axDI[40] ;
+MesIO_SUBMV_EL1809_3[9].value := axDI[41] ;
+MesIO_SUBMV_EL1809_3[10].value := axDI[42] ;
+MesIO_SUBMV_EL1809_3[11].value := axDI[43] ;
+MesIO_SUBMV_EL1809_3[12].value := axDI[44] ;
+MesIO_SUBMV_EL1809_3[13].value := axDI[45] ;
+MesIO_SUBMV_EL1809_3[14].value := axDI[46] ;
+MesIO_SUBMV_EL1809_3[15].value := axDI[47] ;
+MesIO_SUBMV_EL1809_3[16].value := axDI[48] ;
+axDO[1] := MesIO_SUBMV_EL2809_4[1].value ; 
+axDO[2] := MesIO_SUBMV_EL2809_4[2].value ; 
+axDO[3] := MesIO_SUBMV_EL2809_4[3].value ; 
+axDO[4] := MesIO_SUBMV_EL2809_4[4].value ; 
+axDO[5] := MesIO_SUBMV_EL2809_4[5].value ; 
+axDO[6] := MesIO_SUBMV_EL2809_4[6].value ; 
+axDO[7] := MesIO_SUBMV_EL2809_4[7].value ; 
+axDO[8] := MesIO_SUBMV_EL2809_4[8].value ; 
+axDO[9] := MesIO_SUBMV_EL2809_4[9].value ; 
+axDO[10] := MesIO_SUBMV_EL2809_4[10].value ; 
+axDO[11] := MesIO_SUBMV_EL2809_4[11].value ; 
+axDO[12] := MesIO_SUBMV_EL2809_4[12].value ; 
+axDO[13] := MesIO_SUBMV_EL2809_4[13].value ; 
+axDO[14] := MesIO_SUBMV_EL2809_4[14].value ; 
+axDO[15] := MesIO_SUBMV_EL2809_4[15].value ; 
+axDO[16] := MesIO_SUBMV_EL2809_4[16].value ; 
+MesIO_SUBMV_EL3024_5[1].value := axAI[1] ;
+MesIO_SUBMV_EL3024_5[2].value := axAI[2] ;
+MesIO_SUBMV_EL3024_5[3].value := axAI[3] ;
+MesIO_SUBMV_EL3024_5[4].value := axAI[4] ;
+MesIO_PTR_1_EL3024_8[1].value := axAI[5] ;
+MesIO_PTR_1_EL3024_8[2].value := axAI[6] ;
+MesIO_PTR_1_EL3024_8[3].value := axAI[7] ;
+MesIO_PTR_1_EL3024_8[4].value := axAI[8] ;
+MesIO_PTR_1_EL1809_9[1].value := axDI[49] ;
+MesIO_PTR_1_EL1809_9[2].value := axDI[50] ;
+MesIO_PTR_1_EL1809_9[3].value := axDI[51] ;
+MesIO_PTR_1_EL1809_9[4].value := axDI[52] ;
+MesIO_PTR_1_EL1809_9[5].value := axDI[53] ;
+MesIO_PTR_1_EL1809_9[6].value := axDI[54] ;
+MesIO_PTR_1_EL1809_9[7].value := axDI[55] ;
+MesIO_PTR_1_EL1809_9[8].value := axDI[56] ;
+MesIO_PTR_1_EL1809_9[9].value := axDI[57] ;
+MesIO_PTR_1_EL1809_9[10].value := axDI[58] ;
+MesIO_PTR_1_EL1809_9[11].value := axDI[59] ;
+MesIO_PTR_1_EL1809_9[12].value := axDI[60] ;
+MesIO_PTR_1_EL1809_9[13].value := axDI[61] ;
+MesIO_PTR_1_EL1809_9[14].value := axDI[62] ;
+MesIO_PTR_1_EL1809_9[15].value := axDI[63] ;
+MesIO_PTR_1_EL1809_9[16].value := axDI[64] ;
+axDO[17] := MesIO_PTR_1_EL2809_10[1].value ; 
+axDO[18] := MesIO_PTR_1_EL2809_10[2].value ; 
+axDO[19] := MesIO_PTR_1_EL2809_10[3].value ; 
+axDO[20] := MesIO_PTR_1_EL2809_10[4].value ; 
+axDO[21] := MesIO_PTR_1_EL2809_10[5].value ; 
+axDO[22] := MesIO_PTR_1_EL2809_10[6].value ; 
+axDO[23] := MesIO_PTR_1_EL2809_10[7].value ; 
+axDO[24] := MesIO_PTR_1_EL2809_10[8].value ; 
+axDO[25] := MesIO_PTR_1_EL2809_10[9].value ; 
+axDO[26] := MesIO_PTR_1_EL2809_10[10].value ; 
+axDO[27] := MesIO_PTR_1_EL2809_10[11].value ; 
+axDO[28] := MesIO_PTR_1_EL2809_10[12].value ; 
+axDO[29] := MesIO_PTR_1_EL2809_10[13].value ; 
+axDO[30] := MesIO_PTR_1_EL2809_10[14].value ; 
+axDO[31] := MesIO_PTR_1_EL2809_10[15].value ; 
+axDO[32] := MesIO_PTR_1_EL2809_10[16].value ; 
+MesIO_PTR_2_EL3024_8[1].value := axAI[9] ;
+MesIO_PTR_2_EL3024_8[2].value := axAI[10] ;
+MesIO_PTR_2_EL3024_8[3].value := axAI[11] ;
+MesIO_PTR_2_EL3024_8[4].value := axAI[12] ;
+MesIO_PTR_2_EL1809_9[1].value := axDI[65] ;
+MesIO_PTR_2_EL1809_9[2].value := axDI[66] ;
+MesIO_PTR_2_EL1809_9[3].value := axDI[67] ;
+MesIO_PTR_2_EL1809_9[4].value := axDI[68] ;
+MesIO_PTR_2_EL1809_9[5].value := axDI[69] ;
+MesIO_PTR_2_EL1809_9[6].value := axDI[70] ;
+MesIO_PTR_2_EL1809_9[7].value := axDI[71] ;
+MesIO_PTR_2_EL1809_9[8].value := axDI[72] ;
+MesIO_PTR_2_EL1809_9[9].value := axDI[73] ;
+MesIO_PTR_2_EL1809_9[10].value := axDI[74] ;
+MesIO_PTR_2_EL1809_9[11].value := axDI[75] ;
+MesIO_PTR_2_EL1809_9[12].value := axDI[76] ;
+MesIO_PTR_2_EL1809_9[13].value := axDI[77] ;
+MesIO_PTR_2_EL1809_9[14].value := axDI[78] ;
+MesIO_PTR_2_EL1809_9[15].value := axDI[79] ;
+MesIO_PTR_2_EL1809_9[16].value := axDI[80] ;
+axDO[33] := MesIO_PTR_2_EL2809_10[1].value ; 
+axDO[34] := MesIO_PTR_2_EL2809_10[2].value ; 
+axDO[35] := MesIO_PTR_2_EL2809_10[3].value ; 
+axDO[36] := MesIO_PTR_2_EL2809_10[4].value ; 
+axDO[37] := MesIO_PTR_2_EL2809_10[5].value ; 
+axDO[38] := MesIO_PTR_2_EL2809_10[6].value ; 
+axDO[39] := MesIO_PTR_2_EL2809_10[7].value ; 
+axDO[40] := MesIO_PTR_2_EL2809_10[8].value ; 
+axDO[41] := MesIO_PTR_2_EL2809_10[9].value ; 
+axDO[42] := MesIO_PTR_2_EL2809_10[10].value ; 
+axDO[43] := MesIO_PTR_2_EL2809_10[11].value ; 
+axDO[44] := MesIO_PTR_2_EL2809_10[12].value ; 
+axDO[45] := MesIO_PTR_2_EL2809_10[13].value ; 
+axDO[46] := MesIO_PTR_2_EL2809_10[14].value ; 
+axDO[47] := MesIO_PTR_2_EL2809_10[15].value ; 
+axDO[48] := MesIO_PTR_2_EL2809_10[16].value ; 
+MesIO_PTR_3_EL3024_8[1].value := axAI[13] ;
+MesIO_PTR_3_EL3024_8[2].value := axAI[14] ;
+MesIO_PTR_3_EL3024_8[3].value := axAI[15] ;
+MesIO_PTR_3_EL3024_8[4].value := axAI[16] ;
+MesIO_PTR_3_EL1809_9[1].value := axDI[81] ;
+MesIO_PTR_3_EL1809_9[2].value := axDI[82] ;
+MesIO_PTR_3_EL1809_9[3].value := axDI[83] ;
+MesIO_PTR_3_EL1809_9[4].value := axDI[84] ;
+MesIO_PTR_3_EL1809_9[5].value := axDI[85] ;
+MesIO_PTR_3_EL1809_9[6].value := axDI[86] ;
+MesIO_PTR_3_EL1809_9[7].value := axDI[87] ;
+MesIO_PTR_3_EL1809_9[8].value := axDI[88] ;
+MesIO_PTR_3_EL1809_9[9].value := axDI[89] ;
+MesIO_PTR_3_EL1809_9[10].value := axDI[90] ;
+MesIO_PTR_3_EL1809_9[11].value := axDI[91] ;
+MesIO_PTR_3_EL1809_9[12].value := axDI[92] ;
+MesIO_PTR_3_EL1809_9[13].value := axDI[93] ;
+MesIO_PTR_3_EL1809_9[14].value := axDI[94] ;
+MesIO_PTR_3_EL1809_9[15].value := axDI[95] ;
+MesIO_PTR_3_EL1809_9[16].value := axDI[96] ;
+axDO[49] := MesIO_PTR_3_EL2809_10[1].value ; 
+axDO[50] := MesIO_PTR_3_EL2809_10[2].value ; 
+axDO[51] := MesIO_PTR_3_EL2809_10[3].value ; 
+axDO[52] := MesIO_PTR_3_EL2809_10[4].value ; 
+axDO[53] := MesIO_PTR_3_EL2809_10[5].value ; 
+axDO[54] := MesIO_PTR_3_EL2809_10[6].value ; 
+axDO[55] := MesIO_PTR_3_EL2809_10[7].value ; 
+axDO[56] := MesIO_PTR_3_EL2809_10[8].value ; 
+axDO[57] := MesIO_PTR_3_EL2809_10[9].value ; 
+axDO[58] := MesIO_PTR_3_EL2809_10[10].value ; 
+axDO[59] := MesIO_PTR_3_EL2809_10[11].value ; 
+axDO[60] := MesIO_PTR_3_EL2809_10[12].value ; 
+axDO[61] := MesIO_PTR_3_EL2809_10[13].value ; 
+axDO[62] := MesIO_PTR_3_EL2809_10[14].value ; 
+axDO[63] := MesIO_PTR_3_EL2809_10[15].value ; 
+axDO[64] := MesIO_PTR_3_EL2809_10[16].value ; 
+*)]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{1a9a12ca-e10b-450f-97b1-a22daef9633a}">
+      <Declaration><![CDATA[METHOD M_Init : BOOL
+VAR
+	KK : BYTE;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+MesIO_SUBMV_EL1809_1[ 1].Description := 'MV Feeder 1 Opened' ; 
+MesIO_SUBMV_EL1809_1[ 2].Description := 'MV Feeder 2 Opened' ; 
+MesIO_SUBMV_EL1809_1[ 3].Description := 'MV Feeder 3 Opened ' ; 
+MesIO_SUBMV_EL1809_1[ 4].Description := 'Main MVCB Opened' ; 
+MesIO_SUBMV_EL1809_1[ 5].Description := 'MainMVCB Tripped' ; 
+MesIO_SUBMV_EL1809_1[ 6].Description := 'MainMVCB Earthing' ; 
+MesIO_SUBMV_EL1809_1[ 7].Description := 'MainMVCB selector in local position' ; 
+MesIO_SUBMV_EL1809_1[ 8].Description := 'MainMVCB motorization in fault' ; 
+MesIO_SUBMV_EL1809_1[ 9].Description := 'MV Feeder 1 Tripped' ; 
+MesIO_SUBMV_EL1809_1[ 10].Description := 'MV Feeder 2 Tripped' ; 
+MesIO_SUBMV_EL1809_1[ 11].Description := 'MV Feeder 3 Tripped ' ; 
+MesIO_SUBMV_EL1809_1[ 12].Description := 'MV Feeder 1 Motorization fault' ; 
+MesIO_SUBMV_EL1809_1[ 13].Description := 'MV Feeder 2 Motorization fault' ; 
+MesIO_SUBMV_EL1809_1[ 14].Description := 'MV Feeder 3 Motorization fault ' ; 
+MesIO_SUBMV_EL1809_1[ 15].Description := 'MV Feeder 1 Earthing' ; 
+MesIO_SUBMV_EL1809_1[ 16].Description := 'MV Feeder 2 Earthing' ; 
+MesIO_SUBMV_EL1809_2[ 1].Description := 'MV Feeder 3 Earthing ' ; 
+MesIO_SUBMV_EL1809_2[ 2].Description := 'MV Feeder 1 Selector in local position' ; 
+MesIO_SUBMV_EL1809_2[ 3].Description := 'MV Feeder 2 Selector in local position' ; 
+MesIO_SUBMV_EL1809_2[ 4].Description := 'MV Feeder 3 Selector in local position ' ; 
+MesIO_SUBMV_EL1809_2[ 5].Description := 'Grid MV CB opened' ; 
+MesIO_SUBMV_EL1809_2[ 6].Description := 'Measure MV CB opened ' ; 
+MesIO_SUBMV_EL1809_2[ 7].Description := 'Measure MV CB Fuse is burned' ; 
+MesIO_SUBMV_EL1809_2[ 8].Description := 'Measure MVCB Earthing' ; 
+MesIO_SUBMV_EL1809_2[ 9].Description := 'AuxMVCB opened' ; 
+MesIO_SUBMV_EL1809_2[ 10].Description := 'AuxMVCB fuse is burned' ; 
+MesIO_SUBMV_EL1809_2[ 11].Description := 'AuxMVCB earthing' ; 
+MesIO_SUBMV_EL1809_2[ 12].Description := 'Emergency Stop in LV Area' ; 
+MesIO_SUBMV_EL1809_2[ 13].Description := 'Emergency stop in MV Area' ; 
+MesIO_SUBMV_EL1809_2[ 14].Description := 'Smoke detector in LV Area' ; 
+MesIO_SUBMV_EL1809_2[ 16].Description := 'Transformer Alarm synthesis' ; 
+MesIO_SUBMV_EL1809_3[ 1].Description := 'Transformer pressure alarm' ; 
+MesIO_SUBMV_EL1809_3[ 2].Description := 'Transformer gaz alarm ' ; 
+MesIO_SUBMV_EL1809_3[ 3].Description := 'Transformer temperature warning ' ; 
+MesIO_SUBMV_EL1809_3[ 4].Description := 'Transformer temperature alarm' ; 
+MesIO_SUBMV_EL1809_3[ 5].Description := 'UPS Decharge Batterie State' ; 
+MesIO_SUBMV_EL1809_3[ 6].Description := 'UPS alarm synthesis' ; 
+MesIO_SUBMV_EL1809_3[ 7].Description := 'UPS  Low Voltage ' ; 
+MesIO_SUBMV_EL1809_3[ 8].Description := 'ProtectRelay I>>0 Fault' ; 
+MesIO_SUBMV_EL1809_3[ 9].Description := 'ProtectRelay Min U Fault' ; 
+MesIO_SUBMV_EL2809_4[ 1].Description := 'MainMVCB Open order' ; 
+MesIO_SUBMV_EL2809_4[ 2].Description := 'MainMVCB Close order' ; 
+MesIO_SUBMV_EL2809_4[ 3].Description := 'MV Feeder 1 Close Command' ; 
+MesIO_SUBMV_EL2809_4[ 4].Description := 'MV Feeder 2 Close Command' ; 
+MesIO_SUBMV_EL2809_4[ 5].Description := 'MV Feeder 3 Close Command ' ; 
+MesIO_SUBMV_EL2809_4[ 6].Description := 'MV Feeder 1 Open Command' ; 
+MesIO_SUBMV_EL2809_4[ 7].Description := 'MV Feeder 2 Open Command' ; 
+MesIO_SUBMV_EL2809_4[ 8].Description := 'MV Feeder 3 Open Command ' ; 
+MesIO_SUBMV_EL3024_5[ 1].Description := 'Pyranometer GHI' ; 
+MesIO_SUBMV_EL3024_5[ 2].Description := 'Pyranometer GTI' ; 
+MesIO_SUBMV_EL3024_5[ 3].Description := 'External Temperature' ; 
+MesIO_SUBMV_EL3024_5[ 4].Description := 'External Hygrometry' ; 
+MesIO_SUBMV_EL3024_5[ 1].Description := 'Wind direction ' ; 
+MesIO_SUBMV_EL3024_5[ 2].Description := 'Wind Speed' ; 
+MesIO_PTR_1_EL3024_8[ 1].Description := 'Panel Temperature sensor 1' ; 
+MesIO_PTR_1_EL3024_8[ 2].Description := 'Panel Temperature sensor 2' ; 
+MesIO_PTR_1_EL3024_8[ 3].Description := 'Pyranometer GTI' ; 
+MesIO_PTR_1_EL1809_9[ 1].Description := 'Motorization alarm MainMVCB' ; 
+MesIO_PTR_1_EL1809_9[ 2].Description := 'Main MVCB Tripped' ; 
+MesIO_PTR_1_EL1809_9[ 3].Description := 'MainMVCB selector in Local position' ; 
+MesIO_PTR_1_EL1809_9[ 4].Description := 'MainMVCB connected to the Earth' ; 
+MesIO_PTR_1_EL1809_9[ 5].Description := 'Transfo smoke detector 1' ; 
+MesIO_PTR_1_EL1809_9[ 6].Description := 'Inverter smoke detector 2' ; 
+MesIO_PTR_1_EL1809_9[ 7].Description := 'Door sensor Transformer  area' ; 
+MesIO_PTR_1_EL1809_9[ 8].Description := 'Door sensor inverter area' ; 
+MesIO_PTR_1_EL1809_9[ 9].Description := 'Transformer Alarm synthesis' ; 
+MesIO_PTR_1_EL1809_9[ 10].Description := 'Transformer pressure alarm' ; 
+MesIO_PTR_1_EL1809_9[ 11].Description := 'Transformer gaz alarm ' ; 
+MesIO_PTR_1_EL1809_9[ 12].Description := 'Transformer temperature warning ' ; 
+MesIO_PTR_1_EL1809_9[ 13].Description := 'Transformer temperature alarm' ; 
+MesIO_PTR_1_EL1809_9[ 14].Description := 'Auxiliairy main CB Opened' ; 
+MesIO_PTR_1_EL2809_10[ 1].Description := 'Open Command MainMVCB' ; 
+MesIO_PTR_1_EL2809_10[ 2].Description := 'Close Command MainMVCB' ; 
+MesIO_PTR_2_EL3024_8[ 1].Description := 'Panel Temperature sensor 1' ; 
+MesIO_PTR_2_EL3024_8[ 2].Description := 'Panel Temperature sensor 2' ; 
+MesIO_PTR_2_EL3024_8[ 3].Description := 'Pyranometer GTI' ; 
+MesIO_PTR_2_EL1809_9[ 1].Description := 'Motorization alarm MainMVCB' ; 
+MesIO_PTR_2_EL1809_9[ 2].Description := 'Main MVCB Tripped' ; 
+MesIO_PTR_2_EL1809_9[ 3].Description := 'MainMVCB selector in Local position' ; 
+MesIO_PTR_2_EL1809_9[ 4].Description := 'MainMVCB connected to the Earth' ; 
+MesIO_PTR_2_EL1809_9[ 5].Description := 'Transfo smoke detector 1' ; 
+MesIO_PTR_2_EL1809_9[ 6].Description := 'Inverter smoke detector 2' ; 
+MesIO_PTR_2_EL1809_9[ 7].Description := 'Door sensor Transformer  area' ; 
+MesIO_PTR_2_EL1809_9[ 8].Description := 'Door sensor inverter area' ; 
+MesIO_PTR_2_EL1809_9[ 9].Description := 'Transformer Alarm synthesis' ; 
+MesIO_PTR_2_EL1809_9[ 10].Description := 'Transformer pressure alarm' ; 
+MesIO_PTR_2_EL1809_9[ 11].Description := 'Transformer gaz alarm ' ; 
+MesIO_PTR_2_EL1809_9[ 12].Description := 'Transformer temperature warning ' ; 
+MesIO_PTR_2_EL1809_9[ 13].Description := 'Transformer temperature alarm' ; 
+MesIO_PTR_2_EL1809_9[ 14].Description := 'Auxiliairy main CB Opened' ; 
+MesIO_PTR_2_EL2809_10[ 1].Description := 'Open Command MainMVCB' ; 
+MesIO_PTR_2_EL2809_10[ 2].Description := 'Close Command MainMVCB' ; 
+MesIO_PTR_3_EL3024_8[ 1].Description := 'Panel Temperature sensor 1' ; 
+MesIO_PTR_3_EL3024_8[ 2].Description := 'Panel Temperature sensor 2' ; 
+MesIO_PTR_3_EL3024_8[ 3].Description := 'Pyranometer GTI' ; 
+MesIO_PTR_3_EL1809_9[ 1].Description := 'Motorization alarm MainMVCB' ; 
+MesIO_PTR_3_EL1809_9[ 2].Description := 'Main MVCB Tripped' ; 
+MesIO_PTR_3_EL1809_9[ 3].Description := 'MainMVCB selector in Local position' ; 
+MesIO_PTR_3_EL1809_9[ 4].Description := 'MainMVCB connected to the Earth' ; 
+MesIO_PTR_3_EL1809_9[ 5].Description := 'Transfo smoke detector 1' ; 
+MesIO_PTR_3_EL1809_9[ 6].Description := 'Inverter smoke detector 2' ; 
+MesIO_PTR_3_EL1809_9[ 7].Description := 'Door sensor Transformer  area' ; 
+MesIO_PTR_3_EL1809_9[ 8].Description := 'Door sensor inverter area' ; 
+MesIO_PTR_3_EL1809_9[ 9].Description := 'Transformer Alarm synthesis' ; 
+MesIO_PTR_3_EL1809_9[ 10].Description := 'Transformer pressure alarm' ; 
+MesIO_PTR_3_EL1809_9[ 11].Description := 'Transformer gaz alarm ' ; 
+MesIO_PTR_3_EL1809_9[ 12].Description := 'Transformer temperature warning ' ; 
+MesIO_PTR_3_EL1809_9[ 13].Description := 'Transformer temperature alarm' ; 
+MesIO_PTR_3_EL1809_9[ 14].Description := 'Auxiliairy main CB Opened' ; 
+MesIO_PTR_3_EL2809_10[ 1].Description := 'Open Command MainMVCB' ; 
+MesIO_PTR_3_EL2809_10[ 2].Description := 'Close Command MainMVCB' ; 
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Inputs" Id="{f8e44163-462f-41ea-920b-8a21ab3d6398}">
+      <Declaration><![CDATA[METHOD M_Inputs
+///////////
+// Intput interface between POUs and I/O Cards
+//////////////
+
+VAR 
+KK							: BYTE ; 					// For LOOP 
+MesCouplerStateSUB_MV			: ST_AI ; 
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Outputs" Id="{030bbb77-a82a-49c0-9b69-3dc3a510932a}">
+      <Declaration><![CDATA[METHOD M_Outputs : BOOL
+///////////
+// Intput interface between POUs and I/O Cards
+//////////////
+VAR
+	KK	: BYTE;
+
+	A1_MainMVCB: INT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+MesIO_SUBMV_EL2809_4[ 1].value := A1_SUBMV.A1_MainMVCB.OUT_CmdOpen_IO and not IN_CmdInhibOutput_OPC; 
+MesIO_SUBMV_EL2809_4[ 2].value := A1_SUBMV.A1_MainMVCB.OUT_CmdClose_IO and not IN_CmdInhibOutput_OPC; 
+MesIO_SUBMV_EL2809_4[ 3].value := A1_SUBMV.AX_FeederMVCB[1].OUT_CmdClose_IO and not IN_CmdInhibOutput_OPC; 
+MesIO_SUBMV_EL2809_4[ 4].value := A1_SUBMV.AX_FeederMVCB[2].OUT_CmdClose_IO and not IN_CmdInhibOutput_OPC; 
+MesIO_SUBMV_EL2809_4[ 5].value := A1_SUBMV.AX_FeederMVCB[3].OUT_CmdClose_IO and not IN_CmdInhibOutput_OPC; 
+MesIO_SUBMV_EL2809_4[ 6].value := A1_SUBMV.AX_FeederMVCB[1].OUT_CmdOpen_IO and not IN_CmdInhibOutput_OPC; 
+MesIO_SUBMV_EL2809_4[ 7].value := A1_SUBMV.AX_FeederMVCB[2].OUT_CmdOpen_IO and not IN_CmdInhibOutput_OPC; 
+MesIO_SUBMV_EL2809_4[ 8].value := A1_SUBMV.AX_FeederMVCB[3].OUT_CmdOpen_IO and not IN_CmdInhibOutput_OPC; 
+MesIO_PTR_1_EL2809_10[ 1].value := AX_PTR[1].A1_MainMVCB_PTR.OUT_CmdOpen_IO and not IN_CmdInhibOutput_OPC; 
+MesIO_PTR_1_EL2809_10[ 2].value := AX_PTR[1].A1_MainMVCB_PTR.OUT_CmdClose_IO and not IN_CmdInhibOutput_OPC; 
+MesIO_PTR_2_EL2809_10[ 1].value := AX_PTR[2].A1_MainMVCB_PTR.OUT_CmdOpen_IO and not IN_CmdInhibOutput_OPC; 
+MesIO_PTR_2_EL2809_10[ 2].value := AX_PTR[2].A1_MainMVCB_PTR.OUT_CmdClose_IO and not IN_CmdInhibOutput_OPC; 
+MesIO_PTR_3_EL2809_10[ 1].value := AX_PTR[3].A1_MainMVCB_PTR.OUT_CmdOpen_IO and not IN_CmdInhibOutput_OPC; 
+MesIO_PTR_3_EL2809_10[ 2].value := AX_PTR[3].A1_MainMVCB_PTR.OUT_CmdClose_IO and not IN_CmdInhibOutput_OPC; 
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="PRG_IO">
+      <LineId Id="305" Count="11" />
+      <LineId Id="349" Count="15" />
+      <LineId Id="324" Count="0" />
+      <LineId Id="254" Count="0" />
+    </LineIds>
+    <LineIds Name="PRG_IO.M_AlarmManagement">
+      <LineId Id="2" Count="0" />
+      <LineId Id="4" Count="110" />
+    </LineIds>
+    <LineIds Name="PRG_IO.M_Evaluate">
+      <LineId Id="7" Count="0" />
+      <LineId Id="5" Count="1" />
+      <LineId Id="116" Count="1" />
+      <LineId Id="8" Count="107" />
+      <LineId Id="2" Count="0" />
+      <LineId Id="180" Count="0" />
+      <LineId Id="118" Count="61" />
+      <LineId Id="185" Count="0" />
+    </LineIds>
+    <LineIds Name="PRG_IO.M_Init">
+      <LineId Id="124" Count="0" />
+      <LineId Id="128" Count="109" />
+      <LineId Id="114" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="PRG_IO.M_Inputs">
+      <LineId Id="111" Count="0" />
+    </LineIds>
+    <LineIds Name="PRG_IO.M_Outputs">
+      <LineId Id="48" Count="0" />
+      <LineId Id="2" Count="0" />
+      <LineId Id="5" Count="12" />
+      <LineId Id="49" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

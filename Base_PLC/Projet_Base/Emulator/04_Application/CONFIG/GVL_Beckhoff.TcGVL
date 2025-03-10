@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <GVL Name="GVL_Beckhoff" Id="{27b67242-27b6-4f4c-b9f7-7275a119f98d}">
+    <Declaration><![CDATA[VAR_GLOBAL
+	CalLocalTimeStruct			: TIMESTRUCT;		// Local Time Structure
+	CstTimeZone_G				: ST_TimeZoneInformation 	:= WEST_EUROPE_TZI ;	// Local TimeZone
+	ParamDirBaseStore		: STRING := 'C:\TwinCAT\Functions\Historisation\';	// Directroy for the historization
+	
+	
+
+	
+END_VAR]]></Declaration>
+  </GVL>
+</TcPlcObject>

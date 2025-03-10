@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.13">
+  <DUT Name="WS_RAV2" Id="{043e10e4-1647-42ef-8cee-835981bb16fc}">
+    <Declaration><![CDATA[TYPE WS_RAV2 :
+STRUCT
+	
+
+	MesData						: WS ; (* Object *)
+
+	Pyran_GTI_1					: ANA_Standard ;		(* Pyranometer GTI 1			*)
+	Pyran_GTI_2					: ANA_Standard ;		(* Pyranometer GTI 2			*)
+	Pyran_GHI_1					: ANA_Standard ;		(* Pyranometer GTI 3			*)
+	Pyran_GHI_2					: ANA_Standard ;		(* Pyranometer GTI SUB			*)				
+	TempSensor_Panel_1			: ANA_Standard ; 		(* Panel Temperature Sensor 	*)
+	TempSensor_Panel_2			: ANA_Standard ; 		(* Panel Temperature Sensor 	*)	
+	TempSensor_Panel_3			: ANA_Standard ; 		(* Panel Temperature Sensor 	*)	
+	TempSensor_Panel_4			: ANA_Standard ; 		(* Panel Temperature Sensor 	*)	
+	
+	WS600						: AllInOne_Standard ;
+	
+	Pyrano_GTI					: ARRAY[1..CstNbPyrano_GTI] OF SMP1X; // Laisser FB_ANA_SMP1X même pour une ANA
+	Pyrano_GHI					: ARRAY[1..CstNbPyrano_GHI] OF SMP1X; // Laisser FB_ANA_SMP1X même pour une ANA
+	TempSensor_Panel			: ARRAY[1..CstNbPanTmp] OF PV_Temp_sensor;	
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

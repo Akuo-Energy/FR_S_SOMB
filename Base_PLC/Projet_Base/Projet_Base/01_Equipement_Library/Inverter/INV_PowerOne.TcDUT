@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="INV_PowerOne" Id="{9fb78274-c637-4671-bddf-fb38949af73c}">
+    <Declaration><![CDATA[///////////
+// Structure For Inverter. Main Operating Data to be saved ( ex: OPC ) .  
+//////////
+TYPE INV_PowerOne :
+STRUCT
+		MesData				: INV ; (* MesData *)
+	
+
+	// INV Measures
+		MesEDay				: REAL;     (* (kWh)	Daily Energy*)
+	    MesETot				: REAL;		(* (kWh)    Total Energy*)
+	    MesEPartial			: REAL;		(* (kWh)	??? To check*)
+	    MesEWeek			: REAL;		(* (kWh)	Week Energy*)
+	    MesEMonth			: REAL;		(* (kWh)	Monthly Energy*)
+	    MesEYear			: REAL;     (* (kWh)	Yearly Energy*)
+			
+		MesNbPowerColConnected				: UINT ; (* Cal Number of powercolumns connected *)
+	//Modules Measures
+		AX_PowerCol 	: ARRAY[1..6] OF PowerCol_INV_Power_One; 	(* PowerCol Object  *)
+	
+
+END_STRUCT
+END_TYPE
+
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

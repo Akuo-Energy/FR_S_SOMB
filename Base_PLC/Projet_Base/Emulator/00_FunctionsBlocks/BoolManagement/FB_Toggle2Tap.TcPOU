@@ -1,0 +1,48 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_Toggle2Tap" Id="{601e125e-f992-4f72-a434-4b953c041aa8}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Toggle2Tap
+///////////
+// FB to change a toggle into a tap with constant duration//
+///////////
+
+VAR_INPUT
+	TapDuration		: TIME; 	// (s) Tap duration
+	
+	ToggleVar 		: BOOL;		// Toggled input variable 
+
+	
+END_VAR
+
+VAR_OUTPUT
+	TapVar			: BOOL ; 	// Tapped output variable
+	
+END_VAR
+
+VAR				
+	R_TRIG			: R_TRIG ;				// Create a square at Rising Edge Detection
+	F_TRIG			: F_TRIG ;				// Create a square at falling Edge Detection 
+	TP				: TP ; 					// Square Signal 
+
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[R_TRIG(CLK := ToggleVar) ;  							// Rising Edge Detection
+F_TRIG(CLK := ToggleVar) ; 								// Falling Edge Detection
+
+TP(IN := R_TRIG.Q OR F_TRIG.Q , PT := TapDuration) ;  	// Square signal 
+
+TapVar		:= TP.Q ; 									// OUtput variable 
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_Toggle2Tap">
+      <LineId Id="81" Count="0" />
+      <LineId Id="80" Count="0" />
+      <LineId Id="82" Count="0" />
+      <LineId Id="87" Count="0" />
+      <LineId Id="86" Count="0" />
+      <LineId Id="34" Count="0" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

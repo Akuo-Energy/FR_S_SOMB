@@ -1,0 +1,217 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_IPC" Id="{687aa23d-950b-4e6c-ab72-b57d853ed066}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_IPC
+
+VAR_INPUT PERSISTENT 
+	ParamTempoRestart		: TIME 	:= T#30S ;	(* (s)Tempo to wait before resupplying the IPC *)	
+END_VAR
+      	
+VAR_INPUT  
+	MesDataExd				: IPC_Standard;
+	Heure_Local     		: TIMESTRUCT;
+	IN_CmdRestart 			: BOOL;	
+	IN_CmdReset_L			: BOOL;			// (NA) External Reset Command
+END_VAR     
+
+VAR_OUTPUT
+	//Child objects
+	OUT_CmdOpen_IO			: BOOL;	
+END_VAR        	
+      	
+VAR                 	
+	bInit					: BOOL := TRUE;	// Booleen d'initialisation		
+	TP_Restart				: TP;
+	// State Mananger //
+	MesState				: BYTE; 		// Cal  : state
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{99ccc25b-e928-4d99-a56d-8444f8d5be4c}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Generates object alarms and manages resets. 
+//////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager		: FB_AlarmCodeManager ;  
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[	
+// ALARM CODE //
+	FB_AlarmCodeManager(
+		bAlarm1				:= FALSE,						//
+		bAlarm2				:= FALSE,                       //
+		bAlarm3				:= FALSE,                       //
+		bAlarm4				:= FALSE,                       //
+		bAlarm5				:= FALSE,                       //
+		bAlarm6				:= FALSE,                       //
+		bAlarm7				:= FALSE,                       //
+		bAlarm8				:= FALSE,                       //
+		bAlarm9				:= FALSE,                       //
+		bAlarm10			:= FALSE,                       //
+		bAlarm11			:= FALSE,                       //
+		bAlarm12			:= FALSE,						//
+		bAlarm13			:= FALSE ,                      //
+		bAlarm14			:= FALSE ,                      //
+		bAlarm15			:= FALSE,                       //
+		wAlarmCode			=>MesDataExd.MesData.MesAlarmCode);       
+			                                                
+// WARNING CODE //                                          
+	FB_AlarmCodeManager(
+		bAlarm1				:= FALSE, 						//				
+		bAlarm2				:= FALSE,                       //
+		bAlarm3				:= FALSE,                       //
+		bAlarm4				:= FALSE,                       //
+		bAlarm5				:= FALSE,                       //
+		bAlarm6				:= FALSE,                       //
+		bAlarm7				:= FALSE,                       //
+		bAlarm8				:= FALSE,                       //
+		bAlarm9				:= FALSE,                       //
+		bAlarm10			:= FALSE,                       //
+		bAlarm11			:= FALSE,                       //
+		bAlarm12			:= FALSE,                       //
+		bAlarm13			:= FALSE,                       //
+		bAlarm14			:= FALSE,                       //
+		bAlarm15			:= FALSE,                       //
+		wAlarmCode			=>MesDataExd.MesData.MesWarningCode);
+		
+// EVENT CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= OUT_CmdOpen_IO, 					// Open command
+		bAlarm2			:= FALSE , 							//
+		bAlarm3			:= FALSE,                           //
+		bAlarm4			:= FALSE,                           //
+		bAlarm5			:= FALSE,                           //
+		bAlarm6			:= FALSE,                           //
+		bAlarm7			:= FALSE,                           //
+		bAlarm8			:= FALSE,                           //
+		bAlarm9			:= FALSE,                           //
+		bAlarm10		:= FALSE,                           //
+		bAlarm11		:= FALSE,                           //
+		bAlarm12		:= FALSE,                           //
+		bAlarm13		:= FALSE,                           //
+		bAlarm14		:= FALSE,                           //
+		bAlarm15		:= FALSE,                           //
+		wAlarmCode		=>MesDataExd.MesData.MesEventCode);]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{57bc2214-310a-4793-a3a0-adda3943b5c2}">
+      <Declaration><![CDATA[METHOD M_Execute : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF bInit THEN
+	M_Init();
+ELSIF CmdInit_G OR IN_CmdReset_L THEN
+	bInit := TRUE;
+ELSE
+	M_OpenClose(); 
+	M_StateManager();
+END_IF
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{ff523479-62d7-487a-b6e6-e3899a4abb42}">
+      <Declaration><![CDATA[METHOD M_Init : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[bInit := FALSE;
+
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_OpenClose" Id="{99feee8a-1154-4613-bf20-2a7870ca609f}">
+      <Declaration><![CDATA[METHOD M_OpenClose
+//////////////////
+// Manages restart of the IPC 
+//////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+// Rest Command
+TP_Restart(IN:= IN_CmdRestart , PT:=ParamTempoRestart) ;
+OUT_CmdOpen_IO := TP_Restart.Q ;  // Impulsion that goes back to zero as soon as the state of the TP goes down 
+
+IF  IN_CmdRestart THEN
+	 IN_CmdRestart := FALSE;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_StateManager" Id="{25a3874c-dd70-435d-a219-13b287274ab5}">
+      <Declaration><![CDATA[METHOD M_StateManager
+//////////////////
+// IPC off -> State.2 = 1, IPC on -> State.0 = 1 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+END_VAR
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// OPERATIONNAL INDEX //
+IF NOT  OUT_CmdOpen_IO THEN 
+	MesState.2 := 1;
+ELSE
+	MesState.0 := 1;
+END_IF
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_IPC">
+      <LineId Id="151" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_IPC.M_AlarmManagement">
+      <LineId Id="1940" Count="13" />
+      <LineId Id="2021" Count="2" />
+      <LineId Id="1954" Count="20" />
+      <LineId Id="1993" Count="1" />
+      <LineId Id="1996" Count="16" />
+    </LineIds>
+    <LineIds Name="FB_IPC.M_Execute">
+      <LineId Id="6" Count="2" />
+      <LineId Id="44" Count="0" />
+      <LineId Id="11" Count="0" />
+      <LineId Id="39" Count="1" />
+      <LineId Id="30" Count="0" />
+      <LineId Id="37" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_IPC.M_Init">
+      <LineId Id="6" Count="0" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="8" Count="0" />
+      <LineId Id="7" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_IPC.M_OpenClose">
+      <LineId Id="14" Count="0" />
+      <LineId Id="23" Count="2" />
+      <LineId Id="34" Count="0" />
+      <LineId Id="2" Count="0" />
+      <LineId Id="43" Count="1" />
+    </LineIds>
+    <LineIds Name="FB_IPC.M_StateManager">
+      <LineId Id="95" Count="0" />
+      <LineId Id="113" Count="0" />
+      <LineId Id="115" Count="0" />
+      <LineId Id="117" Count="1" />
+      <LineId Id="116" Count="0" />
+      <LineId Id="114" Count="0" />
+      <LineId Id="12" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,307 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_PM_ION7650" Id="{5a7f8518-3673-48b9-82b1-21f1a5d5c05e}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_PM_ION7650 EXTENDS FB_PM_Base
+//////////////////
+// Measurement Solution based on Digiware, but access through PMS Socomec
+//////////////////
+VAR CONSTANT
+	// Characteristics of the object (Same for all instances)
+			
+END_VAR
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance specific) 
+	{attribute 'OPC.UA.DA' := '1'} 
+	ParamUnitID					: BYTE 		:= 1 ;								(* (NA) Unit ID*)
+//	ParamInInterfaceSub			: BOOL 		:= TRUE; 							// (NA) Serial interface RS422/RS485 TYPE (0:EL6021,1:SUB9)
+	{attribute 'OPC.UA.DA' := '1'} 
+	ParamIPAddress		   		: STRING 	:= '192.168.20.15'; 				(* (NA) IP Adress of ION7650 *)
+	{attribute 'OPC.UA.DA' := '1'} 
+	ParamTcpPort				: UINT 		:= 502;								(* (NA) TCP port			*)
+	ParamPCountZero				: INT		:= 1;								(* (NA) Number of time the PM P measurement was reinitialized to zero *)
+
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	
+END_VAR
+
+VAR_INPUT 
+			MesDataExd				: PM_Standard;								// (NA) Structure of the PM3250
+END_VAR
+
+VAR                                                  								                                          								
+	//M_READ VARIABLES//
+		FB_ModbusRead				: FB_ModbusRTU ;						// (NA) FB for Modbus Reading
+		InputStructRead 			: ARRAY[1..1] OF  Struct_InputRTU;
+		
+		AX_Quantity					: ARRAY[1..1] OF WORD;					// (NA) Quantity of blocks to read
+		AX_Address					: ARRAY[1..1] OF WORD;					// (NA) Start address of the read
+		MesBlock_Temp 				: ARRAY[1..1] OF ARRAY[1..125] OF WORD;	// (NA) Temporary Block with multiple modbus reading (U30 + I35)
+		Busy						: BOOL;
+		OutErrorMbRead				: ARRAY[1..1] OF BOOL;
+		
+		RTrigI						: R_TRIG;
+	//M_INIT VARIABLES //
+		OutFBCompleteted			: BOOL;
+	// ION was reset to 0 
+		IONCount_PossibleReset		: BOOL := TRUE; 						// (NA) The active power of the PM ION7650 is between 1000 and  10m 
+		
+		
+		
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{e04c9d21-6d64-4578-b75e-a2b0d1919dc9}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Digiware measurement tool alarm and warning management
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager			: FB_AlarmCodeManager ; 
+	
+	KK							: BYTE ;		// For loop
+	
+	CMWarning					: BOOL;			// At least one Digiware device in Alarm
+	CMAlarm						: BOOL;			// At least one Digiware device in Alarm
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[TON_ComAlarm(IN:= OutErrorMbRead[1], PT:= ParamTempoComAlarm, Q=>MesDataExd.MesData.MesAlarmCom) ;	
+//					General com alarm : All the read FB fucked up
+
+// ALARM CODE //
+	FB_AlarmCodeManager( 
+		bAlarm1			:=MesDataExd.MesData.MesAlarmCom, 					// Communication Error  #COM
+		bAlarm2			:=FALSE, 									// 
+		bAlarm3			:=FALSE, 									// 
+		bAlarm4			:=FALSE, 									// 
+		bAlarm5			:=FALSE, 									//
+		bAlarm6			:=FALSE, 									//
+		bAlarm7			:=FALSE, 									//
+		bAlarm8			:=FALSE, 									//
+		bAlarm9			:=FALSE, 									//
+		bAlarm10		:=FALSE, 									//
+		bAlarm11		:=FALSE, 									//
+		bAlarm12		:=FALSE, 									//
+		bAlarm13		:=FALSE, 									//
+		bAlarm14		:=FALSE, 									//
+		bAlarm15		:= FALSE , 									//						 
+		wAlarmCode		=>MesDataExd.MesData.MesAlarmCode);
+
+// WARNING CODE //
+	FB_AlarmCodeManager(		
+		bAlarm1			:=	MesWarningCom,				 			// Communication Warning #COM	
+		bAlarm2			:=FALSE, 									// 
+		bAlarm3			:=FALSE, 									// 
+		bAlarm4			:=FALSE, 									// 
+		bAlarm5			:=FALSE, 									//
+		bAlarm6			:=FALSE, 									//
+		bAlarm7			:=FALSE, 									//
+		bAlarm8			:=FALSE, 									//
+		bAlarm9			:=FALSE, 									//
+		bAlarm10		:=FALSE, 									//
+		bAlarm11		:=FALSE, 									//
+		bAlarm12		:=FALSE, 									//
+		bAlarm13		:=FALSE, 									//
+		bAlarm14		:=FALSE, 									//
+		bAlarm15		:=FALSE, 									//
+		wAlarmCode		=>MesDataExd.MesData.MesWarningCode);		]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_CP" Id="{1c835db2-e3a5-44d7-9e64-c47535805e72}">
+      <Declaration><![CDATA[METHOD M_CP 
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+SUPER^.M_CP() ; 
+
+
+
+
+Trig_Cmd_Read(CLK:=IN_CmdToggleRead);
+	
+IF Trig_Cmd_Read.Q THEN
+	IN_CmdToggleRead := FALSE;
+	MesDataExd.MesData.MesCP_Read := NOT MesDataExd.MesData.MesCP_Read;
+END_IF
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Evaluate" Id="{4aa2059c-a199-457c-924f-fedbcc79bdca}">
+      <Declaration><![CDATA[METHOD M_Evaluate : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{dc5e822d-72bb-4568-bb09-a2b141861107}">
+      <Declaration><![CDATA[METHOD M_Init
+VAR 
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[(*FB_ModbusRead(InTimeout:= ParamTimeout,
+				 InUnitID:= DINT_TO_BYTE(ParamUnitID),
+				 InQuantity:= 125,	
+				 InInterfaceSub:= ParamInInterfaceSub,
+				 InFunctionRead := FALSE);
+*)
+	
+AX_Quantity[1] := 125;
+AX_Address[1]  := 149;
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Read" Id="{57f69b97-3f3d-4ed4-ac91-225c5286b54f}">
+      <Declaration><![CDATA[METHOD M_Read
+//////////////////
+//  Read Modbus Variable for ION7650. 
+/////////////////
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	MW 					: FB_MergeWordsToDint; 
+	KK					: BYTE;  						// FOR Loop 
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// CP-Read / Write 
+
+ 
+
+IF MesDataExd.MesData.MesCP_Read  THEN	
+// MODBUS REQUEST TCP-IP //
+(*	 
+	ModbusRead
+	(
+		pDestAddr := ADR(MesBlock1_Temp),
+		sIPAddr := ParamIPAdress,
+		tTimeout := ParamTimeout,
+		nQuantity := 122,
+		nMBAddr := 150,
+		cbLength := SIZEOF(MesBlock1_Temp),
+		nUnitID := ParamUnitID,
+		ClockRead := ClockRead,
+		ErrorId => ModbusAlarmsID,
+		ModbusReadAlarm => ModbusAlarm
+	);
+	*)
+// MODBUS REQUEST RTU //	
+	FB_ModbusRead();
+
+	RTrigI(CLK:= ClockRead );
+//Metrology
+	FOR KK:=1 TO 1 DO
+		InputStructRead[KK].InBuffer := ADR(MesBlock_Temp[KK]);
+		InputStructRead[KK].InFunction := 3;
+		InputStructRead[KK].InQuantity := AX_Quantity[KK];
+		InputStructRead[KK].InStartAddr := AX_Address[KK];
+		InputStructRead[KK].InUnitID := ParamUnitID;
+		
+		InputStructRead[KK].OutBusy := ADR(Busy);
+		InputStructRead[KK].OutError := ADR(OutErrorMbRead[KK]);
+		//InputStructRead[KK].OutCompleted := ADR(bReadCompleted);
+		
+		IF RTrigI.Q THEN 
+			FB_ModbusRead.M_AddAction_FIFO(InStruct:= InputStructRead[KK] , InPriority:=1 ) ; 
+		END_IF
+		
+	END_FOR 
+				
+// PROPERTIES UPDATE // 
+	// Block 1
+	MW(WORD_STRONG:= MesBlock_Temp[1][  1], SIGNED:=FALSE, FIX:=1 , SIZE:=1, 	VAR_OUT	:= MesDataExd.MesData.MesI1);
+	MW(WORD_STRONG:= MesBlock_Temp[1][  2], SIGNED:=FALSE, FIX:=1 , SIZE:=1, 	VAR_OUT	:= MesDataExd.MesData.MesI2);
+	MW(WORD_STRONG:= MesBlock_Temp[1][  3], SIGNED:=FALSE, FIX:=1 , SIZE:=1, 	VAR_OUT	:= MesDataExd.MesData.MesI3);
+	MW(WORD_STRONG:= MesBlock_Temp[1][  6], SIGNED:=FALSE, FIX:=1 , SIZE:=1, 	VAR_OUT	:= MesDataExd.MesData.MesI);
+	MW(WORD_STRONG:= MesBlock_Temp[1][ 10], SIGNED:=FALSE, FIX:=1 , SIZE:=1, 	VAR_OUT	:= MesDataExd.MesData.MesFreq);
+	MW(WORD_STRONG:= MesBlock_Temp[1][ 17], Word_WEAK:= MesBlock_Temp[1][ 18], 	SIGNED:=FALSE, FIX:=0 , SIZE:=2, VAR_OUT:= MesDataExd.MesData.MesV1);
+	MW(WORD_STRONG:= MesBlock_Temp[1][ 19], Word_WEAK:= MesBlock_Temp[1][ 20], 	SIGNED:=FALSE, FIX:=0 , SIZE:=2, VAR_OUT:= MesDataExd.MesData.MesV2);
+	MW(WORD_STRONG:= MesBlock_Temp[1][ 21], Word_WEAK:= MesBlock_Temp[1][ 22], 	SIGNED:=FALSE, FIX:=0 , SIZE:=2, VAR_OUT:= MesDataExd.MesData.MesV3);
+	MW(WORD_STRONG:= MesBlock_Temp[1][ 23], Word_WEAK:= MesBlock_Temp[1][ 24], 	SIGNED:=FALSE, FIX:=0 , SIZE:=2, VAR_OUT:= MesDataExd.MesData.MesV);
+	MW(WORD_STRONG:= MesBlock_Temp[1][ 29], Word_WEAK:= MesBlock_Temp[1][ 30], 	SIGNED:=FALSE, FIX:=0 , SIZE:=2, VAR_OUT:= MesDataExd.MesData.MesU12);
+	MW(WORD_STRONG:= MesBlock_Temp[1][ 31], Word_WEAK:= MesBlock_Temp[1][ 32], 	SIGNED:=FALSE, FIX:=0 , SIZE:=2, VAR_OUT:= MesDataExd.MesData.MesU23);
+	MW(WORD_STRONG:= MesBlock_Temp[1][ 33], Word_WEAK:= MesBlock_Temp[1][ 34], 	SIGNED:=FALSE, FIX:=0 , SIZE:=2, VAR_OUT:= MesDataExd.MesData.MesU31);
+	MW(WORD_STRONG:= MesBlock_Temp[1][ 35], Word_WEAK:= MesBlock_Temp[1][ 36], 	SIGNED:=FALSE, FIX:=0 , SIZE:=2, VAR_OUT:= MesDataExd.MesData.MesU);	
+	MW(WORD_STRONG:= MesBlock_Temp[1][ 49], Word_WEAK:= MesBlock_Temp[1][ 50], 	SIGNED:=TRUE , FIX:=0 , SIZE:=2, VAR_OUT:= MesDataExd.MesData.MesP1);
+	MW(WORD_STRONG:= MesBlock_Temp[1][ 51], Word_WEAK:= MesBlock_Temp[1][ 52], 	SIGNED:=TRUE , FIX:=0 , SIZE:=2, VAR_OUT:= MesDataExd.MesData.MesP2);
+	MW(WORD_STRONG:= MesBlock_Temp[1][ 53], Word_WEAK:= MesBlock_Temp[1][ 54], 	SIGNED:=TRUE , FIX:=0 , SIZE:=2, VAR_OUT:= MesDataExd.MesData.MesP3);
+	MW(WORD_STRONG:= MesBlock_Temp[1][ 55], Word_WEAK:= MesBlock_Temp[1][ 56], 	SIGNED:=TRUE , FIX:=0 , SIZE:=2, VAR_OUT:= MesDataExd.MesData.MesP);	
+	MW(WORD_STRONG:= MesBlock_Temp[1][ 59], Word_WEAK:= MesBlock_Temp[1][ 60], 	SIGNED:=TRUE , FIX:=0 , SIZE:=2, VAR_OUT:= MesDataExd.MesData.MesQ1);	
+	MW(WORD_STRONG:= MesBlock_Temp[1][ 61], Word_WEAK:= MesBlock_Temp[1][ 62], 	SIGNED:=TRUE , FIX:=0 , SIZE:=2, VAR_OUT:= MesDataExd.MesData.MesQ2);	
+	MW(WORD_STRONG:= MesBlock_Temp[1][ 63], Word_WEAK:= MesBlock_Temp[1][ 64], 	SIGNED:=TRUE , FIX:=0 , SIZE:=2, VAR_OUT:= MesDataExd.MesData.MesQ3);	
+	MW(WORD_STRONG:= MesBlock_Temp[1][ 65], Word_WEAK:= MesBlock_Temp[1][ 66], 	SIGNED:=TRUE , FIX:=0 , SIZE:=2, VAR_OUT:= MesDataExd.MesData.MesQ);	
+	MW(WORD_STRONG:= MesBlock_Temp[1][ 75], Word_WEAK:= MesBlock_Temp[1][ 76], 	SIGNED:=TRUE , FIX:=0 , SIZE:=2, VAR_OUT:= MesDataExd.MesData.MesS);	
+	                                                                                                                       
+	MW(WORD_STRONG:= MesBlock_Temp[1][ 81], Word_weak:= MesBlock_Temp[1][ 82], 	SIGNED:=TRUE , FIX:=0 , SIZE:=2, VAR_OUT:= MesDataExd.MesData.MesEActProd);
+	MW(WORD_STRONG:= MesBlock_Temp[1][ 83], Word_weak:= MesBlock_Temp[1][ 84], 	SIGNED:=TRUE , FIX:=0 , SIZE:=2, VAR_OUT:= MesDataExd.MesData.MesEActCons);
+	MW(WORD_STRONG:= MesBlock_Temp[1][ 85], Word_weak:= MesBlock_Temp[1][ 86], 	SIGNED:=TRUE , FIX:=0 , SIZE:=2, VAR_OUT:= MesDataExd.MesData.MesEReactProd);
+	MW(WORD_STRONG:= MesBlock_Temp[1][ 87], Word_weak:= MesBlock_Temp[1][ 88], 	SIGNED:=TRUE , FIX:=0 , SIZE:=2, VAR_OUT:= MesDataExd.MesData.MesEReactCons);
+	                                                                 
+	MW(WORD_STRONG:= MesBlock_Temp[1][113], SIGNED:=FALSE , FIX:=4 , SIZE:=1,	VAR_OUT:= MesDataExd.MesData.MesCosPhi1);
+	MW(WORD_STRONG:= MesBlock_Temp[1][114], SIGNED:=FALSE , FIX:=4 , SIZE:=1,	VAR_OUT:= MesDataExd.MesData.MesCosPhi2);
+	MW(WORD_STRONG:= MesBlock_Temp[1][115], SIGNED:=FALSE , FIX:=4 , SIZE:=1,	VAR_OUT:= MesDataExd.MesData.MesCosPhi3);
+	MW(WORD_STRONG:= MesBlock_Temp[1][116], SIGNED:=FALSE , FIX:=4 , SIZE:=1,	VAR_OUT:= MesDataExd.MesData.MesCosPhi);
+	
+	
+// Add the previous produced energy before counter reset
+	IF MesDataExd.MesData.MesEActProd > 0 AND MesDataExd.MesData.MesEActProd < 1000  AND IONCount_PossibleReset THEN  
+		IONCount_PossibleReset := FALSE;
+		ParamPCountZero := ParamPCountZero + 1;	
+	ELSIF MesDataExd.MesData.MesEActProd > 1000 THEN
+		IONCount_PossibleReset := TRUE;
+	END_IF
+
+MesDataExd.MesData.MesEActProd := MesDataExd.MesData.MesEActProd + 10000000*ParamPCountZero;	
+		
+	IF MesDataExd.MesData.MesP<0.01 AND MesDataExd.MesData.MesP>-0.01  THEN 
+		MesDataExd.MesData.MesTanPhi := 0 ;  
+	ELSE
+		MesDataExd.MesData.MesTanPhi := MesDataExd.MesData.MesQ /MesDataExd.MesData.MesP ; 
+	END_IF
+	
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_PM_ION7650">
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PM_ION7650.M_AlarmManagement">
+      <LineId Id="195" Count="38" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PM_ION7650.M_CP">
+      <LineId Id="20" Count="7" />
+      <LineId Id="29" Count="5" />
+      <LineId Id="11" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PM_ION7650.M_Evaluate">
+      <LineId Id="5" Count="0" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PM_ION7650.M_Init">
+      <LineId Id="49" Count="8" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PM_ION7650.M_Read">
+      <LineId Id="954" Count="0" />
+      <LineId Id="956" Count="2" />
+      <LineId Id="843" Count="89" />
+      <LineId Id="943" Count="0" />
+      <LineId Id="306" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

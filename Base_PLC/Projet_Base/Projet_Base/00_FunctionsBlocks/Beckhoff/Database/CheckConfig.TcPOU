@@ -1,0 +1,92 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="CheckConfig" Id="{503db43f-1be2-4b73-b610-623c8286b0be}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM CheckConfig
+VAR_INPUT
+		IN_Start				: BOOL := TRUE;
+		ParamInitWait			: TIME := T#5S;
+END_VAR
+VAR_OUTPUT
+		OUT_aDBConfig         		: ARRAY[0..MAX_CONFIGURATIONS] OF ST_ConfigDB;
+		OUT_Busy					: BOOL;
+		OUT_Error					: BOOL;
+		OUT_Result					: INT;
+END_VAR
+VAR
+	// CheckConfig    
+		TON_CheckConfig				: TON;      		
+		TrigCheckConfig				: R_TRIG;
+		TrigInit					: F_TRIG;
+		RS_CheckConfig				: RS;
+		                    		
+		ConfigTcDBSrvEvt  			: FB_ConfigTcDBSrvEvt(sNetId := '', tTimeout:=T#5S);
+		                    		
+		aAutoGrpConfig    			: ARRAY[0..MAX_CONFIGURATIONS] OF ST_ConfigAutoLogGrp;
+		AX_NameBase					: ARRAY[0..MAX_CONFIGURATIONS] OF T_MaxString;
+		AX_hDBID					: ARRAY[0..MAX_CONFIGURATIONS] OF BOOL;
+		AX_hDBIDNull				: ARRAY[0..MAX_CONFIGURATIONS] OF BOOL;
+		                    		
+		nDbCount          			: UDINT;
+		nAutoGrpCount     			: UDINT;
+
+		KK : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[TON_CheckConfig(IN := IN_Start, PT := ParamInitWait);
+
+TrigCheckConfig(CLK := TON_CheckConfig.Q);
+RS_CheckConfig(SET := TrigCheckConfig.Q);
+IF TrigCheckConfig.Q THEN
+	IN_Start := FALSE;
+	OUT_Result := 0;
+END_IF
+IF RS_CheckConfig.Q1 THEN
+	
+	OUT_Busy := TRUE;
+	IF ConfigTcDBSrvEvt.Read(pDBConfig := ADR(OUT_aDBConfig), cbDBConfig := SIZEOF(OUT_aDBConfig), pAutologGrpConfig := ADR(aAutoGrpConfig),
+			cbAutoLogGrpConfig := SIZEOF(aAutoGrpConfig),pDBCount := ADR(nDbCount),pAutoLogGrpCount := ADR(nAutoGrpCount)) THEN
+		
+		IF ConfigTcDBSrvEvt.bError THEN
+			OUT_Result := -1;
+		ELSE
+			FOR KK := 0 TO MAX_CONFIGURATIONS DO
+				AX_hDBID[OUT_aDBConfig[KK].hDBID] := OUT_aDBConfig[KK].hDBID <> 0;
+				AX_NameBase[KK] :=  OUT_aDBConfig[KK].sName;
+			END_FOR
+			OUT_Result := 1;
+		END_IF  
+		RS_CheckConfig(RESET1 := TRUE);
+		RS_CheckConfig(RESET1 := FALSE);
+		OUT_Busy := FALSE;
+		
+	END_IF
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="CheckConfig">
+      <LineId Id="218" Count="0" />
+      <LineId Id="217" Count="0" />
+      <LineId Id="84" Count="2" />
+      <LineId Id="220" Count="0" />
+      <LineId Id="186" Count="1" />
+      <LineId Id="87" Count="0" />
+      <LineId Id="185" Count="0" />
+      <LineId Id="113" Count="0" />
+      <LineId Id="88" Count="0" />
+      <LineId Id="92" Count="0" />
+      <LineId Id="96" Count="0" />
+      <LineId Id="125" Count="0" />
+      <LineId Id="156" Count="0" />
+      <LineId Id="99" Count="0" />
+      <LineId Id="101" Count="3" />
+      <LineId Id="155" Count="0" />
+      <LineId Id="105" Count="0" />
+      <LineId Id="122" Count="0" />
+      <LineId Id="108" Count="0" />
+      <LineId Id="124" Count="0" />
+      <LineId Id="123" Count="0" />
+      <LineId Id="109" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

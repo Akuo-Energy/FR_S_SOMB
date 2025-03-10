@@ -1,0 +1,80 @@
+﻿{
+  "parameters": [
+    {
+      "name": "data-tchmi-associated_variable",
+      "displayName": "Associated_variable",
+      "visible": true,
+      "type": "tchmi:general#/definitions/BOOL",
+      "category": "",
+      "description": "",
+      "requiredOnCompile": false,
+      "readOnly": false,
+      "bindable": true,
+      "heritable": true,
+      "propertyName": "Associated_variable",
+      "propertySetterName": "setAssociated_variable",
+      "propertyGetterName": "getAssociated_variable",
+      "refTo": ""
+    },
+    {
+      "name": "data-tchmi-size",
+      "displayName": "Size",
+      "visible": true,
+      "type": "tchmi:general#/definitions/Number",
+      "category": "",
+      "description": "",
+      "defaultValue": 30.0,
+      "requiredOnCompile": false,
+      "readOnly": false,
+      "bindable": true,
+      "heritable": true,
+      "propertyName": "Size",
+      "propertySetterName": "setSize",
+      "propertyGetterName": "getSize",
+      "refTo": ""
+    },
+    {
+      "name": "data-tchmi-color_on",
+      "displayName": "Color_On",
+      "visible": true,
+      "type": "tchmi:framework#/definitions/Color",
+      "category": "",
+      "description": "",
+      "defaultValue": {
+        "color": "rgba(153, 204, 51, 1)"
+      },
+      "defaultValueInternal": null,
+      "requiredOnCompile": false,
+      "readOnly": false,
+      "bindable": true,
+      "heritable": true,
+      "propertyName": "Color_On",
+      "propertySetterName": "setColor_On",
+      "propertyGetterName": "getColor_On",
+      "refTo": ""
+    },
+    {
+      "name": "data-tchmi-color_off",
+      "displayName": "Color_Off",
+      "visible": true,
+      "type": "tchmi:framework#/definitions/Color",
+      "category": "",
+      "description": "",
+      "defaultValue": {
+        "color": "rgba(247, 11, 11, 1)"
+      },
+      "defaultValueInternal": null,
+      "requiredOnCompile": false,
+      "readOnly": false,
+      "bindable": true,
+      "heritable": true,
+      "propertyName": "Color_Off",
+      "propertySetterName": "setColor_Off",
+      "propertyGetterName": "getColor_Off",
+      "refTo": ""
+    }
+  ],
+  "virtualRights": [],
+  "$schema": "../../../Packages/Beckhoff.TwinCAT.HMI.Framework.12.742.5/runtimes/native1.12-tchmi/Schema/UserControlConfig.Schema.json",
+  "description": ""
+}

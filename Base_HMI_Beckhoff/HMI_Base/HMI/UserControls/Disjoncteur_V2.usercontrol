@@ -1,0 +1,54 @@
+﻿<div id="UserControl1_116" data-tchmi-type="TcHmi.Controls.System.TcHmiUserControl" 
+     data-tchmi-top="0" data-tchmi-left="0" 
+     data-tchmi-width="139" data-tchmi-height="132" data-tchmi-width-unit="px" data-tchmi-height-unit="px"
+     data-tchmi-creator-viewport-width="500" data-tchmi-creator-viewport-height="500" data-tchmi-width-mode="Content" data-tchmi-height-mode="Content" data-tchmi-zindex="2">
+
+<div id="TcHmiContainer_135" data-tchmi-type="TcHmi.Controls.System.TcHmiContainer" data-tchmi-height="132" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-width="86" data-tchmi-width-unit="px" data-tchmi-zindex="1">
+
+<div id="TcHmiLine_241" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiLine" data-tchmi-height="%f%%pp%H%/pp%/2-0.1*%pp%H%/pp%%/f%" data-tchmi-height-unit="px" data-tchmi-left="%f%%pp%W%/pp%/2%/f%" data-tchmi-left-unit="px" data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-width="15" data-tchmi-width-unit="px" data-tchmi-x1="0" data-tchmi-x2="0" data-tchmi-y1="0" data-tchmi-y2="%f%%pp%H%/pp%/2-0.1*%pp%H%/pp%%/f%" data-tchmi-zindex="5" data-tchmi-stroke-thickness="%pp%StrokeW%/pp%">
+
+</div>
+
+<div id="TcHmiContainer_136" data-tchmi-type="TcHmi.Controls.System.TcHmiContainer" data-tchmi-height="%pp%W%/pp%" data-tchmi-height-unit="px" data-tchmi-left-unit="px" data-tchmi-width="20" data-tchmi-width-unit="px" data-tchmi-zindex="5" data-tchmi-top="%f%%pp%H%/pp%/2-0.1*%pp%H%/pp%-%pp%W%/pp%/2%/f%" data-tchmi-top-unit="px">
+
+<div id="TcHmiLine_242" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiLine" data-tchmi-height="%pp%W%/pp%" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-width="%pp%W%/pp%" data-tchmi-width-unit="px" data-tchmi-x1="%pp%W%/pp%" data-tchmi-x2="0" data-tchmi-y2="%pp%W%/pp%" data-tchmi-x1-unit="px" data-tchmi-x2-unit="px" data-tchmi-zindex="3" data-tchmi-stroke-thickness="%pp%StrokeW%/pp%">
+
+</div>
+
+<div id="TcHmiLine_243" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiLine" data-tchmi-height="%pp%W%/pp%" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-width="%pp%W%/pp%" data-tchmi-width-unit="px" data-tchmi-x1="0" data-tchmi-x2="%pp%W%/pp%" data-tchmi-y1="0" data-tchmi-y2="%pp%W%/pp%" data-tchmi-x1-unit="px" data-tchmi-x2-unit="px" data-tchmi-zindex="2" data-tchmi-stroke-thickness="%pp%StrokeW%/pp%">
+
+</div>
+
+</div>
+
+<div id="TcHmiLine_244" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiLine" data-tchmi-height="%f%0.2*%pp%H%/pp%%/f%" data-tchmi-height-unit="px" data-tchmi-left="%f%%pp%W%/pp%/2%/f%" data-tchmi-left-unit="px" data-tchmi-top="%f%%pp%H%/pp%/2-0.1*%pp%H%/pp%%/f%" data-tchmi-top-unit="px" data-tchmi-width="2" data-tchmi-width-unit="px" data-tchmi-x1="0" data-tchmi-x2="0" data-tchmi-y1="0" data-tchmi-y2="%f%0.2*%pp%H%/pp%%/f%" data-tchmi-zindex="5" data-tchmi-stroke-thickness="%pp%StrokeW%/pp%">
+
+
+
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-transform" type="application/json">
+[
+  {
+    "transformType": "Origin",
+    "x": 0,
+    "y": "%f%%pp%H%/pp%*0.2%/f%",
+    "xUnit": "px",
+    "zUnit": "px"
+  },
+  {
+    "transformType": "Rotate",
+    "angle": "%f%if (%pp%MesOpen%/pp%){ 45}else{0}%/f%",
+    "angleUnit": "deg"
+  }
+]
+</script>
+</div>
+<div id="TcHmiLine_245" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiLine" data-tchmi-height="%f%%pp%H%/pp%/2-0.1*%pp%H%/pp%%/f%" data-tchmi-height-unit="px" data-tchmi-left="%f%%pp%W%/pp%/2%/f%" data-tchmi-left-unit="px" data-tchmi-top="%f%%pp%H%/pp%/2+0.1*%pp%H%/pp%%/f%" data-tchmi-top-unit="px" data-tchmi-width="1" data-tchmi-width-unit="px" data-tchmi-x1="0" data-tchmi-x2="0" data-tchmi-y1="0" data-tchmi-y2="%f%%pp%H%/pp%/2-0.1*%pp%W%/pp%%/f%" data-tchmi-zindex="5" data-tchmi-stroke-thickness="%pp%StrokeW%/pp%">
+
+</div>
+
+</div>
+
+</div>

@@ -1,0 +1,99 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="ESS" Id="{186c605f-96e9-41cc-9923-886f89a800f1}">
+    <Declaration><![CDATA[///////////
+// Structure For ESS. Main Operating Data to be saved ( ex: OPC ) .  
+//////////
+TYPE ESS:
+STRUCT                                                                                                                        
+		MesP 						: REAL ;  		(* (kW) 	 Active Power                                                     *)
+		MesQ 						: REAL ;  		(* (kVAr) Reactive Power                                                   *)
+		MesCosPhi 					: REAL ;  		(* (p.u) Power factor                                                     *)
+		MesU 						: REAL ;  		(* (V) 	 AC Voltage measure                                               *)
+		MesFreq						: REAL ;		(* (Hz)  Main Bus Freq.                                                   *)
+		MesUdc 						: REAL ;  		(* (V) 	 DC Voltage measure                                               *)
+		MesI 						: REAL ; 		(* (A) 	 Total AC current                                                 *)
+		MesIdc 						: REAL ; 		(* (A) 	 Total DC current from batteries (+ = discharge)                  *)
+		MesTemp_Bat					: REAL ;		(* (°C)  Cal Average Temp in Bat compartment                              *)
+		MesHygro_Bat			    : REAL ;		(* (%)   Cal Average Hygro in Bat compartment                             *)
+		MesTemp_Inv					: REAL ;		(* (°C)  Cal Average Temp in Pcs compartment                              *)
+		MesHygro_Inv				: REAL ;		(* (%)   Cal Average Hygro in Pcs compartment                             *)
+	                                                (*                                                                        *)
+		ParamPn 					: REAL ; 		(* (kW) 	Total nominal Power MesPnTot                                      *)
+		ParamEn						: REAL ; 		(* (J) 	Total nominal Energy                                              *)
+		MesEavailable				: REAL ; 		(* (J) 	Cal Total Energy Available                                        *)
+		                                            (*                                                                        *)
+		MesState					: BYTE ; 		(* (NA) Cal State of the BESS	                                          *)
+                                                    (*                                                                        *)
+		MesSoC						: REAL ; 		(* (p.u) Mean State of Charge of the Batteries connected to Battery contro*)
+		MesEconnected				: REAL ; 		(* (kWh) BESS connected energy availabe for charge or discharge								*)
+		                                            (*                                                                                          *)
+		/////////// max or nominal ?                (*                                                                                          *)
+		MesEnomConnected			: REAL ;		(* (kWh) Maximum connected capacity of the racks connected to the charge/discharge path.    *)
+		MesSoH 						: REAL ; 		(* (p.u) SoH of battery racks                                                               *)
+		MesEActCons					: REAL ;		(* (kWh) Active energy consumed                                                             *)
+		                                            (*                                                                                          *)
+		OUT_SetptP					: REAL ;		(* (kW) Setpoint for the active power                                                       *)
+		OUT_SetptQ					: REAL ;        (* (kVAr) Setpoint for the reactive power                                                   *)
+ 
+		MesPdc_DischargeMax			: REAL ;		(* (kW)	Max active power setpoint															*)
+		MesPdc_ChargeMin			: REAL ;		(* (kW)	Min active power setpoint                                                           *)
+		MesQ_DischargeConnected		: REAL ;		(* (kVAr)	Max reactive power setpoint                                                     *)
+		MesQ_ChargeConnected		: REAL ;		(* (kVAr)	Min reactive power setpoint                                                     *)
+                                                    (*                                                                                          *)
+		MesPdcDischargeMax_FreqReg  : REAL ; 		(* (kW)	Min active power to be achieved with frequency regulation.                          *)
+		MesPdcChargeMin_FreqReg     : REAL ; 		(* (kW)	Max active power to be achieved with frequency regulation.                          *)
+		                                            (*                                                                                          *)
+		MesSbat_DischargeMax		: REAL ;    	(* (kW)	Max battery  power setpoint (discharge). Used for power sharing.                    *)
+		MesSbat_ChargeConnected		: REAL ;   		(* (kW)	Min battery  power setpoint (charge). Used for power sharing.                       *)
+
+		
+		AX_PCS 						: ARRAY[1..CstNbPcs_ESS] OF PCS;		(* Object : PCS *)
+		AX_Bat						: ARRAY[1..CstNbPcs_ESS] OF SystemBMS;		(* Object : BMS *)
+		AX_HVAC						: ARRAY[1..CstNbHvac_ESS] OF HVAC;          (* Object : HVAC*)
+		AX_TempSensor				: ARRAY[1..4] OF ANA;                       (* Object : Temperature sensor *)
+		AX_HygroSensor				: ARRAY[1..4] OF ANA;                       (* Object : Hygro sensor *)
+		// SPD = Wind speed ? 
+		A1_Spd						: TOR;                                      (* Object *)
+		A1_DS_Bat					: TOR;                                      (* Object *)
+		A1_Ds_Pcs					: TOR;                                      (* Object *)
+		// ToS ? 
+		A1_ToS						: TOR;                                      (* Object *)
+		A1_TM						: EM;                                       (* Object: Tarif meter *)
+		A1_MainCB					: CB;                                       (* Object : MainCB *)
+		A1_ES						: TOR;                                      (* Object : Emergency stop *)
+		A1_SD_Pcs					: TOR;                                      (* Object : *)
+		A1_Transfo						: Transfo_MV;                                  (* Object : Transfo *)
+		A1_UPS						: UPS_ENERIS ;                              (* Object : UPS ENERIS *)
+		A1_FSS						: FSS ;                                     (* Object : Fire system *)
+		
+/////////// AX_CB_ChainDcSwitchBank ? AX_CB_ChainFanBank ? A1_CB_RackCtrl24V ?
+		AX_CB_ChainDcSwitchBank		: ARRAY[1..2] OF TOR ; 	                    (* Object *)
+		AX_CB_ChainFanBank			: ARRAY[1..2] OF TOR ;                      (* Object *)
+		A1_CB_RackCtrl24V			: TOR ;                                     (* Object *)
+		A1_CB_PLC24V				: TOR ;                                     (* Object *)
+
+		MesAlarmCode				: WORD	;	(* (NA) Internal Akuo AlarmCode		*)
+		MesWarningCode				: WORD	;	(* (NA) Internal Akuo WarningCode   *)
+		MesEventCode				: WORD	;	(* (NA) Internal Akuo EventCode     *)
+		                                                                                     
+////// Finish these later		
+		System1StopOperation		: WORD ;	(* BESS 1 Alarm Word details        *)
+		System1ReducePower			: WORD ;	(* BESS 1 Alarm Word details        *)
+		System1ReducePower2			: WORD ;	(* BESS 1 Alarm Word details        *)
+		System1StopOperation1		: WORD ;	(* BESS 1 Alarm Word details        *)
+		System1StopOperation2		: WORD ;	(* BESS 1 Alarm Word details		*)
+		System1StopOperation3		: WORD ;	(* BESS 1 Alarm Word details        *)
+		System2StopOperation		: WORD ;	(* BESS 1 Alarm Word details 		*)
+		System2ReducePower			: WORD ;	(* BESS 2 Alarm Word details        *)
+		System2ReducePower2			: WORD ;	(* BESS 2 Alarm Word details        *)
+		System2StopOperation1		: WORD ;	(* BESS 2 Alarm Word details        *)
+		System2StopOperation2		: WORD ;	(* BESS 2 Alarm Word details		*)
+		System2StopOperation3		: WORD ;	(* BESS 2 Alarm Word details        *)
+	
+		
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

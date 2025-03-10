@@ -1,0 +1,162 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_ESS_Base" Id="{4f302840-477e-42f9-a99f-6c73f9ccb977}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_ESS_Base
+//////////////////
+// ESS base product  
+//////////////////
+VAR CONSTANT
+	// Characteristics of the object (Same for all instances)
+	
+END_VAR
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance specific) 
+	ParamESSVersion				: STRING := 'ESS' ;	// ESS Version
+	
+	ParamTempoComAlarm			: TIME := T#5S ; 	// (s) Config : Tempo to detect LOC Alarm
+	ParamTimeOutStart			: TIME := T#3M;		// (min)Config : Tempo for starting before timeout warning
+	ParamTimeOutShutdown			: TIME := T#1M;		// (min)Config : Tempo for stoping before timeout warning
+	ParamTimeOutChangeMaster	: TIME := T#3M;		// (s)  Config : Tempo for changing master before timeout warning
+
+	ParamSoCVeryVeryLow			: REAL := 7 ; 	// (%) SoC at which the ESS creates an alarm and disable discharging the batteries the batteries.
+	ParamSoCVeryVeryHigh		: REAL := 92 ; 	// (%) SoC at Which the ESS creates an alarm and disable Charging  the batteries . 
+	
+	ParamNbPcs					: UINT := 2 ; 		// (NA) Config :Number of Pcs controlled .
+	ParamNbRacks				: ARRAY[1.. CstNbPcs_Ess] OF UINT := [17,17] ; 		// (NA) Config :Number of racks controlled .
+	ParamEssNum					: UINT:=1 ; 			// (NA) Config :Numerous of the ESS in the PP
+
+	//M_INIT VARIABLES // 	        	
+	bInit							: BOOL ; 	// (NA) Initialize object parameters at first cycle 
+	
+	
+END_VAR
+
+
+
+VAR
+
+	MesDataExd					: ESS; 				// (NA) [P,H,B] ESS concept Data structure 
+	
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_EquipmentCalls" Id="{77c3b9de-de9d-4ea0-95cf-e7f114b9c98a}">
+      <Declaration><![CDATA[METHOD M_EquipmentCalls
+//////////////////
+// Evaluate AMS characteristics
+//////////////////
+
+VAR
+	// Method local variables (reinitialized at each cycle) 
+
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Evaluate" Id="{4519b187-9cfd-44bb-87d1-d8bc6f025d16}">
+      <Declaration><![CDATA[METHOD M_Evaluate
+//////////////////
+// Evaluate AMS characteristics
+//////////////////
+
+VAR
+	// Method local variables (reinitialized at each cycle) 
+
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{9dd13a7a-7c72-4e49-ab70-de6ebb536acd}">
+      <Declaration><![CDATA[METHOD M_Execute
+/////////////////////
+// Action Calls and Object Calls
+/////////////////////
+VAR
+
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// INITIALIZE // 
+	IF NOT bInit THEN
+		M_Init() ; 
+		
+
+		bInit:= TRUE ; 
+		
+
+	ELSIF CmdInit_G THEN 
+		bInit:= FALSE ;
+		
+	
+	
+
+	END_IF
+	
+	// OBJECT CALLS //
+		M_EquipmentCalls() ; 
+	
+	// METHODS CALLS //
+	
+		M_Evaluate();
+	]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{60537166-8f3d-4c4f-ba76-4e62ed62f29f}">
+      <Declaration><![CDATA[METHOD M_Init
+
+VAR
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[	
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_ESS_Base">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ESS_Base.M_EquipmentCalls">
+      <LineId Id="49" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ESS_Base.M_Evaluate">
+      <LineId Id="49" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ESS_Base.M_Execute">
+      <LineId Id="53" Count="2" />
+      <LineId Id="153" Count="0" />
+      <LineId Id="147" Count="0" />
+      <LineId Id="106" Count="0" />
+      <LineId Id="150" Count="0" />
+      <LineId Id="149" Count="0" />
+      <LineId Id="57" Count="0" />
+      <LineId Id="107" Count="0" />
+      <LineId Id="58" Count="0" />
+      <LineId Id="137" Count="0" />
+      <LineId Id="151" Count="1" />
+      <LineId Id="108" Count="0" />
+      <LineId Id="61" Count="0" />
+      <LineId Id="138" Count="3" />
+      <LineId Id="144" Count="2" />
+    </LineIds>
+    <LineIds Name="FB_ESS_Base.M_Init">
+      <LineId Id="18" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

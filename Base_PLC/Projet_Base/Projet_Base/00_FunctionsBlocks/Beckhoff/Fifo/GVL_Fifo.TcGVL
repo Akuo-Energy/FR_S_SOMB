@@ -1,0 +1,8 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <GVL Name="GVL_Fifo" Id="{f061c5e5-3563-4ef6-bb84-d92f9ca04d95}">
+    <Declaration><![CDATA[VAR_GLOBAL CONSTANT 
+		Max_buffer_size_G					: UDINT:=10000000; // Max buffer size of fifo
+END_VAR]]></Declaration>
+  </GVL>
+</TcPlcObject>

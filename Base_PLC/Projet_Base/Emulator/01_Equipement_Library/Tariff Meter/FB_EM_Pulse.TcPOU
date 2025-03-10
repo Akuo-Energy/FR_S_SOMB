@@ -1,0 +1,181 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_EM_Pulse" Id="{161ae9eb-ad76-401a-9b3c-6ceb0983afd3}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_EM_Pulse EXTENDS FB_EM_Base
+//////////////////
+// Measurement Solution. Base FB
+//////////////////
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance specific) 
+		
+	
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	
+END_VAR
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//
+		FB_DetectFixedValue   : FB_DetectFixedValue ; 
+        Eact_null    		  : REAL ;                                   								
+		
+
+	//M_INIT VARIABLES //
+		MesDataExd			: EM_Standard ; 
+		
+	// M_EXECUTE VARIABLES //
+ 		
+	// M_Reset_L
+		
+                      
+END_VAR
+
+VAR_INPUT
+		
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{e4add293-eee0-41c2-9092-1e0bbcb0c1e6}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Digiware measurement tool alarm and warning management
+/////////////////
+
+VAR 
+	FB_AlarmCodeManager : FB_AlarmCodeManager ; 
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+FB_DetectFixedValue(IN_Addr := ADR(MesDataExd.MesData.MesEactCons) , IN_Size := SIZEOF(MesDataExd.MesData.MesEactCons) , IN_Duration :=T#3H , IN_EmptyStruct := ADR(Eact_null ) ); 
+
+// ALARM CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= MesDataExd.MesData.MesEActProd > 10 ,																			// Production measured			
+		bAlarm2			:=FB_DetectFixedValue.OUT_bStatic 	,																	// Loss of communication with meter 
+		bAlarm3			:=FALSE, 																								// 
+		bAlarm4			:=FALSE, 																								// 
+		bAlarm5			:=FALSE, 																								//
+		bAlarm6			:=FALSE,        																						//
+		bAlarm7			:=FALSE,        																						//
+		bAlarm8			:=FALSE,        																						//
+		bAlarm9			:=FALSE,        																						//
+		bAlarm10		:=FALSE,        																						//
+		bAlarm11		:=FALSE,        																						//
+		bAlarm12		:=FALSE,        																						//
+		bAlarm13		:=FALSE,        																						//
+		bAlarm14		:=FALSE,        																						//
+		bAlarm15		:=FALSE,        																						//
+		wAlarmCode		=>MesDataExd.MesData.MesAlarmCode);
+
+// WARNING CODE //
+
+	FB_AlarmCodeManager(
+		bAlarm1			:= FALSE ,										//  
+		bAlarm2			:=FALSE, 										// 
+		bAlarm3			:=FALSE, 										// 
+		bAlarm4			:=FALSE, 										// 
+		bAlarm5			:=FALSE, 										//
+		bAlarm6			:=FALSE,        								//
+		bAlarm7			:=FALSE,        								//
+		bAlarm8			:=FALSE,        								//
+		bAlarm9			:=FALSE,        								//
+		bAlarm10		:=FALSE,        								//
+		bAlarm11		:=FALSE,        								//
+		bAlarm12		:=FALSE,        								//
+		bAlarm13		:=FALSE,        								//
+		bAlarm14		:=FALSE,        								//
+		bAlarm15		:=FALSE,        								//
+		wAlarmCode		=>MesDataExd.MesData.MesWarningCode);
+			
+// EVENT CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= IN_CmdReset_L, 				// Reset command
+		bAlarm2			:= FALSE, 						// 
+		bAlarm3			:= FALSE, 						// 
+		bAlarm4			:= FALSE, 						// 
+		bAlarm5			:= FALSE, 						//
+		bAlarm6			:= FALSE, 						//
+		bAlarm7			:= FALSE,                       //
+		bAlarm8			:= FALSE,                       //
+		bAlarm9			:= FALSE,                       //
+		bAlarm10		:= FALSE,                       //
+		bAlarm11		:= FALSE,                       //
+		bAlarm12		:= FALSE,                       //
+		bAlarm13		:= FALSE,                       //
+		bAlarm14		:= FALSE,                       //
+		bAlarm15		:= FALSE,                       //
+		wAlarmCode		=>MesDataExd.MesData.MesEventCode);]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Evaluate" Id="{25962693-2a47-44de-90d0-bdaf8418336a}">
+      <Declaration><![CDATA[METHOD M_Evaluate
+VAR_INPUT
+END_VAR
+
+VAR
+	TM_0 : EM_Standard;	// Empty structure
+	OutTrig_Eac : BOOL;
+	OutTrig_Eap : BOOL;
+	OutTrig_Erc : BOOL;
+	OutTrig_Erp : BOOL;
+	bTest : BOOL;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF CmdInitialValues.MesData.MesEactCons <> TM_0.MesData.MesEactCons OR CmdInitialValues.MesData.MesEActProd <> TM_0.MesData.MesEActProd OR CmdInitialValues.MesData.MesEReactCons <> TM_0.MesData.MesEReactCons OR CmdInitialValues.MesData.MesEReactProd <> TM_0.MesData.MesEReactProd THEN
+MesDataExd:= CmdInitialValues;
+	CmdInitialValues := TM_0 ;
+END_IF
+
+trig1(CLK := IN_MesPulseEactCons_IO, Q => OutTrig_Eac);
+trig2(CLK := IN_MesPulseEactProd_IO, Q => OutTrig_Eap);
+trig3(CLK:= IN_MesPulseEreactCons_IO, Q => OutTrig_Erc);
+trig4(CLK:= IN_MesPulseEreactProd_IO, Q => OutTrig_Erp);
+
+IF OutTrig_Eac THEN
+MesDataExd.MesData.MesEactCons := MesDataExd.MesData.MesEactCons + ParamStepEactCons;
+END_IF 
+
+IF OutTrig_Eap THEN
+MesDataExd.MesData.MesEActProd := MesDataExd.MesData.MesEActProd + ParamStepEactProd;
+END_IF 
+
+IF OutTrig_Erc THEN
+MesDataExd.MesData.MesEReactCons := MesDataExd.MesData.MesEReactCons + ParamStepEreactCons;
+END_IF 
+
+IF OutTrig_Erp THEN
+MesDataExd.MesData.MesEReactProd := MesDataExd.MesData.MesEReactProd + ParamStepEreactProd;
+END_IF 
+
+SUPER^.M_Evaluate();]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{cbdb7d12-855d-4055-afe9-8dd97ac108d3}">
+      <Declaration><![CDATA[METHOD M_Init
+VAR 
+	InitialValues : EM_Standard ; 
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[MesDataExd := InitialValues ; 
+bInit := FALSE ;]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_EM_Pulse">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_EM_Pulse.M_AlarmManagement">
+      <LineId Id="76" Count="58" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_EM_Pulse.M_Evaluate">
+      <LineId Id="51" Count="25" />
+      <LineId Id="12" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_EM_Pulse.M_Init">
+      <LineId Id="9" Count="0" />
+      <LineId Id="13" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="HVAC_MADI" Id="{09803cf3-8eba-4351-8fd2-cc33bc7622b9}">
+    <Declaration><![CDATA[TYPE HVAC_MADI :
+STRUCT
+	MesData				: HVAC ;	
+
+	MesHygro_Amb		: REAL ; 		 (*(%)	 Hygro value*)
+	MesPressure1		: REAL ; 		 (*(bar) Pressure of the evaporatr 1 (bar )*)
+	MesTemp_Room		: REAL ; 		 (*(°C)	 Temperature value .*)
+	MesTemp_Outlet		: REAL ; 		 (*(°C)  Temperature at the HVAC output*)
+	MesTemp_Outside		: REAL ; 		 (*(°C)  Outside air temperature*)
+	
+	MesSetptTempmin		: REAL ;    	 (*(°C)  Min Temperature setpoint *)
+	MesSetptTempmax		: REAL ;    	 (*(°C)	 Max Temperature setpoint *)
+	
+	MesSetptHygromin	: REAL ;    	 (*(%)	 Min Hygrometry setpoint  *)
+	MesSetptHygromax	: REAL ;    	 (*(%)	 Max Hygrometry setpoint  *)
+	
+	MesAlarmsSynthesis	: BOOL ;         (*      Alamrs synthesis *)
+	
+	MesCooling			: BOOL ;   		 (*()	 The HVAC is cooling the air*)
+	MesHeating			: BOOL ; 		 (*()	 The HVAC is heating the air*)
+	                                     
+	MesAlarm1			: WORD ; 		 (* 	 HVAC Alarm word 1*)
+	MesAlarm2			: WORD ; 		 (* 	 HVAC Alarm word 2*)
+	MesAlarm3			: WORD ; 		 (* 	 HVAC Alarm word 3*)
+	
+END_STRUCT
+END_TYPE
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

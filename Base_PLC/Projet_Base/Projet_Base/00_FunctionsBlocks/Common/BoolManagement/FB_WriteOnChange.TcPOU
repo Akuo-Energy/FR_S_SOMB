@@ -1,0 +1,43 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_WriteOnChange" Id="{18f88f4a-5862-41e3-96fb-ae3858f1bb16}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_WriteOnChange
+////////////////// 
+// Write output variable , equals to input variable only if input variable changed state 
+//////////////////	
+
+VAR_INPUT
+	Size			: UDINT; 				// Variable size 
+	VarOut			: POINTER TO BYTE;		// Output  Variable Memory Address
+	VarInput		: POINTER TO BYTE;		// Input Variable Memory Address	
+END_VAR
+
+
+VAR
+	VarHold 		: DWORD  ; 	
+
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF MEMCMP(pBuf1:= VarInput, pBuf2:= ADR(VarHold) , n:=Size )<>0  THEN
+	MEMCPY(srcAddr:= VarInput , destAddr := VarOut, n:= Size ) ;
+END_IF
+
+IF MEMCMP(pBuf1:= VarOut, pBuf2:= ADR(VarHold) , n:=Size )<>0  THEN
+	MEMCPY(srcAddr:= VarOut , destAddr := VarInput, n:= Size ) ;
+END_IF
+
+MEMCPY(srcAddr:= VarInput , destAddr := ADR(VarHold), n:= Size ) ; ]]></ST>
+    </Implementation>
+    <LineIds Name="FB_WriteOnChange">
+      <LineId Id="137" Count="0" />
+      <LineId Id="160" Count="0" />
+      <LineId Id="140" Count="0" />
+      <LineId Id="142" Count="0" />
+      <LineId Id="161" Count="0" />
+      <LineId Id="143" Count="0" />
+      <LineId Id="163" Count="0" />
+      <LineId Id="162" Count="0" />
+      <LineId Id="144" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

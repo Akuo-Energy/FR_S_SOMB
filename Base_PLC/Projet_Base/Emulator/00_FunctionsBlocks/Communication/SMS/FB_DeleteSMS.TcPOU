@@ -1,0 +1,189 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_DeleteSMS" Id="{bd4b8f6f-90d4-4974-8812-877337642c98}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_DeleteSMS
+VAR_INPUT
+	bStart					: BOOL;
+	nIndex					: USINT;
+END_VAR
+VAR_OUTPUT
+	bBusy					: BOOL;
+	bError					: BOOL;
+	nErrorID				: UINT;
+END_VAR
+
+VAR_IN_OUT
+	stTxBuffer				: ComBuffer;
+	stRxBuffer				: ComBuffer;
+END_VAR
+
+VAR
+	rtrigStart				: R_TRIG;
+
+	fbSendData				: SendData;
+	fbReceiveData			: ReceiveData;
+	fbClearComBuffer		: ClearComBuffer;
+
+	i						: INT;
+	uiAnalyzeAnswer			: UINT;
+	nStep					: UINT; (* sequence state *)
+	tonWaitTime				: TON;
+	tonTimeOut				: TON;
+	tTimeout				: TIME:=t#5s;
+
+	arAnswerOK				: ARRAY[1..2] OF BYTE:=[16#4F,16#4B];
+	arAnswerErr				: ARRAY[1..5] OF BYTE:=[16#45,16#52,16#52,16#4F,16#52];
+
+	sDeleteSMS				: STRING(15);			(*Command-String*)
+	arDeleteSMS				: ARRAY[1..15] OF BYTE; (*Command-ARRAY*)
+	arDeleteSMSAnswerRcv	: ARRAY[1..200] OF BYTE;(*Received answer of the command*)
+	arDeleteSMSAnswerClr	: ARRAY[1..200] OF BYTE;(*Empty-ARRAY to clear the answer for debugging*)
+END_VAR
+
+
+
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+	rtrigStart(CLK:=bStart);
+
+	tonTimeout();
+	IF (tonTimeout.Q) THEN
+		tonTimeout(IN := FALSE);
+		nStep := 900;
+	END_IF
+
+
+	CASE nStep OF
+
+	0: 	(*Idle Step*);
+		tonTimeout(IN:=FALSE);
+		IF (rtrigStart.Q AND NOT bBusy) THEN
+			nStep := 5;
+			bBusy := TRUE;
+		ELSE
+			bBusy := FALSE;
+		END_IF
+
+
+	5:
+		bError					:= FALSE;
+		nErrorId				:= 0;
+		tonWaitTime				(IN := FALSE);
+		tonTimeout				(IN := TRUE, PT := tTimeout);
+		fbClearComBuffer		(buffer:=stRxBuffer);
+		fbClearComBuffer		(buffer:=stTxBuffer);
+		arDeleteSMSAnswerRcv	:= arDeleteSMSAnswerClr;
+
+		nStep := 50;
+
+
+	50:(*Create command-Arrays*)
+
+		(*Delete-command*)
+		sDeleteSMS:='AT+CMGD="';
+		sDeleteSMS:=CONCAT(sDeleteSMS,USINT_TO_STRING(nIndex));
+		sDeleteSMS:=CONCAT(sDeleteSMS,'"X');	(*The "X" is a placeholder in the send-string
+												for the "CR" (Hex 0D) in the send-Array*)
+		MEMCPY(ADR(arDeleteSMS),ADR(sDeleteSMS),LEN(sDeleteSMS)); (*Copy String to ARRAY*)
+		arDeleteSMS[LEN(sDeleteSMS)]:=16#0D;	(*Place the "CR" in the array*)
+
+		nStep	:= 100;
+
+
+	100:(*Send delete-command*)
+		fbSendData(
+		pSendData:=ADR(arDeleteSMS),
+		Length:= LEN(sDeleteSMS),
+		TXbuffer:= stTxBuffer);
+
+		IF NOT fbSendData.Busy THEN
+			nStep:=110;
+		END_IF
+
+		IF  fbSendData.Error<>0 THEN
+			bError:= TRUE;
+			nErrorID:= fbSendData.Error;
+			nStep:=1000;
+		END_IF
+
+
+	110:(*Wait for the answer*)
+		fbReceiveData(
+		pPrefix:= 0,
+		LenPrefix:= 0,
+		pReceiveData:= ADR(arDeleteSMSAnswerRcv),
+		SizeReceiveData:= SIZEOF(arDeleteSMSAnswerRcv),
+		Timeout:= t#1000ms,
+		RXbuffer:= stRxBuffer);
+
+		(*Telegram is received*)
+		IF 			fbReceiveData.DataReceived
+			AND NOT fbReceiveData.busy	THEN
+						nStep:=120;
+		END_IF
+
+
+	120:(*Find an "OK" or an "ERROR"-Part in the answer*)
+		uiAnalyzeAnswer	:=0;
+		FOR i:= (SIZEOF(arDeleteSMSAnswerRcv)-5) TO 1 BY -1 DO
+			IF 		arDeleteSMSAnswerRcv[i]		= arAnswerOK[1]
+				AND arDeleteSMSAnswerRcv[i+1] 	= arAnswerOK[2]		THEN
+					uiAnalyzeAnswer:=1;		(*Delete SMS successfully executed*)
+				EXIT;
+
+			ELSIF	arDeleteSMSAnswerRcv[i]		= arAnswerErr[1]
+				AND arDeleteSMSAnswerRcv[i+1] 	= arAnswerErr[2]
+				AND arDeleteSMSAnswerRcv[i+2] 	= arAnswerErr[3]
+				AND arDeleteSMSAnswerRcv[i+3] 	= arAnswerErr[4]
+				AND arDeleteSMSAnswerRcv[i+4] 	= arAnswerErr[5]	THEN
+					uiAnalyzeAnswer:=2;		(*Delete SMS failed*)
+				EXIT;
+			END_IF
+		END_FOR
+
+		CASE uiAnalyzeAnswer OF
+			0:(*Undefined Answer*)
+				bError:= TRUE;
+				nErrorID:= 16#8010;
+				nStep:=1000;
+
+			1:(*Delete SMS successfully executed*)
+				nStep:=1000;
+
+			2:(*Delete SMS failed*)
+				bError:= TRUE;
+				nErrorID:= 16#800F;
+				nStep:=1000;
+		END_CASE
+
+
+	900:(*Timeout*)
+		bError:= TRUE;
+		nErrorID:= 16#8001;
+		nStep:=1000;
+
+
+	1000:(*Reset Receive-FB*)
+		fbReceiveData(	Reset:=TRUE,RXbuffer:= stRxBuffer);
+		tonWaitTime(IN:=TRUE, PT:=t#500ms);
+		IF	tonWaitTime.Q	THEN
+			fbReceiveData(	Reset:=FALSE,RXbuffer:= stRxBuffer);
+			nStep:=1010;
+		END_IF
+
+
+	1010:(*Send/Receive successful -> Reset FBs*)
+		fbClearComBuffer(buffer:=stRxBuffer);
+		fbClearComBuffer(buffer:=stTxBuffer);
+		nStep:=0;
+		bBusy:=FALSE;
+
+	END_CASE;]]></ST>
+    </Implementation>
+    <LineIds Name="FB_DeleteSMS">
+      <LineId Id="43" Count="135" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

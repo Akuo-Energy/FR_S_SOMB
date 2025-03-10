@@ -1,0 +1,248 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1">
+  <POU Name="FB_SUBMV_Base" Id="{c4c9f0b8-5df4-4b12-96e3-b6dc41ea86d0}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_SUBMV_Base 
+// SUB_MV Base Code 
+//////////////////
+VAR CONSTANT
+	// Characteristics of the object (Same for all instances)
+
+
+END_VAR
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance specific)  
+	ParamSUB_MVVersion					: STRING:='SUB_MV';				(* (NA) SUB_MV Version*)
+	ParamTimeOutConnect					: TIME 	:=T#60S	;				(* (s) Tempo for connecting before Timeout warning *)
+	ParamTimeOutDisconnect				: TIME 	:=T#30S	;				(* (s) Tempo for disconnecting before Timeout warning *)
+	ParamTempoComAlarm					: TIME 	:=T#5S	;			    (* (s) Config : Tempo to detect LOC Alarm *)
+	{attribute 'OPC.UA.DA' := '1'} 
+	ParamPmax							: REAL ;						(* (kW) Config :Maximal Power connexion *)
+	{attribute 'OPC.UA.DA' := '1'} 
+	ParamPmin							: REAL ;						(* (kW) Config :Maximal Power connexion *)
+	
+	//M_INIT VARIABLES // = Factory reset 	
+	bInit								: BOOL := TRUE ; 				// (NA) Initialize object parameters at first cycle 	
+	
+END_VAR
+
+VAR_INPUT 
+	// I/O Inputs 
+		IN_CmdReset_L 					: BOOL ;  					//(NA) [P,H] Reset Command  	
+		IN_CmdConnect					: BOOL ; 					//(NA) [P,H] External Connect Command
+		IN_CmdDisconnect				: BOOL ; 					//(NA) [P,H] External Disconnect Command
+        IN_CmdResetEquipement 			: WORD ;  					//(NA) [P,H] Reset Command of different child    
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+
+END_VAR
+
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//
+		TON_ComAlarm					: TON ; 					// Tempo before deteting loss of communication. 	                                                        	
+		MesWarningCom					: BOOL ; 					// Communication with at least one SUB_MV equipement
+
+	//M_STATEMANAGER  VARIABLES//	
+		MesState						: BYTE ; 					//(NA) [P,H,B] Bit 0: Islanded, Bit 1: Connected 
+	
+	//M_CONNECTDISCONNECT VARIABLES//
+		FB_CheckCommandConnect			: FB_CheckCommand ; 		// Check if Connect Command Successful
+		FB_CheckCommandDisconnect		: FB_CheckCommand ;			// Check if Disconnect Command Successful	
+	
+		CalCompareWarningConnect		: BOOL;						// (NA) [H,B] Connect not performed warning
+		CalConnectInProgress			: BOOL;                     // (NA) [H,B] Connect in Progress
+		CalCompareWarningDisconnect		: BOOL;                     // (NA) [H,B] Disconnect not performed warning
+		CalDisconnectInProgress			: BOOL;                     // (NA) [H,B] Disconnect in Progress
+	
+	//M_EVALUATE VARIABLES//	
+//	MesDataExd					: SUBMV;					// (NA) [P,H,B] SUBMV data structure	
+		MesPavailable					: REAL; 					// (kW) Cal: [P,H] Available (no alarm) active Power in the SPP product
+		MesPconnected 					: REAL;						// (kW) Cal: [P,H] Connected active Power in the SPP product 
+			
+	//M_EXECUTE VARIABLES //
+		KK								: BYTE; 					// (NA) Loop over child objects 
+		
+	//GET/SET PROPERTY MANAGEMENT//
+		R_TRIG_Reset					: R_TRIG;					// (NA) Rising Edge Detection for Reset 
+			
+END_VAR			
+ ]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{8e2d1377-4a40-47cc-9161-3ea22cc9f7f8}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Generates object alarms and manages resets. 
+//////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager			: FB_AlarmCodeManager ; 
+	
+
+	AlarmCodeCBL				: WORD;	//Alarm CBL Synthesis 
+	AlarmCodeTransfo			: WORD; //Alarm Transfo Synthesis 
+	AlarmCodeSepam				: WORD; //Alarm Sepam Synthesis 
+	AlarmCodeCM					: WORD; //Alarm Measuring Unit Synthesis 
+	AlarmCodeGhi				: WORD; //Alarm GHI Synthesis 
+	AlarmCodeTemp				: WORD; //Alarm Temperature Synthesis 
+	WarningCodeCBL				: WORD;	//Warning CBL Synthesis 
+	WarningCodeTransfo			: WORD;	//Warning Transfo Synthesis 
+	WarningCodeSepam			: WORD;	//Warning Sepam Synthesis 
+	WarningCodeCM				: WORD;	//Warning Measuring Unit Synthesis 
+	WarningCodeGhi				: WORD;	//Warning GHI Synthesis 
+	WarningCodeTemp				: WORD;	//Warning Temperature Synthesis 
+	
+	KK							: BYTE ;// For Loop 
+	
+	AlarmGridFault				: BOOL;
+	GTEAlarmTrigger 			: BOOL; 
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_ConnectDisconnect" Id="{efca54ac-0741-44ce-9e86-8bba51139950}">
+      <Declaration><![CDATA[METHOD M_ConnectDisconnect
+//////////////////
+// Connect / Disconnect Load
+//////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+
+	KK: BYTE;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_EquipmentCalls" Id="{aefc578a-feb6-4b48-86e5-778a7d00105e}">
+      <Declaration><![CDATA[METHOD M_EquipmentCalls
+//////////////////
+// Equipement Calls 
+//////////////////
+
+VAR
+	// Method local variables (reinitialized at each cycle) 
+
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Evaluate" Id="{257ec85e-9554-4eeb-b3ae-21eacf17c727}">
+      <Declaration><![CDATA[METHOD M_Evaluate
+//////////////////
+// Evaluate SUB_MV Data 
+//////////////////
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{7d70c79c-827f-42d6-94a7-2ebfb60be113}">
+      <Declaration><![CDATA[METHOD M_Execute
+/////////////////////
+// Action Calls and Object Calls
+/////////////////////
+VAR
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+// INITIALIZE // 
+	IF bInit THEN
+		M_Init() ; 
+		bInit:= FALSE ; 
+		
+	ELSIF CmdInit_G OR IN_CmdReset_L THEN 
+		bInit:= TRUE ;
+		
+	END_IF
+
+// OBJECT CALLS //
+	M_EquipmentCalls() ; 
+
+// METHODS CALLS //
+	M_ConnectDisconnect() ; 
+	M_StateManager();	
+	M_Evaluate();
+	M_AlarmManagement(); ]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{14016184-0156-4868-b92e-37e84e22f5cc}">
+      <Declaration><![CDATA[METHOD M_Init
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_StateManager" Id="{226fa0c8-e38d-4356-ab22-698d0562997d}">
+      <Declaration><![CDATA[METHOD M_StateManager
+//////////////////
+// Manages SUB_MV state 
+//////////////////
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_SUBMV_Base">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SUBMV_Base.M_AlarmManagement">
+      <LineId Id="406" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SUBMV_Base.M_ConnectDisconnect">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SUBMV_Base.M_EquipmentCalls">
+      <LineId Id="49" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SUBMV_Base.M_Evaluate">
+      <LineId Id="11" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SUBMV_Base.M_Execute">
+      <LineId Id="107" Count="0" />
+      <LineId Id="60" Count="2" />
+      <LineId Id="125" Count="0" />
+      <LineId Id="63" Count="1" />
+      <LineId Id="126" Count="0" />
+      <LineId Id="65" Count="1" />
+      <LineId Id="68" Count="1" />
+      <LineId Id="81" Count="0" />
+      <LineId Id="84" Count="0" />
+      <LineId Id="86" Count="1" />
+      <LineId Id="89" Count="0" />
+      <LineId Id="91" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SUBMV_Base.M_Init">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SUBMV_Base.M_StateManager">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

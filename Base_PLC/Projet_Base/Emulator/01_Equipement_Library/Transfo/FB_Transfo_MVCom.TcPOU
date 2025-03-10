@@ -1,0 +1,37 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_Transfo_MVCom" Id="{ef3e7ffc-a730-425f-bead-9460e80efb7e}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Transfo_MVCom EXTENDS FB_Transfo_Base
+
+//////////////////
+// High Voltage transformer with Transfo or DMCR detection . 
+//////////////////
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance/model specific) 
+	
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	
+END_VAR
+
+VAR_INPUT
+
+	
+END_VAR
+
+VAR
+MesDataExd					: Transfo_MV ; 
+		
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <LineIds Name="FB_Transfo_MVCom">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

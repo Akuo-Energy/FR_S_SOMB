@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <DUT Name="FSS" Id="{f8bad1d0-cc4b-4fa9-afe6-0937a9e30af5}">
+    <Declaration><![CDATA[TYPE FSS :
+STRUCT
+	
+	MesWatchdogAlarm		: BOOL ; 	(* (NA) Watchdog alarm*)
+	MesAlarmFire			: BOOL ; 	(* (NA) Fire alarm*)
+	MesWarningFSS			: BOOL ; 	(* (NA) FSS warning*)
+	MesOpened_CBFSS			: BOOL ; 	(* (NA) CB of FSS is opened*)
+	MesExtinguisher			: BOOL ; 	(* (NA) Extinguisher triggered  alarm*)
+	MesFault				: BOOL ; 	(* (NA) FSS fault*)
+	MesPsuFault				: BOOL ;	(* (NA) PSU Fault*)
+	MesAlarmCode			: WORD ; 	(* (NA) Internal Akuo Alarm Code*)
+	MesWarningCode			: WORD ;	(* (NA) Internal Akuo Warning Code*)
+	MesEventCode			: WORD ; 	(* (NA) Internal Akuo Warning Code*)
+	
+END_STRUCT		
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

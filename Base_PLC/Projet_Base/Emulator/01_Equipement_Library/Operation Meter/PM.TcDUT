@@ -1,0 +1,54 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="PM" Id="{f748e665-66e2-49c1-a73f-88eed83ffdb9}">
+    <Declaration><![CDATA[///////////
+// Structure For I35. Main Operating Data to be saved (ex: OPC).  
+//////////
+TYPE PM :
+STRUCT
+		MesU12						: REAL ; (* (V) Phase1 - Phase 2 AC Voltage 		   			*)
+		MesU23						: REAL ; (* (V) Phase2 - Phase 3 AC Voltage         			*)
+		MesU31						: REAL ; (* (V) Phase3 - Phase 1 AC Voltage         			*)
+  		MesV1						: REAL ; (* (V) Phase1 AC Voltage                   			*)
+		MesV2						: REAL ; (* (V) Phase2 AC Voltage                   			*)
+		MesV3						: REAL ; (* (V) Phase3 AC Voltage		           				*)
+		MesFreq						: REAL ; (* (Hz)Frequency		                   				*)
+		MesI1						: REAL ; (* (A) AC current Phase 1                  			*)
+		MesI2						: REAL ; (* (A) AC current Phase 2                  			*)
+		MesI3						: REAL ; (* (A) AC current Phase 3                  			*)
+		MesIn						: REAL ; (* (A) Neutral AC current                  			*)
+		MesP						: REAL ; (* (kW) Total Active power                 			*)
+		MesQ						: REAL ; (* (kVAr) Total Reactive Power Phase 1     			*)
+		MesS						: REAL ; (* (kVA)Total Apparent power		       				*)
+		MesCosPhi					: REAL ; (* (NA) Power factor                       			*)
+		MesP1						: REAL ; (* (kW) Active Power Phase 1               			*)
+		MesP2						: REAL ; (* (kW) Active Power Phase 2               			*)
+		MesP3						: REAL ; (* (kW) Active Power phase 3               			*)
+		MesQ1						: REAL ; (* (kVAr)Reactive Power Phase 1            			*)
+		MesQ2						: REAL ; (* (kVAr)Reactive Power Phase 2            			*)
+		MesQ3						: REAL ; (* (kVAr)Reactive Power Phase 3            			*)
+		MesS1						: REAL ; (* (kVA) Total Apparent power Phase 1      			*)
+		MesS2						: REAL ; (* (kVA) Total Apparent power Phase 2      			*)
+		MesS3						: REAL ; (* (kVA) Total Apparent power Phase 3      			*)
+		MesEActCons					: REAL ; (* (kWh) Recieved active energy            			*)
+		MesEReactCons				: REAL ; (* (kVArh) 	Recieved reactive energy       			*)
+		MesEActProd					: REAL ; (* (kWh) Delivered active energy           			*)
+		MesEReactProd				: REAL ; (* (kVArh) 	Delivered reactive energy	   			*)
+		MesI						: REAL ; (* (A) Mean AC current                     			*)
+		MesV						: REAL ; (* (V) Mean Simple Phase AC Voltage        			*)
+		MesU						: REAL ; (* (V) Mean Phase - Phase  AC Voltage      			*)
+		MesCosPhi1                  : REAL ; (* (NA) Total Power Factor Phase 1         			*)
+		MesCosPhi2                  : REAL ; (* (NA) Total Power Factor Phase 2         			*)
+		MesCosPhi3                  : REAL ; (* (NA) Total Power Factor Phase 3         			*)
+		MesTanPhi					: REAL ; (* (NA) Total Tangeante phi                			*)
+
+		MesAlarmCom					: BOOL ;  		 (* (NA) Communication Error with I35 module    *)
+		MesCP_Read					: BOOL := TRUE ; (* (NA) Cal: Read FUNCTION enable 				*)
+		                                                                                        	
+		MesAlarmCode				: WORD ; (* (NA) Internal Akuo Alarm Code			   			*)
+		MesWarningCode				: WORD ; (* (NA) Internal Akuo Warning Code			  			*)
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="CB_Standard" Id="{b42f28a5-aa49-453f-a662-98cbe5e3ed45}">
+    <Declaration><![CDATA[TYPE CB_Standard :
+///////////
+// Structure For Bousquet. Main Operating Data to be saved ( ex: OPC )   
+//////////
+STRUCT
+	//DI
+	MesData				: CB ;  (* Object*)
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>
+
+
+

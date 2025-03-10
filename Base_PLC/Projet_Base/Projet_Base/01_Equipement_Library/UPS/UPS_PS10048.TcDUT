@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="UPS_PS10048" Id="{7d81e1bc-dbf1-452d-b42e-faf4ce8b500e}">
+    <Declaration><![CDATA[///////////
+// Structure for PS100_48. Main operating data to be saved (ex:OPC).  
+//////////
+TYPE UPS_PS10048 :
+STRUCT
+		MesData             : UPS; 			(* MesData 																		*)
+		                            		                                                                                
+		MesSoc				: REAL; 		(* (%) Battery charge indicator 												*)
+		MesUdc_48V			: REAL; 		(* (V) 48V output voltage 														*)
+		MesUdc_12V			: REAL; 		(* (V) 12V output voltage 														*)
+		MesUBatt			: REAL; 		(* (V) 12V battery voltage	    												*)
+		MesIdc_12V			: REAL; 		(* (A) 12V output current 														*)
+		MesIdc_Bat			: REAL;			(* (A) Battery current 															*)
+		                            		                                                                                
+		MesDischarge		: REAL; 		(* (V) Serious discharge threshold 												*)
+		MesEbackUp			: REAL; 		(* (%) Energy backup threshold 	   												*)
+		MesCapacity_Nom		: REAL; 		(* (Ah) NomCapa 				   												*)
+		                                                                       												
+		MesEBackUpEna		: BOOL;  		(* (Na) Energy backup enabled 	   												*)
+		MesBatTestPer		: BOOL;  		(* (Na) Battery test period 	  												*)
+		MesVacTripSelect	: BOOL;  		(* (NA) 0: Low. Off = 52Vac, Low = 129Vac. 1: High. Off = 69Vac, Low = 172Vac	*)
+		                                                                                                                    
+		MesToggleWrite		: BOOL;			(* (NA) Cal : True = read authorised  											*)
+		MesToggleRead		: BOOL;			(* (NA) Cal : True = Write authorised 											*)
+		                           		                                                                                    
+		MesAlarm_AcOff		: BOOL;			(* (NA) True = AC off 															*)
+		MesAlarm_GeneralOff	: BOOL;			(* (NA) True = Imminent shutdown 												*)
+	//	MesAlarm_LowBat		: BOOL;			(* (NA) True = discharge 														*)
+		MesAlarm_AcLow		: BOOL;			(* (NA) True = AC power supply low 												*)
+		                                                                                                                    
+		MesFault_Minor		: BOOL;			(* (NA) True = Minor fault (overtemp, overcurrent, overvolt) 					*)
+		MesFault_Major		: BOOL;			(* (NA) True = Major fault : cannot recover 									*)
+		MesFault_Bat		: BOOL;			(* (NA) True = Battery disconnected 											*)
+		MesFault_Charger	: BOOL;			(* (NA) True = Charger out of order 											*)
+		MesFault_12V		: BOOL;			(* (NA) True = 12V absent 														*)
+		MesFault_48V		: BOOL;			(* (NA) True = 48V absent 														*)
+		                           	
+END_STRUCT
+END_TYPE]]></Declaration>
+  </DUT>
+</TcPlcObject>

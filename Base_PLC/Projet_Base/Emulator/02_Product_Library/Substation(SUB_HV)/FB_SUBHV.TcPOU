@@ -1,0 +1,141 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_SUBHV" Id="{65e427d7-7a01-4b23-b3ea-3e86b04d703e}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_SUBHV EXTENDS FB_SUBHV_Base
+//////////////////
+// Substation for AMHE  Project 
+//////////////////
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance specific)  
+	// Parameters of the Object (instance specific)  
+
+END_VAR
+
+VAR_INPUT 
+	// EQUIPMENTS
+	AX_EM					: ARRAY[1..CstNbEM_G] OF  FB_EM_Pulse ; 
+	A1_DataLogger_PPC		: FB_Datalogger_PPCVerrerie ; 
+	
+	
+	IN_MesAlarm_IntrusionMIDI_IO 		: BOOL ; // MIDI intrusion alarm 
+
+
+END_VAR
+
+VAR_OUTPUT
+		
+	
+END_VAR
+
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//
+	
+	 	R_TRIG_Event					: ARRAY[1..15] OF R_TRIG ;  
+		MesComErrorEthercat	 			: BOOL;						//(NA) Communication Error with Ethercat coupler 
+		TOF_Ethercat					: TOF ;    
+
+	// Unknown fault 
+		UnknownFault					: BOOL;           			// DM2 est reste ouverte avec Aucun défaut et une autorisation de couplage ==> aboutit a une perte d'autorisation    
+		RTrigEndGte						: R_TRIG;           		//
+		TPSepamCloseAfterGte			: TP;  						// 
+
+              	
+	//M_EVALUATE VARIABLES//        	
+	MesDataExd				: SUBHV_Exd; 				// (NA) [P,H,B] MCA PDL specific Data structure    	
+		
+	//M_Init 
+
+END_VAR			]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_EquipmentCalls" Id="{7602fcc7-e03b-42c3-a6aa-a3fcd63e6c5d}">
+      <Declaration><![CDATA[METHOD M_EquipmentCalls
+//////////////////
+// Evaluate AMS characteristics
+//////////////////
+
+VAR
+	// Method local variables (reinitialized at each cycle) 
+	i : INT;
+
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+FOR KK:= 1 TO CstNbEM_G DO 
+	AX_EM[KK].M_Execute() ; 	
+END_FOR 		
+A1_DataLogger_PPC.M_Execute() ; ]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Evaluate" Id="{ecdf52aa-071b-4984-a0c3-d8f59fd1e21b}">
+      <Declaration><![CDATA[METHOD M_Evaluate
+//////////////////
+// Evaluate PDL Data 
+//////////////////
+VAR 
+
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{3f3f38fe-7082-4f5c-825a-8f3dce00db8b}">
+      <Declaration><![CDATA[METHOD M_Init
+
+
+VAR
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[	A1_DataLogger_PPC.ParamTempoComAlarm			:= T#5S ; 	
+	A1_DataLogger_PPC.ParamIPAdr := '192.168.1.2'; // Needs update
+	
+
+	FOR KK:= 1 TO CstNbEM_G DO 
+		AX_EM[KK].ParamStepEactCons := 10 ; // kWh 
+		AX_EM[KK].ParamStepEactProd := 10 ; 
+		AX_EM[KK].ParamStepEreactCons := 10 ; 
+		AX_EM[KK].ParamStepEreactProd := 10 ; 
+		
+		
+	END_FOR 
+
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_SUBHV">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SUBHV.M_EquipmentCalls">
+      <LineId Id="165" Count="0" />
+      <LineId Id="167" Count="0" />
+      <LineId Id="166" Count="0" />
+      <LineId Id="168" Count="0" />
+      <LineId Id="152" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SUBHV.M_Evaluate">
+      <LineId Id="707" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SUBHV.M_Init">
+      <LineId Id="706" Count="0" />
+      <LineId Id="694" Count="0" />
+      <LineId Id="708" Count="0" />
+      <LineId Id="695" Count="0" />
+      <LineId Id="720" Count="0" />
+      <LineId Id="699" Count="0" />
+      <LineId Id="721" Count="0" />
+      <LineId Id="724" Count="1" />
+      <LineId Id="722" Count="1" />
+      <LineId Id="700" Count="0" />
+      <LineId Id="644" Count="0" />
+      <LineId Id="686" Count="0" />
+      <LineId Id="402" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

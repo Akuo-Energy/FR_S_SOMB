@@ -1,0 +1,180 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_CB_MVSwitch" Id="{af8fc7bf-4c2e-4e57-bde0-ed7aeb639ac4}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_CB_MVSwitch EXTENDS FB_CB_Base
+//////////////////
+//  Motorized Circuit Breaker with telecommAND   Requires Open and Close impulsions.
+//////////////////
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance/model specific) 
+	
+END_VAR
+
+VAR_INPUT
+	// I/O Inputs              	
+		MesDataExd	       			 :  CB_Standard ; 
+END_VAR
+
+VAR
+	//M_OPENCLOSE VARIABLES//
+
+	
+	//M_ALARMMANAGEMENT VARIABLES//
+		
+	//M_STATEMANAGER VARIABLES//
+
+	// M_EXECUTE VARIABLES //
+		
+	// EMULATOR //
+
+		
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{ad040282-cfc6-4b7a-a7d8-ab7cdf1fa46b}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Manages Contactor alarms and warnings
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager			: FB_AlarmCodeManager ; 
+
+	
+END_VAR
+VAR_INPUT
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Check if command and measures are matching after tempo
+TON_NotClosedAndNotOpened(IN:=  NOT MesClosed AND NOT MesOpened , PT := ParamTimeOut_Alarm) ; 
+TON_ClosedAndOpened(IN:= MesClosed AND MesOpened, PT := ParamTimeOut_Alarm) ; 
+//RS_AlarmStopReclose(Set := MesTransfo_Fault, RESET1 := BlockWriteTemp[1] OR IN_CmdReset_L);
+
+// ALARM CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= FALSE, 									// 
+		bAlarm2			:= TON_NotClosedAndNotOpened.Q,				// Incoherent State measure (Not Opened and not Closed )
+		bAlarm3 		:= TON_ClosedAndOpened.Q  , 				// Incoherent State measure (Opened and Closed )	
+		bAlarm4			:= FALSE, 									// 
+		bAlarm5			:= FALSE, 									//
+		bAlarm6			:= FALSE,                                   //
+		bAlarm7			:= FALSE,                                   //
+		bAlarm8			:= FALSE,                                   //
+		bAlarm9			:= FALSE,                                   //
+		bAlarm10		:= FALSE,                                   //
+		bAlarm11		:= FALSE,                                   //
+		bAlarm12		:= FALSE,                                   //
+		bAlarm13		:= FALSE, 									//
+		bAlarm14		:= FALSE, 									//
+		bAlarm15		:= FALSE , 									// 
+		wAlarmCode		=>MesDataExd.MesData.MesAlarmCode);
+
+//WARNING CODE//
+		FB_AlarmCodeManager(
+		bAlarm1			:= FALSE , 									//
+		bAlarm2			:= FALSE  , 		                        //
+		bAlarm3 		:= FALSE,									//		
+		bAlarm4			:= FALSE, 									//
+		bAlarm5			:= FALSE,                                   //
+		bAlarm6			:= FALSE,                                   //
+		bAlarm7			:= FALSE,                                   //
+		bAlarm8			:= FALSE,                                   //
+		bAlarm9			:= FALSE,                                   //
+		bAlarm10		:= FALSE,                                   //
+		bAlarm11		:= FALSE,                                   //
+		bAlarm12		:= FALSE,                                   //
+		bAlarm13		:= FALSE,                                   //
+		bAlarm14		:= FALSE,                                   //
+		bAlarm15		:= FALSE,                                   //
+		wAlarmCode 		=>MesDataExd.MesData.MesWarningCode);
+
+// EVENT CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= FALSE, 									// 
+		bAlarm2			:= FALSE, 									// 
+		bAlarm3			:= MesOpened, 								// Opened Position
+		bAlarm4			:= MesClosed, 								// Closed Position
+		bAlarm5			:= IN_CmdReset,                           // Reset Command
+		bAlarm6			:= FALSE,                                   //
+		bAlarm7			:= FALSE,                                   //
+		bAlarm8			:= FALSE,                                   //
+		bAlarm9			:= FALSE,                                   //
+		bAlarm10		:= FALSE,                                   //
+		bAlarm11		:= FALSE,                                   //
+		bAlarm12		:= FALSE,                                   //
+		bAlarm13		:= FALSE,                                   //
+		bAlarm14		:= FALSE,                                   //
+		bAlarm15		:= FALSE,                                   //
+		wAlarmCode		=>MesDataExd.MesData.MesEventCode);
+		
+		 ]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{48cabc0d-2d8c-4fb9-99ba-6afb66a37230}">
+      <Declaration><![CDATA[METHOD M_Execute
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// PERMANENT CONDITIONS //	
+MesDataExd.MesData.MesCP_Open					:= IN_CmdOpen AND NOT IN_CmdReset;
+MesDataExd.MesData.MesCP_Close				:= NOT MesDataExd.MesData.MesClosed AND IN_CmdClose AND NOT MesDataExd.MesData.MesAlarmCode.0 AND NOT MesDataExd.MesData.MesCP_Open AND NOT IN_CmdReset ;
+
+
+SUPER^.M_Execute();]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_StateManager" Id="{85551c7b-c1fe-44f6-b0f0-81e93c5181cf}">
+      <Declaration><![CDATA[METHOD M_StateManager
+//////////////////
+// Manages Contactor State
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[MesState := 0 ; 
+IF MesOpened THEN		// If the cell seems opens and closed in the same time, we will consider it as opened. 
+	
+	MesState.0 := 1 ; 
+MesDataExd.MesData.MesClosed := FALSE ; 
+MesDataExd.MesData.MesOpened := TRUE ; 
+ELSIF MesClosed THEN
+	
+	MesState.1 := 1 ; 
+MesDataExd.MesData.MesClosed := TRUE ; 
+MesDataExd.MesData.MesOpened := FALSE ; 
+ELSE 
+	MesState.0 := 1 ;		// if the cell seems neither opened and neither closed , we will consider it as opened. 
+MesDataExd.MesData.MesClosed := FALSE ; 	
+MesDataExd.MesData.MesOpened := TRUE ; 
+END_IF
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_CB_MVSwitch">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_CB_MVSwitch.M_AlarmManagement">
+      <LineId Id="249" Count="61" />
+      <LineId Id="234" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_CB_MVSwitch.M_Execute">
+      <LineId Id="118" Count="4" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_CB_MVSwitch.M_StateManager">
+      <LineId Id="87" Count="16" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

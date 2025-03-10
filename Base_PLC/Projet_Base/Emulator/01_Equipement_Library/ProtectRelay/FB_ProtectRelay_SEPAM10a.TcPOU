@@ -1,0 +1,66 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_ProtectRelay_SEPAM10a" Id="{a01a79e6-8dd6-4bb4-b3fc-9e5157ad397a}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_ProtectRelay_SEPAM10a EXTENDS FB_ProtectRelay_Base
+VAR_INPUT
+	InUnitID            : DINT;			// (NA)   SMA Modbus Unit ID. 
+	
+END_VAR
+VAR_OUTPUT
+	OutFBCompleteted   : BOOL;
+	
+END_VAR
+VAR
+// M_ALARMMNGMT VARIABLES //
+		MesAlarmCode				: WORD ;  			// (NA) [P,H,B]   Alarm Word . 0: Synthesis , 1:SMA general alarm , 2:Communication Alarm , 3:, 4:, 5:, 6:, 7:, 8:, 9:, 10:, 11:, 12:, 13:, 14:, 15:, 16:
+		MesWarningCode				: WORD ;  			// (NA) [P,H,B]   Warning Word . 0: Synthesis , 1:SMA general warning  , 2: , 3: , 4:, 5:, 6:, 7:, 8:, 9:, 10:, 11:, 12:, 13:, 14:, 15:, 16:		
+  		MesEventCode				: WORD; 			// (NA) [P,H,B] Event Code. Acknowledgable.
+                                              		
+
+		MesComError					: BOOL ; 			// (NA) [P,H]  True if lost of communication
+		MesAlarmCom					: BOOL ; 			// (NA) All modbus trame fail 
+		
+	// M_READ VARIABLES//
+		FB_ModbusRead_I1          	: FB_ReadModbusRTU_V2; 				// (NA) FB for Modbus Reading
+		MesDataExd		      	AT %Q* 	: ProtectRelay_S48; 	
+		MesBlock1_Temp 				: ARRAY[0..7]  OF WORD; 			// (NA) Temporary Block with multiple modbus reading (Caution : Double Word variables)
+		AX_bRead 					: ARRAY[1..2]  OF BOOL;
+		ModbusReadAlarm             : BOOL;				// (NA) Modbus Read Alarm for communications
+		MesModbusAlarmCode			: UDINT;							// (NA) Modbus Read Alarm Code
+		CalAllCompleted				: BOOL;								// (NA) Returns the status of all modbus requests
+	
+		AllNotBusy					: BOOL:=TRUE;
+		TP_Read						: LTP; 								// (NA) Tempo to define Modbus Reading Frequency
+	//	ClockRead					: BOOL;								// (NA) Modbus reading Clock
+		RTrig						: R_TRIG;
+END_VAR
+
+VAR CONSTANT
+	    CstClockReadTime 		: LTIME := LTIME#1S;	  				// (Time) Read Modbus Frequency .	
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_Execute" Id="{8f664f0f-b862-4e28-b2c7-cbae67128c6d}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SUPER^.M_Execute();]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_ProtectRelay_SEPAM10a">
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ProtectRelay_SEPAM10a.M_Execute">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

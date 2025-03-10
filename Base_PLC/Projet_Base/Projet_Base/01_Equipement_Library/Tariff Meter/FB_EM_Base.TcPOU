@@ -1,0 +1,140 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_EM_Base" Id="{201f745c-66c8-47dd-a0bb-638afcee1be4}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_EM_Base
+//////////////////
+// Measurement Solution. Base FB
+//////////////////
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance specific) 
+		CmdInitialValues			: EM_Standard;
+	{attribute 'OPC.UA.DA' := '1'} 
+		ParamStepEactCons			: REAL := 10;	// kWh step for tariff meter
+	{attribute 'OPC.UA.DA' := '1'}                  
+		ParamStepEactProd			: REAL := 10;   // kWh step for tariff meter
+	{attribute 'OPC.UA.DA' := '1'}                  
+		ParamStepEreactCons			: REAL := 10;   // kVArh step for tariff meter
+	{attribute 'OPC.UA.DA' := '1'}                  
+		ParamStepEreactProd			: REAL := 10;   // kVArh step for tariff meter
+		ParamEssNum					: UINT :=1 ; 	// ESS Num
+END_VAR
+
+VAR_INPUT
+	//Child objects
+		IN_CmdReset_L					: BOOL;			// (NA) Local reset of the alarms	
+END_VAR                                                             
+VAR                                                                 
+	//M_ALARMMANAGEMENT VARIABLES//                                 
+		TON_ComAlarm				: TON ; 			// Tempo before deteting loss of communication. 
+                                                        
+	//M_INIT VARIABLES //                               
+		bInit						: BOOL 	:= TRUE ; 	// (NA) Initialize object parameters at first cycle 
+		                                                
+	// M_EXECUTE VARIABLES //                           
+ //	MesDataExd			: EM;					// (NA) Structure of the Tariff Meter
+		MesCP_Read					: BOOL := TRUE;	(* Read function enable *)
+		MesCP_Write					: BOOL := TRUE;	(* Write function enable *)                                                
+	// M_EVALUATE VARIABLES //                          
+		trig1 						: R_TRIG;			// (NA) Trigger for the pulses
+		trig2 						: R_TRIG;			// (NA) Trigger for the pulses
+		trig3 						: R_TRIG;			// (NA) Trigger for the pulses
+		trig4 						: R_TRIG;			// (NA) Trigger for the pulses
+
+                      
+END_VAR
+
+VAR_INPUT
+		IN_MesPulseEactCons_IO			: BOOL;		// Pulse Input signal for the Active energy consumed measurement
+		IN_MesPulseEactProd_IO			: BOOL;		// Pulse Input signal for the Active energy produced measurement
+		IN_MesPulseEreactCons_IO		: BOOL;		// Pulse Input signal for the Reactive energy consumed measurement
+		IN_MesPulseEreactProd_IO		: BOOL;		// Pulse Input signal for the Reactive energy produced measurement
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{d3895fdc-26b8-4f29-b02a-de0f7365d39f}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Digiware measurement tool alarm and warning management
+/////////////////
+
+VAR 
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Evaluate" Id="{59f0db27-9949-471d-9654-9038b926a1e9}">
+      <Declaration><![CDATA[METHOD M_Evaluate
+VAR_INPUT
+END_VAR
+
+VAR
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{904402f7-1bf5-448f-84cd-70c26737d581}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	// EMULATOR
+
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+
+// METHODS CALLS //
+	IF bInit THEN
+		M_Init() ; 
+		bInit					:= FALSE ; 
+	ELSIF CmdInit_G OR IN_CmdReset_L THEN 
+		bInit:= TRUE ;
+	END_IF
+
+	M_Evaluate();	
+
+	////////////////////
+	M_AlarmManagement(); 
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{213e838a-6080-4851-a92f-f51bd28d4dbe}">
+      <Declaration><![CDATA[METHOD M_Init
+VAR 
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_EM_Base">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_EM_Base.M_AlarmManagement">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_EM_Base.M_Evaluate">
+      <LineId Id="27" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_EM_Base.M_Execute">
+      <LineId Id="679" Count="0" />
+      <LineId Id="711" Count="8" />
+      <LineId Id="721" Count="3" />
+      <LineId Id="682" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_EM_Base.M_Init">
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,79 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_PM_520_230" Id="{9401c9eb-ed2f-4ecc-884b-8ffd65dc9614}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_PM_520_230 EXTENDS FB_PM_Base
+//////////////////
+// Measurement Solution based on Digiware, but access through PMS Socomec
+//////////////////
+VAR CONSTANT
+	// Characteristics of the object (Same for all instances)
+			
+END_VAR
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance specific) 
+	ParamUnitID					: BYTE 		:= 1 ;								// (NA)unit ID
+	ParamInInterfaceSub			: BOOL := TRUE; // Serial interface RS422/RS485 TYPE (0:EL6021,1:SUB9)			
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	
+END_VAR
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//
+	                                                    								
+                                                        								
+
+	//M_READ VARIABLES//
+		ModbusRTU					: FB_ModbusRTU;				// (NA) FB for Modbus Reading
+				// (NA) Start address of the read
+		//MesDataExd				: PM520;								// (NA) Structure of the PM3250
+		
+		ObjectCom					: INT;									// (NA) Sequence index
+									
+		Busy						: BOOL;
+		StepRead					: UINT;									// (NA) Step for reading 2 blocks of registers
+		AX_TrigRead					: ARRAY[1..1] OF R_trig;
+		MbStruct					: ARRAY[1..1] OF Struct_InputRTU;	
+		MesBlock					: ARRAY[1..1] OF ARRAY[1..120] OF WORD;	
+		AX_Addr						: ARRAY[1..1] OF UINT 	:= [19000];
+		AX_Qty						: ARRAY[1..1] OF UINT	:= [86];
+		AX_UnitId					: ARRAY[1..1] OF BYTE	:= [1];
+		AX_Function					: ARRAY[1..1] OF UINT	:= [4];	
+		AX_Priority					: ARRAY[1..1] OF UINT	:= [1];
+		KK							: INT;
+		ComError 					: BOOL;
+	//M_INIT VARIABLES //
+		OutFBCompleteted			: BOOL;
+	// M_EXECUTE VARIABLES //
+		
+                              
+
+ 
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_Execute" Id="{cd7662eb-92d1-42d9-86b5-303220a04da2}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+VAR 
+
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_PM_520_230">
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PM_520_230.M_Execute">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

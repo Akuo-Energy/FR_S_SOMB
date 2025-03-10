@@ -1,0 +1,122 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.9">
+  <POU Name="FB_ProtectRelay_NSXCB" Id="{5e6f836f-b242-4bf5-be32-19c973a8be1b}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_ProtectRelay_NSXCB EXTENDS FB_ProtectRelay_Base
+//////////////////
+// SEPAM system for High Voltage or Low Voltage Grid Protection. 
+//////////////////
+VAR_INPUT PERSISTENT
+	ParamTcpPort				: UINT:=502;		// (NA) Tcp port 
+	ParamIPAddress				: STRING;           // (NA) IP address
+	ParamUnitID					: BYTE;             // (NA) Unit ID
+END_VAR
+
+VAR_INPUT 
+
+END_VAR
+
+VAR_OUTPUT
+	
+END_VAR
+
+VAR_INPUT
+
+END_VAR
+
+VAR
+MesDataExd	AT %Q*	: ProtectRelay_NSXCB;
+	
+	FB_ModbusRead	          	: ARRAY[1..3] OF FB_ModbusRead; 
+		
+	CalCP_Read					: BOOL;
+	CalCP_Write                 : BOOL;
+	
+	MesBlock1_Temp 				: ARRAY [1..1] OF WORD ; 
+	MesBlock2_Temp 				: ARRAY [1..32] OF WORD ; 
+	MesBlock3_Temp 				: ARRAY [1..8] OF WORD ; 
+	
+	AX_ModbusReadAlarm			: ARRAY[1..3] OF BOOL;
+	AX_ModbusReadAlarmId		: ARRAY[1..3] OF UDINT;	
+	
+	// Emulator
+	Emul_StateCom : BOOL := FALSE;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_Execute" Id="{88384991-52ba-4eb1-b7cf-5cb6f44e3dbe}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+KK : INT;
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SUPER^.M_Execute(); 
+
+//COM
+MesdataExd.MesStatCom  := Emul_StateCom;
+            
+///MesDataExd.MesData.MesPtot := // AX_PTR[ParamPTRNum].MesDataExd.MesData.MesP;
+     
+MesdataExd.MesP1 := AX_PTR[ParamPTRNum].MesDataExd.MesData.MesP;   
+MesdataExd.MesP2 := MesDataExd.MesData.MesP1;	 	
+MesdataExd.MesP3 := MesDataExd.MesData.MesP1;	 	
+               
+MesdataExd.MesQ1 := AX_PTR[ParamPTRNum].MesDataExd.MesData.MesQ; 	 	
+MesdataExd.MesQ2 := MesDataExd.MesData.MesQ1;	 	
+MesdataExd.MesQ3 := MesDataExd.MesData.MesQ1; 	
+
+// S 	         
+MesdataExd.MesS1 :=  SQRT( MesDataExd.MesData.MesP1*.MesDataExd.MesData.MesP1 + MesDataExd.MesData.MesQ1.MesDataExd.MesData.MesQ1) ;
+MesdataExd.MesS2 := MesDataExd.MesData.MesS1; 	
+MesdataExd.MesS3 := MesDataExd.MesData.MesS1;	
+MesdataExd.MesStot := SQRT( MesDataExd.MesData.MesPtot * MesDataExd.MesData.MesPtot + MesDataExd.MesData.MesQtot.MesDataExd.MesData.MesQtot);	 
+	                  
+
+IF MesDataExd.MesData.MesPtot > 0 THEN
+MesDataExd.MesData.MesEact := MesDataExd.MesData.MesEact + MesDataExd.MesData.MesPtot*ParamCycleTime_Emul/3600000	; // Ptot ? 
+END_IF
+
+IF MesDataExd.MesData.MesQtot > 0 THEN
+MesDataExd.MesData.MesEReact := MesDataExd.MesData.MesEReact + MesDataExd.MesData.MesQtot*ParamCycleTime_Emul/3600000	; // Qtot ? 
+END_IF
+
+MesdataExd.MesCosPhi  := MesDataExd.MesData.MesPtot.MesDataExd.MesData.MesStot;	                  
+MesdataExd.MesCosPhi1 := MesDataExd.MesData.MesCosPhi;
+MesdataExd.MesCosPhi2 := MesDataExd.MesData.MesCosPhi;
+MesdataExd.MesCosPhi3 := MesDataExd.MesData.MesCosPhi;
+	
+Mesdata.MesFreq := A1_SUBMV.MesDataExd.MesData.MesFreq;
+MesdataExd.MesMaxFreq := 52;]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_ProtectRelay_NSXCB">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ProtectRelay_NSXCB.M_Execute">
+      <LineId Id="12" Count="0" />
+      <LineId Id="47" Count="2" />
+      <LineId Id="53" Count="0" />
+      <LineId Id="74" Count="0" />
+      <LineId Id="72" Count="0" />
+      <LineId Id="79" Count="0" />
+      <LineId Id="54" Count="5" />
+      <LineId Id="82" Count="0" />
+      <LineId Id="60" Count="5" />
+      <LineId Id="85" Count="3" />
+      <LineId Id="91" Count="3" />
+      <LineId Id="81" Count="0" />
+      <LineId Id="68" Count="3" />
+      <LineId Id="45" Count="0" />
+      <LineId Id="78" Count="0" />
+      <LineId Id="76" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

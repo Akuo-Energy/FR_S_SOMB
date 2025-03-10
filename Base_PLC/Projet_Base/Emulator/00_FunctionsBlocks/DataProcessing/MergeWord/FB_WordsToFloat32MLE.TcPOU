@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_WordsToFloat32MLE" Id="{228c8afd-53e3-4c15-9cb8-094b5e0f9520}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_WordsToFloat32MLE
+////////////////// 
+// Merge two words or one word into a Real with Mid little endian coding.
+//Validée par KBT : 8/11/2017 
+//////////////////		
+VAR_INPUT
+	
+	InFirstWord AT %MW0: WORD; 		// Word sent or stored first 
+	InSecondWord AT %MW1 : WORD; 	// Word sent or stored last  
+
+END_VAR
+VAR_OUTPUT
+	OutCalReal AT %MD0 : REAL;		//Output : Real
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_WordsToFloat32MLE">
+      <LineId Id="4" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

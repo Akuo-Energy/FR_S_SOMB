@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="GRID_PLAN" Id="{f7f75f08-c1b0-4c75-9a63-68e850e282a1}">
+    <Declaration><![CDATA[///////////
+// Structure For DEIECommand. Main Operating Data to be saved ( ex: OPC ) .  
+//////////
+TYPE GRID_PLAN :
+STRUCT
+	
+	MesData			: GRID ; 
+
+	//INPUT
+                                       	
+	OUT_CmdPReg                        	: BOOL ;     	(* Passage à P0 reçu DI*)
+	OUT_CmdQReg	                    	: BOOL ;     	(* Passage à Q0 reçu DI*)
+
+	OUT_Rse								: BOOL; (*Protection en Rse(1) / Protection Hors RSE (O) *)
+	OUT_TA								: BOOL; (*Telecaction en service (1) / Teleaction Hors service (0)*)
+          
+	OUT_SetptU					: REAL ; (* (V) Voltage Setpoint from Grid*)
+    OUT_SetptCosPhi          : REAL ;       (* (kW) Cosphi Setpoint from Grid*)           	                                                       
+	//State                                             	                                                       
+
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

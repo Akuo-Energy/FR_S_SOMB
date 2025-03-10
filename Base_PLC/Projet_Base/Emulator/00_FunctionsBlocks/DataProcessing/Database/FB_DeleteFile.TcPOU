@@ -1,0 +1,70 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_DeleteFile" Id="{d647f402-6c52-4ab2-8ef2-179e1bc46a96}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_DeleteFile
+VAR_INPUT
+	IN_Start				: BOOL;
+	IN_Dir					: T_MaxString;
+END_VAR
+VAR_OUTPUT
+	OUT_Error				: BOOL;
+	OUT_Busy				: BOOL;
+END_VAR
+VAR
+	
+	TrigStart				: R_TRIG;
+	RsStart					: RS;
+	FileDelete				: FB_FileDelete;
+	
+	
+
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[OUT_Busy := TRUE;
+
+TrigStart(CLK := IN_Start);
+FileDelete(sNetId := '', sPathName := IN_Dir, bExecute := TrigStart.Q);
+
+RsStart(SET := TrigStart.Q);
+IF RsStart.Q1 THEN
+	IF NOT FileDelete.bBusy THEN
+		IF FileDelete.bError THEN
+			OUT_Error := TRUE;
+			OUT_Busy := FALSE;
+		ELSE 
+			OUT_Error := FALSE;
+			OUT_Busy := FALSE;
+		END_IF
+		TrigStart(CLK := FALSE);
+		RsStart(RESET1 := TRUE);
+		RsStart(RESET1 := FALSE);
+	END_IF
+END_IF
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_DeleteFile">
+      <LineId Id="185" Count="0" />
+      <LineId Id="44" Count="0" />
+      <LineId Id="52" Count="0" />
+      <LineId Id="302" Count="0" />
+      <LineId Id="301" Count="0" />
+      <LineId Id="28" Count="0" />
+      <LineId Id="53" Count="0" />
+      <LineId Id="27" Count="0" />
+      <LineId Id="30" Count="0" />
+      <LineId Id="60" Count="0" />
+      <LineId Id="268" Count="0" />
+      <LineId Id="261" Count="0" />
+      <LineId Id="303" Count="0" />
+      <LineId Id="265" Count="0" />
+      <LineId Id="32" Count="0" />
+      <LineId Id="271" Count="0" />
+      <LineId Id="55" Count="0" />
+      <LineId Id="58" Count="0" />
+      <LineId Id="31" Count="0" />
+      <LineId Id="50" Count="0" />
+      <LineId Id="140" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

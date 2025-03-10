@@ -1,0 +1,154 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_Read" Id="{7d188dc6-f207-487c-a864-d9e4ba4f02c1}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Read
+//Permet de lire les Valeurs de max 1 semaine de points (1 pt/min pdt 7 jours)
+
+VAR_INPUT
+	InDirectory 				: T_MaxString;		// Base file of the Historization 
+	InExecute					: BOOL;			//Rising Edge detection of read
+END_VAR                 		
+
+VAR_OUTPUT              		
+	OutValue					: T_MaxString;
+	OutCompleted				: BOOL;
+	OutbBusy					: BOOL;
+	OutError 					: BOOL;
+	OutErrorID 					: UINT; // 1 : File not found
+
+END_VAR                 		
+VAR     
+	// Initialisation 
+	RS_Busy						: RS;
+	Trig_Start 					: R_TRIG;
+	FullDirectory				: STRING;  
+	
+	OpenFile					: FB_FileOpen;
+	ReadFile					: FB_FileRead;
+	CloseFile					: FB_FileClose;
+	
+	Opening						: BOOL := TRUE;
+	Reading						: BOOL;
+	Closing						: BOOL;
+	
+	EOF_Reached					: BOOL;
+	
+	FileHandle					: UINT;
+	FileHandle_Old				: UINT;
+	
+	NbJours						: UINT;
+	KK: UINT 					:= 1;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[Trig_Start(CLK := InExecute);
+
+IF Trig_Start.Q THEN 
+	Outerror:= FALSE ; // On reinitialize l'error à un nouvel essai . 
+	OpenFile(bExecute:= FALSE  ); 
+END_IF
+
+RS_Busy(Set := Trig_Start.Q, RESET1 := Outerror OR OutCompleted);
+OutbBusy := RS_Busy.Q1;
+OutCompleted := FALSE;
+
+
+IF RS_Busy.Q1 THEN	
+		//Ouverture du Fichier, récupération du handle
+		OpenFile
+		(
+			sNetId := '',
+			sPathName := InDirectory,
+			nMode := FOPEN_MODEREAD,
+			ePath := PATH_GENERIC,
+			bExecute := TRUE,
+			hFile => FileHandle
+		);
+		
+		IF NOT OpenFile.bBusy AND OpenFile.bError AND OpenFile.nErrId = 1804 THEN // Le fichier n'existe pas 
+			OutErrorID := 1;
+			OutError := OpenFile.bError;
+		ELSIF OpenFile.bError THEN		// Il y a eu une autre erreur
+			OutError := OpenFile.bError;
+		ELSIF NOT OpenFile.bError AND NOT OpenFile.bBusy AND FileHandle <> 0 THEN
+			opening := FALSE;
+		END_IF
+		
+		
+		
+		IF NOT opening AND NOT EOF_Reached THEN			
+			ReadFile
+			(
+				sNetId := '',
+				hFile := FileHandle,
+				bExecute := TRUE,
+				tTimeout := T#1S,
+				pReadBuff := ADR(OutValue),
+				cbReadLen := SIZEOF(OutValue),				
+				bEOF => EOF_Reached
+			);	
+			IF NOT ReadFile.bBusy AND ReadFile.bError THEN
+				OutError := TRUE;	
+				ReadFile(bExecute := FALSE);
+			ELSIF NOT ReadFile.bBusy THEN
+				ReadFile(bExecute := FALSE);	
+			END_IF
+		ELSIF EOF_Reached THEN
+			ReadFile(bExecute := FALSE);
+	
+			CloseFile
+			(
+				sNetId := '',
+				bExecute := TRUE,
+				hFile := FileHandle,
+				tTimeout := T#1S
+			);
+			IF NOT CloseFile.bBusy AND NOT CloseFile.bError  THEN
+				Opening := TRUE;
+				EOF_Reached := FALSE;
+				OpenFile(bExecute := FALSE);
+				ReadFile(bExecute := FALSE);
+				CloseFile(bExecute := FALSE);
+				
+				OUTCompleted := TRUE;
+			ELSIF CloseFile.bError THEN
+				OutError := TRUE;
+				OutErrorID := UDINT_TO_UINT(Closefile.nErrId);
+			END_IF	
+		END_IF
+	END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="FB_Read">
+      <LineId Id="1255" Count="0" />
+      <LineId Id="1580" Count="2" />
+      <LineId Id="1585" Count="0" />
+      <LineId Id="1583" Count="0" />
+      <LineId Id="1579" Count="0" />
+      <LineId Id="1576" Count="0" />
+      <LineId Id="1257" Count="0" />
+      <LineId Id="1260" Count="0" />
+      <LineId Id="1578" Count="0" />
+      <LineId Id="1577" Count="0" />
+      <LineId Id="1261" Count="0" />
+      <LineId Id="1286" Count="13" />
+      <LineId Id="1301" Count="2" />
+      <LineId Id="1480" Count="0" />
+      <LineId Id="1306" Count="2" />
+      <LineId Id="1311" Count="1" />
+      <LineId Id="1314" Count="5" />
+      <LineId Id="1535" Count="1" />
+      <LineId Id="1321" Count="1" />
+      <LineId Id="1364" Count="1" />
+      <LineId Id="1529" Count="0" />
+      <LineId Id="1531" Count="1" />
+      <LineId Id="1366" Count="11" />
+      <LineId Id="1383" Count="1" />
+      <LineId Id="1486" Count="3" />
+      <LineId Id="1485" Count="0" />
+      <LineId Id="1481" Count="0" />
+      <LineId Id="1483" Count="1" />
+      <LineId Id="1386" Count="1" />
+      <LineId Id="34" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

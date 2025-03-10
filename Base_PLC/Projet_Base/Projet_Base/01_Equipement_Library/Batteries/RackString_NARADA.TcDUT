@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="RackString_NARADA" Id="{6fc77ab5-5116-4c61-81d4-a705c2a296a4}">
+    <Declaration><![CDATA[///////////
+// Structure For Battery Racks. Main Operating Data to be saved ( ex: OPC ) .  
+//////////
+TYPE RackString_NARADA :
+STRUCT
+	
+		MesData		: RackString ;
+	
+		MesIDWarning						: WORD;
+		MesIDCriticalAlarm					: WORD;		
+ 
+		MesInsulationValue          		: REAL  ; (* (Ω) 	*)
+		MesPositiveInsulationValue          : REAL  ; (* (Ω)  	*)    
+		MesNegativeInsulationValue          : REAL  ; (* (Ω)  	*)            	
+	                                                     
+		MesCCL						        : REAL  ; (* (A)  	*)     
+		MesDCL						        : REAL  ; (* (A)  	*)  
+
+		MesIDstate2				 			: REAL  ; (* Rack Charge State (Chg/Dsg) - 0x0: (Idle); 0x1: (Discharging); 0x2: Charging) *)
+		
+		MesNaradaIDState					: UINT ;  (* 	0 : Normal ;  1 : Interdit la charge ; 2 : Interdire la décharge ; 3 : Standby ; 4 : Arrêt *)
+		
+END_STRUCT
+END_TYPE
+
+
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

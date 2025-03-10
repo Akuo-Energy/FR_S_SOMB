@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <GVL Name="GVL_Check" Id="{f5694ae6-cd0e-420d-949a-4d1e24e09fad}">
+    <Declaration><![CDATA[VAR_GLOBAL
+	FaultCheck_G : BOOL ; // Test if Fault 
+	Fault_Count_G: CTU  ; // Counter 	
+	
+
+END_VAR]]></Declaration>
+  </GVL>
+</TcPlcObject>

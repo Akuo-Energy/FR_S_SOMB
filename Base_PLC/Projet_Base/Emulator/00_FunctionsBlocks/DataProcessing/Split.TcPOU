@@ -1,0 +1,46 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="Split" Id="{558f02ca-87a6-468b-bbb1-99e158a365c2}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM Split
+//Donne la position de la IN_Position-ième répétition du caractère recherché et renvoie la chaine de caractère suivante
+VAR_INPUT
+	IN_Delimiter 		: STRING;
+	IN_TextToSearch		: T_MaxString;
+END_VAR
+
+VAR
+	n					: UINT;	
+	Position_Int		: UINT;
+	LenOutSplit			: INT;
+	TextToSearch_Int	: T_MaxString;
+	OUT_Null			: ARRAY[1..100] OF T_Maxstring;
+END_VAR
+
+VAR_OUTPUT
+	OUT_Split			: ARRAY[1..100] OF T_Maxstring;
+	NbElements			: UINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[OUT_Split := OUT_Null;
+n:= 1;
+TextToSearch_Int := IN_TextToSearch;
+Position_Int := INT_TO_UINT( Find(STR1 := TextToSearch_Int, STR2 := IN_Delimiter));
+LenOutSplit := 0;
+
+WHILE Position_Int > 0 AND LenOutSplit < LEN(STR:= IN_TextToSearch) DO
+	OUT_Split[n] := LEFT(STR := TextToSearch_Int, SIZE := UINT_TO_INT(Position_Int)-1);
+	LenOutSplit := LenOutSplit + Len(STR := OUT_Split[n])+1;
+	TextToSearch_Int := RIGHT(STR := TextToSearch_Int, SIZE := LEN(STR:= TextToSearch_Int)- LEN(STR:= OUT_Split[n])-1);
+	Position_Int := INT_TO_UINT(FIND(STR1 := TextToSearch_Int, STR2 := IN_Delimiter));
+	n := n + 1;
+END_WHILE
+
+NbElements := n-1;]]></ST>
+    </Implementation>
+    <LineIds Name="Split">
+      <LineId Id="133" Count="13" />
+      <LineId Id="57" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

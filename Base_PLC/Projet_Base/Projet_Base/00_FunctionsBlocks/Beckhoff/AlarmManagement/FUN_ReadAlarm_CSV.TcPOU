@@ -1,0 +1,183 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FUN_ReadAlarm_CSV" Id="{a54f7c7d-a7e3-4c7c-997f-50aab4f5110e}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM FUN_ReadAlarm_CSV
+//Permet de lire les Valeurs de max 1 semaine de points (1 pt/min pdt 7 jours)
+
+VAR_INPUT
+	InDirectory_Stockage 		: T_MaxString;		// Base file of the Historization 
+	InStartTimeStamp			: TIMESTRUCT;
+	InExecute					: BOOL;			//Rising Edge detection of read
+	ParamSeparateur				: STRING;
+	IN_Reset					: BOOL ; // Close File . 
+	ParamMaxLine				: WORD :=  200 ; 
+END_VAR                 		
+
+VAR_OUTPUT              		
+	OutValue					: ARRAY[1..500] OF ST_ValuesAlarms;
+	OutDir						: T_Maxstring;
+	OutCompleted				: BOOL;
+	OutNbLigne					: UINT;
+	OutbBusy					: BOOL;
+	OutError 					: BOOL;
+	OutErrorID 					: UINT; // 1 : File not found
+END_VAR                 		
+VAR     
+	// Initialisation 
+	TypeFile					: STRING;
+	ParamTimeOut				: TIME := T#1S;
+	
+	//Read
+	TimeStructBeingRead			: TIMESTRUCT;
+	FullDirectory				: STRING;                		
+	
+	OpenFile					: FB_FileOpen;
+	ReadFile					: FB_FileGets;
+	CloseFile					: FB_FileClose;
+	InfoFile					: FB_EnumFindFileEntry;
+	FileInfo					: ST_FindFileEntry;
+
+	Index_Array_OutValue		: UINT := 1;			// Valeur de OutValue qui va être écrite
+	
+	Opening						: BOOL := TRUE;
+	
+	LineRead					: T_Maxstring;
+	EOF_Reached					: BOOL;              		
+	CompteurLigne				: CTU;
+	AX_ArrayString 				: ARRAY[1..100] OF T_Maxstring;
+	
+	OutEmpty					: ARRAY[1..500] OF ST_ValuesAlarms;
+	OutBusy						: RS;
+	OutCompleted_RS				: RS;
+	Trig_Read					: R_TRIG;
+	Trig_Start 					: R_TRIG;
+	
+	FileHandle					: UINT;
+	FileHandle_Old				: UINT;
+	
+	KK: UINT := 1;
+	bInit : BOOL;
+	LL: UINT;
+	MM: UINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[Trig_Start(CLK := InExecute);
+OutCompleted_RS(Reset1 := Trig_Start.Q);
+IF trig_start.Q THEN
+	OutEmpty := OutValue;
+	outError := FALSE;
+END_IF
+OutBusy(Set := InExecute, RESET1 := OutError OR OutCompleted_RS.Q1);
+OutbBusy := OutBusy.Q1;
+OutCompleted := OutCompleted_RS.Q1;
+IF OutBusy.Q1 THEN	
+	// J'initialise le tout : 
+	//Initialisation du type de fichier
+	TypeFile := 'ALARMS'; 
+	
+	TimeStructBeingRead := DT_TO_SYSTEMTIME(SYSTEMTIME_TO_DT(InStartTimeStamp) );
+	FullDirectory := Concat(Concat(Concat(Concat(Concat(Concat(Concat(Concat(Concat(Concat(Concat(Concat(InDirectory_Stockage , WORD_TO_STRING(TimeStructBeingRead.wyear)),'\'),WORD_TO_STRING(TimeStructBeingRead.wMonth)),'\'),'ALARMS'),'_'),WORD_TO_STRING(TimeStructBeingRead.wyear)),'-'),WORD_TO_STRING(TimeStructBeingRead.wMonth)),'-'),WORD_TO_STRING(TimeStructBeingRead.wDay)),'.csv');
+    OutDir := FullDirectory;
+	//Ouverture du Fichier, récupération du handle
+	OpenFile
+	(
+		sNetId := '',
+		sPathName := FullDirectory,
+		nMode := FOPEN_MODEREAD,
+		ePath := PATH_GENERIC,
+		bExecute := Opening AND NOT OutCompleted_RS.Q1,
+		hFile => FileHandle
+	);
+	
+	IF OpenFile.nErrId = 1804 THEN // Le fichier n'existe pas 
+		OutErrorID := 1;
+		OutError := OpenFile.bError;
+		OpenFile(bExecute :=  FALSE);
+	ELSIF OpenFile.bError THEN		// Il y a eu une autre erreur
+		OutError := OpenFile.bError;
+	ELSIF NOT OpenFile.bError AND NOT OpenFile.bBusy AND FileHandle <> 0 AND FileHandle <> FileHandle_Old THEN
+		opening := FALSE;
+		FileHandle_Old := FileHandle;
+	END_IF
+	// On a obtenu le file handle, on va commencer la lecture
+
+	// Le bloc suivant va lire le document ligne à ligne en incrémentant le compteur ligne et en ressortant l'ensemble de la ligne dans LineRead
+	LineRead := '';
+	IF NOT opening THEN
+		ReadFile
+		(
+			sNetId := '',
+			hFile := FileHandle,
+			bExecute := TRUE,
+			tTimeout := ParamTimeOut,
+			sLine => LineRead,
+			bEOF => EOF_Reached
+		);				
+
+		IF NOT ReadFile.bBusy AND NOT ReadFile.bError AND (LineRead <> '') THEN
+			ReadFile(bExecute := FALSE);
+			CompteurLigne(CU := TRUE);	
+			CompteurLigne(CU := FALSE);
+			IF CompteurLigne.CV > 2 THEN
+				Split(IN_TextToSearch := LineRead, IN_Delimiter := 	ParamSeparateur, OUT_Split => AX_ArrayString);			
+				OutValue[Index_Array_OutValue].TimeStamp_Act 	:= AX_ArrayString[1];
+				OutValue[Index_Array_OutValue].ID 				:= STRING_TO_UINT(AX_ArrayString[2]);
+				OutValue[Index_Array_OutValue].Message			:= AX_ArrayString[3];
+				OutValue[Index_Array_OutValue].Value			:= STRING_TO_BOOL(AX_ArrayString[4]);
+				OutValue[Index_Array_OutValue].Ack			 	:= STRING_TO_BOOL(AX_ArrayString[5]);
+				OutValue[Index_Array_OutValue].Alarms_LVL	 	:= STRING_TO_UINT(AX_ArrayString[6]);				
+				Index_Array_OutValue := Index_Array_OutValue + 1;
+				
+			END_IF
+		
+		ELSIF NOT ReadFile.bBusy AND  ReadFile.bError THEN
+			OutError := TRUE;	
+		ELSIF  EOF_Reached THEN
+			OutNbLigne := Index_Array_OutValue;
+			OutCompleted_RS( SET := TRUE);
+			OutCompleted_RS( SET := FALSE);
+	
+		END_IF	
+	
+	END_IF
+	
+ELSIF EOF_Reached AND FileHandle <> 0 THEN
+	ReadFile(bExecute := FALSE);
+	CloseFile
+	(
+		sNetId := '',
+		bExecute := TRUE,
+		hFile := FileHandle,
+		tTimeout := ParamTimeOut
+	);
+	IF NOT CloseFile.bBusy AND NOT CloseFile.bError THEN
+		CloseFile(bExecute := FALSE);
+		Opening := TRUE;
+		CompteurLigne(RESET := TRUE);
+		CompteurLigne(RESET := FALSE);
+		Index_Array_OutValue := 1;
+		FileHandle := 0;
+		OutValue := OutEmpty;
+	ELSIF NOT CloseFile.bBusy AND closefile.bError THEN
+		OutError := TRUE;
+	END_IF  
+END_IF	]]></ST>
+    </Implementation>
+    <LineIds Name="FUN_ReadAlarm_CSV">
+      <LineId Id="1272" Count="34" />
+      <LineId Id="1308" Count="0" />
+      <LineId Id="1477" Count="0" />
+      <LineId Id="1309" Count="14" />
+      <LineId Id="1325" Count="5" />
+      <LineId Id="1452" Count="0" />
+      <LineId Id="1445" Count="0" />
+      <LineId Id="1454" Count="4" />
+      <LineId Id="1341" Count="6" />
+      <LineId Id="1461" Count="0" />
+      <LineId Id="1348" Count="17" />
+      <LineId Id="1371" Count="8" />
+      <LineId Id="34" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

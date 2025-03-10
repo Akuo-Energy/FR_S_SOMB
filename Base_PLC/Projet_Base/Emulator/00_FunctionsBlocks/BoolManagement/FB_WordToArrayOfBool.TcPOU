@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_WordToArrayOfBool" Id="{d74281c5-4190-4767-819b-ad3d382bead7}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_WordToArrayOfBool
+// Transforms a Word in an array of BOOL;
+VAR_INPUT
+	MyWord	:WORD;
+END_VAR
+VAR_OUTPUT
+	ArrayOfBool: ARRAY [0..15] OF BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[ArrayOfBool[0] := BIT_TO_BOOL(MyWord.0);
+ArrayOfBool[1] := BIT_TO_BOOL(MyWord.1);
+ArrayOfBool[2] := BIT_TO_BOOL(MyWord.2);
+ArrayOfBool[3] := BIT_TO_BOOL(MyWord.3);
+ArrayOfBool[4] := BIT_TO_BOOL(MyWord.4);
+ArrayOfBool[5] := BIT_TO_BOOL(MyWord.5);
+ArrayOfBool[6] := BIT_TO_BOOL(MyWord.6);
+ArrayOfBool[7] := BIT_TO_BOOL(MyWord.7);
+ArrayOfBool[8] := BIT_TO_BOOL(MyWord.8);
+ArrayOfBool[9] := BIT_TO_BOOL(MyWord.9);
+ArrayOfBool[10] := BIT_TO_BOOL(MyWord.10);
+ArrayOfBool[11] := BIT_TO_BOOL(MyWord.11);
+ArrayOfBool[12] := BIT_TO_BOOL(MyWord.12);
+ArrayOfBool[13] := BIT_TO_BOOL(MyWord.13);
+ArrayOfBool[14] := BIT_TO_BOOL(MyWord.14);
+ArrayOfBool[15] := BIT_TO_BOOL(MyWord.15);]]></ST>
+    </Implementation>
+    <LineIds Name="FB_WordToArrayOfBool">
+      <LineId Id="60" Count="14" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

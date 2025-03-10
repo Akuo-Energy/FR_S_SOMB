@@ -1,0 +1,63 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_ProtectRelay_VIP410" Id="{99d4276f-5178-4539-9d33-c374173d27d9}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_ProtectRelay_VIP410 EXTENDS FB_ProtectRelay_Base
+//////////////////
+// SEPAM system for High Voltage or Low Voltage Grid Protection . 
+//////////////////
+VAR_INPUT PERSISTENT
+	ParamTcpPort				: UINT:=502;    // (NA) TCP port
+	ParamIPAddress				: STRING; 		// (NA) IP address
+	ParamUnitID					: BYTE; 		// (NA) unit ID
+END_VAR
+
+VAR_OUTPUT
+	
+END_VAR
+
+VAR_INPUT
+		IN_MesTrip_IO			: BOOL ; 
+END_VAR
+
+VAR
+	
+	MesDataExd		AT %Q* 		: ProtectRelay_VIP410;
+	FB_ModbusRead	          	: ARRAY[1..4] OF FB_ModbusRead; 
+	ClockReadInput				: BOOL;
+
+	MesBlock1_Temp 				: ARRAY [1..1] OF WORD ; 
+	MesBlock2_Temp 				: ARRAY [1..20] OF WORD ; 
+	MesBlock3_Temp 				: ARRAY [1..8] OF WORD ; 
+	MesBlock4_Temp 				: ARRAY [1..2] OF WORD ; 
+	AX_ModbusReadAlarm			: ARRAY[1..4] OF BOOL;
+	AX_ModbusReadAlarmId		: ARRAY[1..4] OF UDINT;	
+//	TP1							: TP ; 				// (NA) Tempo to define Modbus Reading Frequency 
+	ParamClockInputTime 		: TIME 		:= TIME#5S;	  		// (Time) Read Modbus Frequency . 
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_Execute" Id="{1363776a-dcc0-4f14-8d77-e22f0da0991b}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SUPER^.M_Execute();]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_ProtectRelay_VIP410">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ProtectRelay_VIP410.M_Execute">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

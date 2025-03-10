@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="PTR" Id="{3c42d565-f365-4db4-92a3-4ff9fa111833}">
+    <Declaration><![CDATA[///////////
+// Structure For PTR. Main Operating Data to be saved (ex: OPC).  
+//////////
+TYPE PTR :
+STRUCT
+	// PTR Measures
+		MesP 				: REAL ;	 	(* (kW)   Active Power output (AC) of PTR  		*)
+		MesQ 				: REAL ;  		(* (kVAr) Reactive AC Power Produced       		*)
+		MesI 				: REAL ;  		(* (A)   Mean Phase Current Produced      		*)
+                                            (*                                        		*)
+		MesNbInv_Connected	: UINT  ; 		(* (NA) Cal : Number of Inverters connceted     *)
+		MesPConnected		: REAL ; 		(* (KW) Cal : Total connected active power      *)
+		                                    (*                                       	    *)
+		MesAlarmCode		: WORD ; 		(* (NA) Alarm Code                              *)
+		MesWarningCode		: WORD ;		(* (NA) Warning  Code                           *)
+		MesEventCode		: WORD ; 		(* (NA) Event Code                              *)
+		                                    
+		MesAlarmCom			: BOOL ;		(* (NA) Communication alarm                     *)
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>
+
+
+

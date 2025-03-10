@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="ST_InfluxAlarmsInsert" Id="{c5893776-933a-4f07-8199-e61e515c2539}">
+    <Declaration><![CDATA[TYPE ST_InfluxAlarmsInsert :
+STRUCT
+    {attribute 'TagName' := 'Message'}
+	Message		 	: T_MaxString;	// Alarm Message 
+    {attribute 'FieldName' := 'ID'}	
+	ID			: 	ULINT;
+    {attribute 'FieldName' := 'Value'}	
+	Value 		: BOOL;
+    {attribute 'FieldName' := 'Ack'}	
+	Ack			: BOOL;	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

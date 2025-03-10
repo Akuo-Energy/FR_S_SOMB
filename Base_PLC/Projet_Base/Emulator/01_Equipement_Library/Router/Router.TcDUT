@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="Router" Id="{dbad6274-51a4-41cc-8bf7-03e6125eb91c}">
+    <Declaration><![CDATA[TYPE Router :
+STRUCT
+		MesWatchdog	        : BOOL ; 	(* Watchdog*)
+		
+		MesAlarmCode		: WORD ;	(* (NA) Internal Akuo AlarmCode		*)
+		MesWarningCode		: WORD ; 	(* (NA) Internal Akuo WarningCode   *)
+		MesEventCode		: WORD ; 	(* (NA) Internal Akuo EventCode	    *)
+		
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

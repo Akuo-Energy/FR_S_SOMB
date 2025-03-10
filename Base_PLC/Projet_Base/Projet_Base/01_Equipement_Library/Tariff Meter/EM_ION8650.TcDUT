@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <DUT Name="EM_ION8650" Id="{e67a81a0-982d-4d85-8872-a2d86505390b}">
+    <Declaration><![CDATA[TYPE EM_ION8650 :
+STRUCT
+	
+	MesData					: EM; 			(* (NA) MesData							*)
+	
+	//MesAlarmPower		  	: BOOL;			(* (NA) Power failure alarm 		    *)
+	MesAlarmAbnormal  		: BOOL; 		(* (NA) Alarm for abnormal functionning *)	
+	MesLossPhase			: BOOL;			(* (NA) Loss of 1 or more TC phases		*)
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

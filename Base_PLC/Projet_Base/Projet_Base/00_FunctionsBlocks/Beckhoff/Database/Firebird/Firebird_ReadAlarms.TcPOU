@@ -1,0 +1,338 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="Firebird_ReadAlarms" Id="{77dff88a-b802-4d67-b141-a3df4a63f7c6}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM Firebird_ReadAlarms
+VAR_INPUT
+	ParamTimeBetweenReconnect	: TIME := T#1M;
+	IN_StartRead				: BOOL;
+	IN_FrequencyRead			: TIME := T#1M;
+	IN_bAct						: BOOL; // Read only Active values
+	IN_FilterAct				: BOOL;
+	IN_bAck						: BOOL; // Read only Acknowledged values
+	IN_FilterAck				: BOOL;
+	
+	IN_TimeStampStart			: TIMESTRUCT;
+	IN_TimeStampEnd				: TIMESTRUCT;
+	
+END_VAR
+VAR CONSTANT
+	NbMaxElements	 			: UINT := 250;
+END_VAR
+VAR_OUTPUT
+	OUT_Busy					: BOOL;
+	
+END_VAR
+VAR
+	
+	AX_Buffer_Alarms			: ARRAY[1..NbMaxElements] OF St_AlarmsV2;		// Buffer of alarms to write
+	StNull						: St_AlarmsV2;		// Buffer of alarms to write
+		
+	// Connexion
+		TP_Reconnect			: TP;
+		Trig_Connect			: R_TRIG;
+		TRIG_CmdStart			: R_TRIG;
+		RS_Connect				: RS;
+		RS_HasBeenConnected		: RS;
+	// DISCONNECT
+		TrigStartDisconnect				: R_TRIG;
+		RsStartDisconnect				: RS;		
+			
+	// READ File       
+		TP_ReadBddPeriodically	: TP;
+		TRIG_ReadBddPeriodically: R_TRIG;
+
+		ETAPE					: UINT;
+		Trig_Start				: R_TRIG;   
+		RS_Start				: RS; 	
+		Requete					: ARRAY[1..10] OF STRING(1000);
+		RequeteNull				: ARRAY[1..10] OF STRING(1000);
+		sToAdd					: STRING(1000);
+		pPosRequete				: DINT;
+		TimeStampNull			: TIMESTRUCT;
+		TimeStampDefault		: TIMESTRUCT;
+		sTimeStampStart			: STRING(255);
+		sTimeStampEnd			: STRING(255);
+		sValue					: STRING(255);
+		sAck					: STRING(255);
+		Format					: FB_FormatString;
+		SQLDatabase				: FB_SQLDatabaseEvt('',T#10S);
+		SQLCommand				: FB_SQLCommandEvt('',T#10S);
+		SQLCommandNull			: FB_SQLCommandEvt('',T#10S);
+		SQLResult				: FB_SQLResultEvt('',T#10S);
+		
+	
+	// General variables
+		nbMax					: UINT;
+		bInit 					: BOOL;
+		NomTableAlarms			: STRING(255) := 'TABLE_ALARMS_V2';
+		KK						: UINT;
+		
+	//TABLEAU
+	
+		AX_MesAlarmCode_Bool	: ARRAY [1..CstNbAlarmCode] OF ARRAY[1..15] OF BOOL; //Tableau de tous les alarmesCode en Bool
+		AX_Alarm_State			: ARRAY [1..CstNbAlarmCode] OF ARRAY[1..15] OF BOOL; //Tableau de Bool avec toutes les nouveaux bit modifiés
+		AX_MesAck				: ARRAY [1..CstNbAlarmCode] OF ARRAY[1..15] OF BOOL;
+		AX_Ack_State			: ARRAY [1..CstNbAlarmCode] OF ARRAY[1..15] OF BOOL; //Tableau de Bool avec tous les nouveaux acknowledgement 
+
+	
+
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// DataProcessing
+IF NOT bInit THEN
+	M_Init();
+END_IF
+RS_HasBeenConnected(SET := SQLDatabase.bConnected);
+TP_Reconnect(In :=RS_HasBeenConnected.Q1 AND NOT SQLDatabase.bConnected OR NOT bInit OR TP_Reconnect.Q, PT := ParamTimeBetweenReconnect);
+	
+TP_ReadBddPeriodically(IN := NOT TP_ReadBddPeriodically.Q, PT := IN_FrequencyRead);
+TRIG_ReadBddPeriodically(CLK := TP_ReadBddPeriodically.Q);
+TRIG_CmdStart(CLK := IN_StartRead);
+
+Trig_Start(CLK := SQLDatabase.bConnected AND NOT OUT_Busy AND ( TRIG_CmdStart.Q OR TRIG_ReadBddPeriodically.Q));
+IF Trig_Start.Q THEN
+	// Init the table :
+	FOR KK := 1 TO 10 DO 
+		Requete[KK] := RequeteNull[KK];
+	END_FOR
+	FOR KK := 1 TO NbMaxElements DO
+		AX_Buffer_Alarms[KK] := StNull;
+	END_FOR
+	Requete := RequeteNull;
+	nbMax := NbMaxElements;
+	pPosRequete := 0;
+	// Je commence par préparer ma requête 
+	IF MEMCMP(pBuf1 := ADR(IN_TimeStampStart), pBuf2:=ADR(TimeStampNull), n:=SIZEOF(TimeStampNull))=0 THEN
+		IN_TimeStampStart := TimeStampDefault;
+	END_IF
+	sTimeStampStart := systemtime_to_string(in := IN_TimeStampStart);
+	sTimeStampEnd := systemtime_to_string(in := IN_TimeStampEnd);
+	Format( sFormat := 'Select first %d "TIMESTAMP_START", case when "TIMESTAMP_STOP" is null then cast($'01.01.1970, 00:00:00.000$' as timestamp) else "TIMESTAMP_STOP" end,AlarmsID,Act,Ack from %s where "TIMESTAMP_START" > $'%s$' ', 
+		sOut=> sToAdd,
+		arg1 := F_UINT(In:=nbMax),
+		arg2 := F_STRING(In := NomTableAlarms),
+		arg3 := F_STRING(in := sTimeStampStart)
+	);
+	MEMCPY(destAddr := ADR(requete), srcAddr := ADR(sToAdd), n := SIZEOF(sToAdd));
+	pPosRequete:= pPosRequete + LEN(STR := sToAdd);
+	
+	IF IN_FilterAct THEN
+		sToAdd := CONCAT(STR1 := ' AND Act = ', STR2 := UINT_TO_STRING(BOOL_TO_UINT(IN_bAct)));
+		MEMCPY(srcAddr:= ADR(sToAdd), destAddr := ADR(Requete)+DINT_TO_DWORD(pPosRequete), n:= SIZEOF(sToAdd));
+		pPosRequete:= pPosRequete + LEN(STR := sToAdd);
+	END_IF
+	
+	IF IN_FilterAck THEN
+		sToAdd := CONCAT(STR1 := ' AND Ack = ', STR2 := UINT_TO_STRING(BOOL_TO_UINT(IN_bAck)));
+		MEMCPY(srcAddr:= ADR(sToAdd), destAddr := ADR(Requete)+DINT_TO_DWORD(pPosRequete), n:= SIZEOF(sToAdd));
+		pPosRequete:= pPosRequete + LEN(STR := sToAdd);
+	END_IF	
+
+	sToAdd := ' order by TIMESTAMP_START desc';
+	MEMCPY(srcAddr:= ADR(sToAdd), destAddr := ADR(Requete)+DINT_TO_DWORD(pPosRequete), n:= SIZEOF(sToAdd));
+	pPosRequete:= pPosRequete + LEN(STR := sToAdd);	
+	ETAPE := 1;
+END_IF
+		
+CASE ETAPE OF
+	1: // CONNECTED
+		OUT_Busy := TRUE;
+		IF SQLDatabase.CreateCmd(pSQLCommand := ADR(SQLCommand)) THEN 
+			IF NOT SQLCommAND bError THEN
+				ETAPE := 2;
+			ELSIF SQLCommAND bError THEN
+				ETAPE := 255;
+			END_IF
+		END_IF
+		
+	2:	
+		IF SQLCommAND ExecuteDataReturn(pSQLCmd := ADR(Requete), cbSQLCmd := SIZEOF(Requete), pSQLDBResult := ADR(SQLResult))THEN
+			IF  NOT SQLCommAND bError THEN
+				ETAPE := 3;
+			ELSIF SQLCommAND bError THEN
+				ETAPE := 255;
+			END_IF
+		END_IF
+	3: 
+		IF SQLResult.Read(nStartIndex := 1, nRecordCount := NbMaxElements, pData := ADR(AX_Buffer_Alarms), cbData := SIZEOF(AX_Buffer_Alarms), bDataRelease := TRUE, bWithVerifying := FALSE) THEN
+			IF NOT SQLResult.bError THEN
+				Etape := 4;
+			ELSE
+				ETAPE := 255;
+			END_IF
+		END_IF
+	4:
+		IF NOT SQLDatabase.bError THEN
+
+			Requete  := RequeteNull;
+			Trig_Start(CLK := FALSE);
+			Etape := 0;
+			OUT_Busy := FALSE;
+		ELSE 
+			ETAPE := 255;
+		END_IF
+	255: 
+		OUT_Busy := FALSE;
+		Requete := RequeteNull;
+		Etape := 0;
+		IN_StartRead := FALSE;
+END_CASE
+
+
+
+
+
+
+
+
+
+]]></ST>
+    </Implementation>
+    <Method Name="M_Connect" Id="{4d1f5b4b-5f6b-4ca1-9991-2727935dfd35}">
+      <Declaration><![CDATA[METHOD M_Connect : BOOL
+
+VAR_OUTPUT
+END_VAR
+VAR_INPUT
+	IN_hDBID				: DINT;
+	IN_Start				: BOOL;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[Trig_Connect(CLK := IN_Start);
+RS_Connect(SET := Trig_Connect.Q);
+IF RS_Connect.Q1 THEN
+	IF SQLDatabase.Connect(hDBID := IN_hDBID) THEN;
+		RS_Connect(RESET1 := TRUE);
+		RS_Connect(RESET1 := FALSE);
+	END_IF
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Disconnect" Id="{bded37dd-9213-490e-84c2-d758bb75adb4}">
+      <Declaration><![CDATA[METHOD M_Disconnect : BOOL
+VAR_INPUT
+END_VAR
+VAR_INPUT
+	IN_Start				: BOOL;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[TrigStartDisconnect(CLK := IN_Start);
+RsStartDisconnect(SET := TrigStartDisconnect.Q);
+IF RsStartDisconnect.Q1 THEN
+	IF SQLDatabase.Disconnect() THEN;
+		RsStartDisconnect(RESET1 := TRUE);
+		RsStartDisconnect(RESET1 := FALSE);
+	END_IF
+END_IF
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{835b61ab-7879-4096-94e5-00be6fb2c747}">
+      <Declaration><![CDATA[METHOD M_Init
+
+VAR
+	LL	: SINT;
+	KK 	: SINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[TimeStampDefault.wYear := 1995;
+TimeStampDefault.wMonth := 3;
+TimeStampDefault.wDay := 12;
+
+bInit := TRUE;
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="Firebird_ReadAlarms">
+      <LineId Id="741" Count="1" />
+      <LineId Id="956" Count="1" />
+      <LineId Id="1475" Count="0" />
+      <LineId Id="743" Count="0" />
+      <LineId Id="1293" Count="0" />
+      <LineId Id="744" Count="0" />
+      <LineId Id="1637" Count="0" />
+      <LineId Id="1308" Count="0" />
+      <LineId Id="841" Count="0" />
+      <LineId Id="1331" Count="1" />
+      <LineId Id="1856" Count="0" />
+      <LineId Id="1934" Count="2" />
+      <LineId Id="1857" Count="2" />
+      <LineId Id="1710" Count="0" />
+      <LineId Id="1670" Count="0" />
+      <LineId Id="1855" Count="0" />
+      <LineId Id="1641" Count="0" />
+      <LineId Id="1707" Count="2" />
+      <LineId Id="1648" Count="0" />
+      <LineId Id="1655" Count="0" />
+      <LineId Id="1643" Count="0" />
+      <LineId Id="1663" Count="0" />
+      <LineId Id="1645" Count="0" />
+      <LineId Id="1647" Count="0" />
+      <LineId Id="1657" Count="0" />
+      <LineId Id="1646" Count="0" />
+      <LineId Id="1685" Count="0" />
+      <LineId Id="1687" Count="0" />
+      <LineId Id="1691" Count="0" />
+      <LineId Id="1642" Count="0" />
+      <LineId Id="1660" Count="0" />
+      <LineId Id="1701" Count="1" />
+      <LineId Id="1661" Count="0" />
+      <LineId Id="1688" Count="0" />
+      <LineId Id="1664" Count="1" />
+      <LineId Id="1699" Count="1" />
+      <LineId Id="1662" Count="0" />
+      <LineId Id="1694" Count="0" />
+      <LineId Id="1698" Count="0" />
+      <LineId Id="1696" Count="0" />
+      <LineId Id="1695" Count="0" />
+      <LineId Id="1336" Count="1" />
+      <LineId Id="1345" Count="0" />
+      <LineId Id="1456" Count="0" />
+      <LineId Id="1348" Count="0" />
+      <LineId Id="1681" Count="0" />
+      <LineId Id="1349" Count="8" />
+      <LineId Id="1369" Count="0" />
+      <LineId Id="1371" Count="6" />
+      <LineId Id="1672" Count="1" />
+      <LineId Id="1675" Count="0" />
+      <LineId Id="1677" Count="0" />
+      <LineId Id="1679" Count="0" />
+      <LineId Id="1676" Count="0" />
+      <LineId Id="1674" Count="0" />
+      <LineId Id="1378" Count="1" />
+      <LineId Id="1473" Count="0" />
+      <LineId Id="1381" Count="0" />
+      <LineId Id="1392" Count="0" />
+      <LineId Id="1397" Count="0" />
+      <LineId Id="1683" Count="0" />
+      <LineId Id="1399" Count="3" />
+      <LineId Id="1682" Count="0" />
+      <LineId Id="1461" Count="0" />
+      <LineId Id="1406" Count="0" />
+      <LineId Id="1671" Count="0" />
+      <LineId Id="1288" Count="0" />
+      <LineId Id="1314" Count="5" />
+      <LineId Id="1313" Count="0" />
+      <LineId Id="870" Count="1" />
+      <LineId Id="10" Count="0" />
+    </LineIds>
+    <LineIds Name="Firebird_ReadAlarms.M_Connect">
+      <LineId Id="17" Count="7" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="Firebird_ReadAlarms.M_Disconnect">
+      <LineId Id="20" Count="8" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="Firebird_ReadAlarms.M_Init">
+      <LineId Id="3448" Count="0" />
+      <LineId Id="3450" Count="1" />
+      <LineId Id="3449" Count="0" />
+      <LineId Id="49" Count="0" />
+      <LineId Id="3447" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

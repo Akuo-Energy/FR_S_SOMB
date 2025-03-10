@@ -1,0 +1,217 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <POU Name="FB_TAC" Id="{3dffe17a-8aae-46a1-92d1-220309a36981}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_TAC
+
+VAR_INPUT PERSISTENT
+		ParamTONFiltering						: TIME:=T#200MS; 	(* (ms) Minimum tempo filter before command validation (noise filtering)*)
+		ParamDurationPulse						: TIME:= T#2S;		(* (ms) Duration of the output pulses *)
+	MesDataExd					: TAC_Standard;	
+END_VAR
+
+VAR_INPUT
+	IN_CmdOn_IO					: BOOL;		(* Order coming from Grid Manager *)
+	IN_CmdOff_IO				: BOOL;		(* Order coming from Grid Manager *)
+	IN_MesOn_IO					: BOOL;		(* Measure from equipment *)
+	IN_MesOff_IO				: BOOL;		(* Measure from equipment *)
+	IN_MesFault_IO				: BOOL;
+	
+	IN_CmdDisconnect_IO			: BOOL;
+	
+	IN_CmdOn_Other				: BOOL;
+	IN_CmdOff_Other				: BOOL;
+	
+	IN_CmdReset					: BOOL;
+	
+END_VAR
+VAR_OUTPUT
+	OUT_CmdDisconnect_IO		: BOOL;
+	OUT_CmdOn_IO				: BOOL;	
+	OUT_CmdOff_IO				: BOOL;
+	OUT_MesFault_IO				: BOOL;
+	OUT_CmdH1_IO				: BOOL; // Envoi commande H1 au Relais de Protection
+END_VAR
+
+VAR PERSISTENT
+END_VAR
+
+VAR
+	
+	TONCmdOn					: TON;
+	TONCmdOff					: TON;
+	TONCmdOnAck					: TON;
+	TONCmdOffAck				: TON;
+	
+	R_TRIG_MesOn				: R_TRIG;
+	F_TRIG_MesOn				: F_TRIG;
+	
+	TP_CmdOn					: TP;
+	TP_CmdOff					: TP;
+
+	
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{939c2840-5b45-4985-965c-a11a4fd25379}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// alarm and warning management
+/////////////////
+
+VAR 
+	FB_AlarmCodeManager			: FB_AlarmCodeManager ; 
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[FB_AlarmCodeManager
+(               
+	bAlarm1  := MesDataExd.MesData.OUT_CmdActivated,		// TAC Activated 
+	bAlarm2  := IN_MesOn_IO,					// TAC is ON : Ack from equipment
+	bAlarm3  := MesDataExd.MesData.MesFault,	// Fault on TAC
+	bAlarm4  := OUT_CmdH1_IO,					// Protection relay switched to H1
+	bAlarm5  := IN_CmdDisconnect_IO,			// Disconnect order from TAC
+	bAlarm6  := IN_MesOff_IO,					// TAC is OFF : Ack from equipment
+	bAlarm7  := FALSE,
+	bAlarm8  := FALSE,
+	bAlarm9  := FALSE,
+	bAlarm10 := FALSE,
+	bAlarm11 := FALSE,
+	bAlarm12 := FALSE,
+	bAlarm13 := FALSE,
+	bAlarm14 := FALSE,
+	bAlarm15 := FALSE,
+	wAlarmCode =>MesDataExd.MesData.mesAlarmCode
+);
+
+FB_AlarmCodeManager
+(               
+	bAlarm1  := FALSE,
+	bAlarm2  := NOT MesDataExd.MesData.OUT_CmdActivated,		// TAC Deactivated 
+	bAlarm3  := FALSE,
+	bAlarm4  := FALSE,
+	bAlarm5  := FALSE,
+	bAlarm6  := FALSE,
+	bAlarm7  := FALSE,
+	bAlarm8  := FALSE,
+	bAlarm9  := FALSE,
+	bAlarm10 := FALSE,
+	bAlarm11 := FALSE,
+	bAlarm12 := FALSE,
+	bAlarm13 := FALSE,
+	bAlarm14 := FALSE,
+	bAlarm15 := FALSE,
+	wAlarmCode =>MesDataExd.MesData.MesWarningCode
+);]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Evaluate" Id="{0e2140fb-db12-48c8-a467-e81173173981}">
+      <Declaration><![CDATA[METHOD M_Evaluate
+//////////////////
+//  Evaluate grid variables 
+/////////////////
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	WatchDog	: BOOL;
+END_VAR
+
+
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+//Filtering Input
+TONCmdOn			(IN:=IN_CmdOn_IO		,PT:=ParamTONFiltering);	
+TONCmdOff			(IN:=IN_CmdOff_IO		,PT:=ParamTONFiltering);	
+TONCmdOnAck			(IN:=IN_MesOn_IO		,PT:=ParamTONFiltering);	
+TONCmdOffAck		(IN:=IN_MesOff_IO	,PT:=ParamTONFiltering);
+
+IF IN_CmdReset OR CmdClearFault_G THEN
+	MesDataExd.MesData.MesFault := FALSE;
+END_IF
+
+//Logical Equation
+	(* Command to switch TAC ON from GRID or OPC*)
+		IF TONCmdOn.Q OR IN_CmdOn_Other THEN
+			MesDataExd.MesData.OUT_CmdActivated := TRUE;
+			OUT_CmdOn_IO := TRUE;
+			OUT_CmdOff_IO := FALSE;
+		END_IF
+		
+	(* Command to switch TAC OFF from GRID or OPC*)
+		IF TONCmdOff.Q OR IN_CmdOff_Other THEN
+			MesDataExd.MesData.OUT_CmdActivated := FALSE;
+			OUT_CmdOn_IO := FALSE;
+			OUT_CmdOff_IO := TRUE;
+		END_IF
+		
+	(* Fault received from TAC*) 	
+		IF IN_MesFault_IO THEN
+			MesDataExd.MesData.MesFault := TRUE ;
+		END_IF
+
+// Send orders to TAC:
+	R_TRIG_MesOn(CLK := MesDataExd.MesData.MesActivated);
+	F_TRIG_MesOn(CLK := MesDataExd.MesData.MesActivated);
+	
+	TP_CmdOn(IN := R_TRIG_MesOn.Q, pt := ParamDurationPulse);
+	TP_CmdOff(IN := F_TRIG_MesOn.Q, pt := ParamDurationPulse);
+	
+	OUT_CmdH1_IO := MesDataExd.MesData.OUT_CmdActivated;
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{b5a7d1ee-2f13-41b6-b429-181c6dcca5a3}">
+      <Declaration><![CDATA[METHOD M_Execute : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+	M_Evaluate() ; 
+	M_AlarmManagement(); ]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_TAC">
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_TAC.M_AlarmManagement">
+      <LineId Id="730" Count="17" />
+      <LineId Id="194" Count="0" />
+      <LineId Id="757" Count="18" />
+      <LineId Id="756" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_TAC.M_Evaluate">
+      <LineId Id="2135" Count="1" />
+      <LineId Id="2138" Count="3" />
+      <LineId Id="2271" Count="0" />
+      <LineId Id="2150" Count="0" />
+      <LineId Id="2272" Count="1" />
+      <LineId Id="2158" Count="1" />
+      <LineId Id="2165" Count="0" />
+      <LineId Id="2167" Count="1" />
+      <LineId Id="2274" Count="0" />
+      <LineId Id="2276" Count="0" />
+      <LineId Id="2260" Count="0" />
+      <LineId Id="2264" Count="0" />
+      <LineId Id="2263" Count="0" />
+      <LineId Id="2261" Count="0" />
+      <LineId Id="2277" Count="1" />
+      <LineId Id="2262" Count="0" />
+      <LineId Id="2169" Count="1" />
+      <LineId Id="2190" Count="3" />
+      <LineId Id="2225" Count="1" />
+      <LineId Id="2265" Count="0" />
+      <LineId Id="2268" Count="0" />
+      <LineId Id="2266" Count="1" />
+      <LineId Id="2270" Count="0" />
+      <LineId Id="2269" Count="0" />
+      <LineId Id="2227" Count="0" />
+      <LineId Id="1631" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_TAC.M_Execute">
+      <LineId Id="6" Count="1" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

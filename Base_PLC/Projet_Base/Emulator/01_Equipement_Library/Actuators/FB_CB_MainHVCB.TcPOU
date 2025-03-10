@@ -1,0 +1,75 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_CB_MainHVCB" Id="{6c624d03-d3b5-4739-b6c2-d8e52163af9c}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_CB_MainHVCB EXTENDS FB_CB_Base
+//////////////////
+//  Motorized Circuit Breaker with telecommAND  Requires Open and Close impulsions.
+//////////////////
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance/model specific) 
+	ParamTP_Impulsion		    : TIME 		:= T#2S ;	// (s) Config : Tempo for the start or stop command impulsion
+	ParamComutNc			    : BOOL ;
+	ParamSectLigne			    : BYTE      :=1 ;		// Monitoring du sectionneur de ligne de la MainMVCB .0 = TRUE := Monitoré .1 = TRUE Close is connected
+
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	
+END_VAR
+
+VAR_INPUT
+	A1_Sect				       : FB_CB_MVSwitch;
+
+// I/O Inputs              
+	IN_MesAlarmPwr_IO		           : BOOL ;	              // (NA)[P,H,B] Remote control Power supply Error .  IO  	
+	IN_MesTripped_IO		  		   : BOOL ; 	          // Tripped position of the CB Must Ack To switch in again
+	IN_MesComut_IO			   	   : BOOL := TRUE ; 	  // True if cell is in local position . 
+	IN_MesEarth_IO 			       : BOOL ; 	
+		
+END_VAR
+
+VAR
+	//M_OPENCLOSE VARIABLES//	
+	TP_Open	 			: TP ;				// (NA) Temporisation for Open pulse Command
+	TP_Close 				: TP ;				// (NA) Temporisation for Close pulse Command	
+
+	//M_ALARMMANAGEMENT VARIABLES//
+MesDataExd	        :  CB_MainHVCB_Sch ; 
+	
+//M_STATEMANAGER VARIABLES//
+	
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_Execute" Id="{19a21bce-0ac9-4dad-bf79-1a36de72b0a7}">
+      <Declaration><![CDATA[METHOD M_Execute
+VAR_INPUT
+END_VAR
+
+VAR
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+SUPER^.M_Execute();
+
+// updat.MesDataExd.MesData.to be used in other functions 
+MesDataExd.MesData.MesClosed := RS_Emulate.Q1 ; ]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_CB_MainHVCB">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_CB_MainHVCB.M_Execute">
+      <LineId Id="78" Count="0" />
+      <LineId Id="2" Count="0" />
+      <LineId Id="86" Count="1" />
+      <LineId Id="85" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

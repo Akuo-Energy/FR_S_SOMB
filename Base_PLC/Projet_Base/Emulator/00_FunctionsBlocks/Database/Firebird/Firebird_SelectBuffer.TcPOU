@@ -1,0 +1,194 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="Firebird_SelectBuffer" Id="{a8d81040-5be1-44d7-9633-e9203d5027a7}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK Firebird_SelectBuffer
+VAR CONSTANT
+	CstNbLigne							: DINT:= 250;
+                            			
+END_VAR                     			
+                            			
+VAR_INPUT                   			
+	IN_NomTable							: STRING := 'Table100ms';
+	IN_IdToSelect						: UINT;
+	IN_TimeStampStart					: TIMESTRUCT;
+	IN_hDBID							: UDINT;
+	IN_Reset							: BOOL;
+	IN_Start							: BOOL;
+END_VAR  
+VAR_OUTPUT                  			
+	OUT_Error							: BOOL;
+	OUT_Busy							: BOOL;
+	OUT_Result							: INT;
+	Out_Connected						: BOOL;
+	Out_Array							: ARRAY[1..CstNbLigne] OF St_DataHisto;
+END_VAR 
+
+VAR                         			
+	ETAPE								: UINT;
+	NbLigne								: DINT;                        			
+	TrigReset							: R_TRIG;
+	
+	StringTimeStart						: STRING;
+		                    			
+	StructNull							: St_DataHisto;
+                            			
+    SQLDatabase							: FB_SQLDatabaseEvt('',T#10S);
+	SQLCommand							: FB_SQLCommandEvt('',T#10S);
+	SQLCommandNull						: FB_SQLCommandEvt('',T#10S);
+	SQLResult	 						: FB_SQLResultEvt(sNetID:='', tTimeout   := T#5S); 
+	bConnected							: BOOL;              	        	
+                            			
+	pPosRequete							: DINT;                		
+	RequeteFinale						: STRING(1000);	
+	RequeteFinaleNull					: STRING(1000);	
+	sTimeStamp							: STRING(255);  
+	Format								: FB_FormatString;
+	                			
+	KK									: DINT;
+	                    				
+	CmdStart							: BOOL;
+	TrigCmdExec							: R_TRIG;
+	TrigStart							: R_TRIG;
+	RsStart								: RS;
+	                        			
+	// AlarmManagement      			
+		bBufferMaxFull 					: BOOL;        		
+		bInStructNull					: BOOL;
+		
+	// CONNECT	
+		TrigStartConnect				: R_TRIG;	
+		RsStartConnect					: RS;
+END_VAR    ]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[TrigReset(CLK := IN_Reset);
+IF TrigReset.Q THEN
+
+	//SQLCommand := SQLCommandNull;
+END_IF
+
+TrigStart(CLK := IN_Start);
+IF TrigStart.Q THEN
+	NbLigne := CstNbLigne;
+	StringTimeStart := LEFT(STR := SYSTEMTIME_TO_STRING(IN_TimeStampStart), SIZE := LEN(SYSTEMTIME_TO_STRING(IN_TimeStampStart))-4);
+	
+	Format(sFormat := 'Select first %d * from "%s" where "ParentId" = %d and "TimeStamp" > $'%s$'', sOut => RequeteFinale, 
+	arg1 := F_DINT(in := NbLigne), arg2 := F_STRING(in := IN_NomTable), arg3 := F_UINT(in := IN_IdToSelect), arg4:= F_STRING(in := StringTimeStart));
+	ETAPE := 1;
+END_IF
+
+CASE ETAPE OF
+		
+	1: // CONNECTED
+		IF SQLDatabase.CreateCmd(pSQLCommand := ADR(SQLCommand)) THEN 
+			IF NOT SQLCommAND bError THEN
+				ETAPE := 2;
+			ELSIF SQLCommAND bError THEN
+				ETAPE := 255;
+			END_IF
+		END_IF
+	2:
+		
+		IF SQLCommAND ExecuteDataReturn(pSQLCmd := ADR(RequeteFinale), cbSQLCmd := SIZEOF(RequeteFinale), pSQLDBResult := ADR(SQLResult)) THEN
+    		IF SQLCommAND bError THEN
+    		    ETAPE := 255; 
+    		ELSE
+    		    ETAPE := 3; 
+    		END_IF			
+		END_IF
+	3:
+		IF SQLResult.Read(nStartIndex := 0, nRecordCount := CstNbLigne, pData := ADR(Out_Array), cbData := SIZEOF(Out_Array), bWithVerifying := TRUE, bDataRelease:= TRUE) THEN
+			IF NOT SQLResult.bError THEN
+				ETAPE := 4;
+			ELSE
+				ETAPE := 255;
+			END_IF
+		END_IF
+		
+	4:
+		IF NOT SQLDatabase.bError THEN
+			
+			RequeteFinale := RequeteFinaleNull;
+	
+			TrigStart(CLK := FALSE);
+			RsStart(RESET1 := TRUE);
+			RsStart(RESET1 := FALSE);
+			TrigCmdExec(CLK := FALSE);
+			IN_Start := FALSE;
+			Etape := 0;
+			OUT_Error := FALSE;
+		ELSE 
+			ETAPE := 255;
+		END_IF
+	255: 
+		RequeteFinale := RequeteFinaleNull;
+		//RequeteFinale := '';
+		OUT_Error := TRUE;
+		Etape := 0;
+		RsStart(RESET1 := TRUE);
+		RsStart(RESET1 := FALSE);
+		TrigCmdExec(CLK := FALSE);
+		IN_Start := FALSE;
+END_CASE]]></ST>
+    </Implementation>
+    <Method Name="M_Connect" Id="{5c5471dd-3a2b-4c55-bfc1-018336b3e8df}">
+      <Declaration><![CDATA[METHOD M_Connect : BOOL
+
+VAR_OUTPUT
+END_VAR
+VAR_INPUT
+	IN_hDBID				: UDINT;
+	IN_Start				: BOOL;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[TrigStartConnect(CLK := IN_Start);
+RsStartConnect(SET := TrigStartConnect.Q);
+IF RsStartConnect.Q1 THEN
+	IF SQLDatabase.Connect(hDBID := IN_hDBID) THEN;
+		RsStartConnect(RESET1 := TRUE);
+		RsStartConnect(RESET1 := FALSE);
+	END_IF
+END_IF
+
+Out_Connected := SQLDatabase.bConnected;
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="Firebird_SelectBuffer">
+      <LineId Id="68" Count="1" />
+      <LineId Id="75" Count="1" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="78" Count="2" />
+      <LineId Id="176" Count="2" />
+      <LineId Id="150" Count="1" />
+      <LineId Id="84" Count="0" />
+      <LineId Id="77" Count="0" />
+      <LineId Id="154" Count="0" />
+      <LineId Id="86" Count="9" />
+      <LineId Id="97" Count="0" />
+      <LineId Id="158" Count="0" />
+      <LineId Id="117" Count="0" />
+      <LineId Id="160" Count="2" />
+      <LineId Id="164" Count="0" />
+      <LineId Id="156" Count="1" />
+      <LineId Id="165" Count="0" />
+      <LineId Id="167" Count="1" />
+      <LineId Id="170" Count="0" />
+      <LineId Id="172" Count="0" />
+      <LineId Id="174" Count="0" />
+      <LineId Id="171" Count="0" />
+      <LineId Id="169" Count="0" />
+      <LineId Id="166" Count="0" />
+      <LineId Id="118" Count="3" />
+      <LineId Id="131" Count="18" />
+      <LineId Id="96" Count="0" />
+      <LineId Id="85" Count="0" />
+    </LineIds>
+    <LineIds Name="Firebird_SelectBuffer.M_Connect">
+      <LineId Id="13" Count="3" />
+      <LineId Id="18" Count="2" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="22" Count="1" />
+      <LineId Id="21" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

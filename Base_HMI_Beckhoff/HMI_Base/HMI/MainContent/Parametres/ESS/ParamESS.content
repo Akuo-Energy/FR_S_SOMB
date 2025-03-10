@@ -1,0 +1,922 @@
+﻿<div id="ParamSPP_5" data-tchmi-type="TcHmi.Controls.System.TcHmiContent" data-tchmi-top="0" data-tchmi-left="0" data-tchmi-width="0" data-tchmi-height="0" data-tchmi-right="-218" data-tchmi-bottom="0" data-tchmi-width-mode="Parent" data-tchmi-height-mode="Parent" data-tchmi-creator-viewport-height="1024" data-tchmi-creator-viewport-width="2048" data-tchmi-left-unit="px" data-tchmi-top-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-width-unit="px" data-tchmi-height-unit="px" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px">
+
+<div id="ESS_Background" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiRectangle" data-tchmi-height="1139" data-tchmi-height-unit="px" data-tchmi-left="57" data-tchmi-left-unit="px" data-tchmi-top="58" data-tchmi-top-unit="px" data-tchmi-width="1690" data-tchmi-width-unit="px" data-tchmi-right="-294" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px">
+
+
+        <script data-tchmi-target-attribute="data-tchmi-fill-color" type="application/json">
+{
+  "color": "rgba(234, 234, 215, 1)"
+}
+</script>
+
+        <script data-tchmi-target-attribute="data-tchmi-stroke-color" type="application/json">
+            {
+            "color": "None"
+            }
+        </script>
+    </div>
+<div id="Title_Background" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiRectangle" data-tchmi-left="57" data-tchmi-left-unit="px" data-tchmi-top="58" data-tchmi-top-unit="px" data-tchmi-width="1690" data-tchmi-width-unit="px" data-tchmi-height="50" data-tchmi-zindex="1" data-tchmi-right-unit="px" data-tchmi-height-unit="px" data-tchmi-bottom-unit="px" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px">
+
+
+        <script data-tchmi-target-attribute="data-tchmi-fill-color" type="application/json">
+            {
+            "color": "rgba(153, 204, 51, 1)"
+            }
+        </script>
+
+        <script data-tchmi-target-attribute="data-tchmi-stroke-color" type="application/json">
+            {
+            "color": "None"
+            }
+        </script>
+    </div>
+
+<div id="Title_Parameters" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="742" data-tchmi-left-unit="px" data-tchmi-text="Parameters for :" data-tchmi-top="71" data-tchmi-top-unit="px" data-tchmi-width="190" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-horizontal-alignment="Center" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-font-weight="Bold" data-tchmi-text-font-size="18" data-tchmi-zindex="1" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px">
+
+
+        <script data-tchmi-target-attribute="data-tchmi-text-color" type="application/json">
+{
+  "color": "rgba(0, 0, 0, 1)"
+}
+</script>
+    </div>
+
+<div id="Select_BESS" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiCombobox" data-tchmi-combobox-text="Select BESS" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="932" data-tchmi-left-unit="px" data-tchmi-top="71" data-tchmi-top-unit="px" data-tchmi-width="133" data-tchmi-width-unit="px" data-tchmi-zindex="3" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px" data-tchmi-visibility="Visible" data-tchmi-selected-index="0">
+<script data-tchmi-target-attribute="data-tchmi-content-padding" type="application/json">
+{
+  "top": 3,
+  "right": 3,
+  "bottom": 3,
+  "left": 3
+}
+</script>
+
+
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
+[
+  {
+    "event": "Select_BESS.onSelectionChanged",
+    "actions": [
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%Table_PCS_1::Selected_Id%/ctrl%",
+        "value": {
+          "objectType": "Symbol",
+          "valueType": "tchmi:general#/definitions/String",
+          "symbolExpression": "%ctrl%Select_BESS::SelectedIndex%/ctrl%"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%Table_PCS_2::Selected_Id%/ctrl%",
+        "value": {
+          "objectType": "Symbol",
+          "valueType": "tchmi:general#/definitions/String",
+          "symbolExpression": "%ctrl%Select_BESS::SelectedIndex%/ctrl%"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%Table_PCS_3::Selected_Id%/ctrl%",
+        "value": {
+          "objectType": "Symbol",
+          "valueType": "tchmi:general#/definitions/String",
+          "symbolExpression": "%ctrl%Select_BESS::SelectedIndex%/ctrl%"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%Table_PCS_4::Selected_Id%/ctrl%",
+        "value": {
+          "objectType": "Symbol",
+          "valueType": "tchmi:general#/definitions/String",
+          "symbolExpression": "%ctrl%Select_BESS::SelectedIndex%/ctrl%"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%Table_HVAC_1::Selected_Id%/ctrl%",
+        "value": {
+          "objectType": "Symbol",
+          "valueType": "tchmi:general#/definitions/String",
+          "symbolExpression": "%ctrl%Select_BESS::SelectedIndex%/ctrl%"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%Table_HVAC_2::Selected_Id%/ctrl%",
+        "value": {
+          "objectType": "Symbol",
+          "valueType": "tchmi:general#/definitions/String",
+          "symbolExpression": "%ctrl%Select_BESS::SelectedIndex%/ctrl%"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%Table_HVAC_3::Selected_Id%/ctrl%",
+        "value": {
+          "objectType": "Symbol",
+          "valueType": "tchmi:general#/definitions/String",
+          "symbolExpression": "%ctrl%Select_BESS::SelectedIndex%/ctrl%"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%Table_HVAC_4::Selected_Id%/ctrl%",
+        "value": {
+          "objectType": "Symbol",
+          "valueType": "tchmi:general#/definitions/String",
+          "symbolExpression": "%ctrl%Select_BESS::SelectedIndex%/ctrl%"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%Table_SBMS_1::Selected_Id%/ctrl%",
+        "value": {
+          "objectType": "Symbol",
+          "valueType": "tchmi:general#/definitions/String",
+          "symbolExpression": "%ctrl%Select_BESS::SelectedIndex%/ctrl%"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%Table_SBMS_2::Selected_Id%/ctrl%",
+        "value": {
+          "objectType": "Symbol",
+          "valueType": "tchmi:general#/definitions/String",
+          "symbolExpression": "%ctrl%Select_BESS::SelectedIndex%/ctrl%"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%Table_SBMS_3::Selected_Id%/ctrl%",
+        "value": {
+          "objectType": "Symbol",
+          "valueType": "tchmi:general#/definitions/String",
+          "symbolExpression": "%ctrl%Select_BESS::SelectedIndex%/ctrl%"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%Table_SBMS_4::Selected_Id%/ctrl%",
+        "value": {
+          "objectType": "Symbol",
+          "valueType": "tchmi:general#/definitions/String",
+          "symbolExpression": "%ctrl%Select_BESS::SelectedIndex%/ctrl%"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%Table_BAT_1::Selected_Id%/ctrl%",
+        "value": {
+          "objectType": "Symbol",
+          "valueType": "tchmi:general#/definitions/String",
+          "symbolExpression": "%ctrl%Select_BESS::SelectedIndex%/ctrl%"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%Table_BAT_2::Selected_Id%/ctrl%",
+        "value": {
+          "objectType": "Symbol",
+          "valueType": "tchmi:general#/definitions/String",
+          "symbolExpression": "%ctrl%Select_BESS::SelectedIndex%/ctrl%"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%Table_SoC_1::Selected_Id%/ctrl%",
+        "value": {
+          "objectType": "Symbol",
+          "valueType": "tchmi:general#/definitions/String",
+          "symbolExpression": "%ctrl%Select_BESS::SelectedIndex%/ctrl%"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%Table_SoC_2::Selected_Id%/ctrl%",
+        "value": {
+          "objectType": "Symbol",
+          "valueType": "tchmi:general#/definitions/String",
+          "symbolExpression": "%ctrl%Select_BESS::SelectedIndex%/ctrl%"
+        },
+        "asyncWait": true
+      }
+    ]
+  }
+]
+</script>
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
+{
+  "color": "rgba(255, 255, 255, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-color" type="application/json">
+{
+  "color": "rgba(0, 0, 0, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-drop-down-text-color" type="application/json">
+{
+  "color": "rgba(2, 2, 2, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-drop-down-toggle-button-background-color" type="application/json">
+{
+  "color": "rgba(125, 121, 121, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-drop-down-toggle-button-arrow-color" type="application/json">
+{
+  "color": "rgba(255, 255, 255, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-width" type="application/json">
+{
+  "left": 1,
+  "right": 1,
+  "top": 1,
+  "bottom": 1,
+  "leftUnit": "px",
+  "rightUnit": "px",
+  "topUnit": "px",
+  "bottomUnit": "px"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-style" type="application/json">
+{
+  "left": "Solid",
+  "right": "Solid",
+  "top": "Solid",
+  "bottom": "Solid"
+}
+</script>
+
+
+
+
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-src-data" type="application/json">
+[
+  {
+    "index": 0.0,
+    "text": "BESS 1",
+    "value": 1.0
+  },
+  {
+    "index": 1.0,
+    "text": "BESS 2",
+    "value": 2.0
+  },
+  {
+    "index": 2.0,
+    "text": "BESS 3",
+    "value": 3.0
+  },
+  {
+    "index": 3.0,
+    "text": "BESS 4",
+    "value": 4.0
+  },
+  {
+    "index": 4.0,
+    "text": "BESS 5",
+    "value": 5.0
+  },
+  {
+    "index": 5.0,
+    "text": "BESS 6",
+    "value": 6.0
+  }
+]
+</script>
+</div>
+
+<div id="PCS_Container" data-tchmi-type="TcHmi.Controls.System.TcHmiContainer" data-tchmi-height="538" data-tchmi-height-unit="px" data-tchmi-left="136" data-tchmi-left-unit="px" data-tchmi-top="176" data-tchmi-top-unit="px" data-tchmi-width="556" data-tchmi-width-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px">
+
+<div data-tchmi-grid-row-index="0" data-tchmi-grid-column-index="0" id="Table_PCS_2" data-tchmi-type="TcHmi.Controls.System.TcHmiUserControlHost" data-tchmi-add_title="false" data-tchmi-height="226" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-ratio_label_width="0.4" data-tchmi-ratio_validationvalue1_width="0.4" data-tchmi-ratio_validationvalue2_width="0.4" data-tchmi-start_with_color="White" data-tchmi-table_height="200" data-tchmi-table_width="400" data-tchmi-target-user-control="HMI/UserControls/Table_Params_2Columns.usercontrol" data-tchmi-top="200" data-tchmi-top-unit="px" data-tchmi-width="550" data-tchmi-width-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-title_1="Data" data-tchmi-title_2="PCS1" data-tchmi-title_3="PCS2" data-tchmi-number_rows="5" data-tchmi-selected_id="0" data-tchmi-label_1="Clock Read Time" data-tchmi-label_2="Clock Write Time" data-tchmi-label_3="TimeOut" data-tchmi-label_4="TimePulseTrig" data-tchmi-label_5="ESS Number" data-tchmi-opacity="1" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px" data-tchmi-zindex="9">
+<script data-tchmi-target-attribute="data-tchmi-params" type="application/json">
+{
+  "Parameters_list": [
+    "ParamClockReadTime",
+    "ParamClockWriteTime",
+    "ParamTimeout",
+    "ParamTimePulseTrig",
+    "ParamEssNum",
+    "DON'T FILL THIS OUT (Max rows number = 5)"
+  ],
+  "SelectVariable_indx": 1.0,
+  "TagPart1": "AX_ESS",
+  "TagPart1_bool": true,
+  "TagPart2": "AX_PCS",
+  "TagPart2_bool": true,
+  "TagPart3_bool": false
+}
+</script>
+
+</div>
+<div data-tchmi-grid-row-index="0" data-tchmi-grid-column-index="0" id="Table_PCS_1" data-tchmi-type="TcHmi.Controls.System.TcHmiUserControlHost" data-tchmi-add_title="True" data-tchmi-height="226" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-ratio_label_width="0.4" data-tchmi-ratio_validationvalue1_width="0.4" data-tchmi-ratio_validationvalue2_width="0.4" data-tchmi-start_with_color="White" data-tchmi-table_height="200" data-tchmi-table_width="400" data-tchmi-target-user-control="HMI/UserControls/Table_Params_2Columns.usercontrol" data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-width="554" data-tchmi-width-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-title_1="Data" data-tchmi-title_2="PCS1" data-tchmi-title_3="PCS2" data-tchmi-number_rows="5" data-tchmi-selected_id="0" data-tchmi-label_1="IP Address" data-tchmi-label_2="TCP Port" data-tchmi-label_3="Number of PCS" data-tchmi-label_4="Tempo Com Alarm" data-tchmi-label_5="Tempo Com Warning" data-tchmi-opacity="1" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px" data-tchmi-zindex="10">
+<script data-tchmi-target-attribute="data-tchmi-params" type="application/json">
+{
+  "Parameters_list": [
+    "ParamIPAddress",
+    "ParamTcpPort",
+    "ParamNbPcs",
+    "ParamTempoComAlarm",
+    "ParamTempoComWarning",
+    "DON'T FILL THIS OUT (Max rows number = 5)"
+  ],
+  "SelectVariable_indx": 0.0,
+  "TagPart1": "AX_ESS",
+  "TagPart1_bool": true,
+  "TagPart2": "AX_PCS",
+  "TagPart2_bool": true,
+  "TagPart3_bool": false
+}
+</script>
+
+</div>
+
+<div data-tchmi-grid-row-index="0" data-tchmi-grid-column-index="0" id="Table_PCS_3" data-tchmi-type="TcHmi.Controls.System.TcHmiUserControlHost" data-tchmi-add_title="false" data-tchmi-height="226" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-ratio_label_width="0.4" data-tchmi-ratio_validationvalue1_width="0.4" data-tchmi-ratio_validationvalue2_width="0.4" data-tchmi-start_with_color="White" data-tchmi-table_height="200" data-tchmi-table_width="400" data-tchmi-target-user-control="HMI/UserControls/Table_Params_2Columns.usercontrol" data-tchmi-top="400" data-tchmi-top-unit="px" data-tchmi-width="550" data-tchmi-width-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-title_1="Data" data-tchmi-title_2="PCS1" data-tchmi-title_3="PCS2" data-tchmi-number_rows="5" data-tchmi-selected_id="0" data-tchmi-label_1="PCS Number" data-tchmi-label_2="P nominal" data-tchmi-label_3="Q nominal" data-tchmi-label_4="SetPoint Modbus Mode" data-tchmi-label_5="LVRT Enabled" data-tchmi-opacity="1" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px" data-tchmi-zindex="8">
+<script data-tchmi-target-attribute="data-tchmi-params" type="application/json">
+{
+  "Parameters_list": [
+    "ParamPcsNum",
+    "ParamPnom",
+    "ParamQnom",
+    "ParamSetPtModbusMode",
+    "ParamLVRT_Enabled",
+    "DON'T FILL THIS OUT (Max rows number = 5)"
+  ],
+  "SelectVariable_indx": 1.0,
+  "TagPart1": "AX_ESS",
+  "TagPart1_bool": true,
+  "TagPart2": "AX_PCS",
+  "TagPart2_bool": true,
+  "TagPart3_bool": false
+}
+</script>
+
+</div>
+
+<div data-tchmi-grid-row-index="0" data-tchmi-grid-column-index="0" id="Table_PCS_4" data-tchmi-type="TcHmi.Controls.System.TcHmiUserControlHost" data-tchmi-add_title="false" data-tchmi-height="65" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-ratio_label_width="0.4" data-tchmi-ratio_validationvalue1_width="0.4" data-tchmi-ratio_validationvalue2_width="0.4" data-tchmi-start_with_color="White" data-tchmi-table_height="40" data-tchmi-table_width="400" data-tchmi-target-user-control="HMI/UserControls/Table_Params_2Columns.usercontrol" data-tchmi-top="600" data-tchmi-top-unit="px" data-tchmi-width="550" data-tchmi-width-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-title_1="Data" data-tchmi-title_2="PCS1" data-tchmi-title_3="PCS2" data-tchmi-number_rows="1" data-tchmi-selected_id="0" data-tchmi-label_1="AntiIslanding Enabled" data-tchmi-opacity="1" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px">
+<script data-tchmi-target-attribute="data-tchmi-params" type="application/json">
+{
+  "Parameters_list": [
+    "ParamAntiIslanding_Enabled",
+    "",
+    "",
+    "",
+    "",
+    "DON'T FILL THIS OUT (Max rows number = 5)"
+  ],
+  "SelectVariable_indx": 1.0,
+  "TagPart1": "AX_ESS",
+  "TagPart1_bool": true,
+  "TagPart2": "AX_PCS",
+  "TagPart2_bool": true,
+  "TagPart3_bool": false
+}
+</script>
+
+</div>
+
+</div>
+
+<div id="SBMS_Container" data-tchmi-type="TcHmi.Controls.System.TcHmiContainer" data-tchmi-height="185" data-tchmi-height-unit="px" data-tchmi-left="742" data-tchmi-left-unit="px" data-tchmi-top="482" data-tchmi-top-unit="px" data-tchmi-width="479" data-tchmi-width-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px">
+<div data-tchmi-grid-row-index="0" data-tchmi-grid-column-index="0" id="Table_SBMS_1" data-tchmi-type="TcHmi.Controls.System.TcHmiUserControlHost" data-tchmi-add_title="True" data-tchmi-height="154" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-ratio_label_width="0.4" data-tchmi-ratio_validationvalue1_width="0.3" data-tchmi-ratio_validationvalue2_width="0.3" data-tchmi-start_with_color="White" data-tchmi-table_height="120" data-tchmi-table_width="400" data-tchmi-target-user-control="HMI/UserControls/Table_Params_2Columns.usercontrol" data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-width="470" data-tchmi-width-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-title_1="Data" data-tchmi-title_2="SBMS1" data-tchmi-title_3="SBMS2" data-tchmi-number_rows="3" data-tchmi-opacity="1" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px" data-tchmi-label_1="IP Address" data-tchmi-label_2="TCP Port" data-tchmi-selected_id="0" data-tchmi-label_3="Time Watchdog">
+<script data-tchmi-target-attribute="data-tchmi-params" type="application/json">
+{
+  "Parameters_list": [
+    "ParamIpAddress",
+    "ParamTcpPort",
+    "ParamTimeWatchdog",
+    "",
+    "",
+    "DON'T FILL THIS OUT (Max rows number = 5)"
+  ],
+  "SelectVariable_indx": 1.0,
+  "TagPart1": "AX_ESS",
+  "TagPart1_bool": true,
+  "TagPart2": "AX_Bbms",
+  "TagPart2_bool": true,
+  "TagPart3_bool": false
+}
+</script>
+
+</div>
+<div data-tchmi-grid-row-index="0" data-tchmi-grid-column-index="0" id="Table_SBMS_2" data-tchmi-type="TcHmi.Controls.System.TcHmiUserControlHost" data-tchmi-add_title="false" data-tchmi-height="157" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-ratio_label_width="0.4" data-tchmi-ratio_validationvalue1_width="0.3" data-tchmi-ratio_validationvalue2_width="0.3" data-tchmi-start_with_color="White" data-tchmi-table_height="150" data-tchmi-table_width="300" data-tchmi-target-user-control="HMI/UserControls/Table_Params_2Columns.usercontrol" data-tchmi-top="150" data-tchmi-top-unit="px" data-tchmi-width="374" data-tchmi-width-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-title_1="Data" data-tchmi-title_2="PCS1" data-tchmi-title_3="PCS2" data-tchmi-number_rows="5" data-tchmi-opacity="1" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px" data-tchmi-visibility="Collapsed">
+<script data-tchmi-target-attribute="data-tchmi-params" type="application/json">
+{
+  "Parameters_list": [
+    "ClockReadTime",
+    "ClockWriteTime",
+    "Timeout",
+    "TimePulseTrig",
+    "EssNum",
+    "DON'T FILL THIS OUT (Max rows number = 5)"
+  ],
+  "SelectVariable_indx": 1.0,
+  "TagPart1": "AX_ESS",
+  "TagPart1_bool": true,
+  "TagPart2": "AX_PCS",
+  "TagPart2_bool": true,
+  "TagPart3_bool": false
+}
+</script>
+
+</div>
+
+<div data-tchmi-grid-row-index="0" data-tchmi-grid-column-index="0" id="Table_SBMS_3" data-tchmi-type="TcHmi.Controls.System.TcHmiUserControlHost" data-tchmi-add_title="false" data-tchmi-height="169" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-ratio_label_width="0.4" data-tchmi-ratio_validationvalue1_width="0.3" data-tchmi-ratio_validationvalue2_width="0.3" data-tchmi-start_with_color="White" data-tchmi-table_height="150" data-tchmi-table_width="300" data-tchmi-target-user-control="HMI/UserControls/Table_Params_2Columns.usercontrol" data-tchmi-top="300" data-tchmi-top-unit="px" data-tchmi-width="374" data-tchmi-width-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-title_1="Data" data-tchmi-title_2="PCS1" data-tchmi-title_3="PCS2" data-tchmi-number_rows="5" data-tchmi-opacity="1" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px" data-tchmi-visibility="Collapsed">
+<script data-tchmi-target-attribute="data-tchmi-params" type="application/json">
+{
+  "Parameters_list": [
+    "PcsNum",
+    "Pnom",
+    "Qnom",
+    "SetPtModbusMode",
+    "LVRT Enable",
+    "DON'T FILL THIS OUT (Max rows number = 5)"
+  ],
+  "SelectVariable_indx": 1.0,
+  "TagPart1": "AX_ESS",
+  "TagPart1_bool": true,
+  "TagPart2": "AX_PCS",
+  "TagPart2_bool": true,
+  "TagPart3_bool": false
+}
+</script>
+
+</div>
+
+<div data-tchmi-grid-row-index="0" data-tchmi-grid-column-index="0" id="Table_SBMS_4" data-tchmi-type="TcHmi.Controls.System.TcHmiUserControlHost" data-tchmi-add_title="false" data-tchmi-height="171" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-ratio_label_width="0.4" data-tchmi-ratio_validationvalue1_width="0.3" data-tchmi-ratio_validationvalue2_width="0.3" data-tchmi-start_with_color="White" data-tchmi-table_height="150" data-tchmi-table_width="300" data-tchmi-target-user-control="HMI/UserControls/Table_Params_2Columns.usercontrol" data-tchmi-top="448" data-tchmi-top-unit="px" data-tchmi-width="374" data-tchmi-width-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-title_1="Data" data-tchmi-title_2="PCS1" data-tchmi-title_3="PCS2" data-tchmi-number_rows="5" data-tchmi-opacity="1" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px" data-tchmi-visibility="Collapsed">
+<script data-tchmi-target-attribute="data-tchmi-params" type="application/json">
+{
+  "Parameters_list": [
+    "Anti Island Enabled",
+    "",
+    "",
+    "",
+    "",
+    "DON'T FILL THIS OUT (Max rows number = 5)"
+  ],
+  "SelectVariable_indx": 1.0,
+  "TagPart1": "AX_ESS",
+  "TagPart1_bool": true,
+  "TagPart2": "AX_PCS",
+  "TagPart2_bool": true,
+  "TagPart3_bool": false
+}
+</script>
+
+</div>
+
+<div id="Refresh_Button_" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="23" data-tchmi-height-unit="px" data-tchmi-left="200" data-tchmi-left-unit="px" data-tchmi-text="Refresh" data-tchmi-top="180" data-tchmi-top-unit="px" data-tchmi-width="107" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px" data-tchmi-text-font-size-unit="px" data-tchmi-text-font-size="14" data-tchmi-text-horizontal-alignment="Center" data-tchmi-text-vertical-alignment="Center">
+
+
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">[
+  {
+    "event": "Refresh_Button_.onMouseClick",
+    "actions": [
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%s%PLC1.ParamBESS_HMI.PCS_RefreshValues%/s%",
+        "valueType": "tchmi:general#/definitions/BOOL",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:general#/definitions/BOOL",
+          "value": true
+        },
+        "asyncWait": true
+      }
+    ]
+  }
+]</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-width" type="application/json">
+{
+  "left": 1,
+  "right": 1,
+  "top": 1,
+  "bottom": 1,
+  "leftUnit": "px",
+  "rightUnit": "px",
+  "topUnit": "px",
+  "bottomUnit": "px"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-style" type="application/json">
+{
+  "left": "Solid",
+  "right": "Solid",
+  "top": "Solid",
+  "bottom": "Solid"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-radius" type="application/json">
+{
+  "topLeft": 1.0,
+  "topRight": 1.0,
+  "bottomLeft": 1.0,
+  "bottomRight": 1.0,
+  "topLeftUnit": "px",
+  "topRightUnit": "px",
+  "bottomLeftUnit": "px",
+  "bottomRightUnit": "px"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
+{
+  "color": "rgba(232, 226, 226, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-color" type="application/json">
+{
+  "color": "rgba(2, 2, 2, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-text-color" type="application/json">
+{
+  "color": "rgba(2, 2, 2, 1)"
+}
+</script>
+</div>
+
+</div>
+
+<div id="BAT_Container" data-tchmi-type="TcHmi.Controls.System.TcHmiContainer" data-tchmi-height="248" data-tchmi-height-unit="px" data-tchmi-left="1316" data-tchmi-left-unit="px" data-tchmi-top="176" data-tchmi-top-unit="px" data-tchmi-width="420" data-tchmi-width-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px">
+
+<div id="Table_BAT_1" data-tchmi-type="TcHmi.Controls.System.TcHmiUserControlHost" data-tchmi-add_title="true" data-tchmi-height="176" data-tchmi-height-unit="px" data-tchmi-left="-57" data-tchmi-left-unit="px" data-tchmi-ratio_label_width="0.4" data-tchmi-ratio_validationvalue1_width="0.4" data-tchmi-ratio_validationvalue2_width="0" data-tchmi-selected_id="0" data-tchmi-start_with_color="White" data-tchmi-table_height="150" data-tchmi-table_width="500" data-tchmi-target-user-control="HMI/UserControls/Table_Params_2Columns.usercontrol" data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-width="437" data-tchmi-width-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-title_1="Data" data-tchmi-title_2="BAT Values" data-tchmi-number_rows="5" data-tchmi-label_1="SoC Very Low" data-tchmi-label_2="SoC Very High" data-tchmi-label_3="Delta T° Alarm" data-tchmi-label_4="P SoC Equalize" data-tchmi-label_5="DGPT2 P red." data-tchmi-special_display_variable4="f" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px" data-tchmi-zindex="10">
+<script data-tchmi-target-attribute="data-tchmi-params" type="application/json">
+{
+  "Parameters_list": [
+    "ParamSoCVeryVeryLow",
+    "ParamSoCVeryVeryHigh",
+    "ParamDeviationWarning",
+    "ParamPSoCEqualize",
+    "ParamDGPT2WarningProdLimit",
+    "DON'T FILL THIS OUT (Max rows number = 5)"
+  ],
+  "SelectVariable_indx": 0.0,
+  "TagPart1": "AX_ESS",
+  "TagPart1_bool": true,
+  "TagPart2": "",
+  "TagPart2_bool": false,
+  "TagPart3_bool": false
+}
+</script>
+
+</div>
+
+<div id="Table_BAT_2" data-tchmi-type="TcHmi.Controls.System.TcHmiUserControlHost" data-tchmi-add_title="false" data-tchmi-height="60" data-tchmi-height-unit="px" data-tchmi-left="-57" data-tchmi-left-unit="px" data-tchmi-ratio_label_width="0.4" data-tchmi-ratio_validationvalue1_width="0.4" data-tchmi-ratio_validationvalue2_width="0" data-tchmi-selected_id="0" data-tchmi-start_with_color="White" data-tchmi-table_height="30" data-tchmi-table_width="500" data-tchmi-target-user-control="HMI/UserControls/Table_Params_2Columns.usercontrol" data-tchmi-top="151" data-tchmi-top-unit="px" data-tchmi-width-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-title_1="Data" data-tchmi-title_2="BAT Values" data-tchmi-number_rows="1" data-tchmi-label_1="Time Between PCS Connect" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px" data-tchmi-zindex="0" data-tchmi-width="437">
+<script data-tchmi-target-attribute="data-tchmi-params" type="application/json">
+{
+  "Parameters_list": [
+    "ParamTimeBetweenPcsConnect",
+    "",
+    "",
+    "",
+    "",
+    "DON'T FILL THIS OUT (Max rows number = 5)"
+  ],
+  "SelectVariable_indx": 0.0,
+  "TagPart1": "AX_ESS",
+  "TagPart1_bool": true,
+  "TagPart2": "",
+  "TagPart2_bool": false,
+  "TagPart3_bool": false
+}
+</script>
+
+</div>
+
+</div>
+
+<div data-tchmi-grid-row-index="0" data-tchmi-grid-column-index="0" id="HVAC_Container" data-tchmi-type="TcHmi.Controls.System.TcHmiContainer" data-tchmi-height="286" data-tchmi-height-unit="px" data-tchmi-left="742" data-tchmi-left-unit="px" data-tchmi-top="176" data-tchmi-top-unit="px" data-tchmi-width="507" data-tchmi-width-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px">
+
+<div data-tchmi-grid-row-index="0" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-grid-column-index="0" id="Table_HVAC_1" data-tchmi-type="TcHmi.Controls.System.TcHmiUserControlHost" data-tchmi-add_title="True" data-tchmi-height="226" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-ratio_label_width="0.4" data-tchmi-ratio_validationvalue1_width="0.3" data-tchmi-ratio_validationvalue2_width="0.3" data-tchmi-start_with_color="White" data-tchmi-table_height="200" data-tchmi-table_width="400" data-tchmi-target-user-control="HMI/UserControls/Table_Params_2Columns.usercontrol" data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-width="470" data-tchmi-width-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-title_1="Data" data-tchmi-title_2="HVAC1" data-tchmi-title_3="HVAC2" data-tchmi-number_rows="5" data-tchmi-opacity="1" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px" data-tchmi-selected_id="0" data-tchmi-label_2="TCP Port" data-tchmi-label_1="IP Address" data-tchmi-label_3="Setpoint Temperature" data-tchmi-label_4="Setpoint Hygro" data-tchmi-label_5="Priority">
+<script data-tchmi-target-attribute="data-tchmi-params" type="application/json">
+{
+  "Parameters_list": [
+    "ParamIpAddress",
+    "ParamTcpPort",
+    "IN_SetptTemp",
+    "IN_SetptHygro",
+    "ParamPriority",
+    "DON'T FILL THIS OUT (Max rows number = 5)"
+  ],
+  "SelectVariable_indx": 0.0,
+  "TagPart1": "AX_ESS",
+  "TagPart1_bool": true,
+  "TagPart2": "AX_HVAC",
+  "TagPart2_bool": true,
+  "TagPart3_bool": false
+}
+</script>
+
+</div>
+<div data-tchmi-grid-row-index="0" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-grid-column-index="0" id="Table_HVAC_2" data-tchmi-type="TcHmi.Controls.System.TcHmiUserControlHost" data-tchmi-add_title="false" data-tchmi-height="157" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-ratio_label_width="0.4" data-tchmi-ratio_validationvalue1_width="0.3" data-tchmi-ratio_validationvalue2_width="0.3" data-tchmi-start_with_color="White" data-tchmi-table_height="150" data-tchmi-table_width="300" data-tchmi-target-user-control="HMI/UserControls/Table_Params_2Columns.usercontrol" data-tchmi-top="150" data-tchmi-top-unit="px" data-tchmi-width="374" data-tchmi-width-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-title_1="Data" data-tchmi-title_2="PCS1" data-tchmi-title_3="PCS2" data-tchmi-number_rows="5" data-tchmi-opacity="1" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px" data-tchmi-visibility="Collapsed">
+<script data-tchmi-target-attribute="data-tchmi-params" type="application/json">
+{
+  "Parameters_list": [
+    "ClockReadTime",
+    "ClockWriteTime",
+    "Timeout",
+    "TimePulseTrig",
+    "EssNum",
+    "DON'T FILL THIS OUT (Max rows number = 5)"
+  ],
+  "SelectVariable_indx": 1.0,
+  "TagPart1": "AX_ESS",
+  "TagPart1_bool": true,
+  "TagPart2": "AX_PCS",
+  "TagPart2_bool": true,
+  "TagPart3_bool": false
+}
+</script>
+
+</div>
+
+<div data-tchmi-grid-row-index="0" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-grid-column-index="0" id="Table_HVAC_3" data-tchmi-type="TcHmi.Controls.System.TcHmiUserControlHost" data-tchmi-add_title="false" data-tchmi-height="169" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-ratio_label_width="0.4" data-tchmi-ratio_validationvalue1_width="0.3" data-tchmi-ratio_validationvalue2_width="0.3" data-tchmi-start_with_color="White" data-tchmi-table_height="150" data-tchmi-table_width="300" data-tchmi-target-user-control="HMI/UserControls/Table_Params_2Columns.usercontrol" data-tchmi-top="300" data-tchmi-top-unit="px" data-tchmi-width="374" data-tchmi-width-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-title_1="Data" data-tchmi-title_2="PCS1" data-tchmi-title_3="PCS2" data-tchmi-number_rows="5" data-tchmi-opacity="1" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px" data-tchmi-visibility="Collapsed">
+<script data-tchmi-target-attribute="data-tchmi-params" type="application/json">
+{
+  "Parameters_list": [
+    "PcsNum",
+    "Pnom",
+    "Qnom",
+    "SetPtModbusMode",
+    "LVRT Enable",
+    "DON'T FILL THIS OUT (Max rows number = 5)"
+  ],
+  "SelectVariable_indx": 1.0,
+  "TagPart1": "AX_ESS",
+  "TagPart1_bool": true,
+  "TagPart2": "AX_PCS",
+  "TagPart2_bool": true,
+  "TagPart3_bool": false
+}
+</script>
+
+</div>
+
+<div data-tchmi-grid-row-index="0" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-grid-column-index="0" id="Table_HVAC_4" data-tchmi-type="TcHmi.Controls.System.TcHmiUserControlHost" data-tchmi-add_title="false" data-tchmi-height="171" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-ratio_label_width="0.4" data-tchmi-ratio_validationvalue1_width="0.3" data-tchmi-ratio_validationvalue2_width="0.3" data-tchmi-start_with_color="White" data-tchmi-table_height="150" data-tchmi-table_width="300" data-tchmi-target-user-control="HMI/UserControls/Table_Params_2Columns.usercontrol" data-tchmi-top="448" data-tchmi-top-unit="px" data-tchmi-width="374" data-tchmi-width-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-title_1="Data" data-tchmi-title_2="PCS1" data-tchmi-title_3="PCS2" data-tchmi-number_rows="5" data-tchmi-opacity="1" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px" data-tchmi-visibility="Collapsed">
+<script data-tchmi-target-attribute="data-tchmi-params" type="application/json">
+{
+  "Parameters_list": [
+    "Anti Island Enabled",
+    "",
+    "",
+    "",
+    "",
+    "DON'T FILL THIS OUT (Max rows number = 5)"
+  ],
+  "SelectVariable_indx": 1.0,
+  "TagPart1": "AX_ESS",
+  "TagPart1_bool": true,
+  "TagPart2": "AX_PCS",
+  "TagPart2_bool": true,
+  "TagPart3_bool": false
+}
+</script>
+
+</div>
+
+<div data-tchmi-grid-row-index="0" data-tchmi-grid-column-index="0" id="Reset_Button_HVAC1" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="25" data-tchmi-height-unit="px" data-tchmi-left="175" data-tchmi-left-unit="px" data-tchmi-text="Reset" data-tchmi-top="246" data-tchmi-top-unit="px" data-tchmi-width="105" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-zindex="205"  data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-opacity="1" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px" data-tchmi-text-font-size-unit="px" data-tchmi-text-font-size="14">
+
+
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
+[
+  {
+    "event": "Reset_Button_HVAC1.onMouseClick",
+    "actions": [
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%s%PLC1.ParamBESS_HMI.HVAC1_bReset%/s%",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:general#/definitions/BOOL",
+          "value": true
+        },
+        "asyncWait": true
+      }
+    ]
+  }
+]
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
+{
+  "color": "rgba(232, 226, 226, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-text-color" type="application/json">
+{
+  "color": "rgba(0, 0, 0, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-color" type="application/json">
+{
+  "color": "rgba(0, 0, 0, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-width" type="application/json">
+{
+  "left": 1,
+  "right": 1,
+  "top": 1,
+  "bottom": 1,
+  "leftUnit": "px",
+  "rightUnit": "px",
+  "topUnit": "px",
+  "bottomUnit": "px"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-style" type="application/json">
+{
+  "left": "Solid",
+  "right": "Solid",
+  "top": "Solid",
+  "bottom": "Solid"
+}
+</script>
+</div>
+
+<div data-tchmi-grid-row-index="0" data-tchmi-grid-column-index="0" id="Reset_Button_HVAC2" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="25" data-tchmi-height-unit="px" data-tchmi-left="340" data-tchmi-left-unit="px" data-tchmi-text="Reset" data-tchmi-top="246" data-tchmi-top-unit="px" data-tchmi-width="105" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-zindex="205"  data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-text-font-size-unit="px" data-tchmi-text-font-size="14" data-tchmi-opacity="1" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px">
+
+
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
+[
+  {
+    "event": "Reset_Button_HVAC2.onMouseClick",
+    "actions": [
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%s%PLC1.ParamBESS_HMI.HVAC2_bReset%/s%",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:general#/definitions/BOOL",
+          "value": true
+        },
+        "asyncWait": true
+      }
+    ]
+  }
+]
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
+{
+  "color": "rgba(232, 226, 226, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-text-color" type="application/json">
+{
+  "color": "rgba(2, 2, 2, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-color" type="application/json">
+{
+  "angle": 0.0,
+  "stopPoints": [
+    {
+      "color": "rgba(0, 0, 0, 1)",
+      "stop": "0%"
+    },
+    {
+      "color": "rgba(2, 2, 2, 1)",
+      "stop": "100%"
+    }
+  ]
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-width" type="application/json">
+{
+  "left": 1,
+  "right": 1,
+  "top": 1,
+  "bottom": 1,
+  "leftUnit": "px",
+  "rightUnit": "px",
+  "topUnit": "px",
+  "bottomUnit": "px"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-style" type="application/json">
+{
+  "left": "Solid",
+  "right": "Solid",
+  "top": "Solid",
+  "bottom": "Solid"
+}
+</script>
+</div>
+
+</div>
+
+<div id="SoC_Container" data-tchmi-type="TcHmi.Controls.System.TcHmiContainer" data-tchmi-height="248" data-tchmi-height-unit="px" data-tchmi-left="1316" data-tchmi-left-unit="px" data-tchmi-top="452" data-tchmi-top-unit="px" data-tchmi-width="420" data-tchmi-width-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px">
+
+<div id="Table_SoC_1" data-tchmi-type="TcHmi.Controls.System.TcHmiUserControlHost" data-tchmi-add_title="true" data-tchmi-height="93" data-tchmi-height-unit="px" data-tchmi-left="-51" data-tchmi-left-unit="px" data-tchmi-ratio_label_width="0.4" data-tchmi-ratio_validationvalue1_width="0.4" data-tchmi-ratio_validationvalue2_width="0" data-tchmi-selected_id="0" data-tchmi-start_with_color="White" data-tchmi-table_height="60" data-tchmi-table_width="500" data-tchmi-target-user-control="HMI/UserControls/Table_Params_2Columns.usercontrol" data-tchmi-top="-5" data-tchmi-top-unit="px" data-tchmi-width="436" data-tchmi-width-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-title_1="Data" data-tchmi-title_2="BAT Temperature" data-tchmi-number_rows="2" data-tchmi-label_1="BAT Room Temp Max (°)" data-tchmi-label_2="BAT Room Temp Min (°)" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px">
+<script data-tchmi-target-attribute="data-tchmi-params" type="application/json">
+{
+  "Parameters_list": [
+    "ParamVarMaxAlarm",
+    "ParamVarMinAlarm",
+    "",
+    "P SoC Equalize",
+    "DGPT2 P red",
+    "DON'T FILL THIS OUT (Max rows number = 5)"
+  ],
+  "SelectVariable_indx": 0.0,
+  "TagPart1": "AX_ESS",
+  "TagPart1_bool": true,
+  "TagPart2": "AX_TmpSensors",
+  "TagPart2_bool": true,
+  "TagPart3_bool": false
+}
+</script>
+
+</div>
+
+<div id="Table_SoC_2" data-tchmi-type="TcHmi.Controls.System.TcHmiUserControlHost" data-tchmi-add_title="true" data-tchmi-height="92" data-tchmi-height-unit="px" data-tchmi-left="-51" data-tchmi-left-unit="px" data-tchmi-ratio_label_width="0.4" data-tchmi-ratio_validationvalue1_width="0.4" data-tchmi-ratio_validationvalue2_width="0" data-tchmi-selected_id="0" data-tchmi-start_with_color="White" data-tchmi-table_height="60" data-tchmi-table_width="500" data-tchmi-target-user-control="HMI/UserControls/Table_Params_2Columns.usercontrol" data-tchmi-top="150" data-tchmi-top-unit="px" data-tchmi-width="436" data-tchmi-width-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-title_1="Data" data-tchmi-title_2="BAT Hygro" data-tchmi-number_rows="2" data-tchmi-label_1="BAT Room Hygro Max (%)" data-tchmi-label_2="BAT Room Hygro Min (%)" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px">
+<script data-tchmi-target-attribute="data-tchmi-params" type="application/json">
+{
+  "Parameters_list": [
+    "ParamVarMaxAlarm",
+    "ParamVarMinAlarm",
+    "",
+    "",
+    "",
+    "DON'T FILL THIS OUT (Max rows number = 5)"
+  ],
+  "SelectVariable_indx": 0.0,
+  "TagPart1": "AX_ESS",
+  "TagPart1_bool": true,
+  "TagPart2": "AX_HygroSensors",
+  "TagPart2_bool": true,
+  "TagPart3_bool": false
+}
+</script>
+
+</div>
+
+</div>
+
+</div>

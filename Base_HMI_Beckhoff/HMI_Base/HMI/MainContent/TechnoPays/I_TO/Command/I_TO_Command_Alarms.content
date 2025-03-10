@@ -1,0 +1,616 @@
+﻿<div id="I_TO_Command_Alarms" data-tchmi-type="TcHmi.Controls.System.TcHmiContent" data-tchmi-top="0" data-tchmi-left="0" data-tchmi-width="633.6" data-tchmi-height="640" data-tchmi-left-unit="px" data-tchmi-top-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-width-unit="px" data-tchmi-height-unit="px" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px">
+
+
+<script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
+{
+  "color": "rgba(242, 242, 242, 1)"
+}
+</script>
+<div id="ESS1_12" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiDatagrid" data-tchmi-height="563" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px"    data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-width="380" data-tchmi-width-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-row-height-unit="px" data-tchmi-table-border-width-unit="px" data-tchmi-grid-font-size-unit="px" data-tchmi-show-row-numbers="False" data-tchmi-row-numbers-resizable="False" data-tchmi-row-numbers-width-unit="px" data-tchmi-row-numbers-font-size-unit="px" data-tchmi-header-height-unit="px" data-tchmi-header-font-size-unit="px" data-tchmi-header-height="0" data-tchmi-table-border-width="0" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px" data-tchmi-src-data="%s%PLC1.GVL_CFG.AX_ESS.0.AX_AlarmWords%/s%" data-tchmi-visibility="%i%ESS1_Alarms_Visu%/i%" data-tchmi-grid-font-size="16.5" data-tchmi-grid-font-weight="Bold">
+<script data-tchmi-target-attribute="data-tchmi-src-column" type="application/json">
+[
+  {
+    "name": "Message",
+    "label": "Message",
+    "control": "TextBox",
+    "width": 96,
+    "widthUnit": "%",
+    "resize": false,
+    "sortable": false,
+    "minWidth": 70,
+    "minWidthUnit": "px",
+    "cellBackground": {
+      "color": "rgba(255, 255, 255, 1)"
+    },
+    "textColor": {
+      "color": "rgba(2, 0, 0, 1)"
+    },
+    "editable": true,
+    "horizontalAlignment": "Center",
+    "verticalAlignment": "Center",
+    "headerHorizontalAlignment": "Center",
+    "headerVerticalAlignment": "Center",
+    "format": null
+  }
+]
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-cell-content-padding" type="application/json">
+{
+  "left": 3,
+  "right": 3,
+  "top": 0,
+  "bottom": 0,
+  "leftUnit": "px",
+  "rightUnit": "px",
+  "topUnit": "px",
+  "bottomUnit": "px"
+}
+</script>
+
+
+<script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
+{
+  "color": "None"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-color" type="application/json">
+{
+  "color": "rgba(0, 0, 0, 1)"
+}
+</script>
+
+
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-filter" type="application/json">
+[
+  {
+    "path": "Message",
+    "comparator": "!=",
+    "value": ""
+  }
+]
+</script>
+</div>
+
+<div id="ESS2" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiDatagrid" data-tchmi-height="563" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px"    data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-width="380" data-tchmi-width-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-row-height-unit="px" data-tchmi-table-border-width-unit="px" data-tchmi-grid-font-size-unit="px" data-tchmi-show-row-numbers="False" data-tchmi-row-numbers-resizable="False" data-tchmi-row-numbers-width-unit="px" data-tchmi-row-numbers-font-size-unit="px" data-tchmi-header-height-unit="px" data-tchmi-header-font-size-unit="px" data-tchmi-header-height="0" data-tchmi-table-border-width="0" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px" data-tchmi-src-data="%s%PLC1.GVL_CFG.AX_ESS.1.AX_AlarmWords%/s%" data-tchmi-visibility="%i%ESS2_Alarms_Visu%/i%" data-tchmi-grid-font-size="16.5" data-tchmi-grid-font-weight="Bold">
+<script data-tchmi-target-attribute="data-tchmi-src-column" type="application/json">
+[
+  {
+    "name": "Message",
+    "label": "Message",
+    "control": "TextBox",
+    "width": 96,
+    "widthUnit": "%",
+    "resize": false,
+    "sortable": false,
+    "minWidth": 70,
+    "minWidthUnit": "px",
+    "cellBackground": {
+      "color": "rgba(255, 255, 255, 1)"
+    },
+    "textColor": {
+      "color": "rgba(2, 0, 0, 1)"
+    },
+    "editable": true,
+    "horizontalAlignment": "Center",
+    "verticalAlignment": "Center",
+    "headerHorizontalAlignment": "Center",
+    "headerVerticalAlignment": "Center",
+    "format": null
+  }
+]
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-cell-content-padding" type="application/json">
+{
+  "left": 3,
+  "right": 3,
+  "top": 0,
+  "bottom": 0,
+  "leftUnit": "px",
+  "rightUnit": "px",
+  "topUnit": "px",
+  "bottomUnit": "px"
+}
+</script>
+
+
+<script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
+{
+  "color": "None"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-color" type="application/json">
+{
+  "color": "None"
+}
+</script>
+
+
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-filter" type="application/json">
+[
+  {
+    "path": "Message",
+    "comparator": "!=",
+    "value": ""
+  }
+]
+</script>
+</div>
+
+<div id="ESS3" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiDatagrid" data-tchmi-height="563" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px"    data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-width="380" data-tchmi-width-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-row-height-unit="px" data-tchmi-table-border-width-unit="px" data-tchmi-grid-font-size-unit="px" data-tchmi-show-row-numbers="False" data-tchmi-row-numbers-resizable="False" data-tchmi-row-numbers-width-unit="px" data-tchmi-row-numbers-font-size-unit="px" data-tchmi-header-height-unit="px" data-tchmi-header-font-size-unit="px" data-tchmi-header-height="0" data-tchmi-table-border-width="0" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px" data-tchmi-src-data="%s%PLC1.GVL_CFG.AX_ESS.2.AX_AlarmWords%/s%" data-tchmi-visibility="%i%ESS3_Alarms_Visu%/i%" data-tchmi-grid-font-size="16.5" data-tchmi-grid-font-weight="Bold">
+<script data-tchmi-target-attribute="data-tchmi-src-column" type="application/json">
+[
+  {
+    "name": "Message",
+    "label": "Message",
+    "control": "TextBox",
+    "width": 96,
+    "widthUnit": "%",
+    "resize": false,
+    "sortable": false,
+    "minWidth": 70,
+    "minWidthUnit": "px",
+    "cellBackground": {
+      "color": "rgba(255, 255, 255, 1)"
+    },
+    "textColor": {
+      "color": "rgba(2, 0, 0, 1)"
+    },
+    "editable": true,
+    "horizontalAlignment": "Center",
+    "verticalAlignment": "Center",
+    "headerHorizontalAlignment": "Center",
+    "headerVerticalAlignment": "Center",
+    "format": null
+  }
+]
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-cell-content-padding" type="application/json">
+{
+  "left": 3,
+  "right": 3,
+  "top": 0,
+  "bottom": 0,
+  "leftUnit": "px",
+  "rightUnit": "px",
+  "topUnit": "px",
+  "bottomUnit": "px"
+}
+</script>
+
+
+<script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
+{
+  "color": "None"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-color" type="application/json">
+{
+  "color": "None"
+}
+</script>
+
+
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-filter" type="application/json">
+[
+  {
+    "path": "Message",
+    "comparator": "!=",
+    "value": ""
+  }
+]
+</script>
+</div>
+
+<div id="ESS4" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiDatagrid" data-tchmi-height="563" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px"    data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-width="380" data-tchmi-width-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-row-height-unit="px" data-tchmi-table-border-width-unit="px" data-tchmi-grid-font-size-unit="px" data-tchmi-show-row-numbers="False" data-tchmi-row-numbers-resizable="False" data-tchmi-row-numbers-width-unit="px" data-tchmi-row-numbers-font-size-unit="px" data-tchmi-header-height-unit="px" data-tchmi-header-font-size-unit="px" data-tchmi-header-height="0" data-tchmi-table-border-width="0" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px" data-tchmi-src-data="%s%PLC1.GVL_CFG.AX_ESS.3.AX_AlarmWords%/s%" data-tchmi-visibility="%i%ESS4_Alarms_Visu%/i%" data-tchmi-grid-font-size="16.5" data-tchmi-grid-font-weight="Bold">
+<script data-tchmi-target-attribute="data-tchmi-src-column" type="application/json">
+[
+  {
+    "name": "Message",
+    "label": "Message",
+    "control": "TextBox",
+    "width": 96,
+    "widthUnit": "%",
+    "resize": false,
+    "sortable": false,
+    "minWidth": 70,
+    "minWidthUnit": "px",
+    "cellBackground": {
+      "color": "rgba(255, 255, 255, 1)"
+    },
+    "textColor": {
+      "color": "rgba(2, 0, 0, 1)"
+    },
+    "editable": true,
+    "horizontalAlignment": "Center",
+    "verticalAlignment": "Center",
+    "headerHorizontalAlignment": "Center",
+    "headerVerticalAlignment": "Center",
+    "format": null
+  }
+]
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-cell-content-padding" type="application/json">
+{
+  "left": 3,
+  "right": 3,
+  "top": 0,
+  "bottom": 0,
+  "leftUnit": "px",
+  "rightUnit": "px",
+  "topUnit": "px",
+  "bottomUnit": "px"
+}
+</script>
+
+
+<script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
+{
+  "color": "None"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-color" type="application/json">
+{
+  "color": "None"
+}
+</script>
+
+
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-filter" type="application/json">
+[
+  {
+    "path": "Message",
+    "comparator": "!=",
+    "value": ""
+  }
+]
+</script>
+</div>
+
+<div id="ESS5" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiDatagrid" data-tchmi-height="563" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px"    data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-width="380" data-tchmi-width-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-row-height-unit="px" data-tchmi-table-border-width-unit="px" data-tchmi-grid-font-size-unit="px" data-tchmi-show-row-numbers="False" data-tchmi-row-numbers-resizable="False" data-tchmi-row-numbers-width-unit="px" data-tchmi-row-numbers-font-size-unit="px" data-tchmi-header-height-unit="px" data-tchmi-header-font-size-unit="px" data-tchmi-header-height="0" data-tchmi-table-border-width="0" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px" data-tchmi-src-data="%s%PLC1.GVL_CFG.AX_ESS.4.AX_AlarmWords%/s%" data-tchmi-visibility="%i%ESS5_Alarms_Visu%/i%" data-tchmi-grid-font-size="16.5" data-tchmi-grid-font-weight="Bold">
+<script data-tchmi-target-attribute="data-tchmi-src-column" type="application/json">
+[
+  {
+    "name": "Message",
+    "label": "Message",
+    "control": "TextBox",
+    "width": 96,
+    "widthUnit": "%",
+    "resize": false,
+    "sortable": false,
+    "minWidth": 70,
+    "minWidthUnit": "px",
+    "cellBackground": {
+      "color": "rgba(255, 255, 255, 1)"
+    },
+    "textColor": {
+      "color": "rgba(2, 0, 0, 1)"
+    },
+    "editable": true,
+    "horizontalAlignment": "Center",
+    "verticalAlignment": "Center",
+    "headerHorizontalAlignment": "Center",
+    "headerVerticalAlignment": "Center",
+    "format": null
+  }
+]
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-cell-content-padding" type="application/json">
+{
+  "left": 3,
+  "right": 3,
+  "top": 0,
+  "bottom": 0,
+  "leftUnit": "px",
+  "rightUnit": "px",
+  "topUnit": "px",
+  "bottomUnit": "px"
+}
+</script>
+
+
+<script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
+{
+  "color": "None"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-color" type="application/json">
+{
+  "color": "None"
+}
+</script>
+
+
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-filter" type="application/json">
+[
+  {
+    "path": "Message",
+    "comparator": "!=",
+    "value": ""
+  }
+]
+</script>
+</div>
+
+<div id="HPP" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiDatagrid" data-tchmi-height="563" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px"    data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-width="405" data-tchmi-width-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-row-height-unit="px" data-tchmi-table-border-width-unit="px" data-tchmi-grid-font-size-unit="px" data-tchmi-show-row-numbers="False" data-tchmi-row-numbers-resizable="False" data-tchmi-row-numbers-width-unit="px" data-tchmi-row-numbers-font-size-unit="px" data-tchmi-header-height-unit="px" data-tchmi-header-font-size-unit="px" data-tchmi-header-height="0" data-tchmi-table-border-width="0" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px" data-tchmi-src-data="%s%PLC1.GVL_CFG.A1_HPP.AX_AlarmWords%/s%" data-tchmi-visibility="%i%HPP_Alarms_Visu%/i%" data-tchmi-row-numbers-font-style="Normal" data-tchmi-row-numbers-font-weight="Normal" data-tchmi-grid-font-size="15" data-tchmi-grid-font-weight="Bold">
+<script data-tchmi-target-attribute="data-tchmi-src-column" type="application/json">
+[
+  {
+    "name": "Message",
+    "label": "Message",
+    "control": "TextBox",
+    "width": 96,
+    "widthUnit": "%",
+    "resize": false,
+    "sortable": false,
+    "minWidth": 70,
+    "minWidthUnit": "px",
+    "cellBackground": {
+      "color": "rgba(255, 255, 255, 1)"
+    },
+    "textColor": {
+      "color": "rgba(2, 0, 0, 1)"
+    },
+    "editable": true,
+    "horizontalAlignment": "Center",
+    "verticalAlignment": "Center",
+    "headerHorizontalAlignment": "Center",
+    "headerVerticalAlignment": "Center",
+    "format": null
+  }
+]
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-cell-content-padding" type="application/json">
+{
+  "left": 3,
+  "right": 3,
+  "top": 0,
+  "bottom": 0,
+  "leftUnit": "px",
+  "rightUnit": "px",
+  "topUnit": "px",
+  "bottomUnit": "px"
+}
+</script>
+
+
+<script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
+{
+  "color": "None"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-color" type="application/json">
+{
+  "color": "rgba(2, 0, 0, 1)"
+}
+</script>
+
+
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-filter" type="application/json">
+[
+  {
+    "path": "Message",
+    "comparator": "!=",
+    "value": ""
+  }
+]
+</script>
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-border-width" type="application/json">
+{
+  "left": 0,
+  "right": 0,
+  "top": 0,
+  "bottom": 0,
+  "leftUnit": "px",
+  "rightUnit": "px",
+  "topUnit": "px",
+  "bottomUnit": "px"
+}
+</script>
+
+
+</div>
+
+<div id="PDL_5" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiDatagrid" data-tchmi-height="563" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px"    data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-width="380" data-tchmi-width-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-row-height-unit="px" data-tchmi-table-border-width-unit="px" data-tchmi-grid-font-size-unit="px" data-tchmi-show-row-numbers="False" data-tchmi-row-numbers-resizable="False" data-tchmi-row-numbers-width-unit="px" data-tchmi-row-numbers-font-size-unit="px" data-tchmi-header-height-unit="px" data-tchmi-header-font-size-unit="px" data-tchmi-header-height="0" data-tchmi-table-border-width="0" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px" data-tchmi-src-data="%s%PLC1.GVL_CFG.A1_PDL.AX_AlarmWords%/s%" data-tchmi-visibility="%i%PDL_Alarms_Visu%/i%" data-tchmi-grid-font-weight="Bold" data-tchmi-grid-font-size="16.5">
+<script data-tchmi-target-attribute="data-tchmi-src-column" type="application/json">
+[
+  {
+    "name": "Message",
+    "label": "Message",
+    "control": "TextBox",
+    "width": 96,
+    "widthUnit": "%",
+    "resize": false,
+    "sortable": false,
+    "minWidth": 70,
+    "minWidthUnit": "px",
+    "cellBackground": {
+      "color": "rgba(255, 255, 255, 1)"
+    },
+    "textColor": {
+      "color": "rgba(2, 0, 0, 1)"
+    },
+    "editable": true,
+    "horizontalAlignment": "Center",
+    "verticalAlignment": "Center",
+    "headerHorizontalAlignment": "Center",
+    "headerVerticalAlignment": "Center",
+    "format": null
+  }
+]
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-cell-content-padding" type="application/json">
+{
+  "left": 3,
+  "right": 3,
+  "top": 0,
+  "bottom": 0,
+  "leftUnit": "px",
+  "rightUnit": "px",
+  "topUnit": "px",
+  "bottomUnit": "px"
+}
+</script>
+
+
+<script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
+{
+  "color": "None"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-color" type="application/json">
+{
+  "color": "rgba(0, 0, 0, 1)"
+}
+</script>
+
+
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-filter" type="application/json">
+[
+  {
+    "path": "Message",
+    "comparator": "!=",
+    "value": ""
+  }
+]
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-table-border-style" type="application/json">
+{
+  "left": "Solid",
+  "right": "Solid",
+  "top": "Solid",
+  "bottom": "Solid"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-table-border-color" type="application/json">
+{
+  "color": "rgba(0, 0, 0, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-width" type="application/json">
+{
+  "left": 0,
+  "right": 0,
+  "top": 0,
+  "bottom": 0,
+  "leftUnit": "px",
+  "rightUnit": "px",
+  "topUnit": "px",
+  "bottomUnit": "px"
+}
+</script>
+
+
+</div>
+
+<div id="ESS6" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiDatagrid" data-tchmi-height="563" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px"    data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-width="380" data-tchmi-width-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-row-height-unit="px" data-tchmi-table-border-width-unit="px" data-tchmi-grid-font-size-unit="px" data-tchmi-show-row-numbers="False" data-tchmi-row-numbers-resizable="False" data-tchmi-row-numbers-width-unit="px" data-tchmi-row-numbers-font-size-unit="px" data-tchmi-header-height-unit="px" data-tchmi-header-font-size-unit="px" data-tchmi-header-height="0" data-tchmi-table-border-width="0" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px" data-tchmi-src-data="%s%PLC1.GVL_CFG.AX_ESS.5.AX_AlarmWords%/s%" data-tchmi-visibility="%i%ESS6_Alarms_Visu%/i%" data-tchmi-grid-font-size="16.5" data-tchmi-grid-font-weight="Bold">
+<script data-tchmi-target-attribute="data-tchmi-src-column" type="application/json">
+[
+  {
+    "name": "Message",
+    "label": "Message",
+    "control": "TextBox",
+    "width": 96,
+    "widthUnit": "%",
+    "resize": false,
+    "sortable": false,
+    "minWidth": 70,
+    "minWidthUnit": "px",
+    "cellBackground": {
+      "color": "rgba(255, 255, 255, 1)"
+    },
+    "textColor": {
+      "color": "rgba(2, 0, 0, 1)"
+    },
+    "editable": true,
+    "horizontalAlignment": "Center",
+    "verticalAlignment": "Center",
+    "headerHorizontalAlignment": "Center",
+    "headerVerticalAlignment": "Center",
+    "format": null
+  }
+]
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-cell-content-padding" type="application/json">
+{
+  "left": 3,
+  "right": 3,
+  "top": 0,
+  "bottom": 0,
+  "leftUnit": "px",
+  "rightUnit": "px",
+  "topUnit": "px",
+  "bottomUnit": "px"
+}
+</script>
+
+
+<script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
+{
+  "color": "None"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-color" type="application/json">
+{
+  "color": "None"
+}
+</script>
+
+
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-filter" type="application/json">
+[
+  {
+    "path": "Message",
+    "comparator": "!=",
+    "value": ""
+  }
+]
+</script>
+</div>
+
+</div>

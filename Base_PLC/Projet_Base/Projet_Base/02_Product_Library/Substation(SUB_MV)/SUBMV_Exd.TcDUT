@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="SUBMV_Exd" Id="{830c61c4-e2b0-4e3c-97f0-ebdc34d30492}">
+    <Declaration><![CDATA[///////////
+// Structure SUBMV_Exd. Main operating Data to be saved (ex: OPC)  
+//////////
+TYPE SUBMV_Exd :
+STRUCT
+	
+	MesData				: SUBMV;													(* Substation MV			*)
+                                                        							
+	GRID				: GRID_Enedis;				 								(* Grid Enedis         		*)
+	MainMVCB			: CB_MainMVCB_Sch;			 								(* MainMVCB : DM2        	*)
+	AX_FeederMVCB		: ARRAY[1..CstNbFeederMVCB_G] OF  CB_FeederMVCB_Sch ; 	 	(* FeederMVCB : IMPV       	*)
+	AX_GridMVCB			: ARRAY[1..CstNbGridMVCB_G] OF CB_Standard ;				(* GridMVCB = IM1          	*)
+	MeasureMVCB			: CB_MeasureMVCB_Sch;										(* MeasureMVCB = CM2    	*)
+	AuxMVCB				: CB_AuxMVCB_Sch;											(* QM                  		*)
+	CB_24V				: TOR_Standard; 														(* CB All In One 24V   		*)
+	CB_48V				: TOR_Standard; 														(* CB All In One 48V   		*)
+	CB_230V				: TOR_Standard; 														(* CB All In One 230V  		*)
+	MainCB_LV			: TOR_Standard; 														(* Main CB Low voltage (LV) *)
+	DS_MV				: TOR_Standard; 														(* Door sensor MV room		*)
+	DS_LV				: TOR_Standard; 														(* Door sensor LV room		*)
+	ES_MV				: TOR_Standard; 														(* Emergency stop MV 		*)
+	ES_LV				: TOR_Standard; 														(* Emergency stop LV 		*)
+	SD_MV				: TOR_Standard; 														(* Smoke detector MV 		*)
+	SD_LV				: TOR_Standard; 														(* Smoke detector LV 		*)
+	ProtectRelay		: ProtectRelay_S48;			    							(* Protection relay S48		*)
+	PM					: PM_DirisA40;														(* Power meter				*)
+	PM_Aux				: PM_Standard; 														(* Power meter aux			*)
+	UPS_48v				: UPS_ENERIS ;												(* UPS UPS_ENERIS 48V 		*)
+	UPS_24v				: UPS_ENERIS; 												(* UPS UPS_ENERIS 24V 		*)
+	Router_ADSL			: Router_Standard; 													(* ADSL Router 				*)
+	Router_4G			: Router_Standard;													(* 4G Router 				*)
+	IPC 				: IPC_Standard;	                        							(* IPC  *)
+	Transfo_Aux			: Transfo_MV; 												(* Transfo 					*)
+	HVAC				: HVAC;  													(* HVAC 					*)
+	MS 					: TOR_Standard;														(* Movement sensor			*)                                                  								                                                							
+		                                                	
+END_STRUCT                                              	
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

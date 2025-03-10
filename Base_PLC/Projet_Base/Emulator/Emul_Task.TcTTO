@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <Task Name="Emul_Task" Id="{3e5883e2-5ec4-45a9-90a9-59d593c038c8}">
+    <!--CycleTime in micro seconds.-->
+    <CycleTime>25000</CycleTime>
+    <Priority>16</Priority>
+    <PouCall>
+      <Name>MAIN_Emul</Name>
+    </PouCall>
+    <TaskFBGuid>{4c35b710-369d-42b1-87ae-b53b91b0b2d5}</TaskFBGuid>
+    <Fb_init>{680be6ef-7662-42c5-8d44-aad1b584cdd9}</Fb_init>
+    <Fb_exit>{b8156218-fa86-412a-bada-e198fea0a437}</Fb_exit>
+    <CycleUpdate>{7879a7ab-9402-47a4-a2b9-8d6d5825774c}</CycleUpdate>
+    <PostCycleUpdate>{a0874f9c-ee58-4114-8c65-66dcc22f839b}</PostCycleUpdate>
+  </Task>
+</TcPlcObject>

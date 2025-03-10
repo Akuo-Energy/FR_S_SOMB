@@ -1,0 +1,2148 @@
+﻿<div id="Button_" data-tchmi-type="TcHmi.Controls.System.TcHmiUserControl" data-tchmi-top="0" data-tchmi-left="0" data-tchmi-width="%f%%pp%Button_Width%/pp% + 5%/f%" data-tchmi-height="%f%%pp%Button_Height%/pp% + 5%/f%" data-tchmi-width-unit="px" data-tchmi-height-unit="px" data-tchmi-creator-viewport-width="500" data-tchmi-creator-viewport-height="500" data-tchmi-left-unit="px" data-tchmi-top-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px">
+
+<script data-tchmi-target-attribute="data-tchmi-border-width" type="application/json">
+{
+  "left": 2,
+  "right": 2,
+  "top": 2,
+  "bottom": 2,
+  "leftUnit": "px",
+  "rightUnit": "px",
+  "topUnit": "px",
+  "bottomUnit": "px"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-style" type="application/json">
+{
+  "left": "Solid",
+  "right": "Solid",
+  "top": "Solid",
+  "bottom": "Solid"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-radius" type="application/json">
+{
+  "topLeft": 5.0,
+  "topRight": 5.0,
+  "bottomLeft": 5.0,
+  "bottomRight": 5.0,
+  "topLeftUnit": "px",
+  "topRightUnit": "px",
+  "bottomLeftUnit": "px",
+  "bottomRightUnit": "px"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
+{
+  "color": "None"
+}
+</script>
+
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
+[
+  {
+    "event": "%pp%Shape%/pp%",
+    "actions": [
+      {
+        "objectType": "Comment",
+        "comment": "Change the shape, initial value and dimensions based on parameters"
+      },
+      {
+        "objectType": "SwitchCase",
+        "active": true,
+        "compare": {
+          "objectType": "Symbol",
+          "valueType": "tchmi:general#/definitions/String",
+          "symbolExpression": "%pp%Shape%/pp%"
+        },
+        "cases": [
+          {
+            "caseValue": {
+              "objectType": "StaticValue",
+              "valueType": "tchmi:project#/definitions/Shape",
+              "value": "Circle"
+            },
+            "actions": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%Circle_::Visibility%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:framework#/definitions/Visibility",
+                  "value": "Visible"
+                },
+                "asyncWait": true
+              },
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TextButton::BorderColor%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:framework#/definitions/Color",
+                  "value": {
+                    "color": "None"
+                  }
+                },
+                "asyncWait": true
+              },
+              {
+                "objectType": "WriteToSymbol",
+                "active": false,
+                "symbolExpression": "%ctrl%Circle_::Zindex%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/UDINT",
+                  "value": 0
+                },
+                "asyncWait": true
+              },
+              {
+                "objectType": "WriteToSymbol",
+                "active": false,
+                "symbolExpression": "%ctrl%TextButton::Zindex%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/UDINT",
+                  "value": 0
+                },
+                "asyncWait": true
+              },
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TextButton::BackgroundColor%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:framework#/definitions/Color",
+                  "value": {
+                    "color": "None"
+                  }
+                },
+                "asyncWait": true
+              },
+              {
+                "objectType": "Condition",
+                "active": true,
+                "parts": [
+                  {
+                    "if": [
+                      {
+                        "compare1": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Associated_Variable%/pp%"
+                        },
+                        "compare2": {
+                          "objectType": "StaticValue",
+                          "valueType": "tchmi:general#/definitions/Boolean",
+                          "value": true
+                        },
+                        "compareOperator": "==",
+                        "logic": null
+                      }
+                    ],
+                    "then": [
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TextButton::Text%/ctrl%",
+                        "value": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Text_On%/pp%"
+                        },
+                        "asyncWait": true
+                      },
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%Circle_::FillColor%/ctrl%",
+                        "value": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Color_On%/pp%"
+                        },
+                        "asyncWait": true
+                      }
+                    ]
+                  },
+                  {
+                    "else": [
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TextButton::Text%/ctrl%",
+                        "value": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Text_Off%/pp%"
+                        },
+                        "asyncWait": true
+                      },
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%Circle_::FillColor%/ctrl%",
+                        "value": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Color_Off%/pp%"
+                        },
+                        "asyncWait": true
+                      }
+                    ]
+                  }
+                ],
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "caseValue": {
+              "objectType": "StaticValue",
+              "valueType": "tchmi:project#/definitions/Shape",
+              "value": "Square"
+            },
+            "actions": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%Circle_::Visibility%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:framework#/definitions/Visibility",
+                  "value": "Hidden"
+                },
+                "asyncWait": true
+              },
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TextButton::BorderColor%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:framework#/definitions/Color",
+                  "value": {
+                    "color": "rgba(0, 0, 0, 1)"
+                  }
+                },
+                "asyncWait": true
+              },
+              {
+                "objectType": "Condition",
+                "active": true,
+                "parts": [
+                  {
+                    "if": [
+                      {
+                        "compare1": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Associated_Variable%/pp%"
+                        },
+                        "compare2": {
+                          "objectType": "StaticValue",
+                          "valueType": "tchmi:general#/definitions/Boolean",
+                          "value": true
+                        },
+                        "compareOperator": "==",
+                        "logic": null
+                      }
+                    ],
+                    "then": [
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TextButton::Text%/ctrl%",
+                        "value": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Text_On%/pp%"
+                        },
+                        "asyncWait": true
+                      },
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TextButton::BackgroundColor%/ctrl%",
+                        "value": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Color_On%/pp%"
+                        },
+                        "asyncWait": true
+                      }
+                    ]
+                  },
+                  {
+                    "else": [
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TextButton::Text%/ctrl%",
+                        "value": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Text_Off%/pp%"
+                        },
+                        "asyncWait": true
+                      },
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TextButton::BackgroundColor%/ctrl%",
+                        "value": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Color_Off%/pp%"
+                        },
+                        "asyncWait": true
+                      }
+                    ]
+                  }
+                ],
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "caseValue": {
+              "objectType": "StaticValue",
+              "valueType": "tchmi:project#/definitions/Shape",
+              "value": "Rectangle"
+            },
+            "actions": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%Circle_::Visibility%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:framework#/definitions/Visibility",
+                  "value": "Hidden"
+                },
+                "asyncWait": true
+              },
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TextButton::BorderColor%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:framework#/definitions/Color",
+                  "value": {
+                    "color": "rgba(0, 0, 0, 1)"
+                  }
+                },
+                "asyncWait": true
+              },
+              {
+                "objectType": "Condition",
+                "active": true,
+                "parts": [
+                  {
+                    "if": [
+                      {
+                        "compare1": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Associated_Variable%/pp%"
+                        },
+                        "compare2": {
+                          "objectType": "StaticValue",
+                          "valueType": "tchmi:general#/definitions/Boolean",
+                          "value": true
+                        },
+                        "compareOperator": "==",
+                        "logic": null
+                      }
+                    ],
+                    "then": [
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TextButton::Text%/ctrl%",
+                        "value": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Text_On%/pp%"
+                        },
+                        "asyncWait": true
+                      },
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TextButton::BackgroundColor%/ctrl%",
+                        "value": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Color_On%/pp%"
+                        },
+                        "asyncWait": true
+                      }
+                    ]
+                  },
+                  {
+                    "else": [
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TextButton::Text%/ctrl%",
+                        "value": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Text_Off%/pp%"
+                        },
+                        "asyncWait": true
+                      },
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TextButton::BackgroundColor%/ctrl%",
+                        "value": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Color_Off%/pp%"
+                        },
+                        "asyncWait": true
+                      }
+                    ]
+                  }
+                ],
+                "asyncWait": true
+              }
+            ]
+          }
+        ],
+        "asyncWait": true
+      }
+    ]
+  },
+  {
+    "event": "%pp%Associated_Variable%/pp%",
+    "actions": [
+      {
+        "objectType": "Comment",
+        "comment": "Change the shape, initial value and dimensions based on parameters"
+      },
+      {
+        "objectType": "SwitchCase",
+        "active": true,
+        "compare": {
+          "objectType": "Symbol",
+          "valueType": "tchmi:general#/definitions/String",
+          "symbolExpression": "%pp%Shape%/pp%"
+        },
+        "cases": [
+          {
+            "caseValue": {
+              "objectType": "StaticValue",
+              "valueType": "tchmi:project#/definitions/Shape",
+              "value": "Circle"
+            },
+            "actions": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%Circle_::Visibility%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:framework#/definitions/Visibility",
+                  "value": "Visible"
+                },
+                "asyncWait": true
+              },
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TextButton::BorderColor%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:framework#/definitions/Color",
+                  "value": {
+                    "color": "None"
+                  }
+                },
+                "asyncWait": true
+              },
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TextButton::BackgroundColor%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:framework#/definitions/Color",
+                  "value": {
+                    "color": "None"
+                  }
+                },
+                "asyncWait": true
+              },
+              {
+                "objectType": "Condition",
+                "active": true,
+                "parts": [
+                  {
+                    "if": [
+                      {
+                        "compare1": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Associated_Variable%/pp%"
+                        },
+                        "compare2": {
+                          "objectType": "StaticValue",
+                          "valueType": "tchmi:general#/definitions/Boolean",
+                          "value": true
+                        },
+                        "compareOperator": "==",
+                        "logic": null
+                      }
+                    ],
+                    "then": [
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TextButton::Text%/ctrl%",
+                        "value": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Text_On%/pp%"
+                        },
+                        "asyncWait": true
+                      },
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%Circle_::FillColor%/ctrl%",
+                        "value": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Color_On%/pp%"
+                        },
+                        "asyncWait": true
+                      }
+                    ]
+                  },
+                  {
+                    "else": [
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TextButton::Text%/ctrl%",
+                        "value": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Text_Off%/pp%"
+                        },
+                        "asyncWait": true
+                      },
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%Circle_::FillColor%/ctrl%",
+                        "value": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Color_Off%/pp%"
+                        },
+                        "asyncWait": true
+                      }
+                    ]
+                  }
+                ],
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "caseValue": {
+              "objectType": "StaticValue",
+              "valueType": "tchmi:project#/definitions/Shape",
+              "value": "Square"
+            },
+            "actions": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%Circle_::Visibility%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:framework#/definitions/Visibility",
+                  "value": "Hidden"
+                },
+                "asyncWait": true
+              },
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TextButton::BorderColor%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:framework#/definitions/Color",
+                  "value": {
+                    "color": "rgba(0, 0, 0, 1)"
+                  }
+                },
+                "asyncWait": true
+              },
+              {
+                "objectType": "Condition",
+                "active": true,
+                "parts": [
+                  {
+                    "if": [
+                      {
+                        "compare1": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Associated_Variable%/pp%"
+                        },
+                        "compare2": {
+                          "objectType": "StaticValue",
+                          "valueType": "tchmi:general#/definitions/Boolean",
+                          "value": true
+                        },
+                        "compareOperator": "==",
+                        "logic": null
+                      }
+                    ],
+                    "then": [
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TextButton::Text%/ctrl%",
+                        "value": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Text_On%/pp%"
+                        },
+                        "asyncWait": true
+                      },
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TextButton::BackgroundColor%/ctrl%",
+                        "value": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Color_On%/pp%"
+                        },
+                        "asyncWait": true
+                      }
+                    ]
+                  },
+                  {
+                    "else": [
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TextButton::Text%/ctrl%",
+                        "value": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Text_Off%/pp%"
+                        },
+                        "asyncWait": true
+                      },
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TextButton::BackgroundColor%/ctrl%",
+                        "value": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Color_Off%/pp%"
+                        },
+                        "asyncWait": true
+                      }
+                    ]
+                  }
+                ],
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "caseValue": {
+              "objectType": "StaticValue",
+              "valueType": "tchmi:project#/definitions/Shape",
+              "value": "Rectangle"
+            },
+            "actions": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%Circle_::Visibility%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:framework#/definitions/Visibility",
+                  "value": "Hidden"
+                },
+                "asyncWait": true
+              },
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TextButton::BorderColor%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:framework#/definitions/Color",
+                  "value": {
+                    "color": "rgba(0, 0, 0, 1)"
+                  }
+                },
+                "asyncWait": true
+              },
+              {
+                "objectType": "Condition",
+                "active": true,
+                "parts": [
+                  {
+                    "if": [
+                      {
+                        "compare1": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Associated_Variable%/pp%"
+                        },
+                        "compare2": {
+                          "objectType": "StaticValue",
+                          "valueType": "tchmi:general#/definitions/Boolean",
+                          "value": true
+                        },
+                        "compareOperator": "==",
+                        "logic": null
+                      }
+                    ],
+                    "then": [
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TextButton::Text%/ctrl%",
+                        "value": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Text_On%/pp%"
+                        },
+                        "asyncWait": true
+                      },
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TextButton::BackgroundColor%/ctrl%",
+                        "value": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Color_On%/pp%"
+                        },
+                        "asyncWait": true
+                      }
+                    ]
+                  },
+                  {
+                    "else": [
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TextButton::Text%/ctrl%",
+                        "value": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Text_Off%/pp%"
+                        },
+                        "asyncWait": true
+                      },
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TextButton::BackgroundColor%/ctrl%",
+                        "value": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Color_Off%/pp%"
+                        },
+                        "asyncWait": true
+                      }
+                    ]
+                  }
+                ],
+                "asyncWait": true
+              }
+            ]
+          }
+        ],
+        "asyncWait": true
+      },
+      {
+        "objectType": "Condition",
+        "active": true,
+        "parts": [
+          {
+            "if": [
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "symbolExpression": "%pp%Associated_Variable%/pp%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/Boolean",
+                  "value": true
+                },
+                "compareOperator": "==",
+                "logic": null
+              }
+            ],
+            "then": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TextButton::Text%/ctrl%",
+                "value": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "symbolExpression": "%pp%Text_On%/pp%"
+                },
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "else": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TextButton::Text%/ctrl%",
+                "value": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "symbolExpression": "%pp%Text_Off%/pp%"
+                },
+                "asyncWait": true
+              }
+            ]
+          }
+        ],
+        "asyncWait": true
+      }
+    ]
+  },
+  {
+    "event": "%pp%Button_Height%/pp%",
+    "actions": [
+      {
+        "objectType": "Condition",
+        "active": true,
+        "parts": [
+          {
+            "if": [
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "symbolExpression": "%pp%Button_Height%/pp%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/INT",
+                  "value": 10
+                },
+                "compareOperator": ">",
+                "logic": null
+              }
+            ],
+            "then": [
+              {
+                "objectType": "Condition",
+                "active": true,
+                "parts": [
+                  {
+                    "if": [
+                      {
+                        "compare1": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Button_Height%/pp%"
+                        },
+                        "compare2": {
+                          "objectType": "StaticValue",
+                          "valueType": "tchmi:general#/definitions/INT",
+                          "value": 20
+                        },
+                        "compareOperator": ">",
+                        "logic": null
+                      }
+                    ],
+                    "then": [
+                      {
+                        "objectType": "Condition",
+                        "active": true,
+                        "parts": [
+                          {
+                            "if": [
+                              {
+                                "compare1": {
+                                  "objectType": "Symbol",
+                                  "valueType": "tchmi:general#/definitions/String",
+                                  "symbolExpression": "%pp%Button_Height%/pp%"
+                                },
+                                "compare2": {
+                                  "objectType": "StaticValue",
+                                  "valueType": "tchmi:general#/definitions/INT",
+                                  "value": 50
+                                },
+                                "compareOperator": ">",
+                                "logic": null
+                              }
+                            ],
+                            "then": [
+                              {
+                                "objectType": "Condition",
+                                "active": true,
+                                "parts": [
+                                  {
+                                    "if": [
+                                      {
+                                        "compare1": {
+                                          "objectType": "Symbol",
+                                          "valueType": "tchmi:general#/definitions/String",
+                                          "symbolExpression": "%pp%Button_Height%/pp%"
+                                        },
+                                        "compare2": {
+                                          "objectType": "StaticValue",
+                                          "valueType": "tchmi:general#/definitions/INT",
+                                          "value": 80
+                                        },
+                                        "compareOperator": ">",
+                                        "logic": null
+                                      }
+                                    ],
+                                    "then": [
+                                      {
+                                        "objectType": "Condition",
+                                        "active": true,
+                                        "parts": [
+                                          {
+                                            "if": [
+                                              {
+                                                "compare1": {
+                                                  "objectType": "Symbol",
+                                                  "valueType": "tchmi:general#/definitions/String",
+                                                  "symbolExpression": "%pp%Button_Height%/pp%"
+                                                },
+                                                "compare2": {
+                                                  "objectType": "StaticValue",
+                                                  "valueType": "tchmi:general#/definitions/INT",
+                                                  "value": 100
+                                                },
+                                                "compareOperator": ">",
+                                                "logic": null
+                                              }
+                                            ],
+                                            "then": [
+                                              {
+                                                "objectType": "WriteToSymbol",
+                                                "active": true,
+                                                "symbolExpression": "%ctrl%TextButton::TextFontSize%/ctrl%",
+                                                "value": {
+                                                  "objectType": "StaticValue",
+                                                  "valueType": "tchmi:framework#/definitions/MeasurementValue",
+                                                  "value": 30.0
+                                                },
+                                                "asyncWait": true
+                                              }
+                                            ]
+                                          },
+                                          {
+                                            "else": [
+                                              {
+                                                "objectType": "WriteToSymbol",
+                                                "active": true,
+                                                "symbolExpression": "%ctrl%TextButton::TextFontSize%/ctrl%",
+                                                "value": {
+                                                  "objectType": "StaticValue",
+                                                  "valueType": "tchmi:framework#/definitions/MeasurementValue",
+                                                  "value": 25.0
+                                                },
+                                                "asyncWait": true
+                                              }
+                                            ]
+                                          }
+                                        ],
+                                        "asyncWait": true
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "else": [
+                                      {
+                                        "objectType": "WriteToSymbol",
+                                        "active": true,
+                                        "symbolExpression": "%ctrl%TextButton::TextFontSize%/ctrl%",
+                                        "value": {
+                                          "objectType": "StaticValue",
+                                          "valueType": "tchmi:framework#/definitions/MeasurementValue",
+                                          "value": 20.0
+                                        },
+                                        "asyncWait": true
+                                      }
+                                    ]
+                                  }
+                                ],
+                                "asyncWait": true
+                              }
+                            ]
+                          },
+                          {
+                            "else": [
+                              {
+                                "objectType": "WriteToSymbol",
+                                "active": true,
+                                "symbolExpression": "%ctrl%TextButton::TextFontSize%/ctrl%",
+                                "value": {
+                                  "objectType": "StaticValue",
+                                  "valueType": "tchmi:framework#/definitions/MeasurementValue",
+                                  "value": 16.0
+                                },
+                                "asyncWait": true
+                              }
+                            ]
+                          }
+                        ],
+                        "asyncWait": true
+                      }
+                    ]
+                  },
+                  {
+                    "else": [
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TextButton::TextFontSize%/ctrl%",
+                        "value": {
+                          "objectType": "StaticValue",
+                          "valueType": "tchmi:framework#/definitions/MeasurementValue",
+                          "value": 14.0
+                        },
+                        "asyncWait": true
+                      }
+                    ]
+                  }
+                ],
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "else": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TextButton::TextFontSize%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:framework#/definitions/MeasurementValue",
+                  "value": 7.0
+                },
+                "asyncWait": true
+              }
+            ]
+          }
+        ],
+        "asyncWait": true
+      }
+    ]
+  },
+  {
+    "event": "ToggleButton.onMouseClick",
+    "actions": [
+      {
+        "objectType": "Condition",
+        "active": true,
+        "parts": [
+          {
+            "if": [
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "symbolExpression": "%pp%Associated_Variable%/pp%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": false
+                },
+                "compareOperator": "==",
+                "logic": null
+              }
+            ],
+            "then": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%pp%Associated_Variable%/pp%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": true
+                },
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "else": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%pp%Associated_Variable%/pp%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": false
+                },
+                "asyncWait": true
+              }
+            ]
+          }
+        ],
+        "asyncWait": true
+      },
+      {
+        "objectType": "SwitchCase",
+        "active": true,
+        "compare": {
+          "objectType": "Symbol",
+          "valueType": "tchmi:general#/definitions/String",
+          "symbolExpression": "%pp%Shape%/pp%"
+        },
+        "cases": [
+          {
+            "caseValue": {
+              "objectType": "StaticValue",
+              "valueType": "tchmi:project#/definitions/Shape",
+              "value": "Circle"
+            },
+            "actions": [
+              {
+                "objectType": "JavaScript",
+                "active": true,
+                "sourceLines": [
+                  "setTimeout(() => {TcHmi.Symbol.writeEx('%ctrl%Circle_::BorderColor%/ctrl%',{'color': 'rgba(180, 180, 187, 255)'}); }, 100); // Gray\nsetTimeout(() => {TcHmi.Symbol.writeEx('%ctrl%Circle_::BorderColor%/ctrl%',{'color': 'rgba(0, 0, 0, 255)'}); }, 200); // Original color"
+                ],
+                "injectContextObject": false,
+                "asyncWait": true,
+                "waitMode": "Synchronous"
+              },
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%Circle_::Visibility%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:framework#/definitions/Visibility",
+                  "value": "Visible"
+                },
+                "asyncWait": true
+              },
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TextButton::BorderColor%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:framework#/definitions/Color",
+                  "value": {
+                    "color": "None"
+                  }
+                },
+                "asyncWait": true
+              },
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TextButton::BackgroundColor%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:framework#/definitions/Color",
+                  "value": {
+                    "color": "None"
+                  }
+                },
+                "asyncWait": true
+              },
+              {
+                "objectType": "Condition",
+                "active": true,
+                "parts": [
+                  {
+                    "if": [
+                      {
+                        "compare1": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Associated_Variable%/pp%"
+                        },
+                        "compare2": {
+                          "objectType": "StaticValue",
+                          "valueType": "tchmi:general#/definitions/Boolean",
+                          "value": true
+                        },
+                        "compareOperator": "==",
+                        "logic": null
+                      }
+                    ],
+                    "then": [
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TextButton::Text%/ctrl%",
+                        "value": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Text_On%/pp%"
+                        },
+                        "asyncWait": true
+                      },
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%Circle_::FillColor%/ctrl%",
+                        "value": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Color_On%/pp%"
+                        },
+                        "asyncWait": true
+                      }
+                    ]
+                  },
+                  {
+                    "else": [
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TextButton::Text%/ctrl%",
+                        "value": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Text_Off%/pp%"
+                        },
+                        "asyncWait": true
+                      },
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%Circle_::FillColor%/ctrl%",
+                        "value": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Color_Off%/pp%"
+                        },
+                        "asyncWait": true
+                      }
+                    ]
+                  }
+                ],
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "caseValue": {
+              "objectType": "StaticValue",
+              "valueType": "tchmi:project#/definitions/Shape",
+              "value": "Square"
+            },
+            "actions": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%Circle_::Visibility%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:framework#/definitions/Visibility",
+                  "value": "Hidden"
+                },
+                "asyncWait": true
+              },
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TextButton::BorderColor%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:framework#/definitions/Color",
+                  "value": {
+                    "color": "rgba(0, 0, 0, 1)"
+                  }
+                },
+                "asyncWait": true
+              },
+              {
+                "objectType": "Condition",
+                "active": true,
+                "parts": [
+                  {
+                    "if": [
+                      {
+                        "compare1": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Associated_Variable%/pp%"
+                        },
+                        "compare2": {
+                          "objectType": "StaticValue",
+                          "valueType": "tchmi:general#/definitions/Boolean",
+                          "value": true
+                        },
+                        "compareOperator": "==",
+                        "logic": null
+                      }
+                    ],
+                    "then": [
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TextButton::Text%/ctrl%",
+                        "value": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Text_On%/pp%"
+                        },
+                        "asyncWait": true
+                      },
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TextButton::BackgroundColor%/ctrl%",
+                        "value": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Color_On%/pp%"
+                        },
+                        "asyncWait": true
+                      }
+                    ]
+                  },
+                  {
+                    "else": [
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TextButton::Text%/ctrl%",
+                        "value": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Text_Off%/pp%"
+                        },
+                        "asyncWait": true
+                      },
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TextButton::BackgroundColor%/ctrl%",
+                        "value": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Color_Off%/pp%"
+                        },
+                        "asyncWait": true
+                      }
+                    ]
+                  }
+                ],
+                "asyncWait": true
+              },
+              {
+                "objectType": "JavaScript",
+                "active": true,
+                "sourceLines": [
+                  "setTimeout(() => {TcHmi.Symbol.writeEx('%ctrl%TextButton::BorderColor%/ctrl%',{'color': 'rgba(180, 180, 187, 255)'}); }, 100); // Gray\nsetTimeout(() => {TcHmi.Symbol.writeEx('%ctrl%TextButton::BorderColor%/ctrl%',{'color': 'rgba(0, 0, 0, 255)'}); }, 200); // Original color"
+                ],
+                "injectContextObject": false,
+                "asyncWait": true,
+                "waitMode": "Synchronous"
+              }
+            ]
+          },
+          {
+            "caseValue": {
+              "objectType": "StaticValue",
+              "valueType": "tchmi:project#/definitions/Shape",
+              "value": "Rectangle"
+            },
+            "actions": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%Circle_::Visibility%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:framework#/definitions/Visibility",
+                  "value": "Hidden"
+                },
+                "asyncWait": true
+              },
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TextButton::BorderColor%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:framework#/definitions/Color",
+                  "value": {
+                    "color": "rgba(0, 0, 0, 1)"
+                  }
+                },
+                "asyncWait": true
+              },
+              {
+                "objectType": "Condition",
+                "active": true,
+                "parts": [
+                  {
+                    "if": [
+                      {
+                        "compare1": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Associated_Variable%/pp%"
+                        },
+                        "compare2": {
+                          "objectType": "StaticValue",
+                          "valueType": "tchmi:general#/definitions/Boolean",
+                          "value": true
+                        },
+                        "compareOperator": "==",
+                        "logic": null
+                      }
+                    ],
+                    "then": [
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TextButton::Text%/ctrl%",
+                        "value": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Text_On%/pp%"
+                        },
+                        "asyncWait": true
+                      },
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TextButton::BackgroundColor%/ctrl%",
+                        "value": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Color_On%/pp%"
+                        },
+                        "asyncWait": true
+                      }
+                    ]
+                  },
+                  {
+                    "else": [
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TextButton::Text%/ctrl%",
+                        "value": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Text_Off%/pp%"
+                        },
+                        "asyncWait": true
+                      },
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TextButton::BackgroundColor%/ctrl%",
+                        "value": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Color_Off%/pp%"
+                        },
+                        "asyncWait": true
+                      }
+                    ]
+                  }
+                ],
+                "asyncWait": true
+              },
+              {
+                "objectType": "JavaScript",
+                "active": true,
+                "sourceLines": [
+                  "setTimeout(() => {TcHmi.Symbol.writeEx('%ctrl%TextButton::BorderColor%/ctrl%',{'color': 'rgba(180, 180, 187, 255)'}); }, 100); // Gray\nsetTimeout(() => {TcHmi.Symbol.writeEx('%ctrl%TextButton::BorderColor%/ctrl%',{'color': 'rgba(0, 0, 0, 255)'}); }, 200); // Original color"
+                ],
+                "injectContextObject": false,
+                "asyncWait": true,
+                "waitMode": "Synchronous"
+              }
+            ]
+          }
+        ],
+        "asyncWait": true
+      },
+      {
+        "objectType": "Condition",
+        "active": true,
+        "parts": [
+          {
+            "if": [
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "symbolExpression": "%pp%Toggle_Button%/pp%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/Boolean",
+                  "value": false
+                },
+                "compareOperator": "==",
+                "logic": null
+              }
+            ],
+            "then": [
+              {
+                "objectType": "JavaScript",
+                "active": true,
+                "sourceLines": [
+                  "var var_ = TcHmi.Symbol.readEx('%pp%Associated_Variable%/pp%');\n\nif (var_) {\n       \n    setTimeout(() => {TcHmi.Symbol.writeEx('%pp%Associated_Variable%/pp%',\"False\"); }, 1000);\n}\nelse {     \n       setTimeout(() => {TcHmi.Symbol.writeEx('%pp%Associated_Variable%/pp%',\"True\"); }, 1000);        \n}"
+                ],
+                "injectContextObject": false,
+                "asyncWait": true,
+                "waitMode": "Synchronous"
+              },
+              {
+                "objectType": "WriteToSymbol",
+                "active": false,
+                "symbolExpression": "%pp%Associated_Variable%/pp%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": false
+                },
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "else": []
+          }
+        ],
+        "asyncWait": true
+      }
+    ]
+  },
+  {
+    "event": "Button_.onMouseClick",
+    "actions": [
+      {
+        "objectType": "Condition",
+        "active": true,
+        "parts": [
+          {
+            "if": [
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "symbolExpression": "%pp%Associated_Variable%/pp%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": false
+                },
+                "compareOperator": "==",
+                "logic": null
+              }
+            ],
+            "then": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%pp%Associated_Variable%/pp%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": true
+                },
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "else": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%pp%Associated_Variable%/pp%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": false
+                },
+                "asyncWait": true
+              }
+            ]
+          }
+        ],
+        "asyncWait": true
+      },
+      {
+        "objectType": "SwitchCase",
+        "active": true,
+        "compare": {
+          "objectType": "Symbol",
+          "valueType": "tchmi:general#/definitions/String",
+          "symbolExpression": "%pp%Shape%/pp%"
+        },
+        "cases": [
+          {
+            "caseValue": {
+              "objectType": "StaticValue",
+              "valueType": "tchmi:project#/definitions/Shape",
+              "value": "Circle"
+            },
+            "actions": [
+              {
+                "objectType": "JavaScript",
+                "active": true,
+                "sourceLines": [
+                  "setTimeout(() => {TcHmi.Symbol.writeEx('%ctrl%Circle_::BorderColor%/ctrl%',{'color': 'rgba(180, 180, 187, 255)'}); }, 100); // Gray\nsetTimeout(() => {TcHmi.Symbol.writeEx('%ctrl%Circle_::BorderColor%/ctrl%',{'color': 'rgba(0, 0, 0, 255)'}); }, 200); // Original color"
+                ],
+                "injectContextObject": false,
+                "asyncWait": true,
+                "waitMode": "Synchronous"
+              },
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%Circle_::Visibility%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:framework#/definitions/Visibility",
+                  "value": "Visible"
+                },
+                "asyncWait": true
+              },
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TextButton::BorderColor%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:framework#/definitions/Color",
+                  "value": {
+                    "color": "None"
+                  }
+                },
+                "asyncWait": true
+              },
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TextButton::BackgroundColor%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:framework#/definitions/Color",
+                  "value": {
+                    "color": "None"
+                  }
+                },
+                "asyncWait": true
+              },
+              {
+                "objectType": "Condition",
+                "active": true,
+                "parts": [
+                  {
+                    "if": [
+                      {
+                        "compare1": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Associated_Variable%/pp%"
+                        },
+                        "compare2": {
+                          "objectType": "StaticValue",
+                          "valueType": "tchmi:general#/definitions/Boolean",
+                          "value": true
+                        },
+                        "compareOperator": "==",
+                        "logic": null
+                      }
+                    ],
+                    "then": [
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TextButton::Text%/ctrl%",
+                        "value": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Text_On%/pp%"
+                        },
+                        "asyncWait": true
+                      },
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%Circle_::FillColor%/ctrl%",
+                        "value": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Color_On%/pp%"
+                        },
+                        "asyncWait": true
+                      }
+                    ]
+                  },
+                  {
+                    "else": [
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TextButton::Text%/ctrl%",
+                        "value": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Text_Off%/pp%"
+                        },
+                        "asyncWait": true
+                      },
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%Circle_::FillColor%/ctrl%",
+                        "value": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Color_Off%/pp%"
+                        },
+                        "asyncWait": true
+                      }
+                    ]
+                  }
+                ],
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "caseValue": {
+              "objectType": "StaticValue",
+              "valueType": "tchmi:project#/definitions/Shape",
+              "value": "Square"
+            },
+            "actions": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%Circle_::Visibility%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:framework#/definitions/Visibility",
+                  "value": "Hidden"
+                },
+                "asyncWait": true
+              },
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TextButton::BorderColor%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:framework#/definitions/Color",
+                  "value": {
+                    "color": "rgba(0, 0, 0, 1)"
+                  }
+                },
+                "asyncWait": true
+              },
+              {
+                "objectType": "Condition",
+                "active": true,
+                "parts": [
+                  {
+                    "if": [
+                      {
+                        "compare1": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Associated_Variable%/pp%"
+                        },
+                        "compare2": {
+                          "objectType": "StaticValue",
+                          "valueType": "tchmi:general#/definitions/Boolean",
+                          "value": true
+                        },
+                        "compareOperator": "==",
+                        "logic": null
+                      }
+                    ],
+                    "then": [
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TextButton::Text%/ctrl%",
+                        "value": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Text_On%/pp%"
+                        },
+                        "asyncWait": true
+                      },
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TextButton::BackgroundColor%/ctrl%",
+                        "value": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Color_On%/pp%"
+                        },
+                        "asyncWait": true
+                      }
+                    ]
+                  },
+                  {
+                    "else": [
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TextButton::Text%/ctrl%",
+                        "value": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Text_Off%/pp%"
+                        },
+                        "asyncWait": true
+                      },
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TextButton::BackgroundColor%/ctrl%",
+                        "value": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Color_Off%/pp%"
+                        },
+                        "asyncWait": true
+                      }
+                    ]
+                  }
+                ],
+                "asyncWait": true
+              },
+              {
+                "objectType": "JavaScript",
+                "active": true,
+                "sourceLines": [
+                  "setTimeout(() => {TcHmi.Symbol.writeEx('%ctrl%TextButton::BorderColor%/ctrl%',{'color': 'rgba(180, 180, 187, 255)'}); }, 100); // Gray\nsetTimeout(() => {TcHmi.Symbol.writeEx('%ctrl%TextButton::BorderColor%/ctrl%',{'color': 'rgba(0, 0, 0, 255)'}); }, 200); // Original color"
+                ],
+                "injectContextObject": false,
+                "asyncWait": true,
+                "waitMode": "Synchronous"
+              }
+            ]
+          },
+          {
+            "caseValue": {
+              "objectType": "StaticValue",
+              "valueType": "tchmi:project#/definitions/Shape",
+              "value": "Rectangle"
+            },
+            "actions": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%Circle_::Visibility%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:framework#/definitions/Visibility",
+                  "value": "Hidden"
+                },
+                "asyncWait": true
+              },
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TextButton::BorderColor%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:framework#/definitions/Color",
+                  "value": {
+                    "color": "rgba(0, 0, 0, 1)"
+                  }
+                },
+                "asyncWait": true
+              },
+              {
+                "objectType": "Condition",
+                "active": true,
+                "parts": [
+                  {
+                    "if": [
+                      {
+                        "compare1": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Associated_Variable%/pp%"
+                        },
+                        "compare2": {
+                          "objectType": "StaticValue",
+                          "valueType": "tchmi:general#/definitions/Boolean",
+                          "value": true
+                        },
+                        "compareOperator": "==",
+                        "logic": null
+                      }
+                    ],
+                    "then": [
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TextButton::Text%/ctrl%",
+                        "value": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Text_On%/pp%"
+                        },
+                        "asyncWait": true
+                      },
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TextButton::BackgroundColor%/ctrl%",
+                        "value": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Color_On%/pp%"
+                        },
+                        "asyncWait": true
+                      }
+                    ]
+                  },
+                  {
+                    "else": [
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TextButton::Text%/ctrl%",
+                        "value": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Text_Off%/pp%"
+                        },
+                        "asyncWait": true
+                      },
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TextButton::BackgroundColor%/ctrl%",
+                        "value": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%Color_Off%/pp%"
+                        },
+                        "asyncWait": true
+                      }
+                    ]
+                  }
+                ],
+                "asyncWait": true
+              },
+              {
+                "objectType": "JavaScript",
+                "active": true,
+                "sourceLines": [
+                  "setTimeout(() => {TcHmi.Symbol.writeEx('%ctrl%TextButton::BorderColor%/ctrl%',{'color': 'rgba(180, 180, 187, 255)'}); }, 100); // Gray\nsetTimeout(() => {TcHmi.Symbol.writeEx('%ctrl%TextButton::BorderColor%/ctrl%',{'color': 'rgba(0, 0, 0, 255)'}); }, 200); // Original color"
+                ],
+                "injectContextObject": false,
+                "asyncWait": true,
+                "waitMode": "Synchronous"
+              }
+            ]
+          }
+        ],
+        "asyncWait": true
+      },
+      {
+        "objectType": "Condition",
+        "active": true,
+        "parts": [
+          {
+            "if": [
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "symbolExpression": "%pp%Toggle_Button%/pp%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/Boolean",
+                  "value": false
+                },
+                "compareOperator": "==",
+                "logic": null
+              }
+            ],
+            "then": [
+              {
+                "objectType": "JavaScript",
+                "active": true,
+                "sourceLines": [
+                  "var var_ = TcHmi.Symbol.readEx('%pp%Associated_Variable%/pp%');\nvar TOn_Off = TcHmi.Symbol.readEx('%pp%Ton_Toff_Seconds%/pp%');\nif (var_) {\n       \n    setTimeout(() => {TcHmi.Symbol.writeEx('%pp%Associated_Variable%/pp%',\"False\"); }, TOn_Off*1000);\n}\nelse {     \n       setTimeout(() => {TcHmi.Symbol.writeEx('%pp%Associated_Variable%/pp%',\"True\"); }, TOn_Off*1000);        \n}"
+                ],
+                "injectContextObject": false,
+                "asyncWait": true,
+                "waitMode": "Synchronous"
+              }
+            ]
+          },
+          {
+            "else": []
+          }
+        ],
+        "asyncWait": true
+      }
+    ]
+  }
+]
+</script>
+<div id="Circle_" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiEllipse" data-tchmi-height="%pp%Button_Height%/pp%" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-width-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-width="%pp%Button_Width%/pp%" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px" data-tchmi-visibility="Hidden" data-tchmi-stroke-thickness-unit="px" data-tchmi-background-image-width-unit="px" data-tchmi-background-image-height-unit="px">
+
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-border-width" type="application/json">
+{
+  "left": 0,
+  "right": 0,
+  "top": 0,
+  "bottom": 0,
+  "leftUnit": "px",
+  "rightUnit": "px",
+  "topUnit": "px",
+  "bottomUnit": "px"
+}
+</script>
+
+
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-border-color" type="application/json">
+{
+  "color": "None"
+}
+</script>
+
+
+</div>
+
+
+<script data-tchmi-target-attribute="data-tchmi-border-color" type="application/json">
+{
+  "color": "None"
+}
+</script>
+<div id="TextButton" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" cursor="pointer" data-tchmi-height="%pp%Button_Height%/pp%" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-text="Toggle" data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-width="%f%if(%pp%Shape%/pp%==&quot;Rectangle&quot;){%pp%Button_Width%/pp%}else{%pp%Button_Height%/pp%}%/f%" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-text-font-size-unit="px" data-tchmi-text-horizontal-alignment="Center" data-tchmi-text-vertical-alignment="Center" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px" data-tchmi-background-image-width-unit="px" data-tchmi-background-image-height-unit="px" data-tchmi-text-font-size="20">
+
+
+<script data-tchmi-target-attribute="data-tchmi-border-width" type="application/json">
+{
+  "left": 2,
+  "right": 2,
+  "top": 2,
+  "bottom": 2,
+  "leftUnit": "px",
+  "rightUnit": "px",
+  "topUnit": "px",
+  "bottomUnit": "px"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-style" type="application/json">
+{
+  "left": "Solid",
+  "right": "Solid",
+  "top": "Solid",
+  "bottom": "Solid"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-radius" type="application/json">
+{
+  "topLeft": 10.0,
+  "topRight": 10.0,
+  "bottomLeft": 10.0,
+  "bottomRight": 10.0,
+  "topLeftUnit": "px",
+  "topRightUnit": "px",
+  "bottomLeftUnit": "px",
+  "bottomRightUnit": "px"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-color" type="application/json">
+{
+  "color": "None"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
+[
+  {
+    "event": "TextButton.onMouseOver",
+    "actions": [
+      {
+        "objectType": "JavaScript",
+        "active": false,
+        "sourceLines": [
+          "<html lang=\"en\">\n<head>\n//<meta charset=\"utf-8\">\n//<title>Make the Cursor a Hand Pointer using CSS</title>\n<style>\n    li{\n        cursor: pointer;\n    }\n</style>\n</head>\n</html>"
+        ],
+        "injectContextObject": false,
+        "asyncWait": true,
+        "waitMode": "Synchronous"
+      },
+      {
+        "objectType": "Function",
+        "active": true,
+        "fn": "SetCursor",
+        "fnParams": [
+          {
+            "objectType": "Symbol",
+            "valueType": "tchmi:general#/definitions/String",
+            "symbolExpression": "%ctrl%TextButton%/ctrl%"
+          }
+        ],
+        "asyncWait": true
+      }
+    ]
+  }
+]
+</script>
+</div>
+
+</div>

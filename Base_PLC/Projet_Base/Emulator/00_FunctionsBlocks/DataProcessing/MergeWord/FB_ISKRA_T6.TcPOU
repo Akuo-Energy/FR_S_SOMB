@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_ISKRA_T6" Id="{f4a4d768-acdc-4d58-add0-4e566a1a44cd}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_ISKRA_T6
+// FB Utilisée uniquement pour motherfucking ISKRA de mes couilles.... 
+// 
+VAR_INPUT
+
+	WORD_WEAK		: WORD;				// Strong Word. Word to consider if size equals 1.
+	WORD_STRONG		: WORD;
+END_VAR
+VAR_OUTPUT
+	VAR_OUT			: REAL;
+END_VAR
+VAR
+	
+	Filtre			: DWORD := 2#11111111000000000000000000000000;
+	FullWord		: DWORD;
+	ValExp			: SINT;
+	ValCorps		: DINT;
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+FullWord := SHL(WORD_TO_DWORD(WORD_STRONG), 16) OR WORD_Weak;
+
+ValExp := BYTE_TO_SINT(DWORD_TO_BYTE(SHR(FullWord, 24)));
+
+ValCorps := -DWORD_TO_DINT(NOT (FullWord OR Filtre) + 1);
+
+
+VAR_OUT :=  ValCorps*EXPT(10, ValExp);]]></ST>
+    </Implementation>
+    <LineIds Name="FB_ISKRA_T6">
+      <LineId Id="32" Count="0" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="26" Count="0" />
+      <LineId Id="31" Count="0" />
+      <LineId Id="40" Count="0" />
+      <LineId Id="49" Count="0" />
+      <LineId Id="38" Count="0" />
+      <LineId Id="35" Count="0" />
+      <LineId Id="34" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

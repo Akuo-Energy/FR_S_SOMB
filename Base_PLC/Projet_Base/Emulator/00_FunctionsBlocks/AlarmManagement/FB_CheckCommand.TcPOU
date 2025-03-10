@@ -1,0 +1,101 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_CheckCommand" Id="{434cf80d-9e42-4964-a87b-e9b3e9eddf78}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_CheckCommand
+////////////////// 
+// Compare command with measure and raise warning if inconsistance. 
+//////////////////	
+VAR_INPUT
+	T					: TIME ;			// Tempo to check if command has been executed	
+	bCmd				: BOOL ; 			// Input command 
+	bMes				: BOOL ; 			// Measure feedback 
+	bReset				: BOOL := FALSE ; 	// Reset 
+	bImpulsion			: BOOL ; 			// If True , the command is done on impulsion
+	
+END_VAR
+
+VAR_OUTPUT
+	bWarning 			: BOOL ; 		// Warning if inconsistancy . 
+	bInProgress			: BOOL ; 		// Action in Progress
+	
+END_VAR
+
+VAR
+
+	// Inconsistency detection
+	R_TRIG1				: R_TRIG ; 		// Detect command
+	TOF1				: TOF ; 		// Creates a falling edge T time after command detcetion	
+	F_TRIG				: F_TRIG ; 		// Detect Falling edge of TOF1	
+	
+	F_TRIG2				: F_TRIG ; 		// Detect falling edge of feedback measure
+	TOF2				: TOF ; 		// Creates  a falling edge T time after Feedback measure ended detcetion
+ 
+	TON					: TON ; 		// Tempo in case of bistable functuion
+
+	// Reset management 	
+	TOF_Reset			: TOF;			// Hold Reset command afetr reset to inhibate future warnings
+	RS_Reset			: RS;			// Maintain reset command
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF bReset THEN
+	bWarning 	:= FALSE ; 
+END_IF
+
+// Reset management 
+TOF_Reset(IN:= bReset ,PT :=T);
+RS_Reset(SET := bCmd,RESET1 := bReset) ; 
+
+
+IF bImpulsion THEN 
+	// Command is an impulsion
+	R_TRIG1(CLK := bCmd) ; 
+	TOF1(IN:=R_TRIG1.Q , PT:=T) ;
+	F_TRIG(CLK:=TOF1.Q);		
+
+	F_TRIG2(CLK := bMes) ;  
+	TOF2(IN:=F_TRIG2.Q , PT:=T) ; 
+
+ELSE
+	// Command is a bistable function
+	TON(IN:=bCmd , PT:= T);
+END_IF
+
+// Reset to False "InProgress" if Reset command or if command has been executed . 
+bInProgress :=  ((TON.ET < TON.PT) AND (TON.ET>T#0S) OR (TOF1.ET < TOF1.PT) AND (TOF1.ET>T#0S)) AND NOT bMes AND RS_Reset.Q1  ; 
+
+// Inconsistency detection
+IF ((F_TRIG.Q AND NOT TOF2.Q AND NOT bMes) OR (TON.Q AND NOT bMes)) AND NOT TOF_Reset.Q  THEN
+	bWarning := TRUE ; 
+END_IF
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_CheckCommand">
+      <LineId Id="3" Count="0" />
+      <LineId Id="78" Count="0" />
+      <LineId Id="82" Count="0" />
+      <LineId Id="139" Count="0" />
+      <LineId Id="83" Count="0" />
+      <LineId Id="110" Count="1" />
+      <LineId Id="84" Count="0" />
+      <LineId Id="6" Count="0" />
+      <LineId Id="142" Count="0" />
+      <LineId Id="7" Count="1" />
+      <LineId Id="75" Count="0" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="164" Count="0" />
+      <LineId Id="10" Count="1" />
+      <LineId Id="13" Count="0" />
+      <LineId Id="143" Count="0" />
+      <LineId Id="14" Count="2" />
+      <LineId Id="144" Count="0" />
+      <LineId Id="17" Count="0" />
+      <LineId Id="50" Count="0" />
+      <LineId Id="145" Count="0" />
+      <LineId Id="18" Count="4" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

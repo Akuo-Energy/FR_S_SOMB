@@ -1,0 +1,70 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="BMS_SAFT" Id="{fa765fdc-ce5a-42d7-8601-a24f97195dce}">
+    <Declaration><![CDATA[///////////
+// Structure For Battery Racks. Main Operating Data to be saved ( ex: OPC ) .  
+//////////
+TYPE BMS_SAFT :
+STRUCT
+	
+HVAC 				: HVAC_SAFT ;	
+
+
+MesEToFullCharge				: REAL   ;//(kWh) ToFullChargeEnergy [SubBankToFullChargeEnergy]             
+MesEconnected                   : REAL   ;//(kWh) RemainingEnergy [SubBankRemainingEnergy]                   
+//HVAC.MesTempExt                 : REAL   ;//(C) HVAC Outside Temp [SubBankHVACOutTemp]                       
+//HVAC.MesTemp                    : REAL   ;//(C) HVAC Inside Temp [SubBankHVACInTemp]                         
+//HVAC.MesHygro                   : REAL   ;//(%) HVAC Inside Humidity [SubBankInsideHumidity]                 
+//                                : REAL   ;//(NA) SetPointInsideTemperature [SubBankSetPointInsideTemperature]
+//                                : REAL   ;//(NA) SetPointInsideHumidity [SubBankSetPointInsideHumidity]      
+MesU_Aux                        : REAL   ;//(NA) AUX Average Line Voltage [SubBankAUX Avg Volt]              
+MesFreq_Aux                     : REAL   ;//(NA) AUX Frequency [SubBankAUX Freq]                             
+MesP_Aux                        : REAL   ;//(kW) AUX Active Power [SubBankAUX ActPow]                        
+MesS_Aux                        : REAL   ;//(kVA) AUX Apparent Power [SubBankAUX AppaPow]                    
+MesQ_Aux                        : REAL   ;//(kVAr) AUX Reactive Power [SubBankAUX ReactPow]                  
+MesEreact_Aux        : REAL   ;//(kVArh) AUX   Cumulated   Reactive                               
+MesEact_Aux          : REAL   ;//Energy [SubBankAUX CumulReactEne]                                
+MesEapp_Aux          : REAL   ;//(kWh) AUX     Cumulated     Active                               
+//HVAC.MesIDState                 : WORD   ;//Energy [SubBankAUX CumulActEne]                                  
+MesIDAlarm                      : WORD   ;//(kVAh) AUX   Cumulated   Apparent                                
+MesIDAlarm2                     : WORD   ;//Energy [SubBankAUX CumulAppaEne]                                 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

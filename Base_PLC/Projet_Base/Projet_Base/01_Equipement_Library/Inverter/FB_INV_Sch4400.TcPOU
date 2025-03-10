@@ -1,0 +1,774 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_INV_Sch4400" Id="{7782e039-0aef-42f3-84b8-455ed5548ec4}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_INV_Sch4400 EXTENDS FB_INV_Base
+// Schneider Conext SmartGen 4400
+VAR_INPUT PERSISTENT
+	{attribute 'OPC.UA.DA' := '1'} 
+	ParamTcpPort					: UINT		:= 502;				(* (NA) TCP port*)
+	{attribute 'OPC.UA.DA' := '1'} 
+	ParamIPAddress					: STRING; 						(* (NA)Config: IP Adress of PV INverter	*)
+	{attribute 'OPC.UA.DA' := '1'} 
+	ParamUnitID 					: BYTE; 						(* (NA) Modbus Unit ID *)
+	ParamNumInv						: BYTE;             			(* (NA) Number of inverters*)
+END_VAR
+
+VAR_INPUT
+			MesDataExd		AT %Q*		: INV_Sch4400; 					 // (NA) Inverter Object 
+END_VAR
+
+VAR	
+	// M_READ VARIABLES//
+
+
+		FB_ModbusRead	          	: ARRAY[1..9] OF FB_ModbusRead;  // (NA) FB for Modbus Reading
+		FB_ModbusWrite				: ARRAY[1..2] OF FB_ModbusWrite;
+		AX_ModbusReadAlarm			: ARRAY[1..9] OF BOOL;
+		AX_ModbusReadAlarmId		: ARRAY[1..9] OF UDINT;		
+		AX_ModbusWriteAlarm			: ARRAY[1..2] OF BOOL;
+		AX_ModbusWriteAlarmId		: ARRAY[1..2] OF UDINT;
+		
+		AX_QTY_MB			: ARRAY[1..2,1..9] OF WORD := [24, 		30, 	10, 	28, 	13, 	2, 		6,		11,2,	24, 	30, 	10, 	28, 	13, 	2, 		6,		11,		2	];
+		AX_ADR_MB			: ARRAY[1..2,1..9] OF WORD := [11100, 	11000, 	10401, 	11300, 	11701, 	11600, 	11200,	10500, 11400,	21100, 	21000, 	20401, 	21300, 	21701, 	21600,	21200, 20500, 21400	];
+	
+		MesBlock1_Temp 				: ARRAY [1..24] OF WORD ; 		// (NA) Temporary Block with multiple modbus reading (Caution : Double Word variables)
+		MesBlock2_Temp 				: ARRAY [1..30] OF WORD ; 		// (NA) Temporary Block with multiple modbus reading (Caution : Double Word variables)
+		MesBlock3_Temp 				: ARRAY [1..10] OF WORD ; 		// (NA) Temporary Block with multiple modbus reading (Caution : Double Word variables)
+		MesBlock4_Temp 				: ARRAY [1..28] OF WORD ; 		// (NA) Temporary Block with multiple modbus reading (Caution : Double Word variables)
+		MesBlock5_Temp 				: ARRAY [1..13] OF WORD ; 		// (NA) Temporary Block with multiple modbus reading (Caution : Double Word variables)
+		MesBlock6_Temp				: ARRAY [1..2]  OF WORD ;		// (NA) Temporary block with both start commands for each inverter
+		MesBlock7_Temp				: ARRAY [1..6]  OF WORD ;		// (NA) 
+		MesBlock8_Temp				: ARRAY [1..11] OF WORD ;		// (NA) 
+		MesBlock9_Temp				: ARRAY [1..11] OF WORD ;		// (NA) 
+		
+		MesBlockWrite1_Temp 		: ARRAY[1..4] OF WORD;			// (NA) Temporary Block with multiple modbus writing (Caution : Double Word variables)
+		MesBlockWrite2_Temp			: ARRAY[1..2] of WORD;			// (NA) Temporary Block with multiple modbus writing (Caution : Double Word variables)
+
+		TON_BJ						: ARRAY[1..10 ] OF TON ; 
+
+	// M_STARTSTOP//
+		StartStop_RTrig				: R_Trig;
+              	
+	// M_CP
+		CalCP_CMD_StartStop			: BOOL; 						// Write command start;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+
+]]></ST>
+    </Implementation>
+    <Method Name="M_Acknowledge" Id="{0f67f08d-68ef-4ed3-abd2-2cea32d464cf}">
+      <Declaration><![CDATA[METHOD M_Acknowledge
+VAR
+		//Each cycle
+	Temp_Alarm	:BOOL:=False;	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_AlarmManagement" Id="{85b7d6c3-54b6-447c-8944-b9c809cbb823}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Manages IntelliGen Alarms
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager : FB_AlarmCodeManager ; 
+	KK				: BYTE;		// For Loop 
+	bComError		: BOOL := TRUE;
+	bComWarning 	: BOOL;
+
+	AX_BJHS			: ARRAY[1..10] OF BOOL;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[FOR KK := 1 TO 8 DO
+	bCOmError := bCOmError AND FB_ModbusRead[KK].ModbusReadAlarm;
+	bComWarning := bComWarning OR FB_ModbusRead[KK].ModbusReadAlarm;
+END_FOR
+bComError := bComError AND FB_ModbusWrite[1].ModbusWriteAlarm AND FB_ModbusWrite[2].ModbusWriteAlarm;
+bComWarning := bComError OR FB_ModbusWrite[1].ModbusWriteAlarm OR FB_ModbusWrite[2].ModbusWriteAlarm ;
+
+TON_ComAlarm(IN := bComError, PT := T#30S,Q=> MesDataExd.MesData.MesAlarmCom);
+TON_ComWarning(IN := bComWarning, PT := T#30S);
+
+// BJ HS detection 
+FOR KK:=1 TO 10 DO 
+	TON_BJ[KK]( IN:= MesDataExd.MesData.MesP > 100  AND A1_WS.MesDataExd.MesData.MesGTI > 20 AND MesDataExd.AX_STR[KK].MesIdc < 3 , PT:= T#30S ) ; 
+	AX_BJHS[KK] :=  TON_BJ[KK].Q ; 
+END_FOR
+
+
+// ALARM CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= NOT MesDataExd.MesStateCom,		// INV Not Communicating
+		bAlarm2			:= FALSE,							// 
+		bAlarm3			:= NOT MesDataExd.MesStateCBac,		// INV AC CB opened CB501
+		bAlarm4			:= FALSE,							// 	
+		bAlarm5			:= NOT MesDataExd.MesStateCBdc,		// INV DC CB opened CB201
+		bAlarm6			:= FALSE,							// 
+		bAlarm7			:= MesDataExd.MesFaultGnd,			// INV Ground Fault	
+		bAlarm8			:= FALSE,							// 
+		bAlarm9			:= NOT MesDataExd.MesStateNoAlert, 	// INV has detected an abnormal event which prevents operation
+		bAlarm10		:= FALSE, 							// 
+		bAlarm11		:= MesDataExd.MesEventID_AbnormalOff > 0,	// ID of the event causing an abnormal stop exists for INV1(not 0)   			#Equipment
+		bAlarm12		:= FALSE,							// 
+		bAlarm13		:= MesDataExd.MesState <> 23,  		// INV is not in state online PV  									 			#Equipment
+		bAlarm14		:= MesDataExd.MesState = 5,			// State Of inverter ID = 5,  Disabled. Inverter is disabled. 		 			#Equipment
+		bAlarm15		:= MesDataExd.MesData.MesAlarmCom, 			// No communication frames for the past 30 seconds 					 			#COM
+		wAlarmCode		=> MesDataExd.MesData.MesAlarmCode);
+
+// WARNING CODE //
+	FB_AlarmCodeManager(
+ 		bAlarm1			:= MesWarningCom, 							// A frame failed for the last 30s 												#COM
+		bAlarm2			:= MesDataExd.MesState = 8,  				// INV is Offline  																#Equipment
+		bAlarm3			:= NOT MesDataExd.MesData.MesCP_Read, 	  				// No permission to read from SCADA
+		bAlarm4			:= MesDataExd.MesState_TypeSetptP <> 15,	// INV active power setpoint is not MPPT  										#Equipment
+		bAlarm5			:= NOT MesDataExd.MesData.MesCP_Write,					// No permission to write from SCADA							
+		bAlarm6			:= MesDataExd.MesState_TypeSetptP = 11, 	// INV active power setpoint is limited by communication  						#Equipment	
+		bAlarm7			:= MesDataExd.MesState = 20, 				// State Of inverter ID = 20, Lost of production Online var :  Inverter is online in var Mode. AC circuit breaker is closed. #Equipment 
+		bAlarm8			:= MesDataExd.MesState_TypeSetptQ = 6 OR  MesDataExd.MesState_TypeSetptQ = 7,   // INV reactive setpoint set by communication   #Equipment
+		bAlarm9			:= IN_SetptPlimit_Local < MesDataExd.MesData.ParamPn,  		// INV local active power setpoint is under nominal active power 
+		bAlarm10		:= NOT RS_StartStop_Local.Q1,       // Local Stop Command 
+		bAlarm11		:= FALSE , //
+		bAlarm12		:= FALSE, 							//
+		bAlarm13		:= FALSE,							// 
+		bAlarm14		:= FALSE,							// 
+		bAlarm15		:= FALSE, 							//
+		wAlarmCode		=> MesDataExd.MesData.MesWarningCode);	
+
+// EVENT CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= AX_BJHS[1],						// BJ 1 HS  
+		bAlarm2			:= AX_BJHS[2],						// BJ 2 HS  
+		bAlarm3			:= AX_BJHS[3],						// BJ 3 HS
+		bAlarm4			:= AX_BJHS[4],						// BJ 4 HS
+		bAlarm5			:= AX_BJHS[5], 						// BJ 5 HS
+		bAlarm6			:= AX_BJHS[6], 						// BJ 6 HS
+		bAlarm7			:= AX_BJHS[7],						// BJ 7 HS
+		bAlarm8			:= AX_BJHS[8],  					// BJ 8 HS
+		bAlarm9			:= AX_BJHS[9], 						// BJ 9 HS
+		bAlarm10		:= AX_BJHS[10], 					// BJ 10 HS
+		bAlarm11		:= NOT RS_StartStop.Q1, 			// Stop command for INV 
+		bAlarm12		:= FALSE,  							// 
+		bAlarm13		:= FALSE, 							// 
+		bAlarm14		:= FALSE, 							// 
+		bAlarm15		:= FALSE,							// 		
+		wAlarmCode		=>  MesDataExd.MesData.MesEventCode);
+	]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_CP" Id="{390b23e5-c6d9-45f4-87f1-04c814b94ec0}">
+      <Declaration><![CDATA[METHOD M_CP
+//////////////////
+//  Emulator
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+	
+CalCP_CMD_StartStop	:= FB_ModbusRead[6].OUT_NbRead > 0 AND (MesDataExd.MesStartDisabled  <> NOT  RS_StartStop.Q1);
+
+
+SUPER^.M_CP() ; 
+
+
+
+
+Trig_Cmd_Read(CLK:=IN_CmdToggleRead);
+Trig_Cmd_Write(CLK:=IN_CmdToggleWrite);
+	
+IF Trig_Cmd_Read.Q THEN
+	IN_CmdToggleRead := FALSE;
+	MesDataExd.MesData.MesCP_Read := NOT MesDataExd.MesData.MesCP_Read;
+END_IF
+
+
+IF Trig_Cmd_Write.Q THEN
+	IN_CmdToggleWrite := FALSE;
+	MesDataExd.MesData.MesCP_Write := NOT MesDataExd.MesData.MesCP_Write;
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Curtail" Id="{5c529177-ba62-4d47-93fc-6a879416753b}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'M_Curtail'}
+METHOD M_Curtail
+//////////////////
+// Write Curtail Command through modbus to PV inverters.  
+//////////////////
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+	MW					: FB_MergeWordsToFloat;
+	MW_1				: FB_SplitFloatToWords;
+	AX_ADR_MB			: ARRAY[1..2] OF  WORD := [11800, 21800];
+	AX_QTY_MB			: ARRAY[1..2] OF  BYTE := [4, 4];
+	
+	InvSetptP_temp		: REAL;
+	InvSetptQ_temp		: REAL;
+	
+
+	KK: INT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SUPER^.M_Curtail() ; 
+// MODBUS VARIABLE FORMATING //
+FB_ModbusWrite[1](WriteCmd := FALSE);
+InvSetptP_temp	:= IN_SetptPlimit / MesDataExd.MesData.ParamPn; // MesData.ParamPn;
+InvSetptQ_temp	:= IN_SetptQ / MesDataExd.MesData.ParamQn; 
+
+MesDataExd.MesData.OUT_SetptPLimit :=  IN_SetptPlimit ; 
+MesDataExd.MesData.OUT_SetptQ :=  IN_SetptQ ; 
+		
+IF A1_PP.ParamTanPhiCtrl   OR A1_SUBMV.A1_GRID.MesDataExd.OUT_CmdQReg 	THEN	
+	MW_1(VAR_IN := InvSetptP_temp,		WORD_STRONG =>  MesBlockWrite1_Temp[2 ], 		WORD_WEAK => MesBlockWrite1_Temp[1 ]);	
+	MW_1(VAR_IN := InvSetptQ_temp,		WORD_STRONG =>  MesBlockWrite1_Temp[4 ], 		WORD_WEAK => MesBlockWrite1_Temp[3 ]);	 			
+ELSE
+	MW_1(VAR_IN := InvSetptP_temp,		WORD_STRONG =>  MesBlockWrite1_Temp[2 ], 		WORD_WEAK => MesBlockWrite1_Temp[1 ]);	
+	MesBlockWrite1_Temp[3 ]:= 16#7FC0;
+	MesBlockWrite1_Temp[4 ]:= 16#0000;
+ 
+END_IF
+
+
+
+FB_ModbusWrite[1]
+	(
+		pSrcAddr := ADR (MesBlockWrite1_Temp),
+		sIPAddr := ParamIPAddress,
+		tTimeout := ParamTimeout,
+		nMBAddr := AX_ADR_MB[ParamNumInv],
+		nTCPport := ParamTCPPort,
+		cbLength := SIZEOF(MesBlockWrite1_Temp),
+		nQuantity := AX_QTY_MB[ParamNumInv],
+		nUnitID := ParamUnitID,
+		WriteCmd := ClockWrite AND MesDataExd.MesData.MesCP_Write  ,
+		Reset := CmdClearFault_G OR IN_CmdReset_L,
+		ErrorId => AX_ModbusWriteAlarmId[1],
+		ModbusWriteAlarm => AX_ModbusWriteAlarm[1]
+	);
+		
+		
+		]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{68366109-3f6c-499b-b981-e3985add7384}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF  bInit THEN
+	M_Init();
+	bInit:= FALSE ; 
+ELSIF CmdInit_G THEN 
+	bInit:= TRUE ;
+END_IF
+
+SUPER^.M_Execute() ; ]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{b9e44282-a4ee-4a15-9010-8f9c494fc95f}">
+      <Declaration><![CDATA[METHOD M_Init
+VAR_INPUT
+END_VAR
+
+VAR
+	bCompleted : BOOL := FALSE;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IN_SetptPlimit_Local := ParamPn ; // MesDataExd.MesData.ParamPn ;
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Read" Id="{17d27c8e-2fef-481e-b3cd-91ebb0f289a2}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'M_Read'}
+METHOD M_Read
+//////////
+// Read Method for SMA : Modbus reading
+//////////
+VAR
+	// Method local variables (reinitialized at each cycle) 
+	MW					: FB_MergeWordsToFloat;
+	MW_1				: FB_WordsToDint64BE;
+	
+	EacInj_Interm1		: ULINT;
+	EacCon_Interm1		: ULINT;
+	EreacCapa_Interm1	: ULINT;
+	EreacInd_Interm1	: ULINT;
+	EacInj_Day_Interm1	: ULINT;
+	
+	EacInj_Interm2		: ULINT;
+	EacCon_Interm2		: ULINT;
+	EreacCapa_Interm2	: ULINT;
+	EreacInd_Interm2	: ULINT;
+	EacInj_Day_Interm2	: ULINT;
+	
+	KK					: BYTE;						 // Index to loop over modbus blocks 	
+	JJ					: BYTE;
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF MesDataExd.MesData.MesCP_Read THEN		
+	
+	// MODBUS REQUEST//
+		//Electrical Measurements + Ground Measurements
+		FB_ModbusRead[1]
+		(
+			nTCPPort		:= ParamTcpPort,
+			ClockRead		:= MesDataExd.MesData.MesCP_Read AND ClockRead, 
+			Reset			:= CmdClearFault_G OR IN_CmdReset_L,
+			sIPAddr			:=ParamIPAddress ,
+			nUnitID			:= 1, 
+			tTimeout		:= ParamTimeout,
+			nQuantity		:= AX_QTY_MB[ParamUnitID, 1] , 
+			nMBAddr			:= AX_ADR_MB[ParamUnitID, 1] , 
+			cbLength		:= SIZEOF(MesBlock1_Temp) , 
+			pDestAddr		:= ADR(MesBlock1_Temp) , 
+			ModbusReadAlarm	=>AX_ModbusReadAlarm[1] , 
+			ErrorId			=> AX_ModbusReadAlarmId[1]
+		);
+			
+		//Production Measurements
+		FB_ModbusRead[2]
+		(
+			nTCPPort		:= ParamTcpPort,
+			ClockRead		:= MesDataExd.MesData.MesCP_Read AND ClockRead, 
+			Reset			:= CmdClearFault_G OR IN_CmdReset_L,
+			sIPAddr			:=ParamIPAddress , 
+			nUnitID			:= 1, 
+			tTimeout		:= ParamTimeout,
+			nQuantity		:= AX_QTY_MB[ParamUnitID, 2] , 
+			nMBAddr			:= AX_ADR_MB[ParamUnitID, 2] , 
+			cbLength		:= SIZEOF(MesBlock2_Temp) , 
+			pDestAddr		:= ADR(MesBlock2_Temp) , 
+			ModbusReadAlarm	=>AX_ModbusReadAlarm[2] , 
+			ErrorId			=> AX_ModbusReadAlarmId[2]
+		);
+		
+		// Status Summary + Event Summary
+		FB_ModbusRead[3]
+		(
+			nTCPPort		:= ParamTcpPort,
+			ClockRead		:= MesDataExd.MesData.MesCP_Read AND ClockRead, 
+			Reset			:= CmdClearFault_G OR IN_CmdReset_L,
+			sIPAddr			:=ParamIPAddress , 
+			nUnitID			:= 1, 
+			tTimeout		:= ParamTimeout,
+			nQuantity		:= AX_QTY_MB[ParamUnitID, 3] , 
+			nMBAddr			:= AX_ADR_MB[ParamUnitID, 3] , 
+			cbLength		:= SIZEOF(MesBlock3_Temp) , 
+			pDestAddr		:= ADR(MesBlock3_Temp) , 
+			ModbusReadAlarm	=>AX_ModbusReadAlarm[3] , 
+			ErrorId			=> AX_ModbusReadAlarmId[3]
+		);
+		
+		//String Measurements
+		FB_ModbusRead[4]
+		(
+			nTCPPort		:= ParamTcpPort,
+			ClockRead		:= MesDataExd.MesData.MesCP_Read AND ClockRead, 
+			Reset			:= CmdClearFault_G OR IN_CmdReset_L,
+			sIPAddr			:= ParamIPAddress , 
+			nUnitID			:= 1, 
+			tTimeout		:= ParamTimeout,
+			nQuantity		:= AX_QTY_MB[ParamUnitID, 4], 
+			nMBAddr			:= AX_ADR_MB[ParamUnitID, 4], 
+			cbLength		:= SIZEOF(MesBlock4_Temp), 
+			pDestAddr		:= ADR(MesBlock4_Temp), 
+			ModbusReadAlarm	=> AX_ModbusReadAlarm[4], 
+			ErrorId			=> AX_ModbusReadAlarmId[4]
+		);
+		
+			//Power Commands
+		FB_ModbusRead[5]
+		(
+			nTCPPort		:= ParamTcpPort,
+			ClockRead		:= MesDataExd.MesData.MesCP_Read AND ClockRead, 
+			Reset			:= CmdClearFault_G OR IN_CmdReset_L,
+			sIPAddr			:=ParamIPAddress , 
+			nUnitID			:= 1, 
+			tTimeout		:= ParamTimeout,
+			nQuantity		:= AX_QTY_MB[ParamUnitID, 5] , 
+			nMBAddr			:= AX_ADR_MB[ParamUnitID, 5] ,  
+			cbLength		:= SIZEOF(MesBlock5_Temp) , 
+			pDestAddr		:= ADR(MesBlock5_Temp) , 
+			ModbusReadAlarm	=>AX_ModbusReadAlarm[5] , 
+			ErrorId			=> AX_ModbusReadAlarmId[5]
+		);
+		
+		FB_ModbusRead[6]
+		(
+			nTCPPort		:= ParamTcpPort,
+			ClockRead		:= MesDataExd.MesData.MesCP_Read AND ClockRead, 
+			Reset			:= CmdClearFault_G OR IN_CmdReset_L,
+			sIPAddr			:=ParamIPAddress , 
+			nUnitID			:= 1, 
+			tTimeout		:= ParamTimeout,
+			nQuantity		:= AX_QTY_MB[ParamUnitID, 6] , 
+			nMBAddr			:= AX_ADR_MB[ParamUnitID, 6] , 
+			cbLength		:= SIZEOF(MesBlock6_Temp)  , 
+			pDestAddr		:= ADR(MesBlock6_Temp) , 
+			ModbusReadAlarm	=> AX_ModbusReadAlarm[6] , 
+			ErrorId			=> AX_ModbusReadAlarmId[6]
+		);
+		
+		FB_ModbusRead[7]
+		(
+			nTCPPort		:= ParamTcpPort,
+			ClockRead		:= MesDataExd.MesData.MesCP_Read AND ClockRead, 
+			Reset			:= CmdClearFault_G OR IN_CmdReset_L,
+			sIPAddr			:=ParamIPAddress , 
+			nUnitID			:= 1, 
+			tTimeout		:= ParamTimeout,
+			nQuantity		:= AX_QTY_MB[ParamUnitID, 7] , 
+			nMBAddr			:= AX_ADR_MB[ParamUnitID, 7] , 
+			cbLength		:= SIZEOF(MesBlock7_Temp)  , 
+			pDestAddr		:= ADR(MesBlock7_Temp) , 
+			ModbusReadAlarm	=> AX_ModbusReadAlarm[7] , 
+			ErrorId			=> AX_ModbusReadAlarmId[7]
+		);
+		FB_ModbusRead[8]
+		(
+			nTCPPort		:= ParamTcpPort,
+			ClockRead		:= MesDataExd.MesData.MesCP_Read AND ClockRead, 
+			Reset			:= CmdClearFault_G OR IN_CmdReset_L,
+			sIPAddr			:=ParamIPAddress , 
+			nUnitID			:= 1, 
+			tTimeout		:= ParamTimeout,
+			nQuantity		:= AX_QTY_MB[ParamUnitID, 8] , 
+			nMBAddr			:= AX_ADR_MB[ParamUnitID, 8] , 
+			cbLength		:= SIZEOF(MesBlock8_Temp)  , 
+			pDestAddr		:= ADR(MesBlock8_Temp) , 
+			ModbusReadAlarm	=> AX_ModbusReadAlarm[8] , 
+			ErrorId			=> AX_ModbusReadAlarmId[8]
+		);	
+		
+			FB_ModbusRead[9]
+		(
+			nTCPPort		:= ParamTcpPort,
+			ClockRead		:= MesDataExd.MesData.MesCP_Read AND ClockRead, 
+			Reset			:= CmdClearFault_G OR IN_CmdReset_L,
+			sIPAddr			:=ParamIPAddress , 
+			nUnitID			:= 1, 
+			tTimeout		:= ParamTimeout,
+			nQuantity		:= AX_QTY_MB[ParamUnitID, 9] , 
+			nMBAddr			:= AX_ADR_MB[ParamUnitID, 9] , 
+			cbLength		:= SIZEOF(MesBlock9_Temp)  , 
+			pDestAddr		:= ADR(MesBlock9_Temp) , 
+			ModbusReadAlarm	=> AX_ModbusReadAlarm[9] , 
+			ErrorId			=> AX_ModbusReadAlarmId[9]
+		);	
+		
+		MW( WORD_STRONG:= MesBlock1_Temp[2  ],	WORD_WEAK := MesBlock1_Temp[1  ], VAR_OUT := MesDataExd.MesI1 );		
+		MW( WORD_STRONG:= MesBlock1_Temp[4  ], 	WORD_WEAK := MesBlock1_Temp[3  ], VAR_OUT := MesDataExd.MesI2 );      
+		MW( WORD_STRONG:= MesBlock1_Temp[6  ], 	WORD_WEAK := MesBlock1_Temp[5  ], VAR_OUT := MesDataExd.MesI3 );      
+		MW( WORD_STRONG:= MesBlock1_Temp[8  ], 	WORD_WEAK := MesBlock1_Temp[7  ], VAR_OUT := MesDataExd.MesV1 );      
+		MW( WORD_STRONG:= MesBlock1_Temp[10 ], 	WORD_WEAK := MesBlock1_Temp[9  ], VAR_OUT := MesDataExd.MesV2 );      
+		MW( WORD_STRONG:= MesBlock1_Temp[12 ], 	WORD_WEAK := MesBlock1_Temp[11 ], VAR_OUT := MesDataExd.MesV3 );      
+		MW( WORD_STRONG:= MesBlock1_Temp[14 ], 	WORD_WEAK := MesBlock1_Temp[13 ], VAR_OUT := MesDataExd.MesData.MesFreq );    
+		MW( WORD_STRONG:= MesBlock1_Temp[16 ], 	WORD_WEAK := MesBlock1_Temp[15 ], VAR_OUT := MesDataExd.MesData.MesIdc );     
+		MW( WORD_STRONG:= MesBlock1_Temp[18 ], 	WORD_WEAK := MesBlock1_Temp[17 ], VAR_OUT := MesDataExd.MesData.MesUdc );     
+		MW( WORD_STRONG:= MesBlock1_Temp[20 ], 	WORD_WEAK := MesBlock1_Temp[19 ], VAR_OUT := MesDataExd.MesU12 );     
+		MW( WORD_STRONG:= MesBlock1_Temp[22 ], 	WORD_WEAK := MesBlock1_Temp[21 ], VAR_OUT := MesDataExd.MesU23 );     
+		MW( WORD_STRONG:= MesBlock1_Temp[24 ], 	WORD_WEAK := MesBlock1_Temp[23 ], VAR_OUT := MesDataExd.MesU31 );    
+			
+		MW( WORD_STRONG:= MesBlock2_Temp[2 ], 	WORD_WEAK := 	MesBlock2_Temp[1 ], VAR_OUT := MesDataExd.MesData.MesP );
+		MW( WORD_STRONG:= MesBlock2_Temp[4 ], 	WORD_WEAK := 	MesBlock2_Temp[3 ], VAR_OUT := MesDataExd.MesData.MesQ );
+		MW_1(InFirstWord := MesBlock2_Temp[7 ], 	InSecondWord := MesBlock2_Temp[8], 	InThirdWord := MesBlock2_Temp[9], 	InFourthWord := MesBlock2_Temp[10], OutCalDint => EacInj_Interm1);
+		MW_1(InFirstWord := MesBlock2_Temp[11], 	InSecondWord := MesBlock2_Temp[12], InThirdWord := MesBlock2_Temp[13], 	InFourthWord := MesBlock2_Temp[14], OutCalDint => EacCon_Interm1);
+		MW_1(InFirstWord := MesBlock2_Temp[15], 	InSecondWord := MesBlock2_Temp[16], InThirdWord := MesBlock2_Temp[17], 	InFourthWord := MesBlock2_Temp[18], OutCalDint => EreacCapa_Interm1);
+		MW_1(InFirstWord := MesBlock2_Temp[19], 	InSecondWord := MesBlock2_Temp[20], InThirdWord := MesBlock2_Temp[21], 	InFourthWord := MesBlock2_Temp[22], OutCalDint => EreacInd_Interm1);
+		MW_1(InFirstWord := MesBlock2_Temp[27], 	InSecondWord := MesBlock2_Temp[28], InThirdWord := MesBlock2_Temp[29], 	InFourthWord := MesBlock2_Temp[30], OutCalDint => EacInj_Day_Interm1);
+	
+		MesDataExd.MesEActProd 					:= ULINT_TO_REAL(EacInj_Interm1)/100;
+		MesDataExd.MesEActCons 					:= ULINT_TO_REAL(EacCon_Interm1)/100;
+		MesDataExd.MesEReactProd 				:= ULINT_TO_REAL(EreacCapa_Interm1)/100;
+		MesDataExd.MesEReactCons 				:= ULINT_TO_REAL(EreacInd_Interm1)/100;
+		MesDataExd.MesEday 						:= ULINT_TO_REAL(EacInj_Day_Interm1)/100;
+		
+		MesDataExd.MesStateCBac					:= WORD_TO_BOOL(MesBlock3_Temp[1]);
+		MesDataExd.MesStateCBdc					:= WORD_TO_BOOL(MesBlock3_Temp[2]);
+		MesDataExd.MesEarthing_Relay			:= WORD_TO_BOOL(MesBlock3_Temp[3]);
+		MesDataExd.MesFaultGnd					:= WORD_TO_BOOL(MesBlock3_Temp[4]);
+		MesDataExd.MesStateNoAlert				:= WORD_TO_BOOL(MesBlock3_Temp[5]);
+		MesDataExd.MesData.MesState_INV			:= WORD_TO_UINT(MesBlock3_Temp[7]);
+		MesDataExd.MesBdrigeCtlMod				:= WORD_TO_UINT(MesBlock3_Temp[8]);
+		MesDataExd.MesWorkingHr					:= MesBlock3_Temp[9];	
+		
+		//MW(WORD_WEAK_F := MesBlock4_Temp[ 1], WORD_STRONG_F := MesBlock4_Temp[ 2], NUMBER_F => MesDataExd.MesSB[1].MesIdc);	
+		//MW(WORD_WEAK_F := MesBlock4_Temp[ 3], WORD_STRONG_F := MesBlock4_Temp[ 4], NUMBER_F => MesDataExd.MesSB[2].MesIdc);	
+		//MW(WORD_WEAK_F := MesBlock4_Temp[ 5], WORD_STRONG_F := MesBlock4_Temp[ 6], NUMBER_F => MesDataExd.MesSB[3].MesIdc);	
+		//MW(WORD_WEAK_F := MesBlock4_Temp[ 7], WORD_STRONG_F := MesBlock4_Temp[ 8], NUMBER_F => MesDataExd.MesSB[4].MesIdc);	
+		
+		
+		IF (ParamNumInv = 1 AND ParamIPAddress = '10.0.0.20') OR (ParamNumInv = 2 AND ParamIPAddress = '10.0.0.30') THEN 
+			MW(WORD_WEAK := MesBlock4_Temp[ 9], WORD_STRONG := MesBlock4_Temp[10], VAR_OUT := MesDataExd.AX_STR[10].MesIdc);	
+			MW(WORD_WEAK := MesBlock4_Temp[11], WORD_STRONG := MesBlock4_Temp[12], VAR_OUT := MesDataExd.AX_STR[9].MesIdc);	
+			MW(WORD_WEAK := MesBlock4_Temp[13], WORD_STRONG := MesBlock4_Temp[14], VAR_OUT := MesDataExd.AX_STR[8].MesIdc);	
+			MW(WORD_WEAK := MesBlock4_Temp[15], WORD_STRONG := MesBlock4_Temp[16], VAR_OUT := MesDataExd.AX_STR[7].MesIdc);	
+			MW(WORD_WEAK := MesBlock4_Temp[17], WORD_STRONG := MesBlock4_Temp[18], VAR_OUT := MesDataExd.AX_STR[6].MesIdc);	
+			MW(WORD_WEAK := MesBlock4_Temp[19], WORD_STRONG := MesBlock4_Temp[20], VAR_OUT := MesDataExd.AX_STR[5].MesIdc);	
+			MW(WORD_WEAK := MesBlock4_Temp[21], WORD_STRONG := MesBlock4_Temp[22], VAR_OUT := MesDataExd.AX_STR[4].MesIdc);	
+			MW(WORD_WEAK := MesBlock4_Temp[23], WORD_STRONG := MesBlock4_Temp[24], VAR_OUT := MesDataExd.AX_STR[3].MesIdc);	
+			MW(WORD_WEAK := MesBlock4_Temp[25], WORD_STRONG := MesBlock4_Temp[26], VAR_OUT := MesDataExd.AX_STR[2].MesIdc);	
+			MW(WORD_WEAK := MesBlock4_Temp[27], WORD_STRONG := MesBlock4_Temp[28], VAR_OUT := MesDataExd.AX_STR[1].MesIdc);		
+			
+		ELSE
+			MW(WORD_WEAK := MesBlock4_Temp[ 9], WORD_STRONG := MesBlock4_Temp[10], VAR_OUT := MesDataExd.AX_STR[1].MesIdc);	
+			MW(WORD_WEAK := MesBlock4_Temp[11], WORD_STRONG := MesBlock4_Temp[12], VAR_OUT := MesDataExd.AX_STR[2].MesIdc);	
+			MW(WORD_WEAK := MesBlock4_Temp[13], WORD_STRONG := MesBlock4_Temp[14], VAR_OUT := MesDataExd.AX_STR[3].MesIdc);	
+			MW(WORD_WEAK := MesBlock4_Temp[15], WORD_STRONG := MesBlock4_Temp[16], VAR_OUT := MesDataExd.AX_STR[4].MesIdc);	
+			MW(WORD_WEAK := MesBlock4_Temp[17], WORD_STRONG := MesBlock4_Temp[18], VAR_OUT := MesDataExd.AX_STR[5].MesIdc);	
+			MW(WORD_WEAK := MesBlock4_Temp[19], WORD_STRONG := MesBlock4_Temp[20], VAR_OUT := MesDataExd.AX_STR[6].MesIdc);	
+			MW(WORD_WEAK := MesBlock4_Temp[21], WORD_STRONG := MesBlock4_Temp[22], VAR_OUT := MesDataExd.AX_STR[7].MesIdc);	
+			MW(WORD_WEAK := MesBlock4_Temp[23], WORD_STRONG := MesBlock4_Temp[24], VAR_OUT := MesDataExd.AX_STR[8].MesIdc);	
+			MW(WORD_WEAK := MesBlock4_Temp[25], WORD_STRONG := MesBlock4_Temp[26], VAR_OUT := MesDataExd.AX_STR[9].MesIdc);	
+			MW(WORD_WEAK := MesBlock4_Temp[27], WORD_STRONG := MesBlock4_Temp[28], VAR_OUT := MesDataExd.AX_STR[10].MesIdc);	
+		
+		END_IF
+		
+	
+		
+		// Idc Bj = 461 when no connected . 
+		FOR KK:=1 TO 10 DO 
+			MesDataExd.AX_STR[KK].MesIdc :=  SEL(MesDataExd.AX_STR[KK].MesIdc>355 , MesDataExd.AX_STR[KK].MesIdc , 0) ; 
+		END_FOR
+		
+	
+		MW( WORD_STRONG:= MesBlock5_Temp[2 ],		WORD_WEAK := MesBlock5_Temp[1 ], VAR_OUT := MesDataExd.MesSetptP_CC );		
+		MW( WORD_STRONG:= MesBlock5_Temp[4 ],		WORD_WEAK := MesBlock5_Temp[3 ], VAR_OUT := MesDataExd.MesSetptQ_CC );   		
+		MW( WORD_STRONG:= MesBlock5_Temp[6 ],		WORD_WEAK := MesBlock5_Temp[5 ], VAR_OUT := MesDataExd.MesSetptCosPhi_CC );  		
+		MW( WORD_STRONG:= MesBlock5_Temp[8 ],		WORD_WEAK := MesBlock5_Temp[7 ], VAR_OUT := MesDataExd.ParamTP_RampP );    		
+		MW( WORD_STRONG:= MesBlock5_Temp[10],		WORD_WEAK := MesBlock5_Temp[9], VAR_OUT  := MesDataExd.ParamTP_RampQ );    	
+		MW( WORD_STRONG:= MesBlock5_Temp[12],		WORD_WEAK := MesBlock5_Temp[11], VAR_OUT := MesDataExd.ParamTP_RampCosPhi ); 	
+																								   
+		MesDataExd.ParamID_QType 		  := WORD_TO_UINT(MesBlock5_Temp[13]);
+		 
+		MesDataExd.MesData.MesP			  := MesDataExd.MesData.MesP/1000;
+		MesDataExd.MesData.MesQ			  := MesDataExd.MesData.MesQ/1000;
+		
+		MesDataExd.MesStartDisabled 	  := NOT WORD_TO_BOOL(MesBlock6_Temp[1]);
+		MesDataExd.MesStartDisabledPersis := NOT WORD_TO_BOOL(MesBlock6_Temp[2]);
+		
+		MW( WORD_STRONG:= MesBlock7_Temp[2], 	WORD_WEAK := MesBlock7_Temp[1], VAR_OUT := MesDataExd.MesData.MesI0 );      
+		MW( WORD_STRONG:= MesBlock7_Temp[4], 	WORD_WEAK := MesBlock7_Temp[3], VAR_OUT := MesDataExd.MesData.MesInsuResistor );    
+		MesDataExd.MesData.MesInsuResistor :=  MesDataExd.MesData.MesInsuResistor / 1000 ; // en kOhms   
+		MesDataExd.MesEvendID			  := MesBlock8_Temp[1];
+		MesDataExd.MesEventID_Stop		  := MesBlock8_Temp[2];
+		MesDataExd.MesStateID_Recovery	  := MesBlock8_Temp[3];
+		MesDataExd.MesEventID_AbnormalOff := MesBlock8_Temp[5];
+		MesDataExd.MesState_TypeSetptP	  := MesBlock8_Temp[6];
+		MW(WORD_WEAK := MesBlock8_Temp[7], WORD_STRONG := MesBlock8_Temp[8], VAR_OUT:= MesDataExd.MesSetptP);
+		MesDataExd.MesState_TypeSetptQ	  := MesBlock8_Temp[9];
+		MW(WORD_WEAK := MesBlock8_Temp[10], WORD_STRONG := MesBlock8_Temp[11], VAR_OUT := MesDataExd.MesSetptQ);
+	
+		MW(WORD_WEAK := MesBlock9_Temp[ 1], WORD_STRONG := MesBlock9_Temp[ 2], VAR_OUT := MesDataExd.MesTempExt);	
+		// Evaluate 
+		MesDataExd.MesData.MesPdc		:=  MesDataExd.MesData.MesIdc * MesDataExd.MesData.MesUdc ;
+		MesDataExd.MesData.MesI			:= (MesDataExd.MesI1 + MesDataExd.MesI2 + MesDataExd.MesI3) /3;
+		MesDataExd.MesData.MesU			:= (MesDataExd.MesU12 + MesDataExd.MesU23 + MesdataExd.MesU31) /3 ; 
+		MesDataExd.MesData.MesV 		:= (MesDataExd.MesV1 + MesDataExd.MesV2 + MesdataExd.MesV3) /3 ; 
+		MesDataExd.MesData.MesS			:= SQRT(MesDataExd.MesData.MesP*MesDataExd.MesData.MesP + MesDataExd.MesData.MesQ* MesDataExd.MesData.MesQ); 
+	
+		MesDataExd.MesData.MesAlarmCom  := TON_ComAlarm.Q; 
+		MesDataExd.MesStateCom 			:= NOT MesDataExd.MesData.MesAlarmCom; 
+	
+		//MesData 						:= MesDataExd.MesData; 
+		
+		// Evaluate 
+		MesDataExd.MesData.MesPdc	:= MesDataExd.MesData.MesIdc * MesDataExd.MesData.MesUdc ;
+		MesDataExd.MesData.MesI					:= (MesDataExd.MesI1 + MesDataExd.MesI2 + MesDataExd.MesI3) /3;
+		MesDataExd.MesData.MesU	:= (MesDataExd.MesU12 + MesDataExd.MesU23 + MesdataExd.MesU31) /3 ; 
+		MesDataExd.MesData.MesV 	:= (MesDataExd.MesV1 + MesDataExd.MesV2 + MesdataExd.MesV3) /3 ; 
+		MesDataExd.MesData.MesS	:= SQRT(MesDataExd.MesData.MesP*MesDataExd.MesData.MesP + MesDataExd.MesData.MesQ* MesDataExd.MesData.MesQ  ) ; 
+		//MesData.MesTemp	:= ;   unavailable . 
+		//MesData.MesIDState	:= ; Unavaialable . 
+		//MesData.MesPF := ; Unavailable . 
+		MesDataExd.MesData.ParamPn := ParamPn ; 
+		MesDataExd.MesData.MesAlarmCom	:= TON_ComAlarm.Q  ; 
+		MesDataExd.MesStateCom := NOT MesDataExd.MesData.MesAlarmCom ; 
+		//MesData. CalCurtailing := IN_SetptPlimit < ParamPnom *0.9  ; 
+		
+END_IF
+
+	
+	MesDataExd.MesData.ParamPn 		:= ParamPn ; 
+	MesDataExd.MesData.ParamQn 		:= ParamQn ;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_StartStop" Id="{c771ce7f-8920-40bf-812d-e2fb16f841e2}">
+      <Declaration><![CDATA[METHOD M_StartStop
+VAR
+	KK : UINT;
+	AX_ADR_MB			: ARRAY[1..2] OF WORD := [11600, 21600];
+	AX_QTY_MB			: ARRAY[1..2] OF BYTE := [2, 2];
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SUPER^.M_StartStop(); 
+
+Trig_Local_Start(CLK:=IN_CmdStart_Local);
+Trig_Local_Stop(CLK:=IN_CmdStop_Local);
+Trig_Start(CLK:=IN_CmdStart);
+Trig_Stop(CLK:=IN_CmdStop);
+
+//RS_StartStop_Local(SET:=Trig_Local_Start.Q,Reset1:= Trig_Local_Stop.Q); // TRUE START, FALSE STOP
+//RS_StartStop(SET:=Trig_Start.Q,Reset1 := Trig_Stop.Q); // TRUE START, FALSE STOP
+IF Trig_Local_Start.Q OR Trig_Local_Stop.Q OR Trig_Stop.Q OR Trig_Start.Q THEN
+	RS_StartStop(SET:=(IN_CmdStart_Local AND NOT IN_CmdStop_Local) OR (IN_CmdStart AND NOT (IN_CmdStop OR IN_CmdStop_Local)), 
+			 Reset1 := IN_CmdStop_Local OR (IN_CmdStop AND NOT IN_CmdStart_Local)); 
+END_IF
+
+FB_ModbusWrite[2](WriteCmd := FALSE);
+
+//Read the setpoints
+	// Evaluate the cmd given 
+
+	MesBlockWrite2_Temp[1] := BOOL_TO_WORD(RS_StartStop.Q1);
+	MesBlockWrite2_Temp[2] := BOOL_TO_WORD(RS_StartStop.Q1);
+	
+	
+	MesDataExd.MesData.OUT_CmdStart := RS_StartStop.Q1 ; 
+	MesDataExd.MesData.OUT_CmdStop  := NOT RS_StartStop.Q1 ; 	
+	
+	StartStop_RTrig(CLK:=CalCP_CMD_StartStop);
+	
+	FB_ModbusWrite[2]
+	(
+		pSrcAddr := ADR (MesBlockWrite2_Temp),
+		sIPAddr := ParamIPAddress,
+		tTimeout := ParamTimeout,
+		nMBAddr := AX_ADR_MB[ParamUnitID],
+		nTCPport := ParamTCPPort,
+		cbLength := SIZEOF(MesBlockWrite2_Temp),
+		nQuantity := AX_QTY_MB[ParamUnitID],
+		nUnitID := ParamUnitID,
+		WriteCmd := StartStop_RTrig.Q AND MesDataExd.MesData.MesCP_Write ,
+		Reset := CmdClearFault_G,
+		ErrorId => AX_ModbusWriteAlarmId[2],
+		ModbusWriteAlarm => AX_ModbusWriteAlarm[2]
+	);
+	
+SUPER^.M_Curtail() ; ]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_StateManager" Id="{a171d52b-233a-44b4-9862-8475d8061c5e}">
+      <Declaration><![CDATA[METHOD M_StateManager
+//////////////////
+// Detect which is the state of the inverter. IF loss of communication MesState =0 , the last inverter state is kept .  
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+	
+END_VAR
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//O=Stopped, 1 = MPPT, 2 = Sleeping, 3 = Starting, 4 = Throttled, 5 = Shutting down, 6 = Fault, 7 = Standby
+
+MesDataExd.MesData.MesState 			:= 0  ; 
+
+//Stopped
+	IF MesDataExd.MesData.MesState_INV = 0 OR MesDataExd.MesData.MesState_INV = 5 OR MesDataExd.MesData.MesState_INV = 8 THEN 
+		MesDataExd.MesData.MesState.0 := 1;
+
+//MPPT
+	ELSIF MesDataExd.MesData.MesState_INV = 23 OR MesDataExd.MesData.MesState_INV = 20 OR MesDataExd.MesData.MesState_INV = 21  OR MesDataExd.MesData.MesState_INV = 25 THEN
+			MesDataExd.MesData.MesState.1 := 1;
+
+//Sleeping
+//	ELSIF MesDataExd.MesData.MesState_INV = 23 THEN
+//			MesDataExd.MesData.MesState.2 := 1;
+
+//Starting		
+	ELSIF MesDataExd.MesData.MesState_INV = 12 OR MesDataExd.MesData.MesState_INV = 13 OR MesDataExd.MesData.MesState_INV = 14 OR MesDataExd.MesData.MesState_INV = 15 OR MesDataExd.MesData.MesState_INV = 19 THEN
+			MesDataExd.MesData.MesState.3 := 1;
+
+////throttled		
+//	ELSIF MesDataExd.MesData.MesState_INV = 23 THEN
+//			MesDataExd.MesData.MesState.4 := 1;	
+
+//Shutting down		
+	ELSIF MesDataExd.MesData.MesState_INV = 11 THEN
+			MesDataExd.MesData.MesState.5 := 1;	
+
+//fault		
+	ELSIF MesDataExd.MesData.MesState_INV = 23 THEN
+			MesDataExd.MesData.MesState.6 := 1;	
+
+//Standby		
+	ELSIF MesDataExd.MesData.MesState_INV = 2 OR MesDataExd.MesData.MesState_INV = 3 OR MesDataExd.MesData.MesState_INV = 18 THEN
+			MesDataExd.MesData.MesState.7 := 1;	
+	END_IF
+
+SUPER^.M_StateManager() ; ]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_INV_Sch4400">
+      <LineId Id="3" Count="1" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_INV_Sch4400.M_Acknowledge">
+      <LineId Id="51" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_INV_Sch4400.M_AlarmManagement">
+      <LineId Id="1577" Count="72" />
+      <LineId Id="893" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_INV_Sch4400.M_CP">
+      <LineId Id="165" Count="0" />
+      <LineId Id="168" Count="0" />
+      <LineId Id="180" Count="0" />
+      <LineId Id="232" Count="19" />
+      <LineId Id="51" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_INV_Sch4400.M_Curtail">
+      <LineId Id="792" Count="37" />
+      <LineId Id="623" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_INV_Sch4400.M_Execute">
+      <LineId Id="55" Count="6" />
+      <LineId Id="12" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_INV_Sch4400.M_Init">
+      <LineId Id="114" Count="1" />
+      <LineId Id="105" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_INV_Sch4400.M_Read">
+      <LineId Id="3017" Count="266" />
+      <LineId Id="3331" Count="13" />
+      <LineId Id="3329" Count="0" />
+      <LineId Id="3298" Count="2" />
+      <LineId Id="1334" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_INV_Sch4400.M_StartStop">
+      <LineId Id="188" Count="43" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_INV_Sch4400.M_StateManager">
+      <LineId Id="175" Count="36" />
+      <LineId Id="12" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,202 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.9">
+  <POU Name="FB_SCADA_VESTAS" Id="{bbcfc2dd-74c9-4234-bd9b-0fe51bbf8a47}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_SCADA_VESTAS
+//////////////////
+// High Voltage transformer with DGPT2 or DMCR detection . 
+//////////////////
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance/model specific) 
+	ParamScaleMin			: REAL:=0 ; 			// minimal input value  of the output. 
+	ParamScaleMax			: REAL:= 32767 ; 		// maximal input value of the output.	
+	ParamPmin				: REAL:=-15000 ; 		// minimal output value in kw
+	ParamPmax				: REAL:= 15000 ; 		// maximal output value in kw
+	ParamQmin				: REAL:=-11000 ; 		// minimal output value in kvar
+    ParamQmax				: REAL:= 11000 ; 		// maximal output value in kvar
+	                		
+END_VAR
+VAR_OUTPUT
+	//Child objects
+	
+END_VAR
+
+VAR_INPUT
+	
+	// INTERFACE VALUES WITH VESTAS :
+		// From AKUO to VESTAS
+			OUT_CmdPRegOn_IO						: BOOL;	// Passage a P0
+			OUT_CmdQregOn_IO						: BOOL;	// Passage a Q0
+			OUT_CmdNoGridFeedingOrder_IO			: BOOL;	// Demande de decouplage (eteindre les turbines)
+			OUT_CmdEmergencyEndEmergProdStopReqRec	: BOOL;	// Demande d'eff d'urgence 
+
+		// From VESTAS to AKUO
+			IN_MesPRegOn_IO							: BOOL;	// Validation de Passage a P0
+			IN_MesQregOn_IO							: BOOL;	// Validation de Passage a Q0
+			IN_TurbinesOFF_IO						: BOOL; // Turbines deconnectées
+			IN_Unavailable_IO						: BOOL; // Centrale indisponible
+			IN_ConnDisconnToGrid_IO					: BOOL; // Centrale couplée
+			IN_WatchDog_IO							: BOOL;	// Watchog du VOB
+	
+
+		IN_SetptP									: REAL; // Value in Kw of Active power from DEIEs
+		IN_SetptQ									: REAL; // Value in kvar of reactive power from DEIE
+		IN_CmdP										: BOOL;
+		IN_CmdQ										: BOOL;
+		OUT_SetptP_IO								: INT;
+		OUT_SetptQ_IO								: INT;
+END_VAR
+
+VAR
+MesDataExd									: ScadaVestas ; 
+	TrigCmdP										: R_TRIG;
+	TrigCmdQ										: R_TRIG;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{78618e31-4e4e-4e2a-b479-c23bae84829b}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Manages High Voltage Transformer Alarms
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager : FB_AlarmCodeManager ; 
+
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+// ALARM CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= IN_WatchDog_IO,  //Perte du watchdog avec le scada
+		bAlarm2			:= FALSE,// 
+		bAlarm3			:= FALSE,//	
+		bAlarm4			:= FALSE,// 
+		bAlarm5			:= FALSE,//
+		bAlarm6			:= FALSE, //
+		bAlarm7			:= FALSE, // 
+		bAlarm8			:= FALSE, // 
+		bAlarm9			:= FALSE, //	
+		bAlarm10		:= FALSE, // 
+		bAlarm11		:= FALSE, //
+		bAlarm12		:= FALSE, //
+		bAlarm13		:= FALSE, //
+		bAlarm14		:= FALSE, //
+		bAlarm15		:= FALSE , 			//      
+		wAlarmCode		=>MesDataExd.MesData.MesAlarmCode);
+
+// WARNING CODE //
+	FB_AlarmCodeManager(
+		bAlarm1 		:= IN_MesPRegOn_IO,   			// Vestas en PO actif
+		bAlarm2			:= IN_MesQregOn_IO, 			// Vestas en Q0 actif
+		bAlarm3			:= IN_TurbinesOFF_IO, 			// Vestas Turbines deconectées. 
+		bAlarm4			:= FALSE, 		// 
+		bAlarm5			:= FALSE, //
+		bAlarm6			:= FALSE, // 
+		bAlarm7			:= FALSE, // 
+		bAlarm8			:= FALSE, // 
+		bAlarm9			:= FALSE, // 
+		bAlarm10		:= FALSE, // 
+		bAlarm11		:= FALSE, // 
+		bAlarm12		:= FALSE, // 
+		bAlarm13		:= FALSE, // 
+		bAlarm14		:= FALSE, // 
+		bAlarm15		:= FALSE, //
+		wAlarmCode		=>MesDataExd.MesData.MesWarningCode);
+		
+// EVENT CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= OUT_CmdEmergencyEndEmergProdStopReqRec, 		// Demande d'effacement d'urgence depuis Scada Akuo
+		bAlarm2			:= OUT_CmdNoGridFeedingOrder_IO, 				// Demande de decouplage depuis scada AKUO 
+		bAlarm3			:= OUT_CmdPRegOn_IO, 							// Demande de P0 depuis Scada AKUO 
+		bAlarm4			:= OUT_CmdQregOn_IO, 							// Demande de Q0 depuis Scada Akuo 
+		bAlarm5			:= FALSE, 		//
+		bAlarm6			:= FALSE,       //
+		bAlarm7			:= FALSE,       //
+		bAlarm8			:= FALSE,       //
+		bAlarm9			:= FALSE, 		//
+		bAlarm10		:= FALSE,       //
+		bAlarm11		:= FALSE,       //
+		bAlarm12		:= FALSE,       //
+		bAlarm13		:= FALSE, 		//
+		bAlarm14		:= FALSE, 		//
+		bAlarm15		:= FALSE, 		//
+		wAlarmCode		=>MesDataExd.MesData.MesEventCode);
+		
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{18ba6187-97ca-49a6-99c0-1ebff8f9bcb1}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+// Recup statuses from DEIE
+	OUT_CmdNoGridFeedingOrder_IO 			:= A1_PDL.A1_DEIE.OUT_GridDisconnEndDisconnReqRec OR A1_PDL.A1_DEIE.OUT_EmergencyEndEmergProdStopReqRec ;
+	OUT_CmdEmergencyEndEmergProdStopReqRec 	:= A1_PDL.A1_DEIE.OUT_EmergencyEndEmergProdStopReqRec;
+	OUT_CmdPRegOn_IO 						:= A1_PDL.A1_DEIE.OUT_ActPowerLimActiv;
+	OUT_CmdQregOn_IO 						:= A1_PDL.A1_DEIE.OUT_ReactPowerLimActiv or A1_HPP.ParamTanPhiCtrl;
+
+
+//Order from Akuo
+MesDataExd.MesData.OUT_CmdPRegOn 					:= OUT_CmdPRegOn_IO;
+MesDataExd.MesData.OUT_CmdQregOn					:= OUT_CmdQregOn_IO;
+MesDataExd.MesData.OUT_CmdNoGridFeedingOrder		:= OUT_CmdNoGridFeedingOrder_IO;
+	
+// Info From Vestas
+MesDataExd.MesData.Ackno_Turbines_Off 				:= IN_TurbinesOFF_IO;
+MesDataExd.MesData.Ackno_MesPRegOn					:= IN_MesPRegOn_IO;
+MesDataExd.MesData.Ackno_MesQregOn					:= IN_MesQregOn_IO;
+MesDataExd.MesData.Watchdog						:= IN_WatchDog_IO;
+	
+MesDataExd.MesData.OUT_P0_4_20ma 	:= (IN_SetptP - ParamPmin)*(ParamScaleMax-ParamScaleMin)/(ParamPmax-ParamPmin) + ParamScaleMin;  
+MesDataExd.MesData.OUT_Q0_4_20ma 	:= (IN_SetptQ - ParamQmin)*(ParamScaleMax-ParamScaleMin)/(ParamQmax-ParamQmin) + ParamScaleMin;  
+		
+MesDataExd.MesData.IN_SetptP := IN_SetptP;
+MesDataExd.MesData.IN_SetptQ := IN_SetptQ;	
+	
+	OUT_SetptP_IO := REAL_TO_INT.MesDataExd.MesData.OUT_P0_4_20ma);
+	OUT_SetptQ_IO := REAL_TO_INT.MesDataExd.MesData.OUT_Q0_4_20ma);
+	
+// METHODS CALLS //
+	M_AlarmManagement() ; ]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_SCADA_VESTAS">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SCADA_VESTAS.M_AlarmManagement">
+      <LineId Id="186" Count="17" />
+      <LineId Id="253" Count="0" />
+      <LineId Id="205" Count="37" />
+      <LineId Id="2" Count="0" />
+      <LineId Id="256" Count="1" />
+    </LineIds>
+    <LineIds Name="FB_SCADA_VESTAS.M_Execute">
+      <LineId Id="207" Count="0" />
+      <LineId Id="249" Count="0" />
+      <LineId Id="243" Count="0" />
+      <LineId Id="242" Count="0" />
+      <LineId Id="246" Count="2" />
+      <LineId Id="244" Count="0" />
+      <LineId Id="208" Count="14" />
+      <LineId Id="224" Count="5" />
+      <LineId Id="223" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

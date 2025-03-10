@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="SMP1X" Id="{43add9a2-db03-4282-afeb-ac8740173fdc}">
+    <Declaration><![CDATA[TYPE SMP1X :
+STRUCT
+	MesData						: ANA; 			(**)
+
+	
+	MesIDAlarm					: WORD;			(**)
+	MesCP_Read					: BOOL;			(**)
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

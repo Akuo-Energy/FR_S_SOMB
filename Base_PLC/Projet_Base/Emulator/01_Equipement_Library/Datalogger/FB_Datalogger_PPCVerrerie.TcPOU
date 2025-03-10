@@ -1,0 +1,67 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_Datalogger_PPCVerrerie" Id="{997b8cf5-210e-4960-b826-076b2e6bfafc}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Datalogger_PPCVerrerie	EXTENDS FB_Datalogger_Base	// Data from PPC ( MV + HV )
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance specific) 
+	ParamTempoComAlarm			: TIME 			:= T#10S ; 						// (s) Config : Tempo to detect LOC Alarm
+	ParamClockReadTime 			: TIME 			:= TIME#200MS;	  				// (Time) Read Modbus Frequency.  
+	ParamTimeout				: TIME  		:= T#2S ;			  			// (Time) Timeout for modbus reading
+	ParamIPAdr : STRING := '192.168.1.2'; // IP Address for Modbus Requests 
+END_VAR
+VAR_INPUT
+	IN_CmdToggleRead			: BOOL ;
+	IN_CmdReset_L				: BOOL  ; // Reset Order .
+END_VAR
+VAR
+MesDataExd	AT %Q*				: Datalogger_PPCVerrerie;
+	
+
+    Trig_Cmd_Read				: R_TRIG;                       
+
+
+	
+	ClockRead					AT %Q*		: BOOL ;
+	
+	
+	
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+				
+				
+	
+	
+]]></ST>
+    </Implementation>
+    <Method Name="M_Execute" Id="{f63b21cc-37de-4f73-9071-fd9b32b52295}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	// EMULATOR
+
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_Datalogger_PPCVerrerie">
+      <LineId Id="27" Count="0" />
+      <LineId Id="26" Count="0" />
+      <LineId Id="24" Count="0" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="17" Count="0" />
+      <LineId Id="10" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Datalogger_PPCVerrerie.M_Execute">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

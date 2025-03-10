@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="PowerCol_PE" Id="{bdb725a5-eb1e-4fe1-8dc8-b6ac6b2ed82f}">
+    <Declaration><![CDATA[///////////
+// Structure For Jema Module 
+//////////
+TYPE PowerCol_PE :
+STRUCT
+		
+		MesData					: PowerCol ; (* MesData *) 
+
+		AX_DCInputs			: ARRAY[1..10] OF  DCInputs_PE ;(* Object *) 
+		
+		MesIDState			: DWORD ;		(* (NA) 	Module status (SV9.3 PE documentation p.97)																*)
+		MesTempmax			: REAL ;		(* (C) 		Maximum IGBT temperature of the selected module															*)
+		MesStateIO			: WORD ;		(* (NA) 	0: Open, 1: Closed. Bit 1 =  fan contactor, Bit 2 = main AC contactor, Bit 3 = AC soft charge contactor, Bit 4 = LCL filter contactor, Bit 5 = DC contactor , Bit 6 = reserved, Bit 7 = if open : overheating in the coil, Bit 8 = fan contactor feedback, Bit 9 = AC main contactor feedback, Bit 10 = AC soft charge contactor feedback, Bit 11 = LCL filter contactor feedback , Bit 12 = DC contactor feedback *) 		
+		MesHygro			: REAL ; 		(* (%) 		Percentage of humidity																					*)
+		MesAlarmID			: BYTE ; 		(* (NA)  PowerColumn Alarm ID  . W65 to W116  *)
+			
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

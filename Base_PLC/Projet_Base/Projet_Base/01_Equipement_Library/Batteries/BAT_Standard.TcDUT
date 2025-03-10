@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="BAT_Standard" Id="{9d56a71b-0898-401e-9ebb-03e05c23dacc}">
+    <Declaration><![CDATA[{attribute 'pack_mode' := '1'}
+
+TYPE BAT_Standard :
+STRUCT
+	AX_Rack						: ARRAY[1..CstNbRack_BAT_G] OF RACK;	(* Object *)
+	
+	MesData						: BAT;	(* Object *)	
+	
+END_STRUCT
+END_TYPE
+
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

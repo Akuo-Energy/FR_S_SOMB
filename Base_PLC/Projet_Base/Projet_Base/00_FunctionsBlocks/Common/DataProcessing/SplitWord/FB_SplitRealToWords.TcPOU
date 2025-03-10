@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_SplitRealToWords" Id="{97a3f640-c25e-4ecf-b730-b86b91e3873a}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_SplitRealToWords
+////////////////// 
+// Convert one REAL into  2 separate WORDS in Big Endian Encoding. 
+//////////////////	
+VAR_INPUT
+	IN		: REAL ;				// Real input
+	
+END_VAR
+
+VAR_OUTPUT
+	OUT		: ARRAY[0..1]OF WORD;	// Word output array
+	
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[OUT[1] := DWORD_TO_WORD(SHR(SHL(REAL_TO_DWORD(IN),16),16)) ; 	// Strong Word
+OUT[0] := DWORD_TO_WORD(SHR(REAL_TO_DWORD(IN),16)); 			// Weak Word]]></ST>
+    </Implementation>
+    <LineIds Name="FB_SplitRealToWords">
+      <LineId Id="3" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

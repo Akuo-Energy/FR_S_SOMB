@@ -1,0 +1,77 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="PowerCol" Id="{ab04da6a-c5e0-40ea-acea-f3d21da35a5c}">
+    <Declaration><![CDATA[///////////
+// Structure For Jema Module 
+//////////
+TYPE PowerCol :
+STRUCT
+		MesP 						: REAL; 		// {1}(kW) Active Power output (AC) of PCS
+		MesQ 						: REAL; 		// {1}(kVAr) Reactive AC Power Produced by PCS 
+		MesPdc						: REAL ; 		// {1}(kW) DC Power . 
+		MesCosPhi 					: REAL;  		// {0}(p.u) Power factor
+		MesFreq						: REAL ; 		// {0}(Hz) Frequency
+		MesTemp						: REAL ; 		// {0}(°C) PCS Internal Temperature
+		MesU 						: REAL;  		// {0}(V) AC Voltage measure
+		MesUdc 						: REAL;  		// {0}(V) DC Voltage measure
+		MesI 						: REAL; 		// {0}(A) Total AC current 
+		MesI1						: REAL ; 		// {0}(A) Phase 1 AC Current
+		MesI2						: REAL ;        // {0}(A) Phase 2 AC Current
+		MesI3						: REAL ;        // {0}(A) Phase 3 AC Current
+		MesIdc 						: REAL; 		// {0}(A) Total DC current from batteries (+ = discharge)
+		MesPavailable 				: REAL;  		// {1}(kW) Available PCS Power 
+		MesPconnected				: REAL ; 		// {0}(kW) Connected PCS Power 
+		MesDcSwitchClosed			: BOOL ; 		// {0}(NA) Position of the DC Switch : True = Switch closed
+		MesAcSwitchClosed			: BOOL ; 		// {0}(NA) Position of the AC Switch : True = Switch closed
+	
+
+			
+
+END_STRUCT
+END_TYPE
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

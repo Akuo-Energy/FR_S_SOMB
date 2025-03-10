@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_SplitFloatToWords" Id="{90279324-8e66-4ef6-8868-f6f8fb3f0062}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_SplitFloatToWords
+////////////////// 
+// Merge two words into a real with IEEE 754 coding (for float reading). 
+//////////////////	
+VAR_INPUT
+	
+	VAR_IN 		AT %MD0 : REAL;
+END_VAR
+
+VAR_OUTPUT
+	
+	WORD_STRONG 	AT %MW1 : WORD; // Strong Word 
+	WORD_WEAK 	AT %MW0 : WORD; // Weak Word. 
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_SplitFloatToWords">
+      <LineId Id="3" Count="1" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

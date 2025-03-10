@@ -1,0 +1,294 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_PM_Janitza" Id="{070049b6-5913-429e-8539-1e7fc41f9feb}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_PM_Janitza EXTENDS FB_PM_Base
+//////////////////
+// Measurement Solution based on Janitza, but access through JemaPLC
+//////////////////
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance specific) 
+	{attribute 'OPC.UA.DA' := '1'} 
+	ParamIpAddress			   	: STRING 		:= '192.168.1.30'; 			(* (NA) IP Adress of D50 .*)
+	{attribute 'OPC.UA.DA' := '1'} 
+	ParamUnitID 				: BYTE  := 1; 			  					(* (NA)   Modbus Unit ID.	*)
+
+
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	
+END_VAR
+
+VAR_INPUT 
+				MesDataExd AT %Q*				: PM_Standard ;
+END_VAR
+
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//
+	
+	//M_READ VARIABLES//
+		FB_ModbusRead_I1			: ARRAY[1..1] OF  FB_ModbusRead ; 		// (NA) FB for Modbus Reading
+	
+		MesBlock1_Temp 				: ARRAY[0..125] OF WORD;				//(NA) Temporary Block with multiple modbus reading (U30 + I35)
+		
+		MesModbusReadAlarm 		  	: ARRAY[1..1] OF BOOL ; 				// (NA) Modbus Read Alarm for communication 
+		
+		MesModbusAlarmCode			: UDINT;								// (NA) Modbus Read Alarm Code	
+		
+	//M_INIT VARIABLES //
+
+	// M_EXECUTE VARIABLES //
+
+	
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{5df650ea-50d1-43dd-af6a-c6e2aa5e829a}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Digiware measurement tool alarm and warning management
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager			: FB_AlarmCodeManager ; 
+	
+	KK							: BYTE ;		// For loop
+	
+	CMWarning					: BOOL;			// At least one Digiware device in Alarm
+	CMAlarm						: BOOL;			// At least one Digiware device in Alarm
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// COMMUNICATION // 
+IF MesDataExd.MesData.MesCP_Read then
+	CMWarning 			:= FALSE ;
+	CMAlarm	 			:= TRUE ;
+	
+	FOR KK:=1 TO 1 DO
+		CMWarning 		:= CMWarning OR MesModbusReadAlarm[KK] ;
+		CMAlarm			:= CMAlarm AND MesModbusReadAlarm[KK] ; 
+	END_FOR
+END_IF
+	
+	// Warning
+	MesWarningCom 		:= CMWarning ; 											// LOC with at least one Digiware module
+	//Alarm
+	TON_ComAlarm(IN:= CMAlarm , PT:= ParamTempoComAlarm, Q=>MesDataExd.MesData.MesAlarmCom) ;	 	// D50 LOC
+
+// ALARM CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= MesDataExd.MesData.MesAlarmCom  , 					// Communication Alarm  #COM
+		bAlarm2			:=FALSE, 		                            // 
+		bAlarm3			:=FALSE, 		                            // 
+		bAlarm4			:=FALSE, 		                            // 
+		bAlarm5			:=FALSE,                                    //
+		bAlarm6			:=FALSE,                                    //
+		bAlarm7			:=FALSE,                                    //
+		bAlarm8			:=FALSE,                                    //
+		bAlarm9			:=FALSE,                                    //
+		bAlarm10		:=FALSE,                                    //
+		bAlarm11		:=FALSE,                                    //
+		bAlarm12		:=FALSE,                                    //
+		bAlarm13		:=FALSE,                                    //
+		bAlarm14		:=FALSE,                                    //
+		bAlarm15		:= FALSE , 			 						// 						 	 
+		wAlarmCode		=>MesDataExd.MesData.MesAlarmCode);
+
+// WARNING CODE //
+	FB_AlarmCodeManager(		
+		bAlarm1			:= MesWarningCom	,				// Communication warning  #COM
+		bAlarm2			:=FALSE, 		                 	// 
+		bAlarm3			:=FALSE, 		                  	// 
+		bAlarm4			:=FALSE, 		                 	// 
+		bAlarm5			:=FALSE,                            //
+		bAlarm6			:=FALSE,                            //
+		bAlarm7			:=FALSE,                            //
+		bAlarm8			:=FALSE,                            //
+		bAlarm9			:=FALSE,                            //
+		bAlarm10		:=FALSE,                            //
+		bAlarm11		:=FALSE,                            //
+		bAlarm12		:=FALSE,                            //
+		bAlarm13		:=FALSE,                            //
+		bAlarm14		:=FALSE,                            //
+		bAlarm15		:=FALSE,                            //
+		wAlarmCode		=>MesDataExd.MesData.MesWarningCode);		
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_CP" Id="{a5351fb4-df85-41f4-8ef1-18688710e560}">
+      <Declaration><![CDATA[METHOD M_CP
+//////////////////
+//  Emulator
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+SUPER^.M_CP() ; 
+
+
+
+
+Trig_Cmd_Read(CLK:=IN_CmdToggleRead);
+	
+IF Trig_Cmd_Read.Q THEN
+	IN_CmdToggleRead := FALSE;
+	MesDataExd.MesData.MesCP_Read := NOT MesDataExd.MesData.MesCP_Read;
+END_IF
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Read" Id="{d5e962c8-c38d-44cd-86c0-19ff1a702814}">
+      <Declaration><![CDATA[METHOD M_Read
+//////////////////
+//  Read Modbus Variable for PCS . 
+/////////////////
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	MW 			: FB_MergeWordsToFloat ;
+	
+	MesPW	 : REAL ; 
+	MesP1W   : REAL ; 
+	MesP2W   : REAL ; 
+	MesP3W   : REAL ; 
+	MesQ1W   : REAL ; 
+	MesQ2W   : REAL ; 
+	MesQ3W   : REAL ; 
+	MesQW	 : REAL ; 
+	CalSW	: REAL ; 
+	
+	CalEacdelWh	: REAL ; 
+	CalEarecWh	: REAL ; 	
+	CalEreacdelvah	: REAL ; 
+	CalErearecvah	: REAL ; 
+
+	
+END_VAR
+
+
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//INITIALIZING MODBUS REQUESTS //
+	FB_ModbusRead_I1[1](Reset:= CmdClearFault_G ,sIPAddr:=ParamIpAddress, tTimeout:= ParamTimeout,nTcpPort:=502);
+
+// CP-Read / Write 
+
+
+
+IF MesDataExd.MesData.MesCP_Read  THEN	
+// MODBUS REQUEST//
+	FB_ModbusRead_I1[1](
+		nQuantity		:= 122, 
+		nMBAddr			:= 19000, 
+		nUnitID			:= ParamUnitID,
+		cbLength		:= SIZEOF(MesBlock1_Temp) , 
+		pDestAddr		:= ADR(MesBlock1_Temp) ,
+		ClockRead		:= MesDataExd.MesData.MesCP_Read AND ClockRead ,
+		ModbusReadAlarm	=>	MesModbusReadAlarm[1] , 
+		ErrorId			=> MesModbusAlarmCode);
+
+// PROPERTIES UPDATE // 
+
+
+	// Block 1
+MW( WORD_STRONG:= MesBlock1_Temp[26], WORD_WEAK := MesBlock1_Temp[27], VAR_OUT:=MesPW);
+MW( WORD_STRONG:= MesBlock1_Temp[42], WORD_WEAK := MesBlock1_Temp[43], VAR_OUT:=MesQW);
+MW( WORD_STRONG:= MesBlock1_Temp[44], WORD_WEAK := MesBlock1_Temp[45], VAR_OUT:=MesDataExd.MesData.MesCosPhi1);
+MW( WORD_STRONG:= MesBlock1_Temp[46], WORD_WEAK := MesBlock1_Temp[47], VAR_OUT:=MesDataExd.MesData.MesCosPhi2);
+MW( WORD_STRONG:= MesBlock1_Temp[48], WORD_WEAK := MesBlock1_Temp[49], VAR_OUT:=MesDataExd.MesData.MesCosPhi3);
+MW( WORD_STRONG:= MesBlock1_Temp[0], WORD_WEAK := MesBlock1_Temp[1], VAR_OUT:=MesDataExd.MesData.MesV1);
+MW( WORD_STRONG:= MesBlock1_Temp[2], WORD_WEAK := MesBlock1_Temp[3], VAR_OUT:=MesDataExd.MesData.MesV2);
+MW( WORD_STRONG:= MesBlock1_Temp[4], WORD_WEAK := MesBlock1_Temp[5], VAR_OUT:=MesDataExd.MesData.MesV3);
+MW( WORD_STRONG:= MesBlock1_Temp[6], WORD_WEAK := MesBlock1_Temp[7], VAR_OUT:=MesDataExd.MesData.MesU12);
+MW( WORD_STRONG:= MesBlock1_Temp[8], WORD_WEAK := MesBlock1_Temp[9], VAR_OUT:=MesDataExd.MesData.MesU23);
+MW( WORD_STRONG:= MesBlock1_Temp[10], WORD_WEAK := MesBlock1_Temp[11], VAR_OUT:=MesDataExd.MesData.MesU31);
+MW( WORD_STRONG:= MesBlock1_Temp[12], WORD_WEAK := MesBlock1_Temp[13], VAR_OUT:=MesDataExd.MesData.MesI1);
+MW( WORD_STRONG:= MesBlock1_Temp[14], WORD_WEAK := MesBlock1_Temp[15], VAR_OUT:=MesDataExd.MesData.MesI2);
+MW( WORD_STRONG:= MesBlock1_Temp[16], WORD_WEAK := MesBlock1_Temp[17], VAR_OUT:=MesDataExd.MesData.MesI3);
+MW( WORD_STRONG:= MesBlock1_Temp[50], WORD_WEAK := MesBlock1_Temp[51], VAR_OUT:=MesDataExd.MesData.MesFreq);
+
+MW( WORD_STRONG:= MesBlock1_Temp[20], WORD_WEAK := MesBlock1_Temp[21], VAR_OUT:=MesP1W);
+MW( WORD_STRONG:= MesBlock1_Temp[22], WORD_WEAK := MesBlock1_Temp[23], VAR_OUT:=MesP2W);
+MW( WORD_STRONG:= MesBlock1_Temp[24], WORD_WEAK := MesBlock1_Temp[25], VAR_OUT:=MesP3W);
+MW( WORD_STRONG:= MesBlock1_Temp[36], WORD_WEAK := MesBlock1_Temp[37], VAR_OUT:=MesQ1W);
+MW( WORD_STRONG:= MesBlock1_Temp[38], WORD_WEAK := MesBlock1_Temp[39], VAR_OUT:=MesQ2W);
+MW( WORD_STRONG:= MesBlock1_Temp[40], WORD_WEAK := MesBlock1_Temp[41], VAR_OUT:=MesQ3W);
+MW( WORD_STRONG:= MesBlock1_Temp[34], WORD_WEAK := MesBlock1_Temp[35], VAR_OUT:=CalSW);
+
+
+MW( WORD_STRONG:= MesBlock1_Temp[68], WORD_WEAK := MesBlock1_Temp[69], VAR_OUT:=CalEarecWh);
+MW( WORD_STRONG:= MesBlock1_Temp[76], WORD_WEAK := MesBlock1_Temp[74], VAR_OUT:=CalEacdelWh);
+MW( WORD_STRONG:= MesBlock1_Temp[100], WORD_WEAK := MesBlock1_Temp[101], VAR_OUT:=CalErearecvah);
+MW( WORD_STRONG:= MesBlock1_Temp[108], WORD_WEAK := MesBlock1_Temp[109], VAR_OUT:=CalEreacdelvah);
+
+
+
+
+// Properties Update 	
+MesDataExd.MesData.MesP		:= MesPW / 1000 ; // kW 
+MesDataExd.MesData.MesP1		:= MesP1W / 1000 ; 
+MesDataExd.MesData.MesP2       := MesP2W / 1000 ; 
+MesDataExd.MesData.MesP3       := MesP3W / 1000 ; 
+MesDataExd.MesData.MesQ        := MesQW / 1000 ; 
+MesDataExd.MesData.MesQ1       := MesQ1W / 1000 ; 
+MesDataExd.MesData.MesQ2       := MesQ2W / 1000 ; 
+MesDataExd.MesData.MesQ3       := MesQ3W / 1000 ; 
+MesDataExd.MesData.MesS		:= CalSW / 1000 ; 
+
+MesDataExd.MesData.MesEActProd		:= CalEacdelWh /1000 ; // kWh 
+MesDataExd.MesData.MesEActCons		:= CalEarecWh / 1000 ; 
+MesDataExd.MesData.MesEReactProd	:= CalEreacdelvah /1000 ; 
+MesDataExd.MesData.MesEReactCons	:= CalErearecvah / 1000  ; 
+END_IF 
+
+MesDataExd.MesData.MesCosPhi    := (MesDataExd.MesData.MesCosPhi1 + MesDataExd.MesData.MesCosPhi2 + MesDataExd.MesData.MesCosPhi3)/3;
+MesDataExd.MesData.MesI 		:= (MesDataExd.MesData.MesI1 + MesDataExd.MesData.MesI2 + MesDataExd.MesData.MesI3 )/3 ; 
+MesDataExd.MesData.MesU			:= (MesDataExd.MesData.MesU12 + MesDataExd.MesData.MesU23 + MesDataExd.MesData.MesU31 ) /3 ; 
+MesDataExd.MesData.MesV			:= (MesDataExd.MesData.MesV1 + MesDataExd.MesData.MesV2 + MesDataExd.MesData.MesV3 ) /3 ;
+
+MesDataExd.MesData.MesCosPhi     := (MesDataExd.MesData.MesCosPhi1 + MesDataExd.MesData.MesCosPhi2 + MesDataExd.MesData.MesCosPhi3)/3;
+MesDataExd.MesData.MesI :=  ( MesDataExd.MesData.MesI1 + MesDataExd.MesData.MesI2 + MesDataExd.MesData.MesI3 )/3 ; 
+MesDataExd.MesData.MesU		:= 	(MesDataExd.MesData.MesU12 + MesDataExd.MesData.MesU23 + MesDataExd.MesData.MesU31 ) /3 ; 
+MesDataExd.MesData.MesV		:= 	(MesDataExd.MesData.MesV1 + MesDataExd.MesData.MesV2 + MesDataExd.MesData.MesV3 ) /3 ; 
+
+IF MesDataExd.MesData.MesP > 0.01 OR MesDataExd.MesData.MesP < -0.01 THEN
+MesDataExd.MesData.MesTanPhi := MesDataExd.MesData.MesQ /MesDataExd.MesData.MesP;
+ELSE
+MesDataExd.MesData.MesTanPhi := 0;
+END_IF
+
+ ]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_PM_Janitza">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PM_Janitza.M_AlarmManagement">
+      <LineId Id="208" Count="0" />
+      <LineId Id="275" Count="0" />
+      <LineId Id="209" Count="51" />
+      <LineId Id="178" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PM_Janitza.M_CP">
+      <LineId Id="112" Count="13" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PM_Janitza.M_Read">
+      <LineId Id="874" Count="3" />
+      <LineId Id="879" Count="84" />
+      <LineId Id="605" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

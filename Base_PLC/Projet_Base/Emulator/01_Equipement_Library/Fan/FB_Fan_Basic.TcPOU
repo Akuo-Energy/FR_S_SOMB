@@ -1,0 +1,71 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_Fan_Basic" Id="{1a4d9657-eb61-4e74-a03a-5c70bc0d8ad2}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Fan_Basic
+// Function Block to ensure fan control 
+
+VAR_INPUT PERSISTENT
+	ParamNbSensors		: INT;					// Number of temperature sensors
+	ParamTemphigh 			: REAL := 35;		//  (C)High temperature to trigger the fan
+	ParamTemplow 			: REAL := 30;		//  (C)Low temperature to trigger the fan
+END_VAR
+	
+VAR_INPUT           	
+	IN_LocalHour     	: TIMESTRUCT;	// 
+	IN_ForceRun				: BOOL;		//
+	IN_Tmp1_IO 				: REAL;     //  Temperature sensor 1
+	IN_Tmp2_IO				: REAL ;    //  Temperature sensor 2
+
+	
+	// Commands and setpoints 
+	IN_CmdReset_L			: BOOL ;	// (NA) External Reset Command
+	
+END_VAR             	
+VAR_OUTPUT          	
+	OUT_Run_IO					: BOOL;
+END_VAR             	
+VAR                 	
+	bInit				: BOOL := TRUE;	// Booleen d'initialisation
+	bTmp1_OK			: BOOL; // Booléen de test si les valeurs remontées par les capteurs de températures remontent une donnée correcte
+	bTmp2_OK			: BOOL;
+	bTmp_OK 			: BOOL;
+	fTmp_PT				: REAL;
+	// AlarmManagement //
+
+	
+
+	
+	// State Mananger //
+	MesState			: BYTE;  // Cal 
+	
+	// M_Evaluate //
+	
+MesData		: Fan;
+END_VAR
+
+VAR PERSISTENT
+
+
+	MesStartTime 		: WORD := 9;
+	MesStopTime 			: WORD := 19;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_Execute" Id="{b8fd9e73-a3bf-49ac-9708-4075ea41f08e}">
+      <Declaration><![CDATA[METHOD M_Execute : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_Fan_Basic">
+      <LineId Id="151" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Fan_Basic.M_Execute">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

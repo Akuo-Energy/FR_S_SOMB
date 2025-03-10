@@ -1,0 +1,445 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="PCS" Id="{60b6ed67-2b86-4365-9f04-095aec8a2767}">
+    <Declaration><![CDATA[///////////
+// Structure for CtrlPcs Jema .  
+//////////
+TYPE PCS :
+STRUCT
+// PCS Controller  Measures
+	MesP 						: REAL;  		// (kW)  Active Power 
+	MesQ 						: REAL;  		// (kVAr) Reactive Power
+	MesPdc 						: REAL;  		// (kW)  DC Power 
+	MesCosPhi 					: REAL;  		// (p.u) Power factor
+	MesU 						: REAL;  		// (V) 	AC Voltage measure
+	MesFreq						: REAL;			// (Hz) Main Bus Freq
+	MesUdc 						: REAL;  		// (V) 	DC Voltage measure
+	MesI 						: REAL; 		// (A) 	Total AC current 
+	MesIdc 						: REAL; 		// (A) 	Total DC current from batteries (+ = discharge)
+	MesState					: WORD;			// (NA) [P,H,B] Bit0: 1 = Not Available (AC or DC breaker open or AllAcContactorsOpened), Bit1: GridMode: 1=grid
+	MesTemp						: REAL;			// (°C) Temperature sensor
+	MesHumidity					: REAL;			// (%) Humidity sensor
+	MesPrecharge				: BOOL;			// (NA) Precharge indicator      
+	MesDcBreaker				: BOOL;			// (NA) Dc Breaker status      
+	MesSoCLimitReached			: BOOL; 		// (NA) SoC limit reached
+    MesAcBreaker				: BOOL; 		// (NA) Ac Breaker status
+	MesHeartBeat				: WORD; 		// (NA) HeartBeat of the Inverter
+	MesS_BatChargeMax			: REAL;			// (kVA) Max apparent power available for Charge based on load factor
+	MesS_BatDischargeMax		: REAL;			// (kVA) Max apparent power available for discharge based on load factor
+	MesNbPcsConnected			: UINT; 		// (NA) Number of online PCS 
+	MesAtLeastOnePcsConnected	: BOOL; 		// (NA) At least one Pcs connected and not in alarm
+	MesOpeFlag					: WORD;			// (NA) Operation flag from PCS
+	MesWarning 					: BOOL; 		// (NA) PCS Controller general Warning 
+	MesComAlarm					: BOOL; 		// (NA) PCS Controller Communication fault
+	MesComWarning				: BOOL;			// (NA) PCS Controller Communication warning
+	MesOnGrid 					: BOOL; 		// TRUE if AFE in ONgrid Mode.
+	MesOffGrid 					: BOOL; 		// TRUE if AFE in Offgrid Mode.                 	
+	MesFreqReg_Active			: BOOL; 		// (NA) Is the frequency regulation active : True = FreqReg Active
+	MesUReg_Active				: BOOL; 		// (NA) Is the voltage regulation active : True = UReg Active
+	MesSnom						: REAL; 		// (kW) Nominal power read on Controller
+	MesAvailability				: REAL; 		// (%) Availability of the inverter
+	MesAlarmCode				: WORD;			// (NA) Internal Akuo AlarmCode
+	MesWarningCode				: WORD; 		// (NA) Internal Akuo WarningCode
+	MesEventCode				: WORD;			// (NA) Internal Akuo EventCode
+	OUT_CmdStop					: BOOL; 		// (NA) Stop  sent to the Controller
+	OUT_CmdStart				: BOOL;			// (NA) Start sent to the Controller
+	OUT_CmdStandby				: BOOL;			// (NA) Soft stop sent to the Controller
+	OUT_CmdInvLocal				: BOOL;			// (NA) If true, INV is excluded from regulation
+	OUT_CmdP					: BOOL;			// (NA) P setpoint is enabled
+	OUT_CmdQ					: BOOL;			// (NA) Q setpoint is enabled
+	OUT_CmdCosPhi				: BOOL;			// (NA) CosPhi setpoint is enabled
+	OUT_CmdBlackStart			: BOOL;			// (NA) Blackstart order sent to the controller
+	OUT_CmdFreqregMode			: BOOL;			// (NA) Frequency regulation mode sent to the controller
+	OUT_CmdUregMode				: BOOL;			// (NA) Voltage regulation mode sent to the controller
+	OUT_CmdMicroCyclingMode		: BOOL;			// (NA) MicroCycling is active
+	OUT_CmdGridMode				: BOOL;			// (NA) Mode of the PCS :  FALSE = Grid Feeder, TRUE = Grid Former
+	OUT_CmdOpenAc				: BOOL;			// (NA) Open AC breaker order sent to controller
+	OUT_CmdOpenDc				: BOOL;			// (NA) Open DC breaker order sent to controller
+	OUT_SetptP					: REAL; 		// (kW) Active power setpoint 
+	OUT_SetptPMax				: REAL;			// (kW) Upper range of the Active Power setpoint
+	OUT_SetptPMin				: REAL;			// (kW) Lower range of the Active Power setpoint
+	OUT_SetptQ					: REAL; 		// (kVAr) Reactive power setpoint 
+	OUT_SetptQMax				: REAL;			// (kVAr) Upper range of the Reactive Power setpoint
+	OUT_SetptQMin				: REAL;			// (kVAr) Lower range of the Reactive Power setpoint
+	OUT_SetptCosPhi				: REAL;			// (NA) CosPhi setpoint
+	OUT_MesV					: REAL;			// (V) Measure of the voltage sent to the Inverter for its regulation
+	OUT_SetptV					: REAL;			// (V) Setpoint of the voltage sent to the Inverter for the OffGrid Mode
+	OUT_SetptF					: REAL;			// (Hz) Setpoint of the frequency sent to the Inverter for the OffGrid Mode
+
+	MesCP_Read					: BOOL := TRUE;	// (NA) CP to read values from PCS
+	MesCP_Write					: BOOL := TRUE;	// (NA) CP to write values from PCS
+	
+END_STRUCT
+END_TYPE
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,66 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_TOR_ToS" Id="{171df055-04f2-4998-bac9-77508f89bcfb}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_TOR_ToS EXTENDS FB_TOR_Base
+//////////////////
+//  Technician on site selectOR   
+//////////////////
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance/model specific) 
+	ParamTempoToSAlarm				: TIME := T#180M ; 	//(min) Tempo (2h30) after ToS without clear fault >> alarm 
+	ParamTempoToSWarning			: TIME := T#120M ;  // (min) Tempo (2h) after ToS without clear fault  >> warning
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	
+END_VAR
+
+VAR_INPUT
+	// I/O Inputs 		                                     				
+	
+END_VAR
+
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//
+		TON 						: TON ;  			 // (NA) Calculate time since technician presence activation. 
+		        
+MesDataExd			: TOR_Standard ;                              			
+	          	
+	//GET/SET PROPERTY MANAGEMENT//
+	
+	//EMULATOR //
+		Emul_MesState				: BOOL;
+		
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_Execute" Id="{5afe17f4-f0af-429b-a447-859712d6a82f}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// EMULATOR I/O //
+
+SUPER^.M_Execute() ; ]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_TOR_ToS">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_TOR_ToS.M_Execute">
+      <LineId Id="56" Count="1" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,263 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_SUBHV_Base" Id="{f99a0271-0817-4750-aff6-c47462f17e09}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_SUBHV_Base 
+// PDL Base Code . 
+//////////////////
+VAR CONSTANT
+	// Characteristics of the object (Same for all instances)
+
+
+END_VAR
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance specific)  
+
+	ParamTimeOutConnect			: TIME 	:=T#10S	;		// (s)Tempo for connecting before Timeout warning	 
+	ParamTimeOutDisconnect		: TIME 	:=T#10S	;		// (s)Tempo for disconnecting before Timeout warning	
+	ParamTempoComAlarm			: TIME 	:=T#5S	;		// (s) Config : Tempo to detect LOC Alarm					
+	ParamPmax					: REAL 		;			// (kW) Config :Maximal Power connexion.
+	ParamPmin					: REAL 		;			// (kW) Config :Maximal Power connexion.	
+
+	//M_INIT VARIABLES // = Factory reset 	
+		bInit					: BOOL := TRUE ; 		// (NA) Initialize object parameters at first cycle 	
+	
+END_VAR
+
+VAR_INPUT 
+	// I/O Inputs 
+		IN_CmdConnect			: BOOL ; 				// (NA) [P,H] External Connect CommAND 
+		IN_CmdDisconnect		: BOOL ; 				// (NA) [P,H] External Disconnect CommAND 
+	
+        IN_CmdResetEquipement 	: WORD ;  				//(NA) [P,H]   Reset Command of different child    
+	
+		IN_CmdReset_L 			: BOOL ;  				//(NA) [P,H]    	Reset Command .  	
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+
+END_VAR
+
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//
+	
+		TON_ComAlarm			: TON ; 				// Tempo before deteting loss of communication. 
+	
+		MesComWarning			: BOOL ; 				// Communication with at least one PDL equipement
+
+	
+	//M_STATEMANAGER  VARIABLES//
+	
+		MesState				: BYTE ;				//(NA) [P,H,B] Cal : Bit 0: Islanded , Bit 1: Connected 
+	
+	//M_CONNECTDISCONNECT VARIABLES//
+		FB_CheckCommandConnect		: FB_CheckCommand ; // Check if Connect Command Successful
+		FB_CheckCommandDisconnect	: FB_CheckCommand ;	// Check if Disconnect Command Successful	
+		                                                
+                                                        
+		CalCompareWarningConnect	: BOOL;				// (NA) [H,B] Connect not performed warning
+		CalConnectInProgress		: BOOL;             // (NA) [H,B] Connect in Progress
+		CalCompareWarningDisconnect	: BOOL;             // (NA) [H,B] Disconnect not performed warning
+		CalDisconnectInProgress		: BOOL;             // (NA) [H,B] Disconnect in Progress
+	
+	//M_EVALUATE VARIABLES//
+//	MesDataExd				: SUBHV ;			// (NA) [P,H,B] PDL concept Data structure
+		
+		CalPavailable				: REAL ; 			// (kW) [P,H] Available (no alarm) active Power in the SPP product
+		CalPconnected 				: REAL	;			// (kW) [P,H] Connected active Power in the SPP product 
+		                                                
+		                                                
+	//M_EXECUTE VARIABLES //                            
+		KK							: BYTE ; 			// (NA) Loop over child objects 
+		                                                
+	//GET/SET PROPERTY MANAGEMENT//                     
+		R_TRIG_Reset				: R_TRIG ;			// (NA) Rising Edge Detection for Reset 
+		
+END_VAR			]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{bd0f1f7e-c032-44ba-9951-72ca0c47619f}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Generates object alarms and manages resets. 
+//////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager			: FB_AlarmCodeManager ; 
+	
+
+	AlarmCodeCBL				: WORD;	//Alarm CBL Synthesis 
+	AlarmCodeTransfo			: WORD; //Alarm Transfo Synthesis 
+	AlarmCodeSepam				: WORD; //Alarm Sepam Synthesis 
+	AlarmCodeCM					: WORD; //Alarm Measuring Unit Synthesis 
+	AlarmCodeGhi				: WORD; //Alarm GHI Synthesis 
+	AlarmCodeTemp				: WORD; //Alarm Temperature Synthesis 
+	WarningCodeCBL				: WORD;	//Warning CBL Synthesis 
+	WarningCodeTransfo			: WORD;	//Warning Transfo Synthesis 
+	WarningCodeSepam			: WORD;	//Warning Sepam Synthesis 
+	WarningCodeCM				: WORD;	//Warning Measuring Unit Synthesis 
+	WarningCodeGhi				: WORD;	//Warning GHI Synthesis 
+	WarningCodeTemp				: WORD;	//Warning Temperature Synthesis 
+	
+	KK							: BYTE ;// For Loop 
+	
+	AlarmGridFault				: BOOL;
+	GTEAlarmTrigger 			: BOOL; 
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_ConnectDisconnect" Id="{00d9eae1-628a-4e7a-9242-a8890b279acc}">
+      <Declaration><![CDATA[METHOD M_ConnectDisconnect
+//////////////////
+// Connect / Disconnect Load
+//////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+
+	KK: BYTE;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// CHECK CONSISTENCY //
+	FB_CheckCommandConnect(
+		T					:= ParamTimeOutConnect ,
+		bCmd				:= IN_CmdConnect, 
+		bMes				:= MesState.1,
+		bImpulsion			:= TRUE , 
+		bReset 				:= CmdClearFault_G OR IN_CmdDisconnect, 
+		bWarning 			=> CalCompareWarningConnect,
+		bInProgress			=> CalConnectInProgress); 
+			
+	FB_CheckCommandDisconnect(
+		T					:= ParamTimeOutDisconnect ,
+		bCmd				:= IN_CmdDisconnect, 
+		bMes				:= MesState.0,
+		bImpulsion			:= TRUE , 
+		bReset 				:= CmdClearFault_G OR IN_CmdConnect, 
+		bWarning 			=> CalCompareWarningDisconnect,
+		bInProgress			=> CalDisconnectInProgress); ]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_EquipmentCalls" Id="{042f959c-d61a-4579-8cc0-731ba301796c}">
+      <Declaration><![CDATA[METHOD M_EquipmentCalls
+//////////////////
+// Equipement Calls 
+//////////////////
+
+VAR
+	// Method local variables (reinitialized at each cycle) 
+
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Evaluate" Id="{2ef46db0-b8bb-4c87-9b9c-92b657c2103b}">
+      <Declaration><![CDATA[METHOD M_Evaluate
+//////////////////
+// Evaluate PDL Data 
+//////////////////
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{f1d679a5-fc55-4f89-861a-4081bb52856a}">
+      <Declaration><![CDATA[METHOD M_Execute
+/////////////////////
+// Action Calls and Object Calls
+/////////////////////
+VAR
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+// INITIALIZE // 
+	IF bInit THEN
+		M_Init() ; 
+		bInit:= FALSE ; 
+		
+	ELSIF CmdInit_G  THEN 
+		bInit:= TRUE ;
+		
+	END_IF
+
+// OBJECT CALLS //
+	M_EquipmentCalls() ; 
+
+// METHODS CALLS //
+	M_ConnectDisconnect() ; 
+	M_StateManager();	
+	M_Evaluate();
+	M_AlarmManagement(); ]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{8744b019-77a1-466f-9d71-6d9c7d6d6c39}">
+      <Declaration><![CDATA[METHOD M_Init
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_StateManager" Id="{78896003-cb1d-42e6-b266-4113aeecc018}">
+      <Declaration><![CDATA[METHOD M_StateManager
+//////////////////
+// Manages PDL state . 
+//////////////////
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_SUBHV_Base">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SUBHV_Base.M_AlarmManagement">
+      <LineId Id="406" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SUBHV_Base.M_ConnectDisconnect">
+      <LineId Id="21" Count="8" />
+      <LineId Id="31" Count="7" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SUBHV_Base.M_EquipmentCalls">
+      <LineId Id="49" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SUBHV_Base.M_Evaluate">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SUBHV_Base.M_Execute">
+      <LineId Id="160" Count="18" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SUBHV_Base.M_Init">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SUBHV_Base.M_StateManager">
+      <LineId Id="75" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

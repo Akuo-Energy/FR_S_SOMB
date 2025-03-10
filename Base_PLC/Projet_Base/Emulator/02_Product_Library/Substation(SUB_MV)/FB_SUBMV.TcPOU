@@ -1,0 +1,447 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_SUBMV" Id="{675d9b06-5aa4-4fc2-8677-a7f89efed664}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_SUBMV EXTENDS FB_SUBMV_Base
+//////////////////
+// Substation for AMHE  Project 
+//////////////////
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance specific)  
+		ParamTempoPoste						: TIME := T#1S; 										// (s) Temps entre fermeture depart de chaque poste
+		ParamTempoUnknowFault				: TIME := T#15S;										//(s) Temps max pour que la MainMVCB reste ouverte avec Aucun défaut et une autorisation de couplage ==> aboutit a une perte d'autorisation
+		ParamTempoSepamCloseAfterGte		: TIME := T#15S; 										//(s)Param renseigné dans le Code du sepam + 10 ms 
+		
+		ParamAutoCloseMainMVCBEnabled		: BOOL := TRUE ; 										// Enable Automatic closing of the HV coupling Cell without Couplig Authorizatioon.  
+END_VAR
+
+VAR_INPUT 
+	// I/O Inputs 
+		IN_MesCouplerState_IO				: UINT ; 											    // Coupler State IO		                                                        									
+                                                                									
+		IN_MesStopMVCC						: BOOL ; 											   // Stop the sequence for closing or opening 
+		IN_CmdNoFeeding						: BOOL ; 											   // Order to disconnect generators to the grid
+		IN_CmdFeeding						: BOOL ; 											   // Order to connect generators to the grid
+		IN_CmdOpenMainMVCB					: BOOL ;
+		IN_CmdCloseMainMVCB					: BOOL ;
+		
+		IN_CmdOpenFeederMVCB				: ARRAY[1..CstNbFeederMVCB_G] OF BOOL ;	
+		IN_CmdCloseFeederMVCB				: ARRAY[1..CstNbFeederMVCB_G] OF BOOL ;	
+		
+		
+	// EQUIPMENTS
+		A1_GRID								: FB_GRID_Enedis ; 
+		A1_MainMVCB							: FB_CB_MainMVCB;
+		AX_FeederMVCB						: ARRAY[1..CstNbFeederMVCB_G] OF FB_CB_FeederMVCB ; 
+//		A1_FeederMVCB_1						: FB_CB_FeederMVCB;
+//		A1_FeederMVCB_2						: FB_CB_FeederMVCB;
+		A1_GridMVCB							: FB_CB_GridMVCB;
+		A1_MeasureMVCB						: FB_CB_MeasureMVCB;			// Measure Cell
+		A1_AuxMVCB							: FB_CB_AuxMVCB;				// Auxiliary cell 
+		A1_CB_24V							: FB_TOR_Standard;					// Série Disjoncteur 24VCC
+		A1_CB_48V							: FB_TOR_Standard;					// Série Disjoncteur 48V
+		A1_CB_230V							: FB_TOR_Standard;					// Série Disjoncteur 230V
+		A1_MainCB_LV						: FB_TOR_Standard ;         		
+		A1_DS_MV							: FB_TOR_Ds ;					// (NA)TOR Door Sensor object instance Filter room
+		A1_DS_LV							: FB_TOR_Ds ;
+		A1_ES_MV							: FB_TOR_Es ;	
+		A1_ES_LV							: FB_TOR_Es ;	
+		A1_MS								: FB_TOR_MS ;
+		A1_SD_MV							: FB_TOR_Sd;
+		A1_SD_LV							: FB_TOR_Sd;
+		A1_ProtectRelay						: FB_ProtectRelay_SepamS48; 	// ID:= 150, 19200,8N1,Sans parité
+		A1_PM								: FB_PM_ION7650; //FB_PM_Janitza;
+		A1_PM_Aux							: FB_PM_PM3250;					// ID = 50, 19200, 8N1, Sans parité
+		A1_UPS_48v							: FB_UPS_ENERIS;
+		A1_UPS_24v							: FB_UPS_ENERIS;
+				
+		A1_Transfo_Aux						: FB_Transfo_MV;
+
+	//Other
+		OUT_HVcellsMoving					: BOOL;
+		A1_Router_ADSL						: FB_Router;
+		A1_Router_4G						: FB_Router;
+		A1_IPC 								: FB_IPC;
+	
+END_VAR
+
+VAR_OUTPUT
+
+	
+END_VAR
+
+VAR
+
+              	
+	//M_EVALUATE VARIABLES//        	
+	MesDataExd			: SUBMV_Exd;  		// (NA) [P,H,B] MCA SUB_MV specific Data structure    
+		
+	//M_Init 
+	
+
+END_VAR			
+ ]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_EquipmentCalls" Id="{317238c2-4ea6-4f18-9367-44fa1bb40436}">
+      <Declaration><![CDATA[METHOD M_EquipmentCalls
+//////////////////
+// Evaluate AMS characteristics
+//////////////////
+
+VAR
+	// Method local variables (reinitialized at each cycle) 
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//MVR
+FOR KK:= 1 TO CstNbFeederMVCB_G DO 
+	AX_FeederMVCB[KK].M_Execute() ; 			
+END_FOR 
+A1_MainMVCB.M_Execute();	
+A1_GridMVCB.M_Execute();
+A1_MeasureMVCB.M_Execute();
+A1_AuxMVCB.M_Execute();
+
+//CB BT			
+A1_CB_48V.M_Execute();
+A1_CB_230V.M_Execute();
+A1_CB_24V.M_Execute();
+A1_MainCB_LV.M_Execute();	
+		
+//Door Sensor
+A1_DS_MV.M_Execute();			
+A1_DS_LV.M_Execute();
+A1_MS.M_Execute();
+
+
+//SEPAM
+//A1_ProtectRelay.ConnectAuthorization := A1_GRID.OUT_GridConnAuthorConnWaitRec;
+A1_ProtectRelay.M_Execute();
+
+//Operation Meter	
+A1_PM.M_Execute();
+//A1_PM_Aux.M_Execute();
+//DEIE
+//A1_DEIE.IN_ConnectAuthorizationLost := A1_VDE_Sepam.C13100IO OR A1_VDE_Sepam.GteLong OR  A1_VDE_Sepam.GTE3Time OR UnknownFault;
+A1_GRID.M_Execute() ; 	    
+
+// UPS
+A1_UPS_48v.M_Execute();
+
+A1_UPS_24v.M_Execute();
+
+// Door Sensor
+A1_DS_LV.M_Execute();
+A1_DS_MV.M_Execute();
+
+// Smoke detector 
+A1_SD_MV.M_Execute();
+
+// ROUTEURS ADSL et 4G
+A1_Router_ADSL.M_Execute();	 
+A1_Router_4G.M_Execute();     
+A1_IPC.M_Execute();            
+
+// ES 
+A1_ES_MV.M_Execute() ; 			
+A1_ES_LV.M_Execute() ; ]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Evaluate" Id="{4e9c8da6-e5c1-406a-a92d-9509601e5f46}">
+      <Declaration><![CDATA[METHOD M_Evaluate
+//////////////////
+// Evaluate SUB.MV Data 
+//////////////////
+VAR 
+
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{b332fad5-5a5d-4161-8fde-fede0d307f37}">
+      <Declaration><![CDATA[METHOD M_Init
+
+
+VAR
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+A1_GRID.ParamRseAvailable	:=TRUE	  ; 	
+A1_GRID.ParamTaAvailable	:=TRUE	  ;   
+A1_GRID.ParamP0Available	:=TRUE	  ;  
+A1_GRID.ParamQ0Available	:=TRUE	  ; 
+A1_GRID.ParamTONFiltering	:=T#200MS ;
+A1_GRID.ParamPmaxPark		:= 15000  ;    
+A1_GRID.ParamQMax			:= 3000   ;    
+A1_GRID.ParamQMin			:= -3000  ;    
+A1_GRID.ParamPMin			:= 0      ;    
+
+// Cells 
+A1_MainMVCB.ParamClosedInput_Connected := FALSE ; 
+A1_MainMVCB.ParamNC := FALSE ;
+A1_MainMVCB.ParamNbFdbck := 1 ; 
+A1_MainMVCB.ParamSectLigne := 1 ; 
+A1_MainMVCB.ParamTP_Impulsion := T#2S ; 
+A1_MainMVCB.ParamTimeOut_Alarm := T#500MS ; 
+A1_MainMVCB.ParamTimeOut_Close := T#1S ; 
+A1_MainMVCB.ParamTimeOut_Open := T#1S ;
+ 	
+// FeederMVCB_ 
+FOR KK:= 1 TO CstNbPTR_G DO 
+	
+	AX_FeederMVCB[KK].ParamClosedInput_Connected := FALSE ; 
+	AX_FeederMVCB[KK].ParamNC := FALSE ; 
+	AX_FeederMVCB[KK].ParamNbFdbck := 1 ; 
+	AX_FeederMVCB[KK].ParamSectLigne := 1 ; 
+	AX_FeederMVCB[KK].ParamTP_Impulsion := T#2S ; 
+	AX_FeederMVCB[KK].ParamTimeOut_Alarm := T#500MS ; 
+	AX_FeederMVCB[KK].ParamTimeOut_Close := T#1S ; 
+	AX_FeederMVCB[KK].ParamTimeOut_Open := T#1S ; 
+END_FOR
+
+	
+A1_GridMVCB.ParamClosedInput_Connected := FALSE ; 
+A1_GridMVCB.ParamNC := FALSE ; 
+A1_GridMVCB.ParamNbFdbck := 1 ; 
+A1_GridMVCB.ParamTimeOut_Alarm := T#500MS ; 
+A1_GridMVCB.ParamTimeOut_Close := T#1S ; 
+A1_GridMVCB.ParamTimeOut_Open := T#1S ; 				
+
+		
+A1_MeasureMVCB.ParamClosedInput_Connected := FALSE ; 
+A1_MeasureMVCB.ParamFuseNC := TRUE ; 
+A1_MeasureMVCB.ParamNC := FALSE ; 
+A1_MeasureMVCB.ParamNbFdbck := 1 ; 
+A1_MeasureMVCB.ParamTP_Impulsion := T#2S ; 
+A1_MeasureMVCB.ParamTimeOut_Alarm := T#500MS ; 
+A1_MeasureMVCB.ParamTimeOut_Close := T#1S ; 
+A1_MeasureMVCB.ParamTimeOut_Open := T#1S ;
+	
+A1_AuxMVCB.ParamClosedInput_Connected := FALSE ; 
+A1_AuxMVCB.ParamFuseNC := TRUE ; 
+A1_AuxMVCB.ParamNC := FALSE ; 
+A1_AuxMVCB.ParamNbFdbck := 1 ; 
+A1_AuxMVCB.ParamTP_Impulsion := T#2S ; 
+A1_AuxMVCB.ParamTimeOut_Alarm := T#500MS ; 
+A1_AuxMVCB.ParamTimeOut_Close := T#1S ; 
+A1_AuxMVCB.ParamTimeOut_Open := T#1S ;
+
+
+A1_CB_24V.ParamAtleastOne := TRUE ; 
+A1_CB_24V.ParamNbSensors := 1 ; 
+A1_CB_24V.ParamCableCutSecurity := TRUE ;
+
+A1_CB_48V.ParamAtleastOne := TRUE ; 
+A1_CB_48V.ParamNbSensors := 1 ; 
+A1_CB_48V.ParamCableCutSecurity := TRUE ;
+
+A1_CB_230V.ParamAtleastOne := TRUE ; 
+A1_CB_230V.ParamNbSensors := 1 ; 
+A1_CB_230V.ParamCableCutSecurity := TRUE ;
+
+A1_MainCB_LV.ParamAtleastOne := TRUE ; 
+A1_MainCB_LV.ParamNbSensors := 1 ; 
+A1_MainCB_LV.ParamCableCutSecurity := TRUE ;
+
+
+A1_DS_LV.ParamAtleastOne := TRUE ; 
+A1_DS_LV.ParamNbSensors := 1 ; 
+A1_DS_LV.ParamCableCutSecurity := TRUE ; 	
+A1_DS_LV.ParamTempoDoorAlarm := T#60S ; 
+
+A1_DS_MV.ParamAtleastOne := TRUE ; 
+A1_DS_MV.ParamNbSensors := 1 ; 
+A1_DS_MV.ParamCableCutSecurity := TRUE ; 	
+A1_DS_MV.ParamTempoDoorAlarm := T#60S ; 
+		
+A1_ES_LV.ParamAtleastOne := TRUE ;
+A1_ES_LV.ParamNbSensors := 1 ; 
+A1_ES_LV.ParamCableCutSecurity := FALSE ; 
+A1_ES_LV.ParamTempoEs := T#5S ; 
+		
+
+A1_ES_MV.ParamAtleastOne := TRUE ;
+A1_ES_MV.ParamNbSensors := 1 ; 
+A1_ES_MV.ParamCableCutSecurity := FALSE ; 
+A1_ES_MV.ParamTempoEs := T#5S ;
+
+
+				
+A1_Sd_LV.ParamAtleastOne := TRUE; 
+A1_Sd_LV.ParamNbSensors := 1; 				
+A1_Sd_LV.ParamCableCutSecurity	:= TRUE; 
+A1_Sd_LV.ParamTempoFire := T#5S ; 
+
+
+A1_Sd_MV.ParamAtleastOne := TRUE; 
+A1_Sd_MV.ParamNbSensors := 1; 				
+A1_Sd_MV.ParamCableCutSecurity	:= TRUE; 
+A1_Sd_MV.ParamTempoFire := T#5S ; 
+
+			
+A1_ProtectRelay.ParamClockReadTime := T#2S ; 
+A1_ProtectRelay.ParamTimeOut	:= T#5S ; 
+A1_ProtectRelay.ParamUnitID := 1 ; 
+A1_ProtectRelay.ParamInInterfaceSub := 0 ; 
+A1_ProtectRelay.ParamTimeoutRTU := T#5S ; 
+
+
+A1_PM.ParamClockReadTime := T#200MS ; 
+A1_PM.ParamIPAdress := '192.168.1.20' ; 
+A1_PM.ParamTempoComAlarm := T#10S ;
+A1_PM.ParamTimeout := T#2S ; 
+A1_PM.ParamUnitID := 1 ; 
+
+
+A1_PM_Aux.ParamClockReadTime := T#200MS ; 
+A1_PM_Aux.ParamTempoComAlarm := T#10S ;
+A1_PM_Aux.ParamTimeout := T#2S ; 
+A1_PM_Aux.ParamUnitID := 1 ; 					
+
+//A1_UPS_48v	
+
+A1_UPS_24v.ParamClockReadTime := T#5S ; 
+A1_UPS_24v.ParamTempoComAlarm := T#20S; 
+A1_UPS_24v.ParamTempoComWarning:= T#10S ; 
+A1_UPS_24v.ParamTimeOut	:= T#10S ; 
+A1_UPS_24v.ParamNC	:= TRUE ; 
+			
+	
+A1_UPS_48v.ParamClockReadTime := T#5S ; 
+A1_UPS_48v.ParamTempoComAlarm := T#20S; 
+A1_UPS_48v.ParamTempoComWarning:= T#10S ; 
+A1_UPS_48v.ParamTimeOut	:= T#10S ; 
+A1_UPS_48v.ParamNC	:= TRUE ; 
+
+				
+A1_Router_ADSL.ParamTempoRestart := T#30S ; 						
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_SUBMV">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SUBMV.M_EquipmentCalls">
+      <LineId Id="376" Count="0" />
+      <LineId Id="439" Count="1" />
+      <LineId Id="378" Count="4" />
+      <LineId Id="384" Count="4" />
+      <LineId Id="391" Count="8" />
+      <LineId Id="441" Count="0" />
+      <LineId Id="401" Count="9" />
+      <LineId Id="412" Count="8" />
+      <LineId Id="424" Count="0" />
+      <LineId Id="426" Count="1" />
+      <LineId Id="170" Count="0" />
+      <LineId Id="454" Count="1" />
+      <LineId Id="443" Count="0" />
+      <LineId Id="442" Count="0" />
+      <LineId Id="445" Count="0" />
+      <LineId Id="444" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SUBMV.M_Evaluate">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SUBMV.M_Init">
+      <LineId Id="319" Count="1" />
+      <LineId Id="104" Count="0" />
+      <LineId Id="131" Count="0" />
+      <LineId Id="115" Count="0" />
+      <LineId Id="130" Count="0" />
+      <LineId Id="120" Count="0" />
+      <LineId Id="129" Count="0" />
+      <LineId Id="122" Count="0" />
+      <LineId Id="128" Count="0" />
+      <LineId Id="124" Count="0" />
+      <LineId Id="113" Count="0" />
+      <LineId Id="149" Count="7" />
+      <LineId Id="70" Count="0" />
+      <LineId Id="167" Count="0" />
+      <LineId Id="159" Count="0" />
+      <LineId Id="328" Count="0" />
+      <LineId Id="350" Count="0" />
+      <LineId Id="160" Count="6" />
+      <LineId Id="133" Count="0" />
+      <LineId Id="157" Count="0" />
+      <LineId Id="169" Count="0" />
+      <LineId Id="72" Count="0" />
+      <LineId Id="186" Count="2" />
+      <LineId Id="191" Count="1" />
+      <LineId Id="73" Count="0" />
+      <LineId Id="180" Count="0" />
+      <LineId Id="74" Count="0" />
+      <LineId Id="212" Count="0" />
+      <LineId Id="219" Count="0" />
+      <LineId Id="213" Count="1" />
+      <LineId Id="216" Count="2" />
+      <LineId Id="75" Count="0" />
+      <LineId Id="200" Count="0" />
+      <LineId Id="220" Count="6" />
+      <LineId Id="208" Count="0" />
+      <LineId Id="227" Count="1" />
+      <LineId Id="232" Count="1" />
+      <LineId Id="229" Count="1" />
+      <LineId Id="239" Count="1" />
+      <LineId Id="234" Count="1" />
+      <LineId Id="241" Count="1" />
+      <LineId Id="236" Count="1" />
+      <LineId Id="243" Count="1" />
+      <LineId Id="238" Count="0" />
+      <LineId Id="245" Count="4" />
+      <LineId Id="231" Count="0" />
+      <LineId Id="76" Count="0" />
+      <LineId Id="251" Count="2" />
+      <LineId Id="250" Count="0" />
+      <LineId Id="79" Count="0" />
+      <LineId Id="257" Count="2" />
+      <LineId Id="254" Count="0" />
+      <LineId Id="85" Count="0" />
+      <LineId Id="330" Count="0" />
+      <LineId Id="334" Count="2" />
+      <LineId Id="331" Count="2" />
+      <LineId Id="329" Count="0" />
+      <LineId Id="89" Count="0" />
+      <LineId Id="262" Count="0" />
+      <LineId Id="260" Count="0" />
+      <LineId Id="263" Count="0" />
+      <LineId Id="337" Count="1" />
+      <LineId Id="340" Count="2" />
+      <LineId Id="339" Count="0" />
+      <LineId Id="264" Count="0" />
+      <LineId Id="90" Count="0" />
+      <LineId Id="284" Count="0" />
+      <LineId Id="289" Count="0" />
+      <LineId Id="278" Count="0" />
+      <LineId Id="290" Count="1" />
+      <LineId Id="296" Count="0" />
+      <LineId Id="277" Count="0" />
+      <LineId Id="272" Count="3" />
+      <LineId Id="97" Count="0" />
+      <LineId Id="269" Count="1" />
+      <LineId Id="297" Count="0" />
+      <LineId Id="299" Count="1" />
+      <LineId Id="271" Count="0" />
+      <LineId Id="293" Count="0" />
+      <LineId Id="313" Count="0" />
+      <LineId Id="301" Count="0" />
+      <LineId Id="305" Count="0" />
+      <LineId Id="308" Count="2" />
+      <LineId Id="312" Count="0" />
+      <LineId Id="292" Count="0" />
+      <LineId Id="102" Count="0" />
+      <LineId Id="346" Count="3" />
+      <LineId Id="344" Count="1" />
+      <LineId Id="343" Count="0" />
+      <LineId Id="2" Count="0" />
+      <LineId Id="321" Count="0" />
+      <LineId Id="105" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

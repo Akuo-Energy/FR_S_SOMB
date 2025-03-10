@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="PTR_Exd" Id="{54314e59-f257-4822-848b-72db19f42031}">
+    <Declaration><![CDATA[TYPE PTR_Exd :
+STRUCT
+	
+	MesData				: PTR ; 												(* PTR *)
+	//A1_INV_Smartlogger  :  SL_Huawei ;                                        (* Smartlogger *)                          
+	AX_INV				: ARRAY[1..CstNbInv_PTR_G] OF INV_Huawei ;             	(* Inverters *)
+	AX_TempTransfo		: ARRAY[1..CstNbTempTansfo_PTR_G] OF ANA_Standard;		(* Transformer temperature *)
+	//MainMVCB			: MainMVCB_Sch ; 		 	                    		(* DM1 *)
+	SD_Transfo			: TOR_Standard ;                                        (* Smoke Detector Transfo *)
+	SD_INV		        : TOR_Standard ;                                        (* INV Smoke detector *)
+	DS_Transfo			: TOR_Standard ;                                        (* Transfo door sendor *)
+	DS_INV		        : TOR_Standard ;                                        (* INV door sensor *)
+	Transfo			    : Transfo_MV ;                                          (* Transfo *)
+	MainCBAux	        : TOR_Standard ;                                        (* Main CB Aux *)
+	MainMVCB_PTR		: CB_MainMVCB_Sch;		 		 	                    (* (NA) MainMVCB PTR		   							*)
+	Fan_Reg			    : Fan_Standard ;                                        (* Fan *)
+	Datalogger			: Datalogger_SchSkid; 									(* (NA) Datalogger 		   								*) 
+	
+	TempTR				: ANA_Standard;(* Child struct*)
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

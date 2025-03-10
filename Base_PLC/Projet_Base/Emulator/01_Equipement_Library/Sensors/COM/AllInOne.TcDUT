@@ -1,0 +1,45 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="AllInOne" Id="{3455eb81-3a65-479a-8a55-499da6d6f745}">
+    <Declaration><![CDATA[TYPE AllInOne :
+STRUCT
+	
+	MesWindSp 			: REAL ;		(* (m/s)	 Wind speed measurement of the weather station												        *)
+	MesWindDir 			: REAL ;		(* (°) 		 Wind direction measurement of the weather station                                                  *)
+	MesHygro			: REAL ;		(* (%) 		 Humidity measurement of the weather station                                                        *)
+	MesTemp_Amb 			: REAL ;		(* (°C)		 Ambiant temperature measurement of the weather station                                             *)
+	MesDewPoint			: REAL ;		(* (%) 		 Dew point measure of weather station                                                               *)
+	MesRain1			: REAL ;		(* (count/h) Rain rate                                                                                          *)
+	MesRain2			: REAL ;		(* (count/h) Rain rate                                                                                          *)
+	MesRain3			: REAL ;		(* (count/h) Rain rate                                                                                          *)
+                                        (*                                                                                                              *)
+	MesAlarmWindSp		: REAL ;		(* Alarm for the Wind speed : 0=OFF, 1 = Lower threshold, 2 = Higher threshold                                  *)
+	MesAlarmWindDir		: REAL ;		(* Alarm for the Wind direction : 0=OFF, 1 = Lower threshold, 2 = Higher threshold                              *)
+	MesAlarmTemp		: REAL ;		(* Alarm for the temp sensor : 0=OFF, 1 = Lower threshold, 2 = Higher threshold                                 *)
+	MesAlarmHygro		: REAL ;		(* Alarm for the humidity sensor : 0=OFF, 1 = Lower threshold, 2 = Higher threshold                             *)
+	MesAlarmDewPt		: REAL ;		(* Alarm for the dew point sensor : 0=OFF, 1 = Lower threshold, 2 = Higher threshold                            *)
+	MesAlarmRain1		: REAL ;		(* Alarm for the rain sensor : 0=OFF, 1 = Lower threshold, 2 = Higher threshold                                 *)
+	MesAlarmRain2		: REAL ;		(* Alarm for the rain sensor : 0=OFF, 1 = Lower threshold, 2 = Higher threshold                                 *)
+	MesAlarmRain3		: REAL ;		(* Alarm for the rain sensor : 0=OFF, 1 = Lower threshold, 2 = Higher threshold                                 *)
+	                                    (*                                                                                                              *)
+	MesAlarmCode		: WORD ;  	    (*                                                                                                              *)
+	MesWarningCode		: WORD ;  	    (*                                                                                                              *)
+	MesEventCode		: WORD ; 	    (*                                                                                                              *)
+	
+END_STRUCT
+END_TYPE
+
+
+	
+
+	
+
+	
+
+
+
+	
+	
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

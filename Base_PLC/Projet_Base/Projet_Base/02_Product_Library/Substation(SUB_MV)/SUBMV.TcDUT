@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1">
+  <DUT Name="SUBMV" Id="{bc3a3edf-7a7b-4ba6-8c52-70cca337697f}">
+    <Declaration><![CDATA[///////////
+// Structure for substation. Main Operating Data to be saved (ex: OPC).  
+//////////
+TYPE SUBMV :
+STRUCT
+	
+	// SUB.MV Data
+	
+	MesU						: REAL ; 						(* (V) Mean Phase to Phase grid voltage 			*)
+	MesFreq						: REAL ; 						(* (Hz) Grid Frequency                              *)
+	MesPsol						: REAL ; 						(* (kW) Total Solar Active Power                     *)
+	MesPbat						: REAL ; 						(* (kW) Total Battery Active Power                   *)
+	MesPload					: REAL ; 						(* (kW) Total Load consumption Active Power          *)
+	MesPgen						: REAL ; 						(* (kW) Total genset Active Power                    *)
+	MesPaux						: REAL ; 						(* (kW) Total Auxiliary Active Power                 *)
+	MesQsol						: REAL ; 						(* (kVAr) Total Solar Reactive Power                 *)
+	MesQbat						: REAL ; 						(* (kVAr) Total Battery Reactive Power               *)
+	MesQload					: REAL ; 						(* (kVAr) Total Load consumption Reactive Power      *)
+	MesQgen						: REAL ; 						(* (kVAr) Total genset Reactive Power                *)
+	MesQaux						: REAL ; 						(* (kVAr) Total Auxiliary Reactive Power             *)
+	MesTanPhi					: REAL ; 						(* (Na)  Cal : TanPhi                               *)
+	  					                                                  
+	MesOpened_AllFeederMVCB		: BOOL ; 						(* (NA) All MV Feeder CB Opened                     *)
+	MesClosed_AllFeederMVCB		: BOOL ; 						(* (NA) All MV Feeder CB Closed                     *)
+	MesOpened_ALOFeederMVCB		: BOOL ; 						(* (NA) At least one Feeder CB Opened               *)
+	MesClosed_ALOFeederMVCB		: BOOL ; 						(* (NA) At least one  Feeder CB Closed              *)
+	MesOpened_KnownEvent		: BOOL ; 						(* (NA) Aggregate all the known event that triggers the opening of the cell *)                                      																										                                                
+		
+	MesAlarmCom					: BOOL ; 						(* (NA) Communication ALarm with PLD coupler        *)
+	MesState					: BYTE ; 						(* (NA) Cal : State Machine                         *)
+	                                     						                                                  
+	MesAlarmCode				: WORD ; 						(* (NA) Internal Akuo AlarmCode                   	*)
+	MesWarningCode				: WORD ; 						(* (NA) Internal Akuo WarningCode                 	*)
+	MesEventCode				: WORD ; 						(* (NA) Internal Akuo EventCode                   	*)
+	MesEventCode2				: WORD ; 						(* (NA) Internal Akuo EventCode                   	*)	
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>
+
+
+

@@ -1,0 +1,38 @@
+﻿<div id="InfosCOM" data-tchmi-type="TcHmi.Controls.System.TcHmiContent" data-tchmi-top="0" data-tchmi-left="0" data-tchmi-width="800" data-tchmi-height="640" data-tchmi-bottom="0" data-tchmi-right="-284" data-tchmi-width-mode="Parent" data-tchmi-height-mode="Parent" data-tchmi-creator-viewport-height="864" data-tchmi-creator-viewport-width="3440">
+
+<div id="Container_InfoCom" data-tchmi-type="TcHmi.Controls.System.TcHmiContainer" data-tchmi-height="481" data-tchmi-height-unit="px" data-tchmi-left="816" data-tchmi-left-unit="px" data-tchmi-top="114" data-tchmi-top-unit="px" data-tchmi-width="521" data-tchmi-width-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px">
+
+
+<script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
+{
+  "color": "rgba(234, 234, 215, 1)"
+}
+</script>
+
+<div data-tchmi-grid-row-index="0" data-tchmi-grid-column-index="0" id="Table_Values_IP" data-tchmi-type="TcHmi.Controls.System.TcHmiUserControlHost" data-tchmi-add_title="true" data-tchmi-height="102" data-tchmi-height-unit="px" data-tchmi-left="117" data-tchmi-left-unit="px" data-tchmi-ratio_width_label_value="0.3" data-tchmi-start_with_color="White" data-tchmi-table_height="70" data-tchmi-table_width="300" data-tchmi-target-user-control="HMI/UserControls/Table_Values.usercontrol" data-tchmi-title="Ping" data-tchmi-top="286" data-tchmi-top-unit="px" data-tchmi-width="300" data-tchmi-width-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-number_rows="2" data-tchmi-label_1="Public IP" data-tchmi-variable_1="%s%PLC1.OpcUa.AllDataR.HPP.CalIpPublique%/s%" data-tchmi-tooltip="%s%PLC1.HMI.bCmdAllSppClockRead%/s%" data-tchmi-variable_2="%s%PLC1.FUN_PingHost.OUT_Result%/s%" data-tchmi-label_2="Result">
+
+</div>
+
+<div id="Table_Validation_3" data-tchmi-type="TcHmi.Controls.System.TcHmiUserControlHost" data-tchmi-add_title="True" data-tchmi-height="100" data-tchmi-height-unit="px" data-tchmi-left="93" data-tchmi-left-unit="px" data-tchmi-position_validation_column_left="False" data-tchmi-ratio_label_value="0.3" data-tchmi-start_with_color="White" data-tchmi-table_height="40" data-tchmi-table_width="300" data-tchmi-target-user-control="HMI/UserControls/Table_Validation.usercontrol" data-tchmi-title_label="" data-tchmi-title_value="IP to ping" data-tchmi-top="132" data-tchmi-top-unit="px" data-tchmi-width="348" data-tchmi-width-unit="px" data-tchmi-number_rows="1" data-tchmi-label1="Ip to ping" data-tchmi-variable1="%f%(TO CHANGE)%s%PLC1.PRG_AnnexesFunctions.IN_AdrIP%/s%%/f%" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px">
+
+</div>
+
+<div data-tchmi-grid-row-index="0" data-tchmi-grid-column-index="0" id="Title" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="54" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-text="Infos Communication" data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-width="521" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-horizontal-alignment="Center" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-font-weight="Bold" data-tchmi-text-font-size="24" data-tchmi-zindex="1" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-text-font-size-unit="px">
+
+
+        <script data-tchmi-target-attribute="data-tchmi-text-color" type="application/json">
+{
+  "color": "rgba(0, 0, 0, 1)"
+}
+</script>
+    
+<script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
+{
+  "color": "rgba(153, 204, 51, 1)"
+}
+</script>
+</div>
+
+</div>
+
+</div>

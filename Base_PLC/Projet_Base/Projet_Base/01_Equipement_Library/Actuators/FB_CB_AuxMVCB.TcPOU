@@ -1,0 +1,245 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_CB_AuxMVCB" Id="{5254a75b-1653-4817-88d3-f422ce31f957}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_CB_AuxMVCB EXTENDS FB_CB_Base
+//////////////////
+//  Motorized Circuit Breaker with telecommAND   Requires Open and Close impulsions.
+//////////////////
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance/model specific) 
+	ParamTP_Impulsion	   : TIME := T#2S;			(* (s)  Config : Tempo for the start or stop command impulsion*)
+	ParamFuseNC		       : BOOL;					(* (NA) False: TRUE = Closed , True : TRUE = opened	*)
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	
+END_VAR
+
+VAR_INPUT
+	// I/O Inputs              
+	
+	IN_MesFuse_IO				: BOOL ;	(* Upstream switch gear                *)
+	IN_Opened_IO 				: BOOL ;	(* Upstream melting of fuses contact   *)
+	IN_LvSwitch_IO				: BOOL ; 	(* Downstream circuit breaker          *)
+	IN_Upstream_Switch_IO		: BOOL ; 	(* LV switch gear PT1 delivery station *)
+	IN_Alim_48v_IO				: BOOL ; 	(* 48V switch gear                     *)
+	IN_MesEarth_IO				: BOOL; 
+	
+	
+	MesDataExd	: CB_AuxMVCB_Sch;	
+END_VAR
+
+VAR
+	//M_OPENCLOSE VARIABLES//	
+		RsFuse				:RS;
+		TPMesFuse			: TP;		
+		TPOpened			: TP;		
+		TPLVSwitch			: TP;
+		TPUpstream			: TP;
+		TPAlim48			: TP;
+		
+		
+	//M_ALARMMANAGEMENT VARIABLES//
+
+ 
+	//M_STATEMANAGER VARIABLES//
+	
+	// M_EXECUTE VARIABLES //
+		
+ 
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{58a40b5e-bb95-4fa1-b6b1-b619b9b836aa}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Manages Contactor alarms and warnings
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager			: FB_AlarmCodeManager ; 	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Check if command and measures are matching after tempo
+
+TON_NotClosedAndNotOpened(IN:=  NOT MesClosed AND NOT MesOpened , PT := ParamTimeOut_Alarm) ; 
+TON_ClosedAndOpened(IN:=MesClosed AND MesOpened, PT := ParamTimeOut_Alarm) ; 
+
+RsFuse(Set:= MesDataExd.MesFuseBurned ,Reset1:=GVL_CFG.CmdClearFault_G OR IN_CmdReset);
+
+TPOpened	(IN:= NOT MesDataExd.MesUpstream_Switch	,PT:= ParamTimeOut_Alarm	);
+TPMesFuse	(IN:= NOT MesDataExd.MesFuseBurned		,PT:= ParamTimeOut_Alarm	);
+TPLVSwitch	(IN:= NOT MesDataExd.MesData.MesOpened	,PT:= ParamTimeOut_Alarm	);
+TPUpstream	(IN:= NOT MesDataExd.MesLvSwitch		,PT:= ParamTimeOut_Alarm	);
+TPAlim48	(IN:= NOT MesDataExd.MesAlim_48v		,PT:= ParamTimeOut_Alarm	);
+
+
+
+ 
+// ALARM CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= FALSE,										//
+		bAlarm2			:= TON_NotClosedAndNotOpened.Q,					// Incoherent state measure (neither open nor closed) 
+		bAlarm3 		:= TON_ClosedAndOpened.Q, 						// Incoherent state measure (Open and closed)	
+		bAlarm4			:= MesDataExd.MesUpstream_Switch,				// Upstream switch gear  is opened             
+		bAlarm5			:= MesDataExd.MesFuseBurned,		    		// Upstream melting of fuses contact  alarm
+		bAlarm6			:= MesDataExd.MesData.MesOpened, 				// Downstream circuit breaker Alarm     
+		bAlarm7			:= MesDataExd.MesLvSwitch,			            // LV switch gear PT1 delivery station alarm
+		bAlarm8			:= MesDataExd.MesAlim_48v,			            // 48V switch gear Alarm                  
+		bAlarm9			:= FALSE,                                       //
+		bAlarm10		:= FALSE,                                       //
+		bAlarm11		:= FALSE,                                       //
+		bAlarm12		:= FALSE,                                       //
+		bAlarm13		:= FALSE, 										//
+		bAlarm14		:= FALSE, 										//
+		bAlarm15		:= FALSE , 										// 
+		wAlarmCode		=>MesDataExd.MesData.MesAlarmCode);
+
+//WARNING CODE//
+		FB_AlarmCodeManager(
+		bAlarm1			:= FALSE, 										// 
+		bAlarm2			:= FALSE,	 									// 
+		bAlarm3 		:= FALSE,										// 
+		bAlarm4			:= FALSE, 										// 
+		bAlarm5			:= FALSE, 										//
+		bAlarm6			:= MesDataExd.MesEarth, 						// The cell is connected to earth (earthing)
+		bAlarm7			:= FALSE, 										//
+		bAlarm8			:= FALSE,                                       //
+		bAlarm9			:= FALSE,                                       //
+		bAlarm10		:= FALSE,                                       //
+		bAlarm11		:= FALSE,                                       //
+		bAlarm12		:= FALSE,                                       //
+		bAlarm13		:= FALSE,                                       //
+		bAlarm14		:= FALSE,                                       //
+		bAlarm15		:= FALSE, 										//
+		wAlarmCode 		=>MesDataExd.MesData.MesWarningCode);
+
+// EVENT CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= FALSE, 										// 
+		bAlarm2			:= FALSE, 										// 
+		bAlarm3			:= MesOpened, 									// Open position
+		bAlarm4			:= MesClosed, 									// Closed position
+		bAlarm5			:= IN_CmdReset, 								// Reset Command
+		bAlarm6			:= TPMesFuse.Q,									// Upstream switch gear  is closed              
+		bAlarm7			:= TPOpened.Q,    								// Upstream melting of fuses contact  alarm back to normal 
+		bAlarm8			:= TPLVSwitch.Q,								// Downstream circuit breaker Alarm back to normal           
+		bAlarm9			:= TPUpstream.Q,       							// LV switch gear PT1 delivery station alarm back to normal
+		bAlarm10		:= TPAlim48.Q,        							// 48V switch gear Alarm back to normal                 
+		bAlarm11		:= FALSE,										//
+		bAlarm12		:= FALSE,                                       //
+		bAlarm13		:= FALSE,                                       //
+		bAlarm14		:= FALSE, 										//
+		bAlarm15		:= FALSE, 										//
+		wAlarmCode		=>MesDataExd.MesData.MesEventCode);
+		
+	// UPDATE STRUCTURE
+
+
+	IF ParamNC THEN 
+		
+	MesDataExd.MesFuseBurned 		:= NOT IN_MesFuse_IO			;
+	MesDataExd.MesUpstream_Switch	:= NOT IN_Upstream_Switch_IO	;
+	MesDataExd.MesData.MesOpened 	:= NOT IN_LvSwitch_IO			;
+	MesDataExd.MesLvSwitch			:= NOT IN_Upstream_Switch_IO	;
+	MesDataExd.MesAlim_48v			:= NOT IN_Alim_48v_IO			;
+	ELSE
+	MesDataExd.MesFuseBurned 		:=  IN_MesFuse_IO				;
+	MesDataExd.MesUpstream_Switch	:=  IN_Opened_IO 				;
+	MesDataExd.MesData.MesOpened 	:=  IN_LvSwitch_IO				;
+	MesDataExd.MesLvSwitch			:=  IN_Upstream_Switch_IO		;
+	MesDataExd.MesAlim_48v			:=  IN_Alim_48v_IO				;
+	END_IF
+	
+MesDataExd.MesEarth	:= IN_MesEarth_IO ;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{8c338fdd-d981-492a-bf9e-371e6f5f0f63}">
+      <Declaration><![CDATA[METHOD M_Execute
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// PERMANENT CONDITIONS //	
+MesDataExd.MesData.MesCP_Open					:= IN_CmdOpen AND NOT IN_CmdReset;
+MesDataExd.MesData.MesCP_Close				:= NOT MesDataExd.MesData.MesClosed AND IN_CmdClose AND NOT MesDataExd.MesData.MesAlarmCode.0 AND NOT MesDataExd.MesData.MesCP_Open AND NOT IN_CmdReset ;
+
+
+SUPER^.M_Execute();]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_OpenClose" Id="{b49bddbb-67c6-402f-87b6-86436312f4d7}">
+      <Declaration><![CDATA[METHOD M_OpenClose
+//////////////////
+// Manages Opening and Closing of the contactor
+//////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_StateManager" Id="{091e174f-72e5-4698-bef0-aeaf41cb2310}">
+      <Declaration><![CDATA[METHOD M_StateManager
+//////////////////
+// Manages Contactor State
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[MesState := 0 ; 
+IF MesOpened THEN		// If the cell seems opens and closed in the same time, we will consider it as opened. 
+	
+	MesState.0 := 1 ; 
+MesDataExd.MesData.MesClosed := FALSE ; 
+MesDataExd.MesData.MesOpened := TRUE ; 
+ELSIF MesClosed THEN
+	
+	MesState.1 := 1 ; 
+MesDataExd.MesData.MesClosed := TRUE ; 
+MesDataExd.MesData.MesOpened := FALSE ; 
+ELSE 
+	MesState.0 := 1 ;		// if the cell seems neither opened and neither closed , we will consider it as opened. 
+MesDataExd.MesData.MesClosed := FALSE ; 	
+MesDataExd.MesData.MesOpened := TRUE ; 
+END_IF
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_CB_AuxMVCB">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_CB_AuxMVCB.M_AlarmManagement">
+      <LineId Id="245" Count="5" />
+      <LineId Id="336" Count="84" />
+      <LineId Id="326" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_CB_AuxMVCB.M_Execute">
+      <LineId Id="79" Count="1" />
+      <LineId Id="69" Count="1" />
+      <LineId Id="75" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_CB_AuxMVCB.M_OpenClose">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_CB_AuxMVCB.M_StateManager">
+      <LineId Id="87" Count="16" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

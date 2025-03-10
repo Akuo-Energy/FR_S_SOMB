@@ -1,0 +1,780 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="SMS_Server" Id="{79b25252-5819-4b49-89e3-30f0489dde4c}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM SMS_Server
+VAR PERSISTENT
+	AX_Numtel						: ARRAY[1..CstNbUser] OF STRING(26) ;	//Contient tous les numéros des utilisateurs
+	AX_Subscribed					: ARRAY[1..CstNbUser] OF BOOL ;			//Contient tous les états d'abonnements des utilisateurs aux SMS
+	AX_NomUtili						: ARRAY[1..CstNbUser] OF STRING(50);	//Contient tous les noms des utilisateurs
+	AX_User_LVL						: ARRAY[1..CstNbUser] OF WORD;			//Contient tous les niveau d'adhésion des utilisateurs.
+END_VAR
+
+VAR_INPUT
+	IN_DataSetFifo_ReadSMS			: FB_SMSDatasetFifo_Read; //Buffer automate des sms récuperer depuis modem Gsm
+	IN_DataSetFifo_SendSMS			: FB_SMSDatasetFifo_Send; //Buffer automate des sms récuperer depuis modem Gsm	
+	IN_AX_Journal					: ARRAY [0..CstNbAlarmCode] OF ARRAY[0..15] OF ST_ValuesAlarms; //Journal d'envoi, contient destinataire et message, et gestion de l'envois ou pas du sms
+	IN_Reset_OPC					: BOOL;
+	IN_ChangePhoneMailInfos_OPC			: BOOL;
+	IN_Reset_SmsServer				: BOOL;
+	IN_CmdReset_L					: BOOL;
+	IN_CmdDeleteAllSms			: BOOL;
+	
+	
+		MesData			: ServerSMS;
+	
+END_VAR
+
+VAR
+	fbSerialLineControl		: SerialLineControl;
+	stTxBufferPC			: ComBuffer;
+	stRxBufferPC			: ComBuffer;
+	fbReadSMS				: FB_ReadSMS;
+	fbSendSMS				: FB_SendSMS;
+	fbDeleteSMS				: FB_DeleteSMS;
+	fbDeleteAllSMS			: FB_DeleteAllSMS;
+	Fblogin 				: FB_Login;
+	
+	//READ VARIABLE 
+	bStartRead				: BOOL; //Gestion du front montant FB ReadSMS
+	ReadSMS_bBusy			: BOOL;
+	ReadSMS_bError			: BOOL;
+	ReadSMS_nErrorID		: UINT;
+	
+	LoginSMS_bError			: BOOL;
+	LoginSMS_bBusy		    : BOOL;
+	IndexReadMessage		: USINT:=1; //Index du message a lire
+	ReadSMS_MessageText		: STRING(240); // Message brut du SMS recu
+	Etape_Read 		 		: SINT:=0; // Etape du Case de M_Fill_Buffer_Read
+	Message_Tous_lu 		: BOOL;  // Si tous les message du buffer READ sont lu : True sinon False
+	
+	//DELETE VARIABLE
+	bStartDelete			: BOOL; //Gestion du front montant FB DeleteSms
+	DeletedSMS_bBusy		: BOOL;
+	DeletedSMS_Error		: BOOL;
+	DeletedSMS_nErrorID		: UINT;
+	
+	IndexDeleteMessage 		: USINT:=1; //Index du message a supprimer
+	
+	//SEND VARIABLE
+	bStartSend				: BOOL;
+	Message_Send			: STRING(160);
+	MesTimeStamp			: STRING(17);
+	SendSMS_bBusy			: BOOL;
+	SendSMS_bError			: BOOL;
+	Etape_Send				: SINT;
+	CPT						: SINT:=1;
+	Num_Tel					: STRING(30);
+
+	//INIT VARIABLE
+	bStartlogin             : BOOL:=TRUE; //Gestion du front montant FB login
+	bInit					: BOOL;
+	
+	//Variables de All Delete
+	DeletedAllSMS_bBusy		: BOOL;
+	DeletedAllSMS_Error		: BOOL;
+	DeletedAllSMS_nErrorID	: UINT;
+	G7_DelAll				: SINT;
+
+	Bstart_delete_all		: BOOL;    
+	
+	//M_G7_SMS
+	CPT_Message				: CTU;
+	
+
+
+	//TABLEAU
+	AX_MesAlarmCode_Bool	: ARRAY [1..CstNbAlarmCode] OF ARRAY[1..15] OF BOOL; //Tableau de tous les alarmesCode en Bool
+	AX_Alarm_State			: ARRAY [1..CstNbAlarmCode] OF ARRAY[1..15] OF BOOL; //Tableau de Bool avec toutes les nouveaux bit modifiés
+	fbXorWord				: FB_XorWord; //Compare 2 Word et retourne les bit modifié
+	Extract_Num_Mes			: FB_Extract_Num_Mes; //Extraction des infos: Message,Numero de tel
+
+	// M_Evaluate
+
+	CalNbrUtiliActive    : INT := 10;
+	//AlarmCode
+	RS_LoginSMS_bError		: RS;
+	RS_SendSMS_bError       : RS;
+	RS_ReadSMS_bError       : RS;
+	RS_DeletedSMS_Error     : RS;
+    RS_DeletedAllSMS_Error  : RS;
+
+	AX_Cmd_SMS				: ARRAY[1..CstNbCMD] OF STRING(26):=['Infos','Reboot_ADSL','P_Onduleur','Stop_SMS','Start_SMS','Toggle subscription','Ip Publique','Active Alarms','Help','Test SMS','ForcedStayConnect','Restart Telegraf','Restart PLC','Auto Couplage','Disconnect', 'VPN Connect', 'VPN Disconnect', 'Reboot_IPC']; //Contient toutes les commandes possibles
+
+	Serial_Use				: BOOL:=TRUE;
+	ReadAct					: BOOL:=FALSE;
+	LoginOK                 : BOOL:=TRUE;
+	Reset					: BOOL;
+	
+	//OPC
+	RS_OPC					: RS;
+	RS_Deletteall			: RS;
+	RS_Reset				: RS;
+	Trig_OPC				: R_TRIG;
+	Trig_OpcDelAll			: R_TRIG;
+	Trig_OpcReset			: R_TRIG;
+
+	
+	
+END_VAR
+
+
+
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF NOT bInit THEN
+	M_Init();
+ELSE
+	
+	// READ OPC Data .
+	M_OPC();
+
+	//SERIALLINEMODE_EL6_22B	
+	fbSerialLineControl(Mode:= SERIALLINEMODE_PC_COM_PORT ,
+		pComIn:= ADR(stPCComInData),
+		pComOut:= ADR(stPCComOutData),
+		SizeComIn:= UINT_TO_INT( SIZEOF(stPCComInData)),
+		TxBuffer:= stTxBufferPC,
+		RxBuffer:= stRxBufferPC,
+		Error=> ,
+		ErrorID=> );
+		
+	Fblogin(bStart:=bStartlogin ,					// etrangement le login fonctionne puis fait une erreur , puis refonctionne etc . relance du login sur read error je pense qui entraine une tentative de login qui foire. 	
+			stTxBuffer:=stTxBufferPC,	
+			stRxBuffer:=stRxBufferPC,
+			bBusy =>LoginSMS_bBusy,
+			bError=>LoginSMS_bError
+			);		
+		
+	fbSendSMS(bStart:= bStartSend,
+		sPhoneNumber:= Num_Tel,
+		bReset := IN_Reset_OPC ,
+		sSMSText:= Message_Send,
+		stTxBuffer:=stTxBufferPC ,
+		stRxBuffer:=stRxBufferPC,
+		bBusy=>SendSMS_bBusy,
+		bError=>SendSMS_bError);
+	
+	fbReadSMS(bStart:= bStartRead,
+		nIndex:= IndexReadMessage,
+		stTxBuffer:=stTxBufferPC ,
+		stRxBuffer:=stRxBufferPC ,
+		bBusy=> ReadSMS_bBusy,
+		bError=> ReadSMS_bError,
+		nErrorID=> ReadSMS_nErrorID
+		);
+	
+	
+	fbDeleteSMS
+	(
+		bStart:= bStartDelete,
+		nIndex:= IndexDeleteMessage,
+		stTxBuffer:=stTxBufferPC,
+		stRxBuffer:=stRxBufferPC,
+		bBusy=> DeletedSMS_bBusy,
+		bError=> DeletedSMS_Error,
+		nErrorID=> DeletedSMS_nErrorID
+	);
+	
+	fbDeleteAllSMS
+	(
+		bStart:= Bstart_delete_all,
+		stTxBuffer:=stTxBufferPC,
+		stRxBuffer:=stRxBufferPC,
+		bBusy=> DeletedAllSMS_bBusy,
+		bError=> DeletedAllSMS_Error,
+		nErrorID=> DeletedAllSMS_nErrorID
+	);	
+
+	M_DeleteAll();
+	M_Fill_Buffer_Read(); //Lecture de tous les messages recu
+
+	M_AlarmManager();
+	M_Evaluate();		// Update serveur info
+	M_Send(); // Envois de tous les messages (Alarm ou réponce aux sms de cmd)
+
+	M_Cmd_Execute(); // Verification des messages recu
+	
+	IF Reset OR IN_Reset_OPC  THEN
+		M_Reset();
+	END_IF
+	
+	IF NOT LoginSMS_bBusy AND NOT LoginSMS_bError AND LoginOK THEN
+		BstartLogin := FALSE;
+		Serial_Use:=FALSE;
+		LoginOK:=FALSE;
+	END_IF
+	
+	
+END_IF]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManager" Id="{f1e6cfca-459c-42de-a2f8-d29a229fe979}">
+      <Declaration><![CDATA[METHOD M_AlarmManager
+VAR
+	ii:SINT;
+	jj:INT;
+	KK:INT;
+	FB_AlarmCodeManager			: FB_AlarmCodeManager ;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[RS_LoginSMS_bError(SET:=LoginSMS_bError,RESET1:=	IN_CmdReset_L OR IN_Reset_OPC); 		
+RS_SendSMS_bError(SET:=SendSMS_bError,RESET1:=  	IN_CmdReset_L OR IN_Reset_OPC); 		
+RS_ReadSMS_bError(SET:=ReadSMS_bError,RESET1:=  	IN_CmdReset_L OR IN_Reset_OPC); 		
+RS_DeletedSMS_Error(SET:=DeletedSMS_Error,RESET1:=	IN_CmdReset_L OR IN_Reset_OPC); 		
+RS_DeletedAllSMS_Error(SET:=DeletedAllSMS_Error,RESET1:=IN_CmdReset_L OR IN_Reset_OPC); 	
+
+// ALARM CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= RS_LoginSMS_bErrOR.Q1		  ,			// Login SMS Error
+		bAlarm2			:= RS_SendSMS_bErrOR.Q1		   ,			// Send SMS Error
+		bAlarm3			:= RS_ReadSMS_bErrOR.Q1		   ,			// Read SMS Error 
+		bAlarm4			:= RS_DeletedSMS_ErrOR.Q1		 ,			// Delete SMS Error 
+		bAlarm5			:= RS_DeletedAllSMS_ErrOR.Q1	,			// Delete All Sms Error
+		bAlarm6			:= IN_DataSetFifo_ReadSMS.bOverwrite,		// Read Fifo overflow
+		bAlarm7			:= IN_DataSetFifo_SendSMS.bOverwrite,       // Send Fifo overflow
+		bAlarm8			:= FALSE,                                   //
+		bAlarm9			:= FALSE,                                   //
+		bAlarm10		:= FALSE,                                   //
+		bAlarm11		:= FALSE,									//
+		bAlarm12		:= FALSE,                                   //
+		bAlarm13		:= FALSE,                                   //
+		bAlarm14		:= FALSE,                                   //
+		bAlarm15		:= FALSE,                                   //
+		wAlarmCode		=>MesData.MesAlarmCode);]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Cmd_Execute" Id="{da7a7d63-e7bf-4cac-bc62-30cbb33ebd1b}">
+      <Declaration><![CDATA[METHOD M_Cmd_Execute
+VAR_INPUT
+END_VAR
+
+VAR
+	i: SINT;
+	Num_Valide 		: BOOL;
+	Message_Valide 	: BOOL;
+	Index_CMD 		: SINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF IN_DataSetFifo_ReadSMS.nCount > 0 THEN
+	IN_DataSetFifo_ReadSMS.A_Get(); // Récuperation du FIFO
+	FOR i:=1 TO CstNbUser DO // VERIFICATION du numéro de telephone
+		IF AX_Numtel[i]=IN_DataSetFifo_ReadSMS.Out.Num THEN
+			Num_Valide := TRUE;
+			EXIT;
+		END_IF
+	END_FOR
+	IF Num_Valide THEN
+		FOR i:=1 TO CstNbCMD DO // VERIFICATION du message
+			IF IN_DataSetFifo_ReadSMS.Out.Message=AX_Cmd_SMS[i] THEN
+				Message_Valide := TRUE;
+				Index_CMD:=i;
+				EXIT;
+			END_IF
+		END_FOR
+	END_IF
+	
+	IF Num_Valide AND Message_Valide THEN
+		M_G7_SMS(G7_Etape:=Index_CMD);
+
+	ELSE
+		IN_DataSetFifo_ReadSMS.A_Remove(); //IL s'agit d'un spam ou d'un utilisateur non autorisé
+	END_IF
+	
+
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_DeleteAll" Id="{c251b310-428c-40a9-a222-1ee605ff2029}">
+      <Declaration><![CDATA[METHOD M_DeleteAll
+
+
+VAR
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[CASE G7_DelAll OF
+	
+	0: // Entrée
+		IF RS_Deletteall.Q1 AND NOT Serial_Use THEN
+			Serial_Use 			:= TRUE;
+			Bstart_delete_all 	:= TRUE;
+			G7_DelAll 			:= 1;
+		END_IF
+	1: // attente du bb=usy
+		Bstart_delete_all 	:= FALSE;
+		IF NOT DeletedAllSMS_bBusy OR DeletedAllSMS_Error THEN
+			RS_Deletteall(RESET1:= TRUE);
+			RS_Deletteall(RESET1:= FALSE);
+			Serial_Use 			:= FALSE;
+			G7_DelAll 			:= 0;
+		END_IF
+		
+		
+END_CASE
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Evaluate" Id="{a7b8cdb4-1eee-446f-86d1-8a2a3f876750}">
+      <Declaration><![CDATA[METHOD M_Evaluate
+VAR 
+	KK: INT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[CalNbrUtiliActive := 0 ;
+FOR KK:=1 TO CstNbUser DO 
+	IF 	AX_Numtel[KK] <> '' THEN 
+		CalNbrUtiliActive := CalNbrUtiliActive+1 ; 
+	END_IF
+END_FOR
+
+
+
+Mesdata.NbrUtiliActive 	:= CalNbrUtiliActive ;
+Mesdata.AX_Numtel		:= AX_Numtel			;
+Mesdata.AX_Subscribed	:= AX_subscribed	    ;
+MesData.AX_NomUtili		:= AX_NomUtili		    ;
+MesData.AX_UserLVL		:= AX_User_LVL		    ;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Fill_Buffer_Read" Id="{2a106b93-9fd1-41ba-9296-7edaefc40d6d}">
+      <Declaration><![CDATA[METHOD M_Fill_Buffer_Read
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[CASE Etape_Read OF
+	0://Initilisation
+		IF NOT ReadSMS_bBusy AND NOT Serial_Use AND ReadAct THEN
+			Etape_Read:=10;
+			ReadSMS_MessageText:='';
+			bStartlogin:=TRUE;
+			Serial_Use:=TRUE;
+		END_IF
+	10: //Initialisation MODEM (ECHO OFF)
+		//Serial_Use:=TRUE;
+		bStartlogin:=FALSE;
+		IF NOT LoginSMS_bBusy AND NOT LoginSMS_bError THEN
+			Etape_Read:=1;
+			BstartRead:=TRUE;	
+		ELSIF LoginSMS_bError THEN
+			Etape_Read:=0;
+			Serial_Use:=FALSE;
+		END_IF
+	1://Lecture des sms
+		//GVL_Rapale.Serial_Use:=TRUE;
+		ReadSMS_MessageText:=fbReadSMS.sMessageText;
+		BstartRead:=FALSE;	
+		IF NOT ReadSMS_bBusy AND NOT ReadSMS_bError THEN	
+			Etape_Read:=2;
+			Serial_Use:=FALSE;
+		ELSIF ReadSMS_bError THEN
+			Etape_Read:=0;
+			Serial_Use:=FALSE;
+			
+		END_IF
+		
+	2://Analyse du sms en Cas d'un message non vide
+		IF(ReadSMS_MessageText<>'OK$R$N') AND (ReadSMS_MessageText<>'') THEN
+			
+			IF (FIND(ReadSMS_MessageText,'REC UNREAD')>0) THEN		//
+				Message_Tous_lu := FALSE;
+				IndexReadMessage:=IndexReadMessage+1;
+				Extract_Num_Mes(InMessage:=ReadSMS_MessageText);
+				IN_DataSetFifo_ReadSMS.A_Add( in := Extract_Num_Mes.OutDataEntry);
+				Etape_Read:=0;					
+			ELSE	// Messages have already been read. 
+				Message_Tous_lu := TRUE;
+				IndexReadMessage:=IndexReadMessage+1;
+				ReadSMS_MessageText:='';
+				Etape_Read:=0;
+			END_IF
+		ELSE
+			Etape_Read:=3;
+		END_IF
+	3://Analyse du sms en cas de message vide
+		IF Message_Tous_lu THEN
+			Etape_Read:=4;
+		ELSE
+			IndexReadMessage:=1;
+			Etape_Read:=0;
+		END_IF
+	4://Initialisation du Delete_FB
+		IF NOT DeletedSMS_bBusy AND ReadAct THEN //AND NOT GVL_Rapale.Serial_Use THEN
+			Etape_Read:=5;
+			bStartDelete:=TRUE;
+			Serial_Use:=TRUE;
+		END_IF
+	5://Suppression du buffer GSM
+		//GVL_Rapale.Serial_Use:=TRUE;
+			bStartDelete:=FALSE;
+		IF NOT DeletedSMS_bBusy AND NOT DeletedSMS_Error THEN
+			Serial_Use:=FALSE;
+			Etape_Read:=6;
+		ELSIF DeletedSMS_Error THEN
+			//GVL_Rapale.Serial_Use:=FALSE;
+			Etape_Read:=4;
+			Serial_Use:=FALSE;
+		END_IF
+	6://Controle suppression
+		IF IndexDeleteMessage=IndexReadMessage-1 THEN
+			Etape_Read:=0;
+			IndexDeleteMessage:=1;
+			Message_Tous_lu:=FALSE;
+			IndexReadMessage:=IndexReadMessage+1;
+			Serial_Use:=FALSE;
+		ELSE
+			IndexDeleteMessage:=IndexDeleteMessage+1;
+			Etape_Read:=4;
+		END_IF		
+		
+END_CASE
+
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_G7_SMS" Id="{0e3e3885-6fdb-42c4-89a9-b4d751623a86}">
+      <Declaration><![CDATA[METHOD M_G7_SMS
+VAR_INPUT
+	G7_Etape :SINT;
+END_VAR
+
+VAR
+	InStruct 		: ST_ValuesAlarms;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[FUN_Alarms.M_G7_SMS(
+	DataSetFifo_ReadSMS		:= IN_DataSetFifo_ReadSMS,
+    IN_DataSetFifo_SendSMS	:= IN_DataSetFifo_SendSMS,
+ 	CPT_Message				:= CPT_Message,	
+    InStruct 				:= InStruct,
+    G7_Etape 				:= G7_Etape,
+    AX_Numtel				:= AX_Numtel,
+    AX_subscribed			:= AX_subscribed,
+    AX_MesAlarmCode_Bool	:= AX_MesAlarmCode_Bool,
+    AX_Cmd_SMS		        := AX_Cmd_SMS
+); 		]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{2bf41133-d437-4711-bae6-fc3aac6c6866}">
+      <Declaration><![CDATA[METHOD M_Init
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+//Initialisation BUFFER
+
+	//Buffer pour la lecture des sms
+	IN_DataSetFifo_ReadSMS.A_Reset();
+	IN_DataSetFifo_ReadSMS.A_Add();
+	IN_DataSetFifo_ReadSMS.A_Get();
+	IN_DataSetFifo_ReadSMS.A_Remove();
+	
+	//Buffer pour l'envois des sms
+	IN_DataSetFifo_SendSMS.A_Reset();
+	IN_DataSetFifo_SendSMS.A_Add();
+	IN_DataSetFifo_SendSMS.A_Get();
+	IN_DataSetFifo_SendSMS.A_Remove();
+
+//Initialisation du Journal		
+bInit := TRUE;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_OPC" Id="{0501ba02-9d37-4221-afc7-c99b700075a5}">
+      <Declaration><![CDATA[METHOD M_OPC : BOOL
+VAR
+	AX_Numtel_Init				: ARRAY[1..CstNbUser] OF STRING(26);
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[Trig_OPC(CLK := IN_ChangePhoneMailInfos_OPC);
+Trig_OpcDelAll(CLK := IN_CmdDeleteAllSms);
+Trig_OpcReset(CLK:= IN_Reset_SmsServer);
+
+RS_OPC(SET:= Trig_OPC.Q);
+RS_Deletteall(SET:=Trig_OpcDelAll.Q);
+RS_Reset(Set:=Trig_OpcReset.Q);
+
+IF (*NOT Serial_Use AND*) RS_OPC.Q1 THEN
+	//Numéro de téléphone
+	AX_Numtel := OpcUa.AllValueW.AX_NbPhone_OPC;
+	//Nom d'utilisateur
+	AX_NomUtili	:= OpcUa.AllValueW.AX_NamesUsers_OPC;
+	
+	// User LVL . 
+	AX_User_LVL := OpcUa.AllValueW.AX_UserLVL;
+
+	//Gestion subscription
+	AX_Subscribed := OpcUa.AllValueW.AX_SubscribedSms_OPC;
+
+	RS_OPC(RESET1:= TRUE);
+	RS_OPC(Reset1 := FALSE);
+END_IF
+
+IF RS_Reset.Q1 THEN
+	IN_Reset_Opc := TRUE;
+END_IF
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Reset" Id="{9b880499-ff5f-4581-b1c5-0f243d913fe8}">
+      <Declaration><![CDATA[METHOD M_Reset : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IN_DataSetFifo_SendSMS.A_Reset();
+
+bStartRead 		:= FALSE;
+bStartSend 		:= FALSE;
+bStartDelete 	:= FALSE;
+bStartlogin 	:= FALSE;
+Serial_Use		:= FALSE;
+
+
+SendSMS_Berror := FALSE ;
+ReadSMS_bError := FALSE ;
+LoginSMS_bError := FALSE ; 
+DeletedSMS_Error := FALSE ; 
+DeletedAllSMS_Error := FALSE ; 
+
+RS_Reset(RESET1 := TRUE);
+RS_Reset(RESET1 := FALSE);
+Reset 			:= FALSE;
+IN_Reset_OPC 		:= FALSE;
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Send" Id="{4c852fe4-68a6-40da-ab02-15bd5da5d185}">
+      <Declaration><![CDATA[METHOD M_Send
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+CASE ETAPE_Send OF
+	0://Etape d'entree
+		IF NOT SendSMS_bBusy  AND NOT Serial_Use AND IN_DataSetFifo_SendSMS.nCount > 0 AND NOT LoginSMS_bBusy AND NOT LoginSMS_bError THEN  //Si serial libre et buffer contient plus d'une infos
+			ReadAct:=FALSE;	
+			Serial_Use:=TRUE;
+			//bStartSend:=TRUE;
+			SendSMS_bError := FALSE;
+			Num_Tel := '';
+			Message_Send:='';
+			IN_DataSetFifo_SendSMS.A_Get();  //recuperation du message dans le send buffer 
+			ETAPE_Send := 20  ; 
+		ELSE
+			ReadAct:=TRUE;	// En attente de lecture de mot d'alarme
+		END_IF
+			
+		20:// Check les utilisateurs pour l'envoi des SMS 
+			IF AX_Numtel[CPT] <> '' AND  AX_Subscribed[CPT] AND IN_DataSetFifo_SendSMS.out.Num_tel = '' AND (AX_User_LVL[CPT] AND IN_DataSetFifo_SendSMS.out.Alarms_LVL)>0    THEN
+				// On envoi l'alarme si l'utilisateur est subscribed , et est dans la liste de diffusion de l'alarme
+				Num_Tel:=AX_NumTel[CPT];
+				bStartSend:=TRUE;
+				ETAPE_Send:=1;
+				MesTimeStamp := CONCAT(REPLACE(STR1:= IN_DataSetFifo_SendSMS.Out.TimeStamp_Act, STR2 := ' ', L := 1, P := 11), ' ') ;
+
+				Message_Send := CONCAT(str1:=CONCAT(str1:=CONCAT(str1:=MesTimeStamp, str2:='$NID:' ), STR2:= UINT_TO_STRING(IN_DataSetFifo_SendSMS.out.ID)), STR2:=' ,' ) ; 
+				Message_Send := CONCAT(STR1:=Message_Send , STR2:= IN_AX_Journal[IN_DataSetFifo_SendSMS.out.IndexWord][IN_DataSetFifo_SendSMS.Out.IndexBit].Message);
+				
+				IF IN_DataSetFifo_SendSMS.OUT.Active  THEN //Connaitre le statut de l'alarme: Active ou Non active
+					Message_Send:=Concat(left(Message_Send, 125),' : Active');	// ajout de la mention activee ou desactive 
+				ELSE
+					Message_Send:=concat(left(Message_Send, 125),' : Desactive');
+				END_IF
+			ELSIF ( NOT AX_Subscribed[CPT] OR (AX_User_LVL[CPT] AND IN_DataSetFifo_SendSMS.out.Alarms_LVL)=0  ) AND IN_DataSetFifo_SendSMS.out.Num_tel = ''  THEN
+				// L'alarme n'est pas envoyéeà cet utilisateur	
+				Num_Tel := '';
+				ETAPE_Send:=2;
+			ELSIF IN_DataSetFifo_SendSMS.out.Num_tel <> ''  THEN
+				// Si un numero de telephone est renseigné précisement, on envoi à ce numéro quelque soit la liste de diffusion , ou si l'utilisateur est subscribed
+				bStartSend:=TRUE;
+				Message_Send := CONCAT(STR1:=Message_Send , STR2:= IN_AX_Journal[IN_DataSetFifo_SendSMS.out.IndexWord][IN_DataSetFifo_SendSMS.Out.IndexBit].Message);
+				Num_Tel:=IN_DataSetFifo_SendSMS.Out.Num_tel;
+				ETAPE_Send:=1;
+			ELSE
+				// L'alarme n'est pas envoyée		
+				Num_Tel := '';
+				ETAPE_Send:=2;
+			END_IF
+
+	1://Envois du message
+		Bstartsend:=FALSE;	
+		IF NOT SendSMS_bBusy  THEN
+			IF IN_DataSetFifo_SendSMS.OUT.IndexWord > 0 AND IN_DataSetFifo_SendSMS.In.Num_tel = ''   THEN
+				ETAPE_Send:=2; // Alarme
+				
+			ELSE
+				ETAPE_Send:=3; // Retour Sms ou utilisateur de renseignée
+			END_IF
+		ELSIF NOT SendSMS_bBusy AND SendSMS_Berror THEN // GGY
+			//ETAPE_Send:=0; modif lWN seminaire 26/08/2020, gestion des ATE0, si erreur on supprime tout de meme le sms.
+			ETAPE_Send:= 3;
+			SendSMS_Berror := FALSE ; // On reset l'error apres avoir supprimé le SMS . 
+			
+		END_IF
+		
+	2:// Switch a un autre utilisateur
+		IF CPT< CstNbUser THEN
+			CPT:=CPT+1;
+			ETAPE_Send:=20;
+		ELSE
+			ETAPE_Send:=3;
+		END_IF
+	
+	3://Suppression de l'alarme et on passe au prochaine element dans le fifo
+		IN_DataSetFifo_SendSMS.A_Remove();
+		CPT:=1;
+		Message_Send:='';
+		ETAPE_Send:=0;
+		Serial_Use:=FALSE;
+		bStartSend:=FALSE;
+
+END_CASE]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="SMS_Server">
+      <LineId Id="2304" Count="83" />
+      <LineId Id="82" Count="0" />
+    </LineIds>
+    <LineIds Name="SMS_Server.M_AlarmManager">
+      <LineId Id="389" Count="22" />
+      <LineId Id="29" Count="0" />
+    </LineIds>
+    <LineIds Name="SMS_Server.M_Cmd_Execute">
+      <LineId Id="81" Count="25" />
+      <LineId Id="7" Count="0" />
+    </LineIds>
+    <LineIds Name="SMS_Server.M_DeleteAll">
+      <LineId Id="891" Count="1" />
+      <LineId Id="1147" Count="1" />
+      <LineId Id="1152" Count="1" />
+      <LineId Id="1149" Count="2" />
+      <LineId Id="1160" Count="0" />
+      <LineId Id="1154" Count="1" />
+      <LineId Id="1157" Count="0" />
+      <LineId Id="1159" Count="0" />
+      <LineId Id="1161" Count="0" />
+      <LineId Id="1156" Count="0" />
+      <LineId Id="1115" Count="0" />
+      <LineId Id="1164" Count="0" />
+      <LineId Id="1116" Count="0" />
+      <LineId Id="331" Count="0" />
+    </LineIds>
+    <LineIds Name="SMS_Server.M_Evaluate">
+      <LineId Id="168" Count="12" />
+      <LineId Id="164" Count="0" />
+    </LineIds>
+    <LineIds Name="SMS_Server.M_Fill_Buffer_Read">
+      <LineId Id="18" Count="0" />
+      <LineId Id="88" Count="0" />
+      <LineId Id="93" Count="0" />
+      <LineId Id="92" Count="0" />
+      <LineId Id="174" Count="0" />
+      <LineId Id="186" Count="0" />
+      <LineId Id="199" Count="0" />
+      <LineId Id="94" Count="0" />
+      <LineId Id="189" Count="0" />
+      <LineId Id="200" Count="0" />
+      <LineId Id="193" Count="0" />
+      <LineId Id="190" Count="1" />
+      <LineId Id="197" Count="0" />
+      <LineId Id="194" Count="2" />
+      <LineId Id="192" Count="0" />
+      <LineId Id="91" Count="0" />
+      <LineId Id="98" Count="0" />
+      <LineId Id="184" Count="0" />
+      <LineId Id="166" Count="0" />
+      <LineId Id="97" Count="0" />
+      <LineId Id="95" Count="0" />
+      <LineId Id="130" Count="0" />
+      <LineId Id="176" Count="2" />
+      <LineId Id="182" Count="0" />
+      <LineId Id="108" Count="0" />
+      <LineId Id="110" Count="0" />
+      <LineId Id="109" Count="0" />
+      <LineId Id="113" Count="0" />
+      <LineId Id="208" Count="0" />
+      <LineId Id="114" Count="2" />
+      <LineId Id="118" Count="1" />
+      <LineId Id="128" Count="0" />
+      <LineId Id="121" Count="3" />
+      <LineId Id="131" Count="0" />
+      <LineId Id="112" Count="0" />
+      <LineId Id="132" Count="1" />
+      <LineId Id="125" Count="0" />
+      <LineId Id="111" Count="0" />
+      <LineId Id="134" Count="1" />
+      <LineId Id="137" Count="2" />
+      <LineId Id="136" Count="0" />
+      <LineId Id="140" Count="0" />
+      <LineId Id="143" Count="2" />
+      <LineId Id="202" Count="0" />
+      <LineId Id="142" Count="0" />
+      <LineId Id="141" Count="0" />
+      <LineId Id="158" Count="0" />
+      <LineId Id="169" Count="0" />
+      <LineId Id="154" Count="0" />
+      <LineId Id="157" Count="0" />
+      <LineId Id="159" Count="0" />
+      <LineId Id="179" Count="2" />
+      <LineId Id="183" Count="0" />
+      <LineId Id="155" Count="1" />
+      <LineId Id="160" Count="1" />
+      <LineId Id="171" Count="1" />
+      <LineId Id="175" Count="0" />
+      <LineId Id="187" Count="0" />
+      <LineId Id="163" Count="2" />
+      <LineId Id="162" Count="0" />
+      <LineId Id="146" Count="0" />
+      <LineId Id="89" Count="0" />
+      <LineId Id="25" Count="0" />
+      <LineId Id="85" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="SMS_Server.M_G7_SMS">
+      <LineId Id="1593" Count="0" />
+      <LineId Id="1596" Count="1" />
+      <LineId Id="1595" Count="0" />
+      <LineId Id="1594" Count="0" />
+      <LineId Id="1598" Count="0" />
+      <LineId Id="1600" Count="4" />
+    </LineIds>
+    <LineIds Name="SMS_Server.M_Init">
+      <LineId Id="2385" Count="1" />
+      <LineId Id="2401" Count="0" />
+      <LineId Id="2387" Count="4" />
+      <LineId Id="2400" Count="0" />
+      <LineId Id="2392" Count="6" />
+      <LineId Id="49" Count="0" />
+    </LineIds>
+    <LineIds Name="SMS_Server.M_OPC">
+      <LineId Id="228" Count="27" />
+      <LineId Id="173" Count="0" />
+    </LineIds>
+    <LineIds Name="SMS_Server.M_Reset">
+      <LineId Id="5" Count="0" />
+      <LineId Id="13" Count="0" />
+      <LineId Id="12" Count="0" />
+      <LineId Id="14" Count="2" />
+      <LineId Id="19" Count="0" />
+      <LineId Id="35" Count="0" />
+      <LineId Id="34" Count="0" />
+      <LineId Id="26" Count="0" />
+      <LineId Id="28" Count="0" />
+      <LineId Id="27" Count="0" />
+      <LineId Id="29" Count="1" />
+      <LineId Id="20" Count="0" />
+      <LineId Id="10" Count="0" />
+      <LineId Id="21" Count="0" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="11" Count="0" />
+      <LineId Id="17" Count="1" />
+    </LineIds>
+    <LineIds Name="SMS_Server.M_Send">
+      <LineId Id="492" Count="79" />
+      <LineId Id="17" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,109 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <GVL Name="GVL_EmulConfig" Id="{e0ed30e2-f236-4fbc-abfb-8c3439227d96}">
+    <Declaration><![CDATA[
+VAR_GLOBAL CONSTANT 
+	ParamVarAdsMax_G				: UINT := 82 ; // Maximum Object to exchange in Ads
+END_VAR
+
+VAR_GLOBAL
+	
+	ParamCycleTime_Emul				: REAL := 10 ; // Temps de reference d'emulation en ms . 
+
+	MesFreqGen 						: REAL := 50;
+	MesUGen							: REAL := 20600;
+	ParamLossImpedance				: REAL := 0.000004 ; // Ohmic value to account for transfo losses . 2 10^-8 ohm.m * 200 m .
+	
+	MesP_INVmppt					: REAL := 2500; // MPPT Power for one inverter 
+	
+	SoCInit							: REAL := 50 ; 
+ 
+	//////   IO ////// 
+	MesTempExt: INT;
+	MesWindDir: INT;
+	MesWindSpd : INT ; 
+	MesHygroExt: INT;
+	MesPyra		: INT  ;
+	// SuBMV 
+	
+	iCouplerStatePDL				: UINT ; 
+	
+	MeasureMVCB_Closed						: BOOL := TRUE; 
+	MeasureMVCB_Opened						: BOOL ; 
+	MeasureMVCB_Fuse						: BOOL ; 
+	MeasureMVCB_Malt						: BOOL ; 
+	
+
+	MainMVCB_ComutLocal						: BOOL := TRUE; 
+	MainMVCB_Malt						: BOOL ; 
+	MainMVCB_Close						: BOOL;
+	MainMVCB_Open						: BOOL ;
+	
+	FeederMVCBClose_External			: ARRAY[1..CstNbFeederMVCB_G] OF BOOL ; 
+	FeederMVCBOpen_External			: ARRAY[1..CstNbFeederMVCB_G] OF BOOL ; 	
+
+	FeederMVCB_ComutLocal		: ARRAY[1..CstNbFeederMVCB_G] OF BOOL ; 
+	FeederMVCB_Malt		: ARRAY[1..CstNbFeederMVCB_G] OF BOOL ; 
+	
+	PDLEsState1_IO                : BOOL:=TRUE;
+	PDLChainBESSState1_IO         : BOOL;
+	PDLMainCBAuxState1_IO         : BOOL;
+	PDLCB_SourceSwitch1State1_IO	:BOOL := TRUE; 
+	PDLCB_SourceSwitch2State1_IO	:BOOL; 
+	PDLCB_HTA1State1_IO           : BOOL;
+	PDLCB_HTA2State1_IO           : BOOL;
+	PDLCB_Rearmement1State1_IO    : BOOL;
+	PDLCB_Rearmement2State1_IO    : BOOL;
+	PDLIN_MesCbUPS_IO             : BOOL;    
+	PDLFireSystemCBFSS_IO         : BOOL;
+	PDLDsBTState1_IO              : BOOL;
+	PDLDsHTState1_IO              : BOOL;
+	PDLUPSFaultSynthesis_IO       : BOOL;  
+	PDLUPSDischarging_IO          : BOOL;  
+	PDLRPNWatchDog_IO             : BOOL := TRUE ;  
+	PDLRPNWatchdogREU615_IO       : BOOL := TRUE  ;  
+	PDLRPNAlarmIPos_IO            : BOOL;  
+	PDLRPNAlarmVolt_IO				:BOOL; 
+	
+	PDLFireSystemWarning_IO			: BOOL;
+	PDLFireSystemAlarm_IO			: BOOL;
+	PDLFireSystemWatchdog_IO		: BOOL;
+	
+	
+	
+(*	
+	// ESS
+	MesTemp							: ARRAY[1..CstNbEss] OF ARRAY[1..4] OF INT;	
+	MesHygr							: ARRAY[1..CstNbEss] OF ARRAY[1..4] OF INT;
+	MesSpdState						: ARRAY[1..CstNbEss] OF BOOL;
+	MesPcsDs						: ARRAY[1..CstNbEss] OF BOOL;
+	MesBatDs						: ARRAY[1..CstNbEss] OF BOOL;
+	MesToS							: ARRAY[1..CstNbEss] OF BOOL;
+	Cb_Q31_Close					: ARRAY[1..CstNbEss] OF BOOL;
+	Cb_Q31_Open						: ARRAY[1..CstNbEss] OF BOOL;
+	MesPcs1Sd						: ARRAY[1..CstNbEss] OF BOOL;
+	MesPcs2Sd						: ARRAY[1..CstNbEss] OF BOOL;
+	MesEs							: ARRAY[1..CstNbEss] OF BOOL;
+	Ds_Pcs							: ARRAY[1..CstNbEss] OF BOOL;
+	Ds_Bat							: ARRAY[1..CstNbEss] OF BOOL;
+	CmdReset_IO						: ARRAY[1..CstNbEss] OF BOOL;			
+	MesUpsAlarm						: ARRAY[1..CstNbEss] OF BOOL;		
+	MesUpsDischarging				: ARRAY[1..CstNbEss] OF BOOL;		
+	MesSupplyFlt_40A_RC				: ARRAY[1..CstNbEss] OF BOOL;	
+	MesSup_10A_PLC					: ARRAY[1..CstNbEss] OF BOOL;		
+	bBatFireWarning					: ARRAY[1..CstNbEss] OF BOOL;
+	bBatFireFault					: ARRAY[1..CstNbEss] OF BOOL;
+	bBatFireAlarm					: ARRAY[1..CstNbEss] OF BOOL;
+ 	bDcSwitchBank1 					: ARRAY[1..CstNbEss] OF BOOL;
+ 	bDcSwitchBank2	 				: ARRAY[1..CstNbEss] OF BOOL;
+ 	bFanBank1	 					: ARRAY[1..CstNbEss] OF BOOL;
+ 	bFanBank2	 					: ARRAY[1..CstNbEss] OF BOOL;
+	iCouplerState: ARRAY[1..CstNbESS]OF UINT;
+	bCmdResetEss	 					: ARRAY[1..CstNbEss] OF BOOL;
+	CoeffSuiviSetpointPcs			: REAL := 0.9;						// Pourcentage de suivi de la consigne à chaque pas de temps : si 1, MesPac = SetptP d'un pas de temps à l'autre, si 0 ne suit pas du tout le setpoint
+
+*)
+END_VAR
+]]></Declaration>
+  </GVL>
+</TcPlcObject>

@@ -1,0 +1,925 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="OpcUa" Id="{4d6dbf7e-6d7e-4f60-90d5-faf4f949aaf3}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM OpcUa
+///////////////////
+// OPC UA Management 
+// Commands are resetted to FALSE right after being received . Protection against rapide consecutives commands . Protection against simultaneous commands.
+///////////////////
+VAR_INPUT PERSISTENT
+	ParamTimeOutTc			: TIME:=T#1S;		(* (s)Minimum duration before two consecutives commands *)
+	ParamNbCmdBlock			: UINT  := 1 ; 		(* Number of commands per block. Commands in the same block can not be executed in the same time. *)
+//Test
+END_VAR             		
+                    		
+                    		
+VAR_INPUT           		
+                    		
+    {attribute 'OPC.UA.DA' := '1'}                		
+	AllDataR 				: AllDataR; // All Data Read Only
+	
+	{attribute 'OPC.UA.DA' := '1'}                		
+	AllDataWPulse 			: AllDataWPulse; //  All boolean OPC UA to be written  that will be converted to tap by resetting the entry to false after two seconds. 
+	
+	AllDataWToggle 			: AllDataWToggle; // All boolean OPC UA to be written as a toggle
+    
+    {attribute 'OPC.UA.DA' := '1'}            		
+	AllValueW 				: AllValueW; // All non boolean OPC UA data to be  written 
+	                		
+	AllRtc					: AllDataWPulse;	// OUtput of the AllDataWPulse . 
+	
+	
+	{attribute 'OPC.UA.DA' := '1'}         	
+	AllAlarms 	: AllAlarms; // All Alarms Read Only
+	
+	
+	
+	// Test Mise à jour Parameters via OPC UA
+	
+	//AllDataParameterWrite	: AllDataParameter;	// Structure qui permet d'écrire les valeurs des paramètres via OPC UA
+   		
+END_VAR             		
+VAR                 		
+//	Buffer_AllW				: ARRAY[1..500] OF BOOL ;      
+	Buffer_TcWord			: ARRAY[1..500] OF BOOL ;  
+	Buffer_Rtc   			: ARRAY[1..500] OF BOOL ;  
+	
+	CP_TcAllow				: BOOL; // The power plan can received TC
+
+	bInit					: BOOL;
+	TempoTcRunning			: TON;
+	                		
+	// M_TC //      		
+	TcIsRunning				: BOOL;
+	NbTcAskedBlock			: BYTE;	    
+	bTooManyCmd				: BOOL;		// At least one block has too many simultaneous commands. 
+	bAtLeastOne				: BOOL;     // There is at least one commAND                              
+	       
+	// Force Alarms
+	R_TRIG_DisableSMSForceAlarms	: R_TRIG;
+	F_TRIG_DisableSMSForceAlarms	: F_TRIG;
+
+
+                 
+	// M_ACKNOWLEDGE        
+	F_Tap_OPC						: ARRAY[1..24] OF FB_TapVariable ; 
+	F_Tap_OPC_SUB_MV				: ARRAY[1..16] OF FB_TapVariable ; 
+	F_Tap_OPC_PTR					: ARRAY[1..CstNbPTR_G] OF ARRAY[1..6] OF FB_TapVariable ;		
+	F_Tap_OPC_Inv					: ARRAY[1..CstNbPTR_G] OF ARRAY[1..CstNbInv_PTR_G] OF ARRAY[1..4] OF FB_TapVariable ;		
+	F_Tap_OPC_GRID					: ARRAY[1..10] OF FB_TapVariable ; 
+	F_Tap_OPC_ESS					: ARRAY[1..10] OF FB_TapVariable ; 
+	F_Tap_OPC_PP					: ARRAY[1..10] OF FB_TapVariable ;	
+	F_Tap_OPC_SUB_MV_InhibRead		: ARRAY[1..10] OF FB_TapVariable ;	
+	
+	F_Tap_OPC_INV_InhibRead : ARRAY[1..CstNbPTR_G] OF ARRAY[1..CstNbInv_PTR_G] OF FB_TapVariable ;	
+	F_Tap_OPC_SL_InhibRead : ARRAY[1..CstNbPTR_G] OF FB_TapVariable ;	
+
+	F_Tap_Inhib : ARRAY[1..1000] OF FB_TapVariable ;	
+	
+	
+	Test_SmS_Rtrig			: R_TRIG ; 
+	Rtrig_StayConnect		: R_TRIG;
+	Rtrig_IpLauncher		: R_TRIG;
+	Rtrig_HHCollector		: R_TRIG;
+	Rtrig_RestartPlc		: R_TRIG;
+	R_TRIGTanPhi			: R_TRIG ; 
+	R_TRIG_InhibIO			: R_TRIG;
+	bReadFromTargetInfos	: BOOL ; 
+	// Intermediary commands
+	PP_SetptP_Old							: REAL;
+	PP_SetptQ_Old							: REAL;
+	
+
+	
+END_VAR
+
+
+VAR
+	// WAGO Variable transcription
+	OpcUaServer_1 : REAL ; 
+	OpcUaServer_2 : REAL ; 
+	OpcUaServer_3 : REAL ; 
+	OpcUaServer_4 : REAL ; 
+	OpcUaServer_5 : REAL ; 
+	OpcUaServer_6 : REAL ; 
+	OpcUaServer_7 : REAL ; 
+	OpcUaServer_8 : REAL ; 
+	OpcUaServer_9 : REAL ; 
+	OpcUaServer_10 : REAL ; 
+	OpcUaServer_11 : REAL ; 
+	OpcUaServer_12 : REAL ; 
+	OpcUaServer_13 : REAL ; 
+	OpcUaServer_14 : REAL ; 
+	OpcUaServer_15 : REAL ; 
+	OpcUaServer_16 : REAL ; 
+	OpcUaServer_17 : REAL ; 
+	OpcUaServer_18 : REAL ; 
+	OpcUaServer_19 : REAL ; 
+	OpcUaServer_20 : REAL ; 
+	OpcUaServer_21 : REAL ; 
+	OpcUaServer_22 : REAL ; 
+	OpcUaServer_23 : REAL ; 
+	OpcUaServer_24 : REAL ; 
+	OpcUaServer_25 : REAL ; 
+	OpcUaServer_26 : REAL ; 
+	OpcUaServer_27 : REAL ; 
+	OpcUaServer_28 : REAL ; 
+	OpcUaServer_29 : REAL ; 
+	OpcUaServer_30 : REAL ; 
+	OpcUaServer_31 : REAL ; 
+	OpcUaServer_32 : REAL ; 
+	OpcUaServer_33 : REAL ; 
+	OpcUaServer_34 : REAL ; 
+	OpcUaServer_35 : REAL ; 
+	OpcUaServer_36 : REAL ; 
+	OpcUaServer_37 : REAL ; 
+	OpcUaServer_38 : REAL ; 
+	OpcUaServer_39 : REAL ; 
+	OpcUaServer_40 : REAL ; 
+	OpcUaServer_41 : REAL ; 
+	OpcUaServer_42 : REAL ; 
+	OpcUaServer_43 : REAL ; 
+
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[	IF NOT bInit THEN
+		M_Init() ; 
+		bInit		:= TRUE ; 
+	ELSE
+		CP_TcAllow := TRUE;
+		M_AlarmManagement() ; 
+		M_Evaluate();
+		M_TC();
+		M_Acknowledge();
+		M_InhibAllowAll() ; 
+		//M_Wago()
+	END_IF
+
+]]></ST>
+    </Implementation>
+    <Method Name="M_Acknowledge" Id="{c5f44776-8f4e-4e79-949e-7299e82cd2c1}">
+      <Declaration><![CDATA[METHOD M_Acknowledge : BOOL
+VAR
+		KK: INT;
+		LL: INT;
+	JJ: UINT;
+	TapTrigger: BOOL;
+	bResetSD : BOOL;
+END_VAR
+
+
+// 					ATTENTION				//
+// Utiliser le AllRtc et pas le AllDataR 	//
+
+ ]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+	
+// Defaults Actions
+	// Reset SMS Server
+	F_Tap_OPC[2](TapTrigger:= AllRtc.CmdReset_ServerSMS , TapOut := SMS_Server.IN_Reset_SmsServer) ; 
+	// Delete all SMS
+	F_Tap_OPC[3](TapTrigger:= AllRtc.CmdDeleteAllSms , TapOut := SMS_Server.IN_CmdDeleteAllSms) ; 
+	// Update SMS & Mail Informations
+	F_Tap_OPC[4](TapTrigger:= AllRtc.CmdChangeInfos_PhoneEmail , TapOut := SMS_Server.IN_ChangePhoneMailInfos_OPC) ; 
+	F_Tap_OPC[5](TapTrigger:= AllRtc.CmdChangeInfos_PhoneEmail , TapOut := FUN_SendMail.IN_ChangePhoneMailInfos_OPC) ; 
+	bReadFromTargetInfos :=	AllRtc.CmdReadInfosFromTarget_PhoneEmail ; 
+	// Collect Ip Public
+	Rtrig_IpLauncher(CLK:=AllRtc.CmdIpLauncher);
+	F_Tap_OPC[6](TapTrigger:= Rtrig_IpLauncher.Q , TapOut := PRG_AnnexesFunctions.IN_bStart_IP) ; 
+	
+	// Toogle Forced Connect
+	Rtrig_StayConnect(CLK:=AllRtc.CmdForcedStay_Connect);
+	IF Rtrig_StayConnect.Q THEN
+		A1_PP.ParamForcedStayConnect := NOT	A1_PP.ParamForcedStayConnect ;
+	END_IF
+	// Restart PLC
+	//Rtrig_RestartPlc(CLK:=AllRtc.CmdRestart_PLC);
+	F_Tap_OPC[8](TapTrigger:= AllRtc.CmdRestart_PLC , TapOut := PRG_AnnexesFunctions.IN_bStart_PLC) ; 
+	// Restart Routeur ADSL
+	F_Tap_OPC[9](TapTrigger:= AllRtc.CmdReset_Router_ADSL, TapOut := A1_SUBMV.A1_Router_ADSL.IN_CmdRestart) ; 
+	//Reset MailServer
+	F_Tap_OPC[10](TapTrigger:= AllRtc.CmdReset_ServerMail, TapOut := FUN_SendMail.IN_Reset_OPC) ; 
+	// Test sms
+	A1_PP.IN_TestMailSms	:=	AllRtc.CmdTestSms;
+	
+	// Restart Routeur 4G
+	F_Tap_OPC[12](TapTrigger:= AllRtc.CmdReset_Router_4G, TapOut := A1_SUBMV.A1_Router_4G.IN_CmdRestart) ;
+ 	// Restart IPC
+	F_Tap_OPC[13](TapTrigger:= AllRtc.CmdReset_IPC, TapOut := A1_SUBMV.A1_IPC.IN_CmdRestart) ;
+	
+	// Disable sms serveur
+	F_Tap_OPC[14](TapTrigger:= AllDataWToggle.CmdStopServer_SMS, TapOut := FUN_Alarms.ParamDisableSMS) ; 
+	// Start VPN
+	F_Tap_OPC[15](TapTrigger:= AllRtc.CmdStart_Vpn, TapOut := PRG_AnnexesFunctions.IN_bStartVpnConnection) ; 
+	// Stop VPN
+	F_Tap_OPC[16](TapTrigger:= AllRtc.CmdStop_Vpn, TapOut := PRG_AnnexesFunctions.IN_bStopVpnConnection) ;
+
+	
+	
+	// Restart Services
+	F_Tap_OPC[18](TapTrigger:= AllRtc.CmdRestart_OPCUA 		 , TapOut := PRG_AnnexesFunctions.IN_CmdRestart_OPCUA) ; // 
+	F_Tap_OPC[20](TapTrigger:= AllRtc.CmdRestart_Teamviewer	 , TapOut := PRG_AnnexesFunctions.IN_CmdRestart_Teamviewer) ; // 
+	F_Tap_OPC[21](TapTrigger:= AllRtc.CmdRestart_HMIServer 	 , TapOut := PRG_AnnexesFunctions.IN_CmdRestart_HMIServer ) ; // 
+	F_Tap_OPC[23](TapTrigger:= AllRtc.CmdRestart_Telegraf 	 , TapOut := PRG_AnnexesFunctions.IN_CmdRestart_Telegraf 	 ) ; // 		
+			
+	F_Tap_OPC[24](TapTrigger:= AllRtc.CmdReset_SD		 	, TapOut := bResetSD 	 ) ; // 		
+		
+	IF bResetSD THEN
+		//A1_SUBMV.A1_SD_LV.IN_CmdReset_L := bResetSD;
+		A1_SUBMV.A1_SD_MV.IN_CmdReset_L := bResetSD;
+		FOR KK := 1 TO CstNbPTR_G DO 
+			AX_PTR[KK].A1_SD_INV.IN_CmdReset_L 		:= bResetSD;
+			AX_PTR[KK].A1_SD_Transfo.IN_CmdReset_L 	:= bResetSD;
+			
+		END_FOR
+	END_IF
+
+//SUB_MV
+	F_Tap_OPC_SUB_MV[1](TapTrigger:= AllRtc.CmdOpen_MainMVCB , TapOut 	:= A1_SUBMV.IN_CmdOpenMainMVCB) ; 
+	F_Tap_OPC_SUB_MV[2](TapTrigger:= AllRtc.CmdClose_MainMVCB , TapOut 	:= A1_SUBMV.IN_CmdCloseMainMVCB) ;
+	F_Tap_OPC_SUB_MV[3](TapTrigger:= AllRtc.CmdReset_MainMVCB , TapOut 	:= A1_SUBMV.A1_MainMVCB.IN_CmdReset) ; 
+	F_Tap_OPC_SUB_MV[4](TapTrigger:= AllRtc.CmdRestart_UPS48 , TapOut 	:= A1_SUBMV.A1_UPS_48v.IN_CmdReStartUPS) ;
+	F_Tap_OPC_SUB_MV[4](TapTrigger:= AllRtc.CmdRestart_UPS24 , TapOut 	:= A1_SUBMV.A1_UPS_24v.IN_CmdReStartUPS) ;  	
+	
+	FOR KK:= 1 TO CstNbFeederMVCB_G DO 
+		F_Tap_OPC_SUB_MV[4+(KK-1)*3+1](TapTrigger:= AllRtc.CmdOpen_FeederMVCB[KK] , TapOut := A1_SUBMV.IN_CmdOpenFeederMVCB[KK]) ; 
+		F_Tap_OPC_SUB_MV[4+(KK-1)*3+2](TapTrigger:= AllRtc.CmdClose_FeederMVCB[KK] , TapOut := A1_SUBMV.IN_CmdCloseFeederMVCB[KK]) ; 
+		F_Tap_OPC_SUB_MV[4+(KK-1)*3+3](TapTrigger:= AllRtc.CmdReset_FeederMVCB[KK] , TapOut := A1_SUBMV.AX_FeederMVCB[KK].IN_CmdReset) ; 
+
+		
+	END_FOR 	
+	
+// PTR 
+FOR KK := 1 TO UINT_TO_INT(CstNbPTR_G) DO
+	F_Tap_OPC_PTR[KK][1](TapTrigger:= AllRtc.CmdClose_PTR[KK] , TapOut := AX_PTR[KK].A1_MainMVCB_PTR.IN_CmdClose) ;
+	F_Tap_OPC_PTR[KK][2](TapTrigger:= AllRtc.CmdOpen_PTR[KK] , TapOut := AX_PTR[KK].A1_MainMVCB_PTR.IN_CmdOpen) ;
+	
+	FOR JJ:=1 TO CstNbInv_PTR_G DO 
+		F_Tap_OPC_Inv[KK][JJ][1](TapTrigger:= AllRtc.CmdStop_INV[KK][JJ] , TapOut := AX_PTR[KK].AX_INV[JJ].IN_CmdStop_Local ) ;
+		F_Tap_OPC_Inv[KK][JJ][2](TapTrigger:= AllRtc.CmdStart_INV[KK][JJ] , TapOut := AX_PTR[KK].AX_INV[JJ].IN_CmdStart_Local ) ;		
+		
+		F_Tap_OPC_Inv[KK][JJ][3](TapTrigger:= AllRtc.CmdToggleCom_Read[KK][JJ] , TapOut := AX_PTR[KK].AX_INV[JJ].IN_CmdToggleRead ) ;
+		F_Tap_OPC_Inv[KK][JJ][4](TapTrigger:= AllRtc.CmdToggleCom_Write[KK][JJ] , TapOut := AX_PTR[KK].AX_INV[JJ].IN_CmdToggleWrite ) ;		
+	
+		IF AllRtc.CmdStartSetptP_INV[KK][JJ] THEN 
+			AX_PTR[KK].AX_INV[JJ].IN_SetptPlimit_Local :=  AllValueW.SetpP_INV[KK][JJ] ; 
+		END_IF
+		IF AllRtc.CmdStopSetptP_INV[KK][JJ] THEN 
+			AX_PTR[KK].AX_INV[JJ].IN_SetptPlimit_Local :=  AX_PTR[KK].AX_INV[JJ].ParamPn ; 
+		END_IF
+		
+	END_FOR
+	
+
+	
+
+END_FOR
+
+// DEIE
+	F_Tap_OPC_GRID[1](TapTrigger:= AllRtc.CmdAutCpl , TapOut := A1_SUBMV.A1_GRID.IN_CmdAutCpl_other) ; 
+	F_Tap_OPC_GRID[2](TapTrigger:= AllRtc.CmdDisconnect , TapOut := A1_SUBMV.A1_GRID.IN_CmdDisconnect_other) ; 
+	F_Tap_OPC_GRID[3](TapTrigger:= AllRtc.CmdDisconnect_end , TapOut := A1_SUBMV.A1_GRID.IN_CmdDisconnect_end_other) ; 
+	F_Tap_OPC_GRID[4](TapTrigger:= AllRtc.CmdEmergencyDisconnect , TapOut := A1_SUBMV.A1_GRID.IN_CmdEmergencyDisconnect_other) ; 	
+	F_Tap_OPC_GRID[5](TapTrigger:= AllRtc.CmdEmergencyDisconnect_end , TapOut := A1_SUBMV.A1_GRID.IN_CmdEmergencyDisconnect_End_other) ; 	
+	F_Tap_OPC_GRID[6](TapTrigger:= AllRtc.CmdStartPReg 		, TapOut := A1_SUBMV.A1_GRID.IN_CmdStartPReg_other) ; 
+	F_Tap_OPC_GRID[7](TapTrigger:= AllRtc.CmdStopPReg 		, TapOut := A1_SUBMV.A1_GRID.IN_CmdStopPReg_other) ; 
+	F_Tap_OPC_GRID[8](TapTrigger:= AllRtc.CmdStartQReg 		, TapOut := A1_SUBMV.A1_GRID.IN_CmdStartQReg_other) ; 
+	F_Tap_OPC_GRID[9](TapTrigger:= AllRtc.CmdStopQReg 		, TapOut := A1_SUBMV.A1_GRID.IN_CmdStopQReg_other) ; 
+
+
+//SUB_MV
+	IF AllRtc.CmdStartLocalSetptP_PP THEN
+		A1_PP.IN_PIDP_SetptP_local			:=	AllValueW.SetpP_SUB;
+		A1_PP.IN_CmdPIDP_LocalMode 	:= TRUE;
+	END_IF
+	
+	IF AllRtc.CmdStopLocalSetptP_PP THEN
+		A1_PP.IN_CmdPIDP_LocalMode  	:= FALSE; 
+		A1_PP.IN_PIDP_SetptP_local		:= A1_PP.ParamPmax;               
+	END_IF
+	
+// ESS
+	F_Tap_OPC_ESS[1](TapTrigger := AllRtc.CmdCloseDc_BAT[1][1], TapOut := AX_ESS[1].AX_Bat[1].IN_CmdCloseDC);
+	F_Tap_OPC_ESS[2](TapTrigger := AllRtc.CmdCloseDc_BAT[1][2], TapOut := AX_ESS[1].AX_Bat[2].IN_CmdCloseDC);
+	F_Tap_OPC_ESS[3](TapTrigger := AllRtc.CmdOpenDc_BAT[1][1], 	TapOut := AX_ESS[1].AX_Bat[1].IN_CmdOpenDC);
+	F_Tap_OPC_ESS[4](TapTrigger := AllRtc.CmdOpenDc_BAT[1][2], 	TapOut := AX_ESS[1].AX_Bat[2].IN_CmdOpenDC);
+	F_Tap_OPC_ESS[5](TapTrigger := AllRtc.CmdStart_PCS[1][1], 	TapOut := AX_ESS[1].AX_PCS[1].IN_CmdStart);
+	F_Tap_OPC_ESS[6](TapTrigger := AllRtc.CmdStop_PCS[1][1], 	TapOut := AX_ESS[1].AX_PCS[1].IN_CmdStop);
+	F_Tap_OPC_ESS[7](TapTrigger := AllRtc.CmdStandby_PCS[1][1], TapOut := AX_ESS[1].AX_PCS[1].IN_CmdStandby);
+	F_Tap_OPC_ESS[8](TapTrigger := AllRtc.CmdLocal_PCS[1][1], 	TapOut := AX_ESS[1].AX_PCS[1].IN_CmdPcsInLocalMode);
+	F_Tap_OPC_ESS[9](TapTrigger := AllRtc.CmdReset_PCS[1][1], 	TapOut := AX_ESS[1].AX_PCS[1].IN_CmdReset);
+	
+// PP 
+	R_TRIGTanPhi(CLK:= AllRtc.CmdWriteSetptTanPhi ) ; 
+	IF R_TRIGTanPhi.Q THEN 
+		A1_PP.Param_SetptTanPhi  :=  AllValueW.SetptTanPhi_PP ; 		
+	END_IF
+
+
+//MAIL - SMS 
+IF bReadFromTargetInfos THEN 
+	AllValueW.AX_MailAddr_OPC		 := AllDataR.MAIL.AX_MailAddr   ; 
+	AllValueW.AX_NamesUsers_OPC 	 := AllDataR.MAIL.AX_NomUtili 	; 
+	AllValueW.AX_NbPhone_OPC		 := AllDataR.SMS.AX_Numtel 		; 	
+	AllValueW.AX_SubscribedMail_OPC  := AllDataR.MAIL.AX_Subscribed ; 	
+	AllValueW.AX_SubscribedSms_OPC   := AllDataR.SMS.AX_Subscribed  ; 	
+	AllValueW.AX_UserLVL 			 := AllDataR.MAIL.AX_UserLVL    ;  		
+	
+	bReadFromTargetInfos 			 := FALSE ;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_AlarmManagement" Id="{6349f38f-0985-4048-8ea7-373c70153b29}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Generates object alarms and manages resets. 
+//////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager			: FB_AlarmCodeManager ;
+
+	TransfoAlarmCode			: WORD;
+	TransfoWarningCode			: WORD;
+	ANATempWarningCode			: WORD;    // ANA Temperature Warning Code synthesis 
+	ANATempAlarmCode			: WORD;    // ANA Temperature Alarm Code synthesis                               
+
+	AlarmCodeSD_Transfo			: WORD;    // Sd Alarm Code synthesis PTR
+	AlarmCodeSD_INV				: WORD;    // Sd Alarm Code synthesis SCADA
+	
+	VaneWarningCode             : WORD;
+	TempSensor_Amb_1WarningCode	: WORD;
+	TempSensor_Amb_2WarningCode	: WORD;
+	TempSensor_TransfoWarningCode: WORD;
+
+	InvComWarning				: BOOL;		// Aggregated communication warning
+	InvComError					: BOOL;		// Aggregated communication Alarm
+	InvAlarmCode				: WORD; 
+	InvWarningcode				: WORD;
+	
+	DS_Transfo					: BOOL;
+	DS_INV						: BOOL;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+	
+// ALARM CODE //
+
+// Attention une alarm doit être mise en commentaire de la manière suivante (* *), l'utilisation du // pose pb sur Bazefield 
+
+	FB_AlarmCodeManager(
+		bAlarm1			:= FALSE,//
+		bAlarm2			:= FALSE,//
+		bAlarm3			:= FALSE,//
+		bAlarm4			:= FALSE,//
+		bAlarm5			:= FALSE,//
+		bAlarm6			:= FALSE,//
+		bAlarm7			:= FALSE,//
+		bAlarm8			:= FALSE,//
+		bAlarm9			:= FALSE,//
+		bAlarm10		:= FALSE,//
+		bAlarm11		:= FALSE,//
+		bAlarm12		:= FALSE,//
+		bAlarm13		:= FALSE,//
+		bAlarm14		:= FALSE,//
+		bAlarm15		:= FALSE,//
+		wAlarmCode		=> AllDataR.OPCUA.MesAlarmCode);
+
+// WARNING CODE //
+	FB_AlarmCodeManager(
+ 		bAlarm1			:= CP_TcAllow AND bTooManyCmd AND NOT   TcIsRunning,	// two many action in the same time requested                                 
+		bAlarm2			:= bAtLeastOne AND  NOT bTooManyCmd AND NOT CP_TcAllow,  					// Cmd send but the PP do not allow TC
+		bAlarm3			:= CP_TcAllow AND bAtLeastOne AND  NOT bTooManyCmd AND   TcIsRunning,		// Wait for previous command to be executed.
+		bAlarm4			:= FALSE,//
+		bAlarm5			:= FALSE,//
+		bAlarm6			:= FALSE,//
+		bAlarm7			:= FALSE,//
+		bAlarm8			:= FALSE,//
+		bAlarm9			:= FALSE,//
+		bAlarm10		:= FALSE,//
+		bAlarm11		:= FALSE,//
+		bAlarm12		:= FALSE,//
+		bAlarm13		:= FALSE,//
+		bAlarm14		:= FALSE,//
+        bAlarm15		:= FALSE,//
+		wAlarmCode		=> AllDataR.OPCUA.MesWarningCode);
+FB_AlarmCodeManager(
+bAlarm1         :=allDataWPulse.CmdReset_ServerSMS,//Reset SMS Server #Interface
+bAlarm2         :=allDataWPulse.CmdReset_ServerMail,//Reset Mail server #Interface
+bAlarm3         :=allDataWPulse.CmdReset_Router_ADSL,//Restart ADSL router #Interface
+bAlarm4         :=allDataWPulse.CmdReset_Router_4G,//Restart 4G router #Interface
+bAlarm5         :=allDataWPulse.CmdReset_IPC,//Restart IPC #Interface
+bAlarm6         :=allDataWPulse.CmdDeleteAllSms,//Delete all SMS in the buffer #Interface
+bAlarm7         :=allDataWPulse.CmdChangeInfos_PhoneEmail,//Apply new changes in MAil and SMS infos #Interface
+bAlarm8         :=allDataWPulse.CmdReadInfosFromTarget_PhoneEmail,//Get Saved configuration #Interface
+bAlarm9         :=allDataWPulse.CmdTestSms,//Test SMS function #Interface
+bAlarm10         :=FALSE,
+bAlarm11         :=allDataWPulse.CmdRestart_OPCUA,//Restart OPCUA #Interface
+bAlarm12         :=FALSE,
+bAlarm13         :=allDataWPulse.CmdRestart_Teamviewer,//Restart Teamviewer #Interface
+bAlarm14         :=allDataWPulse.CmdRestart_HMIServer,//Restart HMIServer #Interface
+bAlarm15         :=FALSE,
+wAlarmCode      => AllDataR.OPCUA.MesEventCode[1]);   
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Evaluate" Id="{c65305e2-3cc6-40aa-9e70-969f3aad67eb}">
+      <Declaration><![CDATA[METHOD M_Evaluate : BOOL
+VAR_INPUT
+END_VAR
+
+
+VAR
+	KK: UINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+AllDataR.PP			:=  A1_PP.MesData ; 
+AllDataR.SUBMV	    :=  A1_SUBMV.MesDataExd; 
+AllDataR.SUBHV		:= A1_SUBHV.MesDataExd ;
+
+FOR KK:=1 TO CstNbPTR_G DO
+	AllDataR.PTR[KK]	    :=  AX_PTR[KK].MesDataExd;
+END_FOR
+
+FOR KK:=1 TO CstNbESS_G DO
+	AllDataR.ESS_Test[KK]	    :=  AX_ESS[KK].MesDataExd;
+	AllDataR.ESS[KK]	    :=  AX_ESS[KK].MesDataExd;
+
+END_FOR
+
+
+
+AllDataR.WS	        :=  A1_WS.MesDataExd; 
+
+AllDataR.SMS	    :=  SMS_Server.MesData;
+AllDataR.MAIL       :=  FUN_SendMail.MesData;
+
+AllDataR.CSV		:= FUN_Alarms_CSV.MesData; 
+AllDataR.CSVData := FUN_Write_CSV.WriteValue.MesData ; 
+AllDataR.IO		:= PRG_IO.MesData ; 
+
+R_TRIG_DisableSMSForceAlarms(CLK := FUN_Alarms.bTestForceAlarms);	
+F_TRIG_DisableSMSForceAlarms(CLK := FUN_Alarms.bTestForceAlarms);	
+	
+IF R_TRIG_DisableSMSForceAlarms.Q THEN	
+	FUN_Alarms.ParamDisableSMS := TRUE;
+	FUN_Alarms.bTriggerCount := TRUE;
+	
+END_IF	
+	
+IF F_TRIG_DisableSMSForceAlarms.Q THEN	
+	FUN_Alarms.ParamDisableSMS := FALSE;
+	FUN_Alarms.MesAlarmWordTestJulienDecouple[FUN_Alarms.nCountSequence-1] := 0 ;  // reinitialize last alarm
+	FUN_Alarms.nCountSequence := 0;
+	FUN_Alarms.bTriggerCount := FALSE;
+END_IF	
+	
+IF FUN_Alarms.bTestForceAlarms THEN	
+	FUN_Alarms.M_ForceAlarms();
+END_IF	
+	
+M_EvaluateAlarms();	
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_EvaluateAlarms" Id="{bea808c8-6bb2-4e49-896b-7f76553f1903}">
+      <Declaration><![CDATA[METHOD M_EvaluateAlarms  : BOOL
+VAR_INPUT
+END_VAR
+
+VAR
+	aa: INT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF FUN_Alarms.bTestForceAlarms THEN
+OpcUa.AllDataR.PP.MesAlarmCode:= A1_PP.MesData.MesAlarmCode; 
+OpcUa.AllDataR.PP.MesWarningCode:= A1_PP.MesData.MesWarningCode; 
+OpcUa.AllDataR.PP.MesWarningCode2:= A1_PP.MesData.MesWarningCode2; 
+OpcUa.AllDataR.PP.MesEventCode:= A1_PP.MesData.MesEventCode; 
+
+	
+END_IF
+AllAlarms.PP_MesAlarmCode_1:=OpcUa.AllDataR.PP.MesAlarmCode.1;
+AllAlarms.PP_MesAlarmCode_2:=OpcUa.AllDataR.PP.MesAlarmCode.2;
+AllAlarms.PP_MesAlarmCode_3:=OpcUa.AllDataR.PP.MesAlarmCode.3;
+AllAlarms.PP_MesAlarmCode_4:=OpcUa.AllDataR.PP.MesAlarmCode.4;
+AllAlarms.PP_MesAlarmCode_5:=OpcUa.AllDataR.PP.MesAlarmCode.5;
+AllAlarms.PP_MesWarningCode_1:=OpcUa.AllDataR.PP.MesWarningCode.1;
+AllAlarms.PP_MesWarningCode_2:=OpcUa.AllDataR.PP.MesWarningCode.2;
+AllAlarms.PP_MesWarningCode_3:=OpcUa.AllDataR.PP.MesWarningCode.3;
+AllAlarms.PP_MesWarningCode_5:=OpcUa.AllDataR.PP.MesWarningCode.5;
+AllAlarms.PP_MesWarningCode_6:=OpcUa.AllDataR.PP.MesWarningCode.6;
+AllAlarms.PP_MesWarningCode_7:=OpcUa.AllDataR.PP.MesWarningCode.7;
+AllAlarms.PP_MesWarningCode_8:=OpcUa.AllDataR.PP.MesWarningCode.8;
+AllAlarms.PP_MesWarningCode_9:=OpcUa.AllDataR.PP.MesWarningCode.9;
+AllAlarms.PP_MesWarningCode_10:=OpcUa.AllDataR.PP.MesWarningCode.10;
+AllAlarms.PP_MesWarningCode_12:=OpcUa.AllDataR.PP.MesWarningCode.12;
+AllAlarms.PP_MesWarningCode_13:=OpcUa.AllDataR.PP.MesWarningCode.13;
+AllAlarms.PP_MesWarningCode_14:=OpcUa.AllDataR.PP.MesWarningCode.14;
+AllAlarms.PP_MesWarningCode_15:=OpcUa.AllDataR.PP.MesWarningCode.15;
+AllAlarms.PP_MesWarningCode2_1:=OpcUa.AllDataR.PP.MesWarningCode2.1;
+AllAlarms.PP_MesWarningCode2_2:=OpcUa.AllDataR.PP.MesWarningCode2.2;
+AllAlarms.PP_MesWarningCode2_3:=OpcUa.AllDataR.PP.MesWarningCode2.3;
+AllAlarms.PP_MesWarningCode2_4:=OpcUa.AllDataR.PP.MesWarningCode2.4;
+AllAlarms.PP_MesWarningCode2_6:=OpcUa.AllDataR.PP.MesWarningCode2.6;
+AllAlarms.PP_MesWarningCode2_7:=OpcUa.AllDataR.PP.MesWarningCode2.7;
+AllAlarms.PP_MesWarningCode2_8:=OpcUa.AllDataR.PP.MesWarningCode2.8;
+AllAlarms.PP_MesWarningCode2_9:=OpcUa.AllDataR.PP.MesWarningCode2.9;
+AllAlarms.PP_MesWarningCode2_10:=OpcUa.AllDataR.PP.MesWarningCode2.10;
+AllAlarms.PP_MesWarningCode2_11:=OpcUa.AllDataR.PP.MesWarningCode2.11;
+AllAlarms.PP_MesWarningCode2_12:=OpcUa.AllDataR.PP.MesWarningCode2.12;
+AllAlarms.PP_MesWarningCode2_14:=OpcUa.AllDataR.PP.MesWarningCode2.14;
+AllAlarms.PP_MesEventCode_14:=OpcUa.AllDataR.PP.MesEventCode.14;
+AllAlarms.PP_MesEventCode_15:=OpcUa.AllDataR.PP.MesEventCode.15;
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_InhibAllowAll" Id="{9b2e7f85-398c-451f-9e26-e3cfc2be36fd}">
+      <Declaration><![CDATA[METHOD M_InhibAllowAll : BOOL
+VAR
+		KK: INT;
+		LL: INT;
+	JJ: UINT;
+	TapTrigger: BOOL;
+END_VAR
+
+
+// 					ATTENTION				//
+// Utiliser le AllRtc et pas le AllDataR 	//
+
+ ]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{b977d2fc-feaf-4c5b-b99b-681626f8a11a}">
+      <Declaration><![CDATA[METHOD M_Init : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[																
+//AllDataWPulse.CmdInhibAllWrite := TRUE  	; 
+
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_TC" Id="{86c1c50d-972b-4a83-baa6-cfb6de058e98}">
+      <Declaration><![CDATA[METHOD M_TC : BOOL
+VAR_INPUT
+END_VAR
+
+VAR
+	AllDataW_0 				: AllDataWPulse; // All Data Write
+	KK						: UINT;
+	BlockElemCount			: UINT;	// Current element in current block.
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[MEMCPY(srcAddr := ADR(AllDataWPulse) ,destAddr:= ADR(Buffer_TcWord) ,n:= SIZEOF(AllDataWPulse) ) ; 
+
+NbTcAskedBlock	:= 0;
+TcIsRunning		:= FALSE ; 
+BlockElemCount 	:=1 ;
+bTooManyCmd 	:= FALSE ; 
+bAtLeastOne		:= FALSE ;
+
+FOR KK:=1 TO SIZEOF(AllDataWPulse) DO 
+	
+	IF Buffer_TcWord[KK] THEN // la commande est à True . 
+		NbTcAskedBlock := NbTcAskedBlock + 1 ; 
+	END_IF
+	
+	IF Buffer_Rtc[KK] THEN // une commande est en cours 
+		TcIsRunning:= TRUE   ;
+	END_IF	
+	
+	IF ParamNbCmdBlock <= BlockElemCount THEN // Fin d'un block. On regarde si il y a eu une commande mais pas plusieurs. 
+		BlockElemCount := 1 ; 
+		bTooManyCmd	:=bTooManyCmd  OR  NbTcAskedBlock>1 ; 
+		bAtLeastOne :=bAtLeastOne  OR NbTcAskedBlock=1; 
+		NbTcAskedBlock := 0 ;
+		
+	ELSE
+		BlockElemCount :=  BlockElemCount + 1 ;
+	END_IF
+END_FOR
+// To consider last block
+bAtLeastOne := bAtLeastOne OR  NbTcAskedBlock=1; 	
+bTooManyCmd	:= bTooManyCmd OR  NbTcAskedBlock>1 ; 
+
+IF CP_TcAllow AND bAtLeastOne AND NOT bTooManyCmd AND NOT TcIsRunning THEN 	// On ne process les commandes que si aucun block n'a pas de double commande, mais qu'au moins un en a une. 
+	Buffer_Rtc := Buffer_TcWord  ; 
+END_IF
+
+MEMCPY(srcAddr := ADR(Buffer_Rtc) ,destAddr:= ADR(AllRtc) ,n:= SIZEOF(AllRtc) ) ; 
+
+IF bAtLeastOne OR bTooManyCmd THEN 
+	//Reset at each cycle
+	AllDataWPulse := AllDataW_0;
+END_IF
+
+
+//SECURITY
+	TempoTcRunning(IN:= TcIsRunning AND CP_TcAllow , PT:=ParamTimeOutTc);
+	
+	IF TempoTcRunning.Q THEN
+		AllRtc 	:= AllDataW_0;
+		FOR KK:= 1 TO SIZEOF(AllDataWPulse) DO 
+			Buffer_Rtc[KK]	:= FALSE;
+		END_FOR 
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_UpdateParameters" Id="{4a3ee050-a55c-4d99-852d-1aa4f5258124}">
+      <Declaration><![CDATA[METHOD M_UpdateParameters : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[(*
+// Update Parameters
+FB_WriteOnChange[1](VarInput := ADR(AllDataParameterWrite.PP_ParamPmax) , VarOut := ADR(A1_PP.ParamPmax), Size:=SIZEOF(A1_PP.ParamPmax) ); 
+FB_WriteOnChange[2](VarInput := ADR(AllDataParameterWrite.PP_ParamPmin) , VarOut := ADR(A1_PP.ParamPmin), Size:=SIZEOF(A1_PP.ParamPmin) ); 
+FB_WriteOnChange[3](VarInput := ADR(AllDataParameterWrite.PP_ParamQmax) , VarOut := ADR(A1_PP.ParamQmax), Size:=SIZEOF(A1_PP.ParamQmax) ); 
+FB_WriteOnChange[4](VarInput := ADR(AllDataParameterWrite.PP_ParamQmin) , VarOut := ADR(A1_PP.ParamQmin), Size:=SIZEOF(A1_PP.ParamQmin) ); 
+FB_WriteOnChange[5](VarInput := ADR(AllDataParameterWrite.PP_ParamNominalVoltage) , VarOut := ADR(A1_PP.ParamNominalVoltage), Size:=SIZEOF(A1_PP.ParamNominalVoltage) ); 
+FB_WriteOnChange[6](VarInput := ADR(AllDataParameterWrite.PP_ParamNominalFrequency) , VarOut := ADR(A1_PP.ParamNominalFrequency), Size:=SIZEOF(A1_PP.ParamNominalFrequency) ); 
+FB_WriteOnChange[7](VarInput := ADR(AllDataParameterWrite.PP_ParamQmaxPbelow20) , VarOut := ADR(A1_PP.ParamQmaxPbelow20), Size:=SIZEOF(A1_PP.ParamQmaxPbelow20) ); 
+FB_WriteOnChange[8](VarInput := ADR(AllDataParameterWrite.PP_ParamTanPhiMax) , VarOut := ADR(A1_PP.ParamTanPhiMax), Size:=SIZEOF(A1_PP.ParamTanPhiMax) ); 
+FB_WriteOnChange[9](VarInput := ADR(AllDataParameterWrite.PP_ParamTanPhiMin) , VarOut := ADR(A1_PP.ParamTanPhiMin), Size:=SIZEOF(A1_PP.ParamTanPhiMin) ); 
+FB_WriteOnChange[10](VarInput := ADR(AllDataParameterWrite.PP_ParamLocalMode) , VarOut := ADR(A1_PP.ParamLocalMode), Size:=SIZEOF(A1_PP.ParamLocalMode) ); 
+FB_WriteOnChange[11](VarInput := ADR(AllDataParameterWrite.PP_ParamQcontrol) , VarOut := ADR(A1_PP.ParamQcontrol), Size:=SIZEOF(A1_PP.ParamQcontrol) ); 
+FB_WriteOnChange[12](VarInput := ADR(AllDataParameterWrite.PP_ParamTanPhiCtrl) , VarOut := ADR(A1_PP.ParamTanPhiCtrl), Size:=SIZEOF(A1_PP.ParamTanPhiCtrl) ); 
+FB_WriteOnChange[13](VarInput := ADR(AllDataParameterWrite.PP_Param_SetptTanPhi) , VarOut := ADR(A1_PP.Param_SetptTanPhi), Size:=SIZEOF(A1_PP.Param_SetptTanPhi) ); 
+FB_WriteOnChange[14](VarInput := ADR(AllDataParameterWrite.PP_ParamPoffset_OL) , VarOut := ADR(A1_PP.ParamPoffset_OL), Size:=SIZEOF(A1_PP.ParamPoffset_OL) ); 
+FB_WriteOnChange[15](VarInput := ADR(AllDataParameterWrite.PP_ParamQoffset_OL) , VarOut := ADR(A1_PP.ParamQoffset_OL), Size:=SIZEOF(A1_PP.ParamQoffset_OL) ); 
+FB_WriteOnChange[16](VarInput := ADR(AllDataParameterWrite.PP_ParamPIDP_K) , VarOut := ADR(A1_PP.ParamPIDP_K), Size:=SIZEOF(A1_PP.ParamPIDP_K) ); 
+FB_WriteOnChange[17](VarInput := ADR(AllDataParameterWrite.PP_ParamPidP_I) , VarOut := ADR(A1_PP.ParamPidP_I), Size:=SIZEOF(A1_PP.ParamPidP_I) ); 
+FB_WriteOnChange[18](VarInput := ADR(AllDataParameterWrite.PP_ParamPidP_D) , VarOut := ADR(A1_PP.ParamPidP_D), Size:=SIZEOF(A1_PP.ParamPidP_D) ); 
+FB_WriteOnChange[19](VarInput := ADR(AllDataParameterWrite.PP_ParamPIDQ_K) , VarOut := ADR(A1_PP.ParamPIDQ_K), Size:=SIZEOF(A1_PP.ParamPIDQ_K) ); 
+FB_WriteOnChange[20](VarInput := ADR(AllDataParameterWrite.PP_ParamPidQ_I) , VarOut := ADR(A1_PP.ParamPidQ_I), Size:=SIZEOF(A1_PP.ParamPidQ_I) ); 
+FB_WriteOnChange[21](VarInput := ADR(AllDataParameterWrite.PP_ParamPidQ_D) , VarOut := ADR(A1_PP.ParamPidQ_D), Size:=SIZEOF(A1_PP.ParamPidQ_D) ); 
+FB_WriteOnChange[22](VarInput := ADR(AllDataParameterWrite.PP_ParamPIDQMin) , VarOut := ADR(A1_PP.ParamPIDQMin), Size:=SIZEOF(A1_PP.ParamPIDQMin) ); 
+FB_WriteOnChange[23](VarInput := ADR(AllDataParameterWrite.PP_ParamPIDQMax) , VarOut := ADR(A1_PP.ParamPIDQMax), Size:=SIZEOF(A1_PP.ParamPIDQMax) ); 
+FB_WriteOnChange[24](VarInput := ADR(AllDataParameterWrite.PP_ParamQfUQmin) , VarOut := ADR(A1_PP.ParamQfUQmin), Size:=SIZEOF(A1_PP.ParamQfUQmin) ); 
+FB_WriteOnChange[25](VarInput := ADR(AllDataParameterWrite.PP_ParamQfUQmax) , VarOut := ADR(A1_PP.ParamQfUQmax), Size:=SIZEOF(A1_PP.ParamQfUQmax) ); 
+FB_WriteOnChange[26](VarInput := ADR(AllDataParameterWrite.PP_ParamQfUUHigh) , VarOut := ADR(A1_PP.ParamQfUUHigh), Size:=SIZEOF(A1_PP.ParamQfUUHigh) ); 
+FB_WriteOnChange[27](VarInput := ADR(AllDataParameterWrite.PP_ParamQfUDdBandHigh) , VarOut := ADR(A1_PP.ParamQfUDdBandHigh), Size:=SIZEOF(A1_PP.ParamQfUDdBandHigh) ); 
+FB_WriteOnChange[28](VarInput := ADR(AllDataParameterWrite.PP_ParamQfUDdBandLow) , VarOut := ADR(A1_PP.ParamQfUDdBandLow), Size:=SIZEOF(A1_PP.ParamQfUDdBandLow) ); 
+FB_WriteOnChange[29](VarInput := ADR(AllDataParameterWrite.PP_ParamQfUULow) , VarOut := ADR(A1_PP.ParamQfUULow), Size:=SIZEOF(A1_PP.ParamQfUULow) ); 
+FB_WriteOnChange[30](VarInput := ADR(AllDataParameterWrite.PP_ParamNofeedingTime) , VarOut := ADR(A1_PP.ParamNofeedingTime), Size:=SIZEOF(A1_PP.ParamNofeedingTime) ); 
+FB_WriteOnChange[31](VarInput := ADR(AllDataParameterWrite.PP_ParamNofeedingWarningTime) , VarOut := ADR(A1_PP.ParamNofeedingWarningTime), Size:=SIZEOF(A1_PP.ParamNofeedingWarningTime) ); 
+FB_WriteOnChange[32](VarInput := ADR(AllDataParameterWrite.PP_ParamNofeedingAlarmTime) , VarOut := ADR(A1_PP.ParamNofeedingAlarmTime), Size:=SIZEOF(A1_PP.ParamNofeedingAlarmTime) ); 
+FB_WriteOnChange[33](VarInput := ADR(AllDataParameterWrite.PP_ParamDiscoAlarmTime) , VarOut := ADR(A1_PP.ParamDiscoAlarmTime), Size:=SIZEOF(A1_PP.ParamDiscoAlarmTime) ); 
+FB_WriteOnChange[34](VarInput := ADR(AllDataParameterWrite.PP_ParamForcedStayConnect) , VarOut := ADR(A1_PP.ParamForcedStayConnect), Size:=SIZEOF(A1_PP.ParamForcedStayConnect) ); 
+FB_WriteOnChange[35](VarInput := ADR(AllDataParameterWrite.PP_ParamMinimalDiskSpace) , VarOut := ADR(A1_PP.ParamMinimalDiskSpace), Size:=SIZEOF(A1_PP.ParamMinimalDiskSpace) ); 
+FB_WriteOnChange[36](VarInput := ADR(AllDataParameterWrite.PP_ParamCodeVersion) , VarOut := ADR(A1_PP.ParamCodeVersion), Size:=SIZEOF(A1_PP.ParamCodeVersion) ); 
+FB_WriteOnChange[37](VarInput := ADR(AllDataParameterWrite.PP_ParamNbCoupler) , VarOut := ADR(A1_PP.ParamNbCoupler), Size:=SIZEOF(A1_PP.ParamNbCoupler) ); 
+FB_WriteOnChange[38](VarInput := ADR(AllDataParameterWrite.PTR_1_ParamPTRVersion) , VarOut := ADR(AX_PTR[1].ParamPTRVersion), Size:=SIZEOF(AX_PTR[1].ParamPTRVersion) ); 
+FB_WriteOnChange[39](VarInput := ADR(AllDataParameterWrite.PTR_2_ParamPTRVersion) , VarOut := ADR(AX_PTR[2].ParamPTRVersion), Size:=SIZEOF(AX_PTR[2].ParamPTRVersion) ); 
+FB_WriteOnChange[40](VarInput := ADR(AllDataParameterWrite.PTR_3_ParamPTRVersion) , VarOut := ADR(AX_PTR[3].ParamPTRVersion), Size:=SIZEOF(AX_PTR[3].ParamPTRVersion) ); 
+FB_WriteOnChange[41](VarInput := ADR(AllDataParameterWrite.PTR_4_ParamPTRVersion) , VarOut := ADR(AX_PTR[4].ParamPTRVersion), Size:=SIZEOF(AX_PTR[4].ParamPTRVersion) ); 
+FB_WriteOnChange[42](VarInput := ADR(AllDataParameterWrite.PTR_1_ParamTimeOutStart) , VarOut := ADR(AX_PTR[1].ParamTimeOutStart), Size:=SIZEOF(AX_PTR[1].ParamTimeOutStart) ); 
+FB_WriteOnChange[43](VarInput := ADR(AllDataParameterWrite.PTR_2_ParamTimeOutStart) , VarOut := ADR(AX_PTR[2].ParamTimeOutStart), Size:=SIZEOF(AX_PTR[2].ParamTimeOutStart) ); 
+FB_WriteOnChange[44](VarInput := ADR(AllDataParameterWrite.PTR_3_ParamTimeOutStart) , VarOut := ADR(AX_PTR[3].ParamTimeOutStart), Size:=SIZEOF(AX_PTR[3].ParamTimeOutStart) ); 
+FB_WriteOnChange[45](VarInput := ADR(AllDataParameterWrite.PTR_4_ParamTimeOutStart) , VarOut := ADR(AX_PTR[4].ParamTimeOutStart), Size:=SIZEOF(AX_PTR[4].ParamTimeOutStart) ); 
+FB_WriteOnChange[46](VarInput := ADR(AllDataParameterWrite.PTR_1_ParamTimeOutStop) , VarOut := ADR(AX_PTR[1].ParamTimeOutStop), Size:=SIZEOF(AX_PTR[1].ParamTimeOutStop) ); 
+FB_WriteOnChange[47](VarInput := ADR(AllDataParameterWrite.PTR_2_ParamTimeOutStop) , VarOut := ADR(AX_PTR[2].ParamTimeOutStop), Size:=SIZEOF(AX_PTR[2].ParamTimeOutStop) ); 
+FB_WriteOnChange[48](VarInput := ADR(AllDataParameterWrite.PTR_3_ParamTimeOutStop) , VarOut := ADR(AX_PTR[3].ParamTimeOutStop), Size:=SIZEOF(AX_PTR[3].ParamTimeOutStop) ); 
+FB_WriteOnChange[49](VarInput := ADR(AllDataParameterWrite.PTR_4_ParamTimeOutStop) , VarOut := ADR(AX_PTR[4].ParamTimeOutStop), Size:=SIZEOF(AX_PTR[4].ParamTimeOutStop) ); 
+FB_WriteOnChange[50](VarInput := ADR(AllDataParameterWrite.PTR_1_ParamTimeOutDisconnect) , VarOut := ADR(AX_PTR[1].ParamTimeOutDisconnect), Size:=SIZEOF(AX_PTR[1].ParamTimeOutDisconnect) ); 
+FB_WriteOnChange[51](VarInput := ADR(AllDataParameterWrite.PTR_2_ParamTimeOutDisconnect) , VarOut := ADR(AX_PTR[2].ParamTimeOutDisconnect), Size:=SIZEOF(AX_PTR[2].ParamTimeOutDisconnect) ); 
+FB_WriteOnChange[52](VarInput := ADR(AllDataParameterWrite.PTR_3_ParamTimeOutDisconnect) , VarOut := ADR(AX_PTR[3].ParamTimeOutDisconnect), Size:=SIZEOF(AX_PTR[3].ParamTimeOutDisconnect) ); 
+FB_WriteOnChange[53](VarInput := ADR(AllDataParameterWrite.PTR_4_ParamTimeOutDisconnect) , VarOut := ADR(AX_PTR[4].ParamTimeOutDisconnect), Size:=SIZEOF(AX_PTR[4].ParamTimeOutDisconnect) ); 
+FB_WriteOnChange[54](VarInput := ADR(AllDataParameterWrite.PTR_1_ParamTempoComAlarm) , VarOut := ADR(AX_PTR[1].ParamTempoComAlarm), Size:=SIZEOF(AX_PTR[1].ParamTempoComAlarm) ); 
+FB_WriteOnChange[55](VarInput := ADR(AllDataParameterWrite.PTR_2_ParamTempoComAlarm) , VarOut := ADR(AX_PTR[2].ParamTempoComAlarm), Size:=SIZEOF(AX_PTR[2].ParamTempoComAlarm) ); 
+FB_WriteOnChange[56](VarInput := ADR(AllDataParameterWrite.PTR_3_ParamTempoComAlarm) , VarOut := ADR(AX_PTR[3].ParamTempoComAlarm), Size:=SIZEOF(AX_PTR[3].ParamTempoComAlarm) ); 
+FB_WriteOnChange[57](VarInput := ADR(AllDataParameterWrite.PTR_4_ParamTempoComAlarm) , VarOut := ADR(AX_PTR[4].ParamTempoComAlarm), Size:=SIZEOF(AX_PTR[4].ParamTempoComAlarm) ); 
+FB_WriteOnChange[58](VarInput := ADR(AllDataParameterWrite.PTR_1_ParamTempoStartInv) , VarOut := ADR(AX_PTR[1].ParamTempoStartInv), Size:=SIZEOF(AX_PTR[1].ParamTempoStartInv) ); 
+FB_WriteOnChange[59](VarInput := ADR(AllDataParameterWrite.PTR_2_ParamTempoStartInv) , VarOut := ADR(AX_PTR[2].ParamTempoStartInv), Size:=SIZEOF(AX_PTR[2].ParamTempoStartInv) ); 
+FB_WriteOnChange[60](VarInput := ADR(AllDataParameterWrite.PTR_3_ParamTempoStartInv) , VarOut := ADR(AX_PTR[3].ParamTempoStartInv), Size:=SIZEOF(AX_PTR[3].ParamTempoStartInv) ); 
+FB_WriteOnChange[61](VarInput := ADR(AllDataParameterWrite.PTR_4_ParamTempoStartInv) , VarOut := ADR(AX_PTR[4].ParamTempoStartInv), Size:=SIZEOF(AX_PTR[4].ParamTempoStartInv) ); 
+FB_WriteOnChange[62](VarInput := ADR(AllDataParameterWrite.PTR_1_ParamTempoStopInv) , VarOut := ADR(AX_PTR[1].ParamTempoStopInv), Size:=SIZEOF(AX_PTR[1].ParamTempoStopInv) ); 
+FB_WriteOnChange[63](VarInput := ADR(AllDataParameterWrite.PTR_2_ParamTempoStopInv) , VarOut := ADR(AX_PTR[2].ParamTempoStopInv), Size:=SIZEOF(AX_PTR[2].ParamTempoStopInv) ); 
+FB_WriteOnChange[64](VarInput := ADR(AllDataParameterWrite.PTR_3_ParamTempoStopInv) , VarOut := ADR(AX_PTR[3].ParamTempoStopInv), Size:=SIZEOF(AX_PTR[3].ParamTempoStopInv) ); 
+FB_WriteOnChange[65](VarInput := ADR(AllDataParameterWrite.PTR_4_ParamTempoStopInv) , VarOut := ADR(AX_PTR[4].ParamTempoStopInv), Size:=SIZEOF(AX_PTR[4].ParamTempoStopInv) ); 
+FB_WriteOnChange[66](VarInput := ADR(AllDataParameterWrite.PTR_1_ParamPTRNum) , VarOut := ADR(AX_PTR[1].ParamPTRNum), Size:=SIZEOF(AX_PTR[1].ParamPTRNum) ); 
+FB_WriteOnChange[67](VarInput := ADR(AllDataParameterWrite.PTR_2_ParamPTRNum) , VarOut := ADR(AX_PTR[2].ParamPTRNum), Size:=SIZEOF(AX_PTR[2].ParamPTRNum) ); 
+FB_WriteOnChange[68](VarInput := ADR(AllDataParameterWrite.PTR_3_ParamPTRNum) , VarOut := ADR(AX_PTR[3].ParamPTRNum), Size:=SIZEOF(AX_PTR[3].ParamPTRNum) ); 
+FB_WriteOnChange[69](VarInput := ADR(AllDataParameterWrite.PTR_4_ParamPTRNum) , VarOut := ADR(AX_PTR[4].ParamPTRNum), Size:=SIZEOF(AX_PTR[4].ParamPTRNum) ); 
+FB_WriteOnChange[70](VarInput := ADR(AllDataParameterWrite.PTR_1_ParamNbINV) , VarOut := ADR(AX_PTR[1].ParamNbINV), Size:=SIZEOF(AX_PTR[1].ParamNbINV) ); 
+FB_WriteOnChange[71](VarInput := ADR(AllDataParameterWrite.PTR_2_ParamNbINV) , VarOut := ADR(AX_PTR[2].ParamNbINV), Size:=SIZEOF(AX_PTR[2].ParamNbINV) ); 
+FB_WriteOnChange[72](VarInput := ADR(AllDataParameterWrite.PTR_3_ParamNbINV) , VarOut := ADR(AX_PTR[3].ParamNbINV), Size:=SIZEOF(AX_PTR[3].ParamNbINV) ); 
+FB_WriteOnChange[73](VarInput := ADR(AllDataParameterWrite.PTR_4_ParamNbINV) , VarOut := ADR(AX_PTR[4].ParamNbINV), Size:=SIZEOF(AX_PTR[4].ParamNbINV) ); 
+FB_WriteOnChange[74](VarInput := ADR(AllDataParameterWrite.SUBMV_ParamTempoPoste) , VarOut := ADR(A1_SUBMV.ParamTempoPoste), Size:=SIZEOF(A1_SUBMV.ParamTempoPoste) ); 
+FB_WriteOnChange[75](VarInput := ADR(AllDataParameterWrite.SUBMV_ParamTempoUnknowFault) , VarOut := ADR(A1_SUBMV.ParamTempoUnknowFault), Size:=SIZEOF(A1_SUBMV.ParamTempoUnknowFault) ); 
+FB_WriteOnChange[76](VarInput := ADR(AllDataParameterWrite.SUBMV_ParamTempoSepamCloseAfterGte) , VarOut := ADR(A1_SUBMV.ParamTempoSepamCloseAfterGte), Size:=SIZEOF(A1_SUBMV.ParamTempoSepamCloseAfterGte) ); 
+FB_WriteOnChange[77](VarInput := ADR(AllDataParameterWrite.SUBMV_ParamAutoCloseMainMVCBEnabled) , VarOut := ADR(A1_SUBMV.ParamAutoCloseMainMVCBEnabled), Size:=SIZEOF(A1_SUBMV.ParamAutoCloseMainMVCBEnabled) ); 
+FB_WriteOnChange[78](VarInput := ADR(AllDataParameterWrite.SUBMV_ParamSUB_MVVersion) , VarOut := ADR(A1_SUBMV.ParamSUB_MVVersion), Size:=SIZEOF(A1_SUBMV.ParamSUB_MVVersion) ); 
+FB_WriteOnChange[79](VarInput := ADR(AllDataParameterWrite.SUBMV_ParamTimeOutConnect) , VarOut := ADR(A1_SUBMV.ParamTimeOutConnect), Size:=SIZEOF(A1_SUBMV.ParamTimeOutConnect) ); 
+FB_WriteOnChange[80](VarInput := ADR(AllDataParameterWrite.SUBMV_ParamTimeOutDisconnect) , VarOut := ADR(A1_SUBMV.ParamTimeOutDisconnect), Size:=SIZEOF(A1_SUBMV.ParamTimeOutDisconnect) ); 
+FB_WriteOnChange[81](VarInput := ADR(AllDataParameterWrite.SUBMV_ParamTempoComAlarm) , VarOut := ADR(A1_SUBMV.ParamTempoComAlarm), Size:=SIZEOF(A1_SUBMV.ParamTempoComAlarm) ); 
+FB_WriteOnChange[82](VarInput := ADR(AllDataParameterWrite.SUBMV_ParamPmax) , VarOut := ADR(A1_SUBMV.ParamPmax), Size:=SIZEOF(A1_SUBMV.ParamPmax) ); 
+FB_WriteOnChange[83](VarInput := ADR(AllDataParameterWrite.SUBMV_ParamPmin) , VarOut := ADR(A1_SUBMV.ParamPmin), Size:=SIZEOF(A1_SUBMV.ParamPmin) ); 
+FB_WriteOnChange[84](VarInput := ADR(AllDataParameterWrite.WS_ParamDurationIntegerGTI) , VarOut := ADR(A1_WS.ParamDurationIntegerGTI), Size:=SIZEOF(A1_WS.ParamDurationIntegerGTI) ); 
+*)]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Wago" Id="{07f2bdfc-2dd1-4bef-a440-3951a1180c87}">
+      <Declaration><![CDATA[METHOD M_Wago
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[(*
+OpcUaServer_1:=  OpcUa.AllDataR.PP.MesU ; 
+OpcUaServer_2:=  OpcUa.AllDataR.PP.MesFreq ; 
+OpcUaServer_3:=  OpcUa.AllDataR.PP.OUT_SetptP ; 
+OpcUaServer_4:=  OpcUa.AllDataR.PP.OUT_SetptQ ; 
+OpcUaServer_5:=  OpcUa.AllDataR.PTR[1].MesDataExd.MesData.MesP ; 
+OpcUaServer_6:=  OpcUa.AllDataR.PTR[1].MesDataExd.MesData.MesQ ; 
+OpcUaServer_7:=  OpcUa.AllDataR.PTR[1].MesDataExd.MesData.MesI ; 
+OpcUaServer_8:=  OpcUa.AllDataR.SUBMV.MesDataExd.MesData.MesU ; 
+OpcUaServer_9:=  OpcUa.AllDataR.SUBMV.MesDataExd.MesData.MesFreq ; 
+OpcUaServer_10:=  OpcUa.AllDataR.WS.MesGTI ; 
+OpcUaServer_11:=  OpcUa.AllDataR.WS.MesGHI ; 
+OpcUaServer_12:=  OpcUa.AllDataR.PTR[1].AX_INV[1].MesDataExd.MesData.MesP ; 
+OpcUaServer_13:=  OpcUa.AllDataR.PTR[1].AX_INV[1].MesDataExd.MesData.MesQ ; 
+OpcUaServer_14:=  OpcUa.AllDataR.PTR[1].AX_INV[1].MesDataExd.MesData.MesPdc ; 
+OpcUaServer_15:=  OpcUa.AllDataR.PTR[1].AX_INV[1].MesDataExd.MesData.MesUdc ; 
+OpcUaServer_16:=  OpcUa.AllDataR.PTR[1].AX_INV[1].MesDataExd.MesData.MesU ; 
+OpcUaServer_17:=  OpcUa.AllDataR.PTR[1].AX_INV[1].MesDataExd.MesData.MesI ; 
+OpcUaServer_18:=  OpcUa.AllDataR.PTR[1].AX_INV[1].MesDataExd.MesData.MesFreq ; 
+OpcUaServer_19:=  OpcUa.AllDataR.PTR[1].AX_INV[1].MesDataExd.MesData.OUT_SetptP ; 
+OpcUaServer_20:=  OpcUa.AllDataR.PTR[1].AX_INV[1].MesDataExd.MesData.OUT_SetptQ ; 
+OpcUaServer_21:=  OpcUa.AllDataR.SUBMV.GRID.MesDataExd.MesData.OUT_SetptP ; 
+OpcUaServer_22:=  OpcUa.AllDataR.SUBMV.GRID.MesDataExd.MesData.OUT_SetptQ ; 
+OpcUaServer_23:=  OpcUa.AllDataR.SUBMV.ProtectRelay_Freq.MesI  ; 
+OpcUaServer_24:=  OpcUa.AllDataR.SUBMV.ProtectRelay_Freq.MesFreq ; 
+OpcUaServer_25:=  OpcUa.AllDataR.SUBMV.PM.MesFreq ; 
+OpcUaServer_26:=  OpcUa.AllDataR.SUBMV.PM.MesP ; 
+OpcUaServer_27:=  OpcUa.AllDataR.SUBMV.PM.MesQ ; 
+OpcUaServer_28:=  OpcUa.AllDataR.SUBMV.PM.MesI ; 
+OpcUaServer_29:=  OpcUa.AllDataR.SUBMV.PM.MesU ; 
+OpcUaServer_30:=  OpcUa.AllDataR.SUBMV.ProtectRelay_Freq.MesI ; 
+OpcUaServer_31:=  OpcUa.AllDataR.SUBMV.ProtectRelay_Freq.MesFreq ; 
+OpcUaServer_32:=  OpcUa.AllDataR.WS.Pyran_GHI_1.Value ; 
+OpcUaServer_33:=  OpcUa.AllDataR.WS.Pyran_GHI_2.Value ; 
+OpcUaServer_34:=  OpcUa.AllDataR.WS.Pyran_GTI_1.Value ; 
+OpcUaServer_35:=  OpcUa.AllDataR.WS.Pyran_GTI_2.Value ; 
+OpcUaServer_36:=  OpcUa.AllDataR.WS.TempSensor_Ext.Value ; 
+OpcUaServer_37:=  OpcUa.AllDataR.WS.windDir.Value ; 
+OpcUaServer_38:=  OpcUa.AllDataR.WS.WindSp.Value ; 
+OpcUaServer_39:=  OpcUa.AllDataR.WS.Rain.AvgmmHour ; 
+OpcUaServer_40:=  OpcUa.AllDataR.WS.Rain.AvgmmDay ; 
+OpcUaServer_41:=  OpcUa.AllDataR.WS.Rain.AvgmmMonth ; 
+OpcUaServer_42:=  OpcUa.AllDataR.WS.TempSensor_Panel_PTR1.Value ; 
+OpcUaServer_43:=  OpcUa.AllDataR.WS.TempSensor_Panel_PTR2.Value ; 
+*)]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="OpcUa">
+      <LineId Id="607" Count="4" />
+      <LineId Id="759" Count="0" />
+      <LineId Id="612" Count="6" />
+      <LineId Id="186" Count="0" />
+    </LineIds>
+    <LineIds Name="OpcUa.M_Acknowledge">
+      <LineId Id="1959" Count="27" />
+      <LineId Id="2108" Count="1" />
+      <LineId Id="1989" Count="14" />
+      <LineId Id="2188" Count="3" />
+      <LineId Id="2010" Count="1" />
+      <LineId Id="2122" Count="0" />
+      <LineId Id="2012" Count="0" />
+      <LineId Id="2124" Count="0" />
+      <LineId Id="2126" Count="2" />
+      <LineId Id="2131" Count="0" />
+      <LineId Id="2130" Count="0" />
+      <LineId Id="2129" Count="0" />
+      <LineId Id="2125" Count="0" />
+      <LineId Id="2013" Count="5" />
+      <LineId Id="2145" Count="0" />
+      <LineId Id="2148" Count="0" />
+      <LineId Id="2020" Count="3" />
+      <LineId Id="2150" Count="0" />
+      <LineId Id="2024" Count="14" />
+      <LineId Id="2041" Count="36" />
+      <LineId Id="2164" Count="10" />
+      <LineId Id="2079" Count="16" />
+      <LineId Id="11" Count="0" />
+    </LineIds>
+    <LineIds Name="OpcUa.M_AlarmManagement">
+      <LineId Id="1275" Count="2" />
+      <LineId Id="1511" Count="0" />
+      <LineId Id="1510" Count="0" />
+      <LineId Id="1512" Count="0" />
+      <LineId Id="1278" Count="35" />
+      <LineId Id="1574" Count="15" />
+      <LineId Id="61" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="OpcUa.M_Evaluate">
+      <LineId Id="376" Count="2" />
+      <LineId Id="423" Count="0" />
+      <LineId Id="422" Count="0" />
+      <LineId Id="400" Count="2" />
+      <LineId Id="410" Count="0" />
+      <LineId Id="413" Count="0" />
+      <LineId Id="453" Count="0" />
+      <LineId Id="414" Count="0" />
+      <LineId Id="424" Count="0" />
+      <LineId Id="411" Count="1" />
+      <LineId Id="381" Count="2" />
+      <LineId Id="385" Count="5" />
+      <LineId Id="432" Count="12" />
+      <LineId Id="462" Count="0" />
+      <LineId Id="445" Count="0" />
+      <LineId Id="461" Count="0" />
+      <LineId Id="446" Count="6" />
+      <LineId Id="275" Count="0" />
+    </LineIds>
+    <LineIds Name="OpcUa.M_EvaluateAlarms">
+      <LineId Id="6" Count="0" />
+      <LineId Id="1389" Count="3" />
+      <LineId Id="1380" Count="0" />
+      <LineId Id="1382" Count="0" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="1789" Count="31" />
+      <LineId Id="1381" Count="0" />
+    </LineIds>
+    <LineIds Name="OpcUa.M_InhibAllowAll">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="OpcUa.M_Init">
+      <LineId Id="5" Count="0" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="14" Count="0" />
+      <LineId Id="152" Count="0" />
+      <LineId Id="13" Count="0" />
+    </LineIds>
+    <LineIds Name="OpcUa.M_TC">
+      <LineId Id="162" Count="1" />
+      <LineId Id="227" Count="0" />
+      <LineId Id="164" Count="0" />
+      <LineId Id="181" Count="0" />
+      <LineId Id="165" Count="0" />
+      <LineId Id="226" Count="0" />
+      <LineId Id="230" Count="0" />
+      <LineId Id="166" Count="0" />
+      <LineId Id="202" Count="0" />
+      <LineId Id="167" Count="2" />
+      <LineId Id="180" Count="0" />
+      <LineId Id="178" Count="1" />
+      <LineId Id="175" Count="1" />
+      <LineId Id="206" Count="1" />
+      <LineId Id="222" Count="0" />
+      <LineId Id="228" Count="0" />
+      <LineId Id="220" Count="0" />
+      <LineId Id="231" Count="0" />
+      <LineId Id="209" Count="1" />
+      <LineId Id="208" Count="0" />
+      <LineId Id="170" Count="0" />
+      <LineId Id="232" Count="0" />
+      <LineId Id="224" Count="1" />
+      <LineId Id="171" Count="3" />
+      <LineId Id="188" Count="0" />
+      <LineId Id="187" Count="0" />
+      <LineId Id="26" Count="1" />
+      <LineId Id="30" Count="0" />
+      <LineId Id="28" Count="0" />
+      <LineId Id="25" Count="0" />
+      <LineId Id="185" Count="0" />
+      <LineId Id="37" Count="0" />
+      <LineId Id="36" Count="0" />
+      <LineId Id="32" Count="0" />
+      <LineId Id="186" Count="0" />
+      <LineId Id="34" Count="1" />
+      <LineId Id="132" Count="0" />
+      <LineId Id="58" Count="0" />
+      <LineId Id="122" Count="0" />
+      <LineId Id="31" Count="0" />
+    </LineIds>
+    <LineIds Name="OpcUa.M_UpdateParameters">
+      <LineId Id="93" Count="0" />
+      <LineId Id="15" Count="0" />
+      <LineId Id="83" Count="0" />
+      <LineId Id="5" Count="9" />
+      <LineId Id="88" Count="0" />
+      <LineId Id="16" Count="66" />
+      <LineId Id="89" Count="0" />
+      <LineId Id="84" Count="3" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="OpcUa.M_Wago">
+      <LineId Id="49" Count="0" />
+      <LineId Id="3" Count="42" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

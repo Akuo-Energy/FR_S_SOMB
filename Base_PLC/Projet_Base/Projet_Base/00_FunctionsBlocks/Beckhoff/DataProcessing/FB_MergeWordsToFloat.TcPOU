@@ -1,0 +1,45 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <POU Name="FB_MergeWordsToFloat" Id="{a40ce608-a6c4-4e11-86a1-b04f9b1e2e90}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_MergeWordsToFloat
+////////////////// 
+// Merge two words into a real with IEEE 754 coding (for float reading). 
+//////////////////	
+VAR_IN_OUT
+	VAR_OUT 		 			 : REAL;	
+END_VAR
+
+
+VAR_INPUT
+	WORD_STRONG 		AT %MB82 : WORD; // Strong Word 
+	WORD_WEAK 			AT %MB80 : WORD; // Weak Word. 
+END_VAR
+
+VAR_OUTPUT
+	OUT_NanError			: BOOL ; 
+END_VAR
+
+VAR
+	NUMBER_F_OLD		AT %MB80	: REAL; 	// Works only if the Fb is instantied once per call in the Fb and not the Methods.
+	
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF NOT(NUMBER_F_OLD = NUMBER_F_OLD) THEN
+	OUT_NanError := TRUE ; 
+ELSE
+	VAR_OUT :=  NUMBER_F_OLD ; 
+	OUT_NanError := FALSE ; 
+END_IF
+
+
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_MergeWordsToFloat">
+      <LineId Id="105" Count="8" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

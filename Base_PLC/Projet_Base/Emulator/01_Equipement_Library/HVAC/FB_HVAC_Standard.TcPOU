@@ -1,0 +1,265 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_HVAC_Standard" Id="{eba7aacf-c337-4225-973f-c27d7c7e1c7e}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_HVAC_Standard EXTENDS FB_HVAC_Base
+VAR_INPUT PERSISTENT
+	{attribute 'OPC.UA.DA' := '1'} 
+	ParamIpAddress							: STRING;
+	{attribute 'OPC.UA.DA' := '1'} 
+	ParamUnitID								: BYTE  := 1 ; 
+	{attribute 'OPC.UA.DA' := '1'}                  
+	ParamTcpPort							: UINT 	:= 502;
+	ParamPriority							: UINT; 
+
+	ParamTimeOut							: TIME 	:= T#2S;
+	ParamMaintainPulse						: TIME 	:= T#2S;
+END_VAR
+
+VAR_INPUT
+	IN_SetptTemp				AT%Q*		: REAL;
+	IN_SetptHygro				AT%Q*		: REAL;
+	IN_CmdStart								: BOOL;
+	IN_CmdStop								: BOOL;
+	IN_CmdReset_L							: BOOL;
+	
+END_VAR
+
+VAR
+
+                                                                                 
+	MesDataExd								: HVAC_Standard ; 
+		
+	//M_READ VARIABLES//
+		WriteSetpt							: FB_ModbusWriteSingleRegister;
+		WriteCmd							: FB_ModbusWriteSingleCoil;
+		ReadStatus							: FB_ModbusReadCoils;
+		
+
+		BlockToWrite			AT%Q*		: UINT;			
+		TP_MaintainStart				: TP;
+		R_TrigWriteCmd					: R_TRIG;
+		F_TrigWriteCmd					: F_TRIG;
+
+		R_TrigState						: R_TRIG;
+		F_TrigState						: F_TRIG;
+		TimeStart						: TIME;
+		TimeNotStart					: TIME;
+		
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{97b23ab8-7662-4c3d-861c-f36681c63b0c}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement : BOOL
+VAR_INPUT
+END_VAR
+
+VAR
+	FB_AlarmCodeManager			: FB_AlarmCodeManager ;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[	FB_AlarmCodeManager(
+		bAlarm1			:= FALSE, 	// CB of the battery charger is opened
+		bAlarm2			:= FALSE,			// Main switch of tgbt is opened
+		bAlarm3			:= False,	// No Voltage on the 48V TGBT
+		bAlarm4			:= False,
+		bAlarm5			:= False,
+		bAlarm6			:= False,
+		bAlarm7			:= False,
+		bAlarm8			:= False,
+		bAlarm9			:= False,
+		bAlarm10		:= False,
+		bAlarm11		:= False,
+		bAlarm12		:= False,
+		bAlarm13		:= False,
+		bAlarm14		:= False,
+		bAlarm15		:= False,
+		wAlarmCode		=>MesDataExd.MesData.MesAlarmCode); 
+		
+
+// WARNING CODE //
+	FB_AlarmCodeManager
+(
+ 		bAlarm1			:= FALSE,
+		bAlarm2			:= False,
+		bAlarm3			:= False,
+		bAlarm4			:= False,
+		bAlarm5			:= False,
+		bAlarm6			:= False,
+		bAlarm7			:= False,
+		bAlarm8			:= False,
+		bAlarm9			:= False,
+		bAlarm10		:= False,
+		bAlarm11		:= False,
+		bAlarm12		:= False,
+		bAlarm13		:= False,
+		bAlarm14		:= False,
+		bAlarm15		:= False,
+		wAlarmCode		=>MesDataExd.MesData.MesWarningCode					
+);   
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Evaluate" Id="{23f463cd-18f7-4faa-92ef-4c60a2bb7cbb}">
+      <Declaration><![CDATA[METHOD M_Evaluate : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Read" Id="{b5bebb64-4e87-4147-b5a4-f03e47b6d7c7}">
+      <Declaration><![CDATA[METHOD M_Read : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[ReadStatus
+(
+	pDestAddr := ADR(OUT_State),
+	sIPAddr := ParamIpAddress,
+	tTimeout := ParamTimeOut,
+	nTcpPort := ParamTcpPort,
+	nQuantity := 1,
+	nMBAddr := 2,
+	cbLength := SIZEOF(OUT_State),
+	ClockRead := ClockRead AND MesCP_Read,
+	nUnitID := ParamUnitID
+);
+
+R_TrigState(CLK := OUT_State AND TpUpdate.Q);
+F_TrigState(CLK := OUT_State AND TpUpdate.Q);
+
+IF R_TrigState.Q THEN
+	TimeStart := TIME();
+END_IF
+IF F_TrigState.Q  THEN
+	TimeNotStart := TIME();
+	OUT_WorkingHr := OUT_WorkingHr + (TimeNotStart-TimeStart);
+END_IF
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Write" Id="{f9e858f7-1b78-470b-9c05-6e8e71cfc1ea}">
+      <Declaration><![CDATA[METHOD M_Write : BOOL
+VAR_INPUT
+END_VAR
+VAR
+	WordToWrite		: WORD;
+	AX_Addr			: ARRAY[1..3] OF UINT :=[1, 2, 3];
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+WordToWrite := REAL_TO_WORD(IN_SetptTemp*10.0);
+
+Trig_CmdStart(CLK  := IN_CmdStart);
+Trig_CmdStop(CLK  := IN_CmdStop);	
+Trig_CmdReset(CLk := IN_CmdReset_L);
+
+TP_MaintainStart(IN := Trig_CmdStart.Q OR Trig_CmdStop.Q OR Trig_CmdReset.Q, PT := ParamMaintainPulse);
+R_TrigWriteCmd(CLK := TP_MaintainStart.Q);
+
+
+IF Trig_CmdStart.Q THEN
+	BlockToWrite := 1;
+END_IF
+
+IF Trig_CmdStop.Q THEN
+	BlockToWrite := 0;
+END_IF
+
+IF Trig_CmdReset.Q THEN
+	BlockToWrite := 2;
+END_IF
+
+WriteSetpt
+(
+	InputWord := (WordToWrite),
+	sIPAddr := ParamIpAddress,
+	tTimeout := ParamTimeOut,
+	nTCPport := ParamTcpPort,
+	nMBAddr := 0,
+	cbLength := SIZEOF(WordToWrite),
+	nQuantity := 1,
+	nUnitID := ParamUnitID,
+	WriteCmd := ClockWrite AND MesCP_Write
+);
+
+
+WriteCmd
+(
+	bValue := TP_MaintainStart.Q,
+	sIPAddr := ParamIpAddress,
+	tTimeout := ParamTimeOut,
+	nTCPport := ParamTcpPort,
+	nMBAddr := BlockToWrite,
+	nUnitID := ParamUnitID,
+	WriteCmd := R_TrigWriteCmd.Q OR F_TrigWriteCmd.Q AND MesCP_Write,
+);]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_HVAC_Standard">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_HVAC_Standard.M_AlarmManagement">
+      <LineId Id="6" Count="38" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_HVAC_Standard.M_Evaluate">
+      <LineId Id="8" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_HVAC_Standard.M_Read">
+      <LineId Id="5" Count="0" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="6" Count="0" />
+      <LineId Id="8" Count="3" />
+      <LineId Id="13" Count="3" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="20" Count="0" />
+      <LineId Id="19" Count="0" />
+      <LineId Id="21" Count="0" />
+      <LineId Id="23" Count="0" />
+      <LineId Id="22" Count="0" />
+      <LineId Id="24" Count="1" />
+      <LineId Id="27" Count="1" />
+      <LineId Id="31" Count="0" />
+      <LineId Id="26" Count="0" />
+      <LineId Id="30" Count="0" />
+      <LineId Id="29" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_HVAC_Standard.M_Write">
+      <LineId Id="54" Count="0" />
+      <LineId Id="13" Count="0" />
+      <LineId Id="47" Count="0" />
+      <LineId Id="46" Count="0" />
+      <LineId Id="49" Count="0" />
+      <LineId Id="42" Count="0" />
+      <LineId Id="57" Count="0" />
+      <LineId Id="56" Count="0" />
+      <LineId Id="58" Count="0" />
+      <LineId Id="60" Count="0" />
+      <LineId Id="50" Count="3" />
+      <LineId Id="62" Count="0" />
+      <LineId Id="61" Count="0" />
+      <LineId Id="63" Count="1" />
+      <LineId Id="69" Count="0" />
+      <LineId Id="67" Count="1" />
+      <LineId Id="66" Count="0" />
+      <LineId Id="16" Count="0" />
+      <LineId Id="5" Count="2" />
+      <LineId Id="17" Count="2" />
+      <LineId Id="21" Count="4" />
+      <LineId Id="27" Count="0" />
+      <LineId Id="44" Count="0" />
+      <LineId Id="20" Count="0" />
+      <LineId Id="28" Count="6" />
+      <LineId Id="37" Count="1" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

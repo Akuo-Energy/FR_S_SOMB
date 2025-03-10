@@ -1,0 +1,209 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_TOR_CB" Id="{f70ab171-c997-4257-8017-76a732ac0f2a}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_TOR_CB EXTENDS FB_TOR_Base
+//////////////////
+//  Circuit Breaker
+//////////////////
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance/model specific) 
+	ParamTP_Impulsion		    : TIME 		:= T#2S;	(* (s) Config : Tempo for the start or stop command impulsion*)
+	ParamNC_Tripped				: BOOL;		(* (NA) is the tripped signal normally closed: True = Normally closed*)
+		
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	OUT_CmdOpen_IO	           : BOOL ; 	          // (NA) Physical I/O Open Command IO
+	OUT_CmdClose_IO			   : BOOL ; 	          // (NA) Physical I/O Close Command IO
+	
+END_VAR
+
+VAR_INPUT
+	// I/O Inputs 		                                     				
+		IN_CmdOpen 						: BOOL ; 				// (NA) External Open Command 
+		IN_CmdClose						: BOOL ; 				// (NA) External Close Command 
+		IN_MesTripped_IO				: BOOL ;				// (NA) the CB tripped
+		MesDataExd			: TOR_CB ;  
+END_VAR
+
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//
+		
+
+
+	//M_OPENCLOSE VARIABLES//	
+		ParamTP_Open	 			: TP ;				(* (NA) Temporisation for Open pulse Command*)
+		ParamTP_Close 				: TP ;				(* (NA) Temporisation for Close pulse Command	*)
+
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{2ea5c6c2-d947-455b-8e05-e509211cd488}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Manages Door sensor alarms and warnings
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager : FB_AlarmCodeManager ; 
+
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF ParamNC_Tripped THEN
+	MesDataExd.MesTripped := NOT IN_MesTripped_IO;
+ELSE
+	MesDataExd.MesTripped := IN_MesTripped_IO;
+END_IF
+
+// ALARM CODE //
+	FB_AlarmCodeManager(
+ 		bAlarm1			:= MesDataExd.MesTripped,    					// 
+		bAlarm2			:= FALSE, 						// 
+		bAlarm3			:= FALSE, 						// 
+		bAlarm4			:= FALSE, 						// 
+		bAlarm5			:= FALSE,       				//
+		bAlarm6			:= FALSE,       				//
+		bAlarm7			:= FALSE,       				//
+		bAlarm8			:= FALSE,       				//
+		bAlarm9			:= FALSE,       				//
+		bAlarm10		:= FALSE,       				//
+		bAlarm11		:= FALSE,       				//
+		bAlarm12		:= FALSE,         				//
+		bAlarm13		:= FALSE,         				//
+		bAlarm14		:= FALSE,         				//
+		bAlarm15		:= FALSE,         				//
+		wAlarmCode		=>MesDataExd.MesData.MesAlarmCode);
+
+// WARNING CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= FALSE,    			// 
+		bAlarm2			:= FALSE, 				//  
+		bAlarm3			:= FALSE, 				//  
+		bAlarm4			:= FALSE, 				//  
+		bAlarm5			:= FALSE,               //
+		bAlarm6			:= FALSE,               //
+		bAlarm7			:= FALSE,               //
+		bAlarm8			:= FALSE,               //
+		bAlarm9			:= FALSE,               //
+		bAlarm10		:= FALSE,               //
+		bAlarm11		:= FALSE,               //
+		bAlarm12		:= FALSE,               //
+		bAlarm13		:= FALSE,               //
+		bAlarm14		:= FALSE,               //
+		bAlarm15		:= FALSE,               //
+		wAlarmCode		=>MesDataExd.MesData.MesWarningCode);
+
+// EVENT CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= MesDataExd.MesData.MesAlarmState, 			//  CB is opened
+		bAlarm2			:= FALSE, 							// 
+		bAlarm3			:= FALSE, 							//  
+		bAlarm4			:= FALSE, 							// 
+		bAlarm5			:= FALSE,                           //
+		bAlarm6			:= FALSE,                           //
+		bAlarm7			:= FALSE,                           //
+		bAlarm8			:= FALSE,                           //
+		bAlarm9			:= FALSE,                           //
+		bAlarm10		:= FALSE,                           //
+		bAlarm11		:= FALSE,                           //
+		bAlarm12		:= FALSE,                           //
+		bAlarm13		:= FALSE,                           //
+		bAlarm14		:= FALSE,                           //
+		bAlarm15		:= FALSE,                           //
+		wAlarmCode		=>MesDataExd.MesData.MesEventCode);
+		
+		
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_StateManager" Id="{2cff202c-6d81-4191-aec3-cfaf05ab538d}">
+      <Declaration><![CDATA[METHOD M_StateManager
+//////////////////
+// Detect when fire occurs
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle)
+ 	MesStateInterm1 : BOOL;
+	MesStateInterm2 : BOOL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+IF ParamCableCutSecurity THEN
+	MesStateInterm1 := NOT IN_MesState1_IO ; 
+	MesStateInterm2 := NOT IN_MesState2_IO ; 
+ELSE 
+	MesStateInterm1 := IN_MesState1_IO;
+	MesStateInterm2 := IN_MesState2_IO;
+END_IF
+
+IF ParamNbSensors = 1 THEN 
+	MesStateInterm2 := MesStateInterm1 ;
+END_IF
+
+IF ParamAtleastOne THEN 
+	MesDataExd.MesData.MesAlarmState := MesStateInterm1 OR MesStateInterm2 ; 
+ELSE
+	MesDataExd.MesData.MesAlarmState := MesStateInterm1 AND MesStateInterm2 ; 
+END_IF
+
+R_TRIGAlarm(CLK:= MesDataExd.MesData.MesAlarmState ) ; 
+IF R_TRIGAlarm.Q THEN
+	MesCountAlarm :=  MIN(MesCountAlarm + 1 ,4294967295 ) ; 
+ELSIF IN_ResetCounter THEN 
+	MesCountAlarm := 0 ; 
+END_IF
+
+MesDataExd.MesData.MesCountAlarm	:= MesCountAlarm ; 
+
+MesDataExd.MesCP_Open				:= IN_CmdOpen AND NOT IN_CmdReset_L;
+MesDataExd.MesCP_Close				:= MesDataExd.MesData.MesAlarmState AND IN_CmdClose AND NOT MesDataExd.MesData.MesAlarmCode.0 AND NOT MesDataExd.MesCP_Open AND NOT IN_CmdReset_L ;
+// Open Command
+ParamTP_Open(IN		:= MesDataExd.MesCP_Open , PT:=ParamTP_Impulsion) ;
+OUT_CmdOpen_IO		:= ParamTP_Open.Q ;                               			 // Impulsion that goes back to zero as soon as the state of the TP goes down. 
+
+// Close Command
+ParamTP_Close(IN	:= MesDataExd.MesCP_Close , PT:=ParamTP_Impulsion) ;
+OUT_CmdClose_IO		:= ParamTP_Close.Q ;                          				 // Impulsion that goes back to zero as soon as the state of the TP goes down.
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_TOR_CB">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_TOR_CB.M_AlarmManagement">
+      <LineId Id="193" Count="0" />
+      <LineId Id="196" Count="0" />
+      <LineId Id="194" Count="0" />
+      <LineId Id="198" Count="0" />
+      <LineId Id="195" Count="0" />
+      <LineId Id="124" Count="58" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_TOR_CB.M_StateManager">
+      <LineId Id="153" Count="0" />
+      <LineId Id="110" Count="2" />
+      <LineId Id="155" Count="0" />
+      <LineId Id="157" Count="1" />
+      <LineId Id="113" Count="10" />
+      <LineId Id="135" Count="1" />
+      <LineId Id="124" Count="0" />
+      <LineId Id="137" Count="0" />
+      <LineId Id="141" Count="1" />
+      <LineId Id="138" Count="0" />
+      <LineId Id="140" Count="0" />
+      <LineId Id="139" Count="0" />
+      <LineId Id="125" Count="0" />
+      <LineId Id="169" Count="9" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

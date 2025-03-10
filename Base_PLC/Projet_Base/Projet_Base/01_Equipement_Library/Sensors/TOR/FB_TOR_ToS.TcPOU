@@ -1,0 +1,202 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_TOR_ToS" Id="{f6049063-d998-4920-bd15-3b5fa86d5383}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_TOR_ToS EXTENDS FB_TOR_Base
+//////////////////
+//  Technician on site selectOR   
+//////////////////
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance/model specific) 
+	ParamTempoToSAlarm				: TIME := T#180M ; 	(*(min) Tempo (2h30) after ToS without clear fault >> alarm *)
+	ParamTempoToSWarning			: TIME := T#120M ;  (* (min) Tempo (2h) after ToS without clear fault  >> warning*)
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	
+END_VAR
+
+VAR_INPUT
+	// I/O Inputs 		                                     				
+	MesDataExd			: TOR_Standard ;                              			
+	          	
+
+END_VAR
+
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//
+		TON 						: TON ;  			 // (NA) Calculate time since technician presence activation. 
+		        
+
+	
+
+		
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{9811abbb-364c-4917-a423-a6267de4ab7d}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Manages Smoke detector alarms and warnings
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager : FB_AlarmCodeManager ; 
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Detection Variables
+	TON(IN:= MesDataExd.MesData.MesAlarmState AND NOT CmdClearFault_G , PT:=ParamTempoToSAlarm);   			// Reset tempo if reset commAND  
+	
+// ALARM CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= TON.Q ,													// If technician presence is active for more than 6 hours . 				
+		bAlarm2			:=FALSE, 													// 
+		bAlarm3			:=FALSE, 													// 
+		bAlarm4			:=FALSE, 													// 
+		bAlarm5			:=FALSE, 													//
+		bAlarm6			:=FALSE,        											//
+		bAlarm7			:=FALSE,        											//
+		bAlarm8			:=FALSE,        											//
+		bAlarm9			:=FALSE,        											//
+		bAlarm10		:=FALSE,        											//
+		bAlarm11		:=FALSE,        											//
+		bAlarm12		:=FALSE,        											//
+		bAlarm13		:=FALSE,        											//
+		bAlarm14		:=FALSE,        											//
+		bAlarm15		:=FALSE,        											//
+		wAlarmCode		=>MesDataExd.MesData.MesAlarmCode);
+
+// WARNING CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= TON.ET > ParamTempoToSWarning ,				// If technician presence is active for more than 2 hours .  
+		bAlarm2			:=FALSE, 										// 
+		bAlarm3			:=FALSE, 										// 
+		bAlarm4			:=FALSE, 										// 
+		bAlarm5			:=FALSE, 										//
+		bAlarm6			:=FALSE,        								//
+		bAlarm7			:=FALSE,        								//
+		bAlarm8			:=FALSE,        								//
+		bAlarm9			:=FALSE,        								//
+		bAlarm10		:=FALSE,        								//
+		bAlarm11		:=FALSE,        								//
+		bAlarm12		:=FALSE,        								//
+		bAlarm13		:=FALSE,        								//
+		bAlarm14		:=FALSE,        								//
+		bAlarm15		:=FALSE,        								//
+		wAlarmCode		=>MesDataExd.MesData.MesWarningCode);
+			
+// EVENT CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= MesDataExd.MesData.MesAlarmState, 		// Technician On Site
+		bAlarm2			:= FALSE, 						// 
+		bAlarm3			:= FALSE, 						// 
+		bAlarm4			:= FALSE, 						// 
+		bAlarm5			:= FALSE, 						//
+		bAlarm6			:= FALSE, 						//
+		bAlarm7			:= FALSE,                       //
+		bAlarm8			:= FALSE,                       //
+		bAlarm9			:= FALSE,                       //
+		bAlarm10		:= FALSE,                       //
+		bAlarm11		:= FALSE,                       //
+		bAlarm12		:= FALSE,                       //
+		bAlarm13		:= FALSE,                       //
+		bAlarm14		:= FALSE,                       //
+		bAlarm15		:= FALSE,                       //
+		wAlarmCode		=>MesDataExd.MesData.MesEventCode);]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{e8ad3483-ac49-42f2-b820-8507526798ec}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// EMULATOR I/O //
+
+SUPER^.M_Execute() ; ]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_StateManager" Id="{7348b1ef-c91b-409e-a03a-fb7aaa4e1030}">
+      <Declaration><![CDATA[METHOD M_StateManager
+//////////////////
+// Detect when fire occurs
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle)
+ 	MesStateInterm1 : BOOL;
+	MesStateInterm2 : BOOL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+IF ParamCableCutSecurity THEN
+	MesStateInterm1 := NOT IN_MesState1_IO ; 
+	MesStateInterm2 := NOT IN_MesState2_IO ; 
+ELSE 
+	MesStateInterm1 := IN_MesState1_IO;
+	MesStateInterm2 := IN_MesState2_IO;
+END_IF
+
+IF ParamNbSensors = 1 THEN 
+	MesStateInterm2 := MesStateInterm1 ;
+END_IF
+
+IF ParamAtleastOne THEN 
+MesDataExd.MesData.MesAlarmState := MesStateInterm1 OR MesStateInterm2 ; 
+ELSE
+MesDataExd.MesData.MesAlarmState := MesStateInterm1 AND MesStateInterm2 ; 
+END_IF
+
+R_TRIGAlarm(CLK:= MesDataExd.MesData.MesAlarmState ) ; 
+IF R_TRIGAlarm.Q THEN
+	MesCountAlarm :=  MIN(MesCountAlarm + 1 ,4294967295 ) ; 
+ELSIF IN_ResetCounter THEN 
+	MesCountAlarm := 0 ; 
+END_IF
+
+MesDataExd.MesData.MesCountAlarm	:= MesCountAlarm ; 
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_TOR_ToS">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_TOR_ToS.M_AlarmManagement">
+      <LineId Id="98" Count="57" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_TOR_ToS.M_Execute">
+      <LineId Id="56" Count="1" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_TOR_ToS.M_StateManager">
+      <LineId Id="153" Count="0" />
+      <LineId Id="110" Count="2" />
+      <LineId Id="155" Count="0" />
+      <LineId Id="157" Count="1" />
+      <LineId Id="113" Count="10" />
+      <LineId Id="135" Count="1" />
+      <LineId Id="124" Count="0" />
+      <LineId Id="137" Count="0" />
+      <LineId Id="141" Count="1" />
+      <LineId Id="138" Count="0" />
+      <LineId Id="140" Count="0" />
+      <LineId Id="139" Count="0" />
+      <LineId Id="125" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

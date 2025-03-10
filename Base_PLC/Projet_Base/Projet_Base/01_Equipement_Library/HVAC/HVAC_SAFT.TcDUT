@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="HVAC_SAFT" Id="{ff0351e3-f87b-4533-ac7c-6272149cace8}">
+    <Declaration><![CDATA[TYPE HVAC_SAFT :
+STRUCT
+	MesData				: HVAC ;	
+
+	MesHygro_Amb		: REAL ; 		 (*(%)	 Hygro value*)
+	MesTemp_Room		: REAL ; 		 (*(°C)	 Temperature value .*)
+	MesTemp_Outside		: REAL ; 		 (*(°C)  Outside air temperature*)
+	
+	MesIDState			: WORD ; (* (NA) SubBankHVAC_St [SubBankHVAC_St] *) 
+
+	
+END_STRUCT
+END_TYPE
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

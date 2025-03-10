@@ -1,0 +1,323 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="Database_V3" Id="{e207b8c8-48a1-4b89-8335-9d6a0dfbf092}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM Database_V3
+VAR_INPUT
+
+END_VAR
+VAR
+
+	TableNames					: ARRAY[1..CstNbTables] OF STRING := ['TABLE1S', 'TABLE1S', 'TABLE1M', 'TABLE1M'];
+	AX_NormalDisconnect			: ARRAY[1..CstNbTables] OF BOOL;
+	InsertBuffer				: ARRAY[1..CstNbBases] OF Firebird_InsertBuffer_vEpoch;
+	Trig_Insert					: ARRAY[1..CstNbBases] OF R_TRIG;
+	NameBase					: ARRAY[1..CstNbBases] OF STRING:= ['DATABASE1_1S', 'DATABASE2_1S','DATABASE1_1M', 'DATABASE2_1M', 'DATABASE_ALARMS' ];
+	NombreValeurs				: ARRAY[1..CstNbBases] OF UINT	:= [250, 250, 2500, 2500];
+	CmdConnect					: ARRAY[1..CstNbBases] OF BOOL;
+	CmdDisconnect				: ARRAY[1..CstNbBases] OF BOOL;
+	ParamRetryConnect			: ARRAY[1..CstNbBases] OF TIME := [T#30S,T#30S,T#30S,T#30S];
+	TP_RetryConnect				: ARRAY[1..CstNbBases] OF TP;
+	TON_NotConnected			: ARRAY[1..CstNbBases] OF TON;
+	Trig_RetryConnect			: ARRAY[1..CstNbBases] OF R_TRIG;
+	Ftrig_RetryConnect			: ARRAY[1..CstNbBases] OF F_TRIG;
+	hDBID						: ARRAY[1..CstNbBases] OF DINT;
+	DbAlreadyConnected			: ARRAY[1..CstNbBases] OF BOOL;	// Permet d'éviter qu'on essaie de connecter dès le début
+
+	// 	INIT
+		bInit 						: BOOL := TRUE;
+		TRIG_CheckConfigBusy		: F_TRIG;
+	// 	CHECK CONFIG	
+		IN_CmdCheckConfig			: BOOL := TRUE;
+		aDBConfig 					: ARRAY[0..MAX_CONFIGURATIONS] OF ST_ConfigDB;
+	// RETRIEVE HDBID
+		Trig_RetrieveHDBID			: R_TRIG;
+		Trig_RetrieveHDBID_Complete	: R_TRIG;
+		IN_CmdRetrieveHDBID			: BOOL;
+		DirBase 					: STRING := 'C:\Databases\';
+		IpAddressBase				: STRING := '192.168.1.148';
+		PortBase					: STRING := '3050';
+	// 	INSERT DB
+		KK 							: UINT;
+	
+		IdConnectedDB				: UINT := 1;							// Database which is connected for the trigger at the moment
+		FTRIG_Busy1s				: F_TRIG;
+		TRIG_10Min					: R_TRIG;
+		TP_1Min						: TP;
+		bChange						: BOOL;
+
+	Old_Second: UINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[DatabaseUpdate();
+
+
+
+TRIG_CheckConfigBusy(CLK := CheckConfig.OUT_Busy);
+IF bInit THEN
+	FOR KK := 1 TO CstNbBases DO
+		InsertBuffer[KK].M_Init();
+	END_FOR
+	IF TRIG_CheckConfigBusy.Q THEN
+		bInit := FALSE;
+	END_IF
+END_IF
+
+// Je lis d'abord la configuration
+	CheckConfig
+	(
+		IN_Start := IN_CmdCheckConfig OR bInit, 
+		OUT_aDBConfig => aDBConfig
+	);
+	IF IN_CmdCheckConfig THEN
+		IN_CmdCheckConfig := FALSE;
+	END_IF
+// Je compare la configuration avec les noms des tables
+
+	Trig_RetrieveHDBID(CLK := CheckConfig.OUT_Result = 1);
+	Firebird_RetrieveHDBID
+	(
+		IN_Start := Trig_RetrieveHDBID.Q OR IN_CmdRetrieveHDBID,
+		IN_ConfigDbActuelle := aDBConfig,
+		IN_Dir := DirBase,
+		IN_Name := NameBase,
+		IN_IpAddressServer := IpAddressBase,
+		IN_Port := PortBase,
+		OUT_hDBID => hDBID
+	);
+	IF IN_CmdRetrieveHDBID THEN
+		IN_CmdRetrieveHDBID := FALSE;
+	END_IF
+// si j'ai fini de comparer les tables :
+	Trig_RetrieveHDBID_Complete(CLK := Firebird_RetrieveHDBID.OUT_Result = 1);
+	
+// Gestion des reconnexions
+	FOR KK := 1 TO CstNbBases DO	
+		// Si je me suis déjà connecté et que je suis plus connecté, j'essaie de me reconnecter
+		TON_NotConnected[KK](IN := NOT InsertBuffer[KK].Out_Connected AND NOT AX_NormalDisconnect[KK], PT := T#50MS);
+		TP_RetryConnect[KK](IN := DbAlreadyConnected[KK] AND TON_NotConnected[KK].Q AND NOT TP_RetryConnect[KK].Q, PT := ParamRetryConnect[KK]);
+		Trig_RetryConnect[KK](CLK := TP_RetryConnect[KK].Q);
+		Ftrig_RetryConnect[KK](CLK := Trig_RetryConnect[KK].Q);
+		IF Trig_RetryConnect[KK].Q THEN
+			CmdConnect[KK] := TRUE;
+		END_IF
+		IF Ftrig_RetryConnect[1].Q THEN
+			CmdConnect[KK] := FALSE;
+		END_IF
+	END_FOR	
+
+// Alors je lance les connexions
+	FOR KK := 1 TO CstNbBases - 1 DO
+		InsertBuffer[KK].M_Connect(IN_hDBID := hDBID[KK], IN_Start := Trig_RetrieveHDBID_Complete.Q OR CmdConnect[KK]);
+		Insertbuffer[KK].M_Disconnect(IN_Start := CmdDisconnect[KK]);
+		IF CmdDisconnect[KK] THEN
+			CmdDisconnect[KK] := FALSE;
+		END_IF
+	END_FOR
+	
+
+	// Un peu différent pour les alarmes 
+		Firebird_WriteAlarms.M_Connect(IN_hDBID := hDBID[CstNbBases], IN_Start := Trig_RetrieveHDBID_Complete.Q OR CmdConnect[CstNbBases]);
+		Firebird_ReadAlarms.M_Connect(IN_hDBID := hDBID[CstNbBases], IN_Start := Trig_RetrieveHDBID_Complete.Q OR CmdConnect[CstNbBases]);
+		Firebird_WriteAlarms.M_Disconnect(IN_Start := 	CmdDisconnect[CstNbBases]);
+		Firebird_ReadAlarms.M_Disconnect(IN_Start := 	CmdDisconnect[CstNbBases]);
+			
+
+// Pour tester les changements de connexion
+	
+	TP_1Min(IN := TRIG_10Min.Q, PT := T#1M);
+	TRIG_10Min(CLK := WORD_TO_UINT(CalLocalTimeStruct.wMinute) < 1);
+	IF TRIG_10Min.Q THEN
+		bChange := TRUE;
+	END_IF
+	FTRIG_Busy1s(CLK :=TP_1Min.Q AND InsertBuffer[IdConnectedDB].OUT_Busy AND bChange);
+	IF FTRIG_Busy1s.Q  THEN
+		bChange := FALSE;
+		CASE IdConnectedDB OF
+			1:
+				IdConnectedDB := 2;
+				AX_NormalDisconnect[1] := TRUE;		CmdDisconnect[1] 	:= TRUE;
+				AX_NormalDisconnect[2] := FALSE;	CmdConnect[2] 		:= TRUE;
+				AX_NormalDisconnect[3] := TRUE;		CmdDisconnect[3] 	:= TRUE;
+				AX_NormalDisconnect[4] := FALSE;	CmdConnect[4] 		:= TRUE;
+				
+			2:
+				IdConnectedDB := 1;
+				AX_NormalDisconnect[1] := FALSE;	CmdConnect[1] 		:= TRUE;
+				AX_NormalDisconnect[2] := TRUE;		CmdDisconnect[2] 	:= TRUE;
+				AX_NormalDisconnect[3] := FALSE;	CmdConnect[3] 		:= TRUE;	
+				AX_NormalDisconnect[4] := TRUE;		CmdDisconnect[4] 	:= TRUE;
+		END_CASE
+	END_IF
+	
+	// Points 1 seconde : 	
+	Trig_Insert[1](clk := CalLocalTimeStruct.wMilliseconds < 500 );
+	IF Trig_Insert[1].Q AND IdConnectedDB = 1 THEN
+		FOR KK := 1 TO  NombreValeurs[1]  DO
+			Old_Second := WORD_TO_UINT(CalLocalTimeStruct.wSecond);
+			InsertBuffer[1].M_AddLine(InStruct := GVL_DataBaseStructures.AX_Struct_1s[KK]);
+		END_FOR
+	END_IF			
+	IF Insertbuffer[1].OUT_Connected AND IdConnectedDB = 1 THEN
+		DbAlreadyConnected[1] 	:= TRUE;	
+		CmdConnect[1] 			:= FALSE;
+		InsertBuffer[1]
+		(
+			NomTable := TableNames[1],
+			IN_Hdbid := hDBID[1]
+		);
+	END_IF
+
+
+	Trig_Insert[2](clk := CalLocalTimeStruct.wMilliseconds < 500 );
+	IF Trig_Insert[2].Q  AND IdConnectedDB = 2 THEN
+		FOR KK := 1 TO  NombreValeurs[2]  DO
+			Old_Second := WORD_TO_UINT(CalLocalTimeStruct.wSecond);
+			InsertBuffer[2].M_AddLine(InStruct := GVL_DataBaseStructures.AX_Struct_1s[KK]);
+		END_FOR
+	END_IF
+	IF InsertBuffer[2].OUT_Connected AND IdConnectedDB = 2 THEN
+		DbAlreadyConnected[2] 	:= TRUE;	
+		CmdConnect[2] 			:= FALSE;
+		InsertBuffer[2]
+		(
+			NomTable := TableNames[2],
+			IN_Hdbid := hDBID[2]
+		);
+	END_IF
+
+
+	Trig_Insert[3](clk := CalLocalTimeStruct.wSecond < 2 );
+	IF Trig_Insert[3].Q AND IdConnectedDB = 1 THEN
+		FOR KK := 1 TO  NombreValeurs[3]  DO
+			InsertBuffer[3].M_AddLine(InStruct := GVL_DataBaseStructures.AX_Struct_1m[KK]);
+		END_FOR
+	END_IF		
+	IF InsertBuffer[3].OUT_Connected AND IdConnectedDB = 1 THEN
+		DbAlreadyConnected[3] 	:= TRUE;	
+		CmdConnect[3] 			:= FALSE;
+		InsertBuffer[3]
+		(
+			NomTable := TableNames[3],
+			IN_Hdbid := hDBID[3]
+		);
+	END_IF
+
+	
+	Trig_Insert[4](clk := CalLocalTimeStruct.wSecond < 2 );
+	IF Trig_Insert[4].Q AND IdConnectedDB = 2 THEN
+		FOR KK := 1 TO  NombreValeurs[4]  DO
+			InsertBuffer[4].M_AddLine(InStruct := GVL_DataBaseStructures.AX_Struct_1m[KK]);
+		END_FOR
+	END_IF			
+	IF InsertBuffer[4].OUT_Connected AND IdConnectedDB = 2 THEN
+		DbAlreadyConnected[4] 	:= TRUE;	
+		CmdConnect[4] 			:= FALSE;
+		InsertBuffer[4]
+		(
+			NomTable := TableNames[4],
+			IN_Hdbid := hDBID[4]
+		);
+	END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="Database_V3">
+      <LineId Id="825" Count="0" />
+      <LineId Id="1558" Count="0" />
+      <LineId Id="1209" Count="0" />
+      <LineId Id="1559" Count="0" />
+      <LineId Id="205" Count="0" />
+      <LineId Id="6" Count="0" />
+      <LineId Id="1390" Count="2" />
+      <LineId Id="136" Count="0" />
+      <LineId Id="133" Count="1" />
+      <LineId Id="70" Count="0" />
+      <LineId Id="1278" Count="0" />
+      <LineId Id="461" Count="0" />
+      <LineId Id="7" Count="4" />
+      <LineId Id="463" Count="0" />
+      <LineId Id="1485" Count="1" />
+      <LineId Id="73" Count="0" />
+      <LineId Id="1492" Count="0" />
+      <LineId Id="1491" Count="0" />
+      <LineId Id="12" Count="9" />
+      <LineId Id="1487" Count="2" />
+      <LineId Id="279" Count="0" />
+      <LineId Id="121" Count="0" />
+      <LineId Id="918" Count="0" />
+      <LineId Id="1185" Count="0" />
+      <LineId Id="1170" Count="0" />
+      <LineId Id="1189" Count="0" />
+      <LineId Id="1224" Count="0" />
+      <LineId Id="924" Count="0" />
+      <LineId Id="926" Count="0" />
+      <LineId Id="933" Count="0" />
+      <LineId Id="780" Count="0" />
+      <LineId Id="928" Count="1" />
+      <LineId Id="927" Count="0" />
+      <LineId Id="931" Count="1" />
+      <LineId Id="981" Count="0" />
+      <LineId Id="1191" Count="0" />
+      <LineId Id="1193" Count="3" />
+      <LineId Id="1653" Count="2" />
+      <LineId Id="1197" Count="0" />
+      <LineId Id="1220" Count="1" />
+      <LineId Id="1199" Count="3" />
+      <LineId Id="1192" Count="0" />
+      <LineId Id="1222" Count="1" />
+      <LineId Id="1190" Count="0" />
+      <LineId Id="1109" Count="0" />
+      <LineId Id="1113" Count="0" />
+      <LineId Id="1115" Count="0" />
+      <LineId Id="1119" Count="2" />
+      <LineId Id="1031" Count="0" />
+      <LineId Id="1081" Count="0" />
+      <LineId Id="1122" Count="0" />
+      <LineId Id="1103" Count="1" />
+      <LineId Id="1106" Count="0" />
+      <LineId Id="1648" Count="0" />
+      <LineId Id="1651" Count="0" />
+      <LineId Id="1649" Count="0" />
+      <LineId Id="1652" Count="0" />
+      <LineId Id="1650" Count="0" />
+      <LineId Id="1107" Count="0" />
+      <LineId Id="1656" Count="2" />
+      <LineId Id="1660" Count="0" />
+      <LineId Id="1108" Count="0" />
+      <LineId Id="1105" Count="0" />
+      <LineId Id="1083" Count="0" />
+      <LineId Id="1570" Count="0" />
+      <LineId Id="1576" Count="0" />
+      <LineId Id="1571" Count="2" />
+      <LineId Id="1599" Count="0" />
+      <LineId Id="1574" Count="1" />
+      <LineId Id="1498" Count="0" />
+      <LineId Id="198" Count="0" />
+      <LineId Id="1168" Count="0" />
+      <LineId Id="247" Count="0" />
+      <LineId Id="102" Count="2" />
+      <LineId Id="581" Count="0" />
+      <LineId Id="101" Count="0" />
+      <LineId Id="286" Count="0" />
+      <LineId Id="1568" Count="0" />
+      <LineId Id="1099" Count="0" />
+      <LineId Id="1578" Count="0" />
+      <LineId Id="1580" Count="1" />
+      <LineId Id="1601" Count="0" />
+      <LineId Id="1582" Count="1" />
+      <LineId Id="1569" Count="0" />
+      <LineId Id="1084" Count="0" />
+      <LineId Id="1169" Count="0" />
+      <LineId Id="1085" Count="5" />
+      <LineId Id="510" Count="0" />
+      <LineId Id="1590" Count="0" />
+      <LineId Id="1584" Count="5" />
+      <LineId Id="1213" Count="0" />
+      <LineId Id="1448" Count="7" />
+      <LineId Id="511" Count="0" />
+      <LineId Id="1597" Count="1" />
+      <LineId Id="1591" Count="4" />
+      <LineId Id="1466" Count="8" />
+      <LineId Id="1465" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

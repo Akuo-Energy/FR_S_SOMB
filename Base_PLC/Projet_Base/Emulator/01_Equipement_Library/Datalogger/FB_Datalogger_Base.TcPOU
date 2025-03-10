@@ -1,0 +1,67 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_Datalogger_Base" Id="{f9401397-67c0-4b63-a336-2b601382710b}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Datalogger_Base
+
+VAR_INPUT PERSISTENT
+	ParamTcpPort				: UINT	:=	502;		// Modbus TCP port
+	ParamIPAddress				: STRING; 				// (NA)Config: IP Adress 
+	ParamUnitID					: BYTE;					// (NA)   Modbus Unit ID. 
+	ParamID_PTR					: BYTE; 				//ID of the datalogger. Corresponding to PTR ID. 
+END_VAR
+
+       	
+VAR_INPUT           	
+	IN_CmdToggleRead			: BOOL;
+	IN_CmdToggleWrite			: BOOL;
+	IN_CmdReset_L				: BOOL;
+END_VAR             	
+      	
+VAR                 	
+	bInit						: BOOL; 	
+
+//INPUT
+	ClockReadInput				: BOOL;							// (NA) Modbus reading Clock
+    TP1							: TP ; 							// (NA) Tempo to define Modbus Reading Frequency 
+	ParamClockInputTime 		: TIME 		:= TIME#2S;	  		// (Time) Read Modbus Frequency  
+	CalCP_Input					: BOOL;
+	CalCP_Output				: BOOL;
+	
+	Trig_Cmd_Read				: R_Trig;
+	Trig_Cmd_Write              : R_Trig;
+	
+	RS_Cmd_Read					: RS;
+	RS_Cmd_Write                : RS;
+	
+	ModbusWriteTimeOut			: TIME;
+	FirstTime					: BOOL;
+
+	
+//  MesDataExd.MesData.                    : Datalogger;
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_Execute" Id="{3d1adfab-5e6d-493a-bd1b-d2e2a08845d2}">
+      <Declaration><![CDATA[METHOD M_Execute : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_Datalogger_Base">
+      <LineId Id="151" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Datalogger_Base.M_Execute">
+      <LineId Id="30" Count="0" />
+      <LineId Id="37" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

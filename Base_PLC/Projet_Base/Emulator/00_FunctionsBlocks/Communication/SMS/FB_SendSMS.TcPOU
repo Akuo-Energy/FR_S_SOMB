@@ -1,0 +1,358 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_SendSMS" Id="{19139bff-92d2-4a83-b580-7e8e5313c7df}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_SendSMS
+
+VAR_INPUT
+	bStart					: BOOL;  			(* Rising edge start fb execution *)
+	sPhoneNumber			: STRING(30);		(* phone Number *)
+	sSMSText				: T_MaxString;		(* Message Text *)
+	bReset					: BOOL ; 
+END_VAR
+
+VAR_OUTPUT
+	bBusy					: BOOL;
+	bError					: BOOL;
+	nErrorID				: UINT;
+	
+END_VAR
+
+VAR_IN_OUT
+	stTxBuffer				: ComBuffer;
+	stRxBuffer				: ComBuffer;
+	
+END_VAR
+
+VAR
+	rtrigStart				: R_TRIG;
+
+	fbSendData				: SendData;
+	fbReceiveData			: ReceiveData;
+	fbClearComBuffer		: ClearComBuffer;
+
+	i						: UINT;
+	uiAnalyzeAnswer			: UINT;
+	nStep					: UINT; (* sequence state *)
+	tonWaitTime				: TON;
+	tonTimeOut				: TON;
+	tTimeout				: TIME:=T#60S;
+
+	byAnswerEnter			: BYTE:=16#3E; //">"
+	arAnswerCMGS			: ARRAY[1..4] OF BYTE:=[16#43,16#4D,16#47,16#53]; //CMGS
+	arAnswerOK				: ARRAY[1..2] OF BYTE:=[16#4F,16#4B]; //OK
+	arAnswerErr				: ARRAY[1..5] OF BYTE:=[16#45,16#52,16#52,16#4F,16#52]; //ERROR
+
+	sSetSMSFormat			: STRING(10);			(*Command-String*)
+	arSetSMSFormat			: ARRAY[1..10] OF BYTE;	(*Command-ARRAY*)
+	arSetSMSFormatAnswerRcv	: ARRAY[1..5] OF BYTE;	(*Received answer of the command*)
+	arSetSMSFormatAnswerClr	: ARRAY[1..5] OF BYTE;	(*Empty-ARRAY to clear the answer for debugging*)
+
+	sSendSMSPart1			: STRING(40);			(*Command-String*)
+	arSendSMSPart1			: ARRAY[1..40] OF BYTE;	(*Command-ARRAY*)
+	arSendSMSPart1AnswerRcv	: ARRAY[1..5] OF BYTE;	(*Received answer of the command*)
+	arSendSMSPart1AnswerClr	: ARRAY[1..5] OF BYTE;	(*Empty-ARRAY to clear the answer for debugging*)
+
+	sSendSMSPart2			: STRING(170);			(*Command-String*)
+	arSendSMSPart2			: ARRAY[1..170] OF BYTE;(*Command-ARRAY*)
+	arSendSMSPart2AnswerRcv	: ARRAY[1..35] OF BYTE;	(*Received answer of the command*)
+	arSendSMSPart2AnswerClr	: ARRAY[1..35] OF BYTE;	(*Empty-ARRAY to clear the answer for debugging*)
+END_VAR
+
+
+
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+IF bReset THEN 
+	bError := FALSE ; 
+	bReset:= FALSE ; 
+END_IF
+
+
+	rtrigStart(CLK:=bStart);
+
+	tonTimeout();
+	IF (tonTimeout.Q) THEN
+		tonTimeout(IN := FALSE);
+		nStep := 900;
+	END_IF
+
+
+	CASE nStep OF
+
+	0:	(*Idle Step*);
+		tonTimeout(IN:=FALSE);
+		IF (rtrigStart.Q AND NOT bBusy) THEN
+			nStep := 5;
+			bBusy := TRUE;
+		ELSE
+			bBusy := FALSE;
+		END_IF
+
+
+	5:
+		bError					:= FALSE;
+		nErrorId				:= 0;
+		tonWaitTime				(IN := FALSE);
+		tonTimeout				(IN := TRUE, PT := tTimeout);
+		fbClearComBuffer		(buffer:=stRxBuffer);
+		fbClearComBuffer		(buffer:=stTxBuffer);
+		arSetSMSFormatAnswerRcv	:= arSetSMSFormatAnswerClr;
+		arSendSMSPart1AnswerRcv	:= arSendSMSPart1AnswerClr;
+		arSendSMSPart2AnswerRcv	:= arSendSMSPart2AnswerClr;
+	
+		nStep := 10;
+
+
+	10:(*Length of phone-number within limits?*)
+		IF 		LEN(sPhoneNumber) < 1
+			OR	LEN(sPhoneNumber) > 25 THEN
+			bError		:= TRUE;
+			nErrorID	:= 16#8006;
+			nStep		:= 1000;
+		ELSE
+			nStep		:= 20;
+		END_IF
+
+
+	20:(*Phone-number contains correct characters? 0..9, + *)
+		FOR i:=1 TO LEN(sPhoneNumber) DO
+			IF 	((ASC(MID(sPhoneNumber,1,i)) < 16#30) OR (ASC(MID(sPhoneNumber,1,i)) > 16#39))
+				AND NOT (ASC(MID(sPhoneNumber,1,i)) = 16#2B)	THEN
+				bError		:= TRUE;	(*a non-numeric character in the phone-number, except the "+"-sign*)
+				nErrorID	:= 16#8007;
+			END_IF
+		END_FOR
+
+		IF bError	THEN
+			nStep	:= 1000;
+		ELSE
+			nStep	:= 30;
+		END_IF
+
+
+	30:(*Length of SMS-Text within limits?*)
+		IF 	(LEN(sSMSText) < 1 OR LEN(sSMSText) > 160) THEN
+			bError		:= TRUE;
+			nErrorID	:= 16#8008;
+			nStep		:= 1000;
+		ELSE
+			nStep		:= 50;
+		END_IF
+
+
+	50:(*Create command-Arrays*)
+
+		(*Set SMS Format to textmode*)
+		sSetSMSFormat:='AT+CMGF=1';
+		sSetSMSFormat:=CONCAT(sSetSMSFormat,'X');	(*The "X" is a placeholder in the send-string
+													for the "CR" (Hex 0D) in the send-Array*)
+		MEMCPY(ADR(arSetSMSFormat),ADR(sSetSMSFormat),LEN(sSetSMSFormat)); (*Copy String to ARRAY*)
+		arSetSMSFormat[LEN(sSetSMSFormat)]:=16#0D;	(*Place the "CR" in the array*)
+
+
+		(*Send SMS, Part1 - Phone-number*)
+		sSendSMSPart1:='AT+CMGS="';
+		sSendSMSPart1:=CONCAT(sSendSMSPart1,sPhoneNumber);
+		sSendSMSPart1:=CONCAT(sSendSMSPart1,'"X');	(*The "X" is a placeholder in the send-string
+													for the "CR" (Hex 0D) in the send-Array*)
+		MEMCPY(ADR(arSendSMSPart1),ADR(sSendSMSPart1),LEN(sSendSMSPart1)); (*Copy String to ARRAY*)
+		arSendSMSPart1[LEN(sSendSMSPart1)]:=16#0D;	(*Place the "CR" in the array*)
+
+
+		(*Send SMS, Part2 - text*)
+		sSendSMSPart2:='"';
+		sSendSMSPart2:=CONCAT(sSendSMSPart2,sSMSText);
+		sSendSMSPart2:=CONCAT(sSendSMSPart2,'"X');	(*The "X" is a placeholder in the send-string
+													for the "ctrl+z" (Hex 1A) in the send-Array*)
+		MEMCPY(ADR(arSendSMSPart2),ADR(sSendSMSPart2),LEN(sSendSMSPart2)); (*Copy String to ARRAY*)
+		arSendSMSPart2[LEN(sSendSMSPart2)]:=16#1A;	(*Place the "ctrl+z" in the array*)
+
+
+		nStep	:= 100;
+
+
+	100:(*Set SMS-Format to text-Mode*)
+		fbSendData(
+		pSendData:=ADR(arSetSMSFormat),
+		Length:= LEN(sSetSMSFormat),
+		TXbuffer:= stTxBuffer);
+
+		IF NOT fbSendData.Busy THEN
+			nStep:=110;
+		END_IF
+
+		IF  fbSendData.Error<>0 THEN
+			bError:= TRUE;
+			nErrorID:= fbSendData.Error;
+			nStep:=1000;
+		END_IF
+
+
+	110:(*Wait for OK or Err-Answer. Any other answer caused by Comm-Error will end in global timeout*)
+		fbReceiveData(
+		pPrefix:= 0,
+		LenPrefix:= 0,
+		pReceiveData:= ADR(arSetSMSFormatAnswerRcv),
+		SizeReceiveData:= SIZEOF(arSetSMSFormatAnswerRcv),
+		Timeout:= t#500ms,
+		RXbuffer:= stRxBuffer);
+
+		(*Telegram is received*)
+		IF 			fbReceiveData.DataReceived
+			AND NOT fbReceiveData.busy	THEN
+						nStep:=120;
+		END_IF
+
+
+	120:(*Analyze answer*)
+		IF		(arSetSMSFormatAnswerRcv[3]=arAnswerOK[1]) AND (arSetSMSFormatAnswerRcv[4]=arAnswerOK[2])	THEN
+					nStep:=200;			(*Set-format successfully executed*)
+		ELSIF	(arSetSMSFormatAnswerRcv[3]=arAnswerErr[1]) AND (arSetSMSFormatAnswerRcv[4]=arAnswerErr[2])	THEN
+					bError:= TRUE;
+					nErrorID:= 16#8009;	(*Set-format failed*)
+					nStep:=1000;
+		ELSE
+					bError:= TRUE;
+					nErrorID:= 16#800A;	(*Undefined answer*)
+					nStep:=1000;
+		END_IF
+
+
+	200:(*Send SMS Part1 - Command and phone-number*)
+		fbSendData(
+		pSendData:=ADR(arSendSMSPart1),
+		Length:= LEN(sSendSMSPart1),
+		TXbuffer:= stTxBuffer);
+
+		IF NOT fbSendData.Busy THEN
+			nStep:=210;
+		END_IF
+
+		IF  fbSendData.Error<>0 THEN
+			bError:= TRUE;
+			nErrorID:= fbSendData.Error;
+			nStep:=1000;
+		END_IF
+
+
+	210:(*Wait explicitly for an ">"-Answer because normally only ">" is possible,
+		any other answer is regarded faulty and will end in global timeout*)
+
+		fbReceiveData(
+		pPrefix:= ADR(byAnswerEnter),
+		LenPrefix:= 1,
+		pReceiveData:= ADR(arSendSMSPart1AnswerRcv),
+		SizeReceiveData:= SIZEOF(arSendSMSPart1AnswerRcv),
+		Timeout:= t#500ms,
+		Reset:= FALSE,
+		RXbuffer:= stRxBuffer);
+
+		(*Telegram is received*)
+		IF 			fbReceiveData.DataReceived
+			AND NOT fbReceiveData.busy			THEN
+						nStep:=220;
+		END_IF
+
+
+	220:(*Send SMS Part2 - text-part*)
+		fbSendData(
+		pSendData:=ADR(arSendSMSPart2),
+		Length:= LEN(sSendSMSPart2),
+		TXbuffer:= stTxBuffer);
+
+		IF NOT fbSendData.Busy THEN
+			nStep:=230;
+		END_IF
+
+		IF  fbSendData.Error<>0 THEN
+			bError:= TRUE;
+			nErrorID:= fbSendData.Error;
+			nStep:=1000;
+		END_IF
+
+
+	230:(*Wait explicitly for a "CMGS"-Answer because normally only "CMGS" is possible,
+		any other answer is regarded faulty and will end in global timeout*)
+		fbReceiveData(
+		pPrefix:= ADR(arAnswerCMGS),
+		LenPrefix:= SIZEOF(arAnswerCMGS),
+		pReceiveData:= ADR(arSendSMSPart2AnswerRcv),
+		SizeReceiveData:= SIZEOF(arSendSMSPart2AnswerRcv),
+		Timeout:= t#1000ms,
+		RXbuffer:= stRxBuffer);
+
+		(*Telegram is received*)
+		IF 			fbReceiveData.DataReceived
+			AND NOT fbReceiveData.busy	THEN
+						nStep:=240;
+		END_IF
+
+
+	240:(*Find an "OK" or an "ERROR"-Part in the answer*)
+		uiAnalyzeAnswer:=0;
+		FOR i:= 1 TO (SIZEOF(arSendSMSPart2AnswerRcv)-5) DO
+			IF 		arSendSMSPart2AnswerRcv[i]		= arAnswerOK[1]
+				AND arSendSMSPart2AnswerRcv[i+1] 	= arAnswerOK[2]		THEN
+					uiAnalyzeAnswer:=1;		(*Send SMS successfully executed*)
+					EXIT;
+
+			ELSIF	arSendSMSPart2AnswerRcv[i]		= arAnswerErr[1]
+				AND arSendSMSPart2AnswerRcv[i+1] 	= arAnswerErr[2]
+				AND arSendSMSPart2AnswerRcv[i+2] 	= arAnswerErr[3]
+				AND arSendSMSPart2AnswerRcv[i+3] 	= arAnswerErr[4]
+				AND arSendSMSPart2AnswerRcv[i+4] 	= arAnswerErr[5]	THEN
+					uiAnalyzeAnswer:=2;		(*Send SMS failed*)
+					EXIT;
+			END_IF
+		END_FOR
+
+		CASE uiAnalyzeAnswer OF
+			0:(*Undefined Answer*)
+				bError:= TRUE;
+				nErrorID:= 16#800D;
+				nStep:=1000;
+
+			1:(*Send SMS successfully executed*)
+				nStep:=1000;
+
+			2:(*Send SMS failed*)
+				bError:= TRUE;
+				nErrorID:= 16#800C;
+				nStep:=1000;
+		END_CASE
+
+
+	900:(*Timeout*) // delete last sms in case of timeout
+		bError:= TRUE;
+		nErrorID:= 16#8001;
+		nStep:=1000;
+
+
+	1000:(*Reset Receive-FB*)
+		fbReceiveData(	Reset:=TRUE,RXbuffer:= stRxBuffer);
+		tonWaitTime(IN:=TRUE, PT:=t#500ms);
+		IF	tonWaitTime.Q	THEN
+			fbReceiveData(	Reset:=FALSE,RXbuffer:= stRxBuffer);
+			nStep:=1010;
+		END_IF
+
+
+	1010:	(*Send/Receive successful -> Reset FBs*)
+		fbClearComBuffer(buffer:=stRxBuffer);
+		fbClearComBuffer(buffer:=stTxBuffer);
+		nStep:=0;
+		bBusy:=FALSE;
+
+	END_CASE;]]></ST>
+    </Implementation>
+    <LineIds Name="FB_SendSMS">
+      <LineId Id="394" Count="2" />
+      <LineId Id="399" Count="0" />
+      <LineId Id="397" Count="0" />
+      <LineId Id="392" Count="1" />
+      <LineId Id="56" Count="275" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,246 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="TEST" Id="{a4afb91a-1cb7-4580-848e-d5f5a964dc59}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM TEST
+VAR
+// create an instance for all FB in base project in order to test if there are errors in the FB ()
+
+	moyenne_test : MOYENNE;
+	time_Test : TIME := T#5s;
+	bTest : BOOL;
+	rValue : REAL;
+
+(*
+FB_PM_PM5XXX						: FB_PM_PM5XXX ; 
+FB_GRID_PLAN						: FB_GRID_PLAN ; 	
+FB_CB_AuxMVCB						:FB_CB_AuxMVCB						;
+FB_CB_FeederMVCB            		:FB_CB_FeederMVCB            		 ;
+FB_CB_GridMVCB               		:FB_CB_GridMVCB               		;
+FB_CB_MainHVCB           			:FB_CB_MainHVCB           			;
+FB_CB_MainMVCB           			:FB_CB_MainMVCB           			;
+FB_CB_MeasureMVCB        			:FB_CB_MeasureMVCB        			;
+FB_CB_MVSwitch           	  		:FB_CB_MVSwitch;             		
+FB_CB_Switch	               		:FB_CB_Switch;               		
+FB_Fan_Basic                		:FB_Fan_Basic                		 ;
+FB_FSS                      		:FB_FSS                      		 ;
+FB_GRID_Enedis              		:FB_GRID_Enedis              		 ;
+FB_GRID_MADI                		:FB_GRID_MADI                		 ;
+FB_HVAC_Standard            		:FB_HVAC_Standard            		          ;
+FB_HVAC_MADI                		:FB_HVAC_MADI                		 ;
+FB_PM_520x230               		:FB_PM_520x230               		 ;
+FB_PM_A40                   		:FB_PM_A40                   		 ;
+FB_PM_ION7650               		:FB_PM_ION7650               		 ;
+FB_PM_Janitza               		:FB_PM_Janitza               		 ;
+FB_PM_PM3250                		:FB_PM_PM3250                		 ;
+FB_PM_SM103E                		:FB_PM_SM103E                		 ;
+FB_ProtectRelay_DM2     			:FB_ProtectRelay_DM2     		;
+FB_ProtectRelay_PACE100ST    		:FB_ProtectRelay_PACE100ST    		;
+FB_ProtectRelay_REF615       		:FB_ProtectRelay_REF615       		;
+FB_ProtectRelay_SEPAM10a     		:FB_ProtectRelay_SEPAM10a     		;
+FB_ProtectRelay_SepamS48     		:FB_ProtectRelay_SepamS48     		;
+FB_ProtectRelay_SepamT20     		:FB_ProtectRelay_SepamT20     		;
+FB_ProtectRelay_VIP410       		:FB_ProtectRelay_VIP410       		;
+FB_ProtectRelay_WIP1         		:FB_ProtectRelay_WIP1         		;
+FB_ANA_Irra_Fx               		:FB_ANA_Irra_Fx               		;
+FB_ANA_SMP1X                 		:FB_ANA_SMP1X                 		;
+FB_ANA_AllInOne              		:FB_ANA_AllInOne              		    ;
+FB_TOR_CB                    		:FB_TOR_CB                    		;
+FB_TOR_DS                    		:FB_TOR_DS                    		;
+FB_TOR_ES                    		:FB_TOR_ES                    		;
+FB_TOR_Fuse                  		:FB_TOR_Fuse                  		;
+FB_TOR_Rain                			:FB_TOR_Rain                			;
+FB_TOR_SD                    		:FB_TOR_SD                    		;
+FB_TOR_Spd                   		:FB_TOR_Spd                   		;
+FB_TOR_ToS                   		:FB_TOR_ToS                   		;
+FB_EM_Pulse                  		:FB_EM_Pulse                  		      ;
+FB_Transfo_HVCom             		:FB_Transfo_HVCom             		;
+FB_Transfo_MV                		:FB_Transfo_MV                		;
+FB_Transfo_MVCom             		:FB_Transfo_MVCom             		;
+FB_UPS_CXC                   		:FB_UPS_CXC                   		;
+FB_UPS_ENERIS                		:FB_UPS_ENERIS                		;
+FB_BAT_KP_MK1						: FB_BAT_KP_MK1					; 
+//FB_BAT_M3							: FB_BAT_M3       					;          
+FB_BAT_Saft                 		: FB_BAT_Saft                      ;
+FB_BAT_Sams                 		: FB_BAT_Sams                      ;
+
+FB_Datalogger_SchSkid       		: FB_Datalogger_SchSkid            ;
+
+FB_HVAC_MeAcMbs1            		: FB_HVAC_MeAcMbs1                 ;
+*)
+FB_INV_Huawei_SL            		: FB_INV_Huawei_SL                 ;
+
+FB_INV_Huawei_Sun2000KtlMo  		: FB_INV_Huawei_Sun2000KtlMo       ;
+FB_INV_JemaIFX6             		: FB_INV_JemaIFX6                  ;
+FB_INV_Power_One            		: FB_INV_Power_One                 ;
+FB_INV_Sch4400              		: FB_INV_Sch4400                   ;
+FB_INV_SmaSCXXXXCP_HE       		: FB_INV_SmaSCXXXXCP_HE            ;
+FB_INV_SmaSCXXXXUP_US       		: FB_INV_SmaSCXXXXUP_US            ;
+(*
+FB_IPC                      		: FB_IPC                           ;
+FB_PM_Digiware              		: FB_PM_Digiware                   ;
+FB_PM_PM800                 		: FB_PM_PM800                      ;
+FB_PM_Prometer              		: FB_PM_Prometer                   ;
+FB_PM_Q100                  		: FB_PM_Q100                       ;
+FB_PCS_Jema_IBX3            		: FB_PCS_Jema_IBX3                 ;
+FB_PCS_PE                   		: FB_PCS_PE                        ;
+FB_PCS_Sma_SCS3450UP        		: FB_PCS_Sma_SCS3450UP             ;
+FB_PPC_SmaKita              		: FB_PPC_SmaKita                   ;
+FB_ProtectRelay_Siprotec    	    : FB_ProtectRelay_Siprotec         ;
+FB_ProtectRelay_Flair23DM   	    : FB_ProtectRelay_Flair23DM        ;
+FB_ProtectRelay_MaxI        	    : FB_ProtectRelay_MaxI             ;
+FB_ProtectRelay_NSXCB       	    : FB_ProtectRelay_NSXCB            ;
+FB_Router                   	    : FB_Router                        ;
+FB_ANA_IO                   	    : FB_ANA_IO                        ;
+FB_ANA_DustIQ               	    : FB_ANA_DustIQ                    ;
+
+FB_TOR_Digicode             	    : FB_TOR_Digicode                  ;
+FB_TOR_Standard             	    : FB_TOR_Standard                  ;
+FB_TOR_MS                   	    : FB_TOR_MS                        ;
+FB_TOR_VP                   	    : FB_TOR_VP                        ;
+FB_TAC                      	    : FB_TAC                           ;
+FB_NCU_Axial                	    : FB_NCU_Axial                     ;
+FB_UPS_PS10048              	    : FB_UPS_PS10048                   ;
+FB_PM_ION9200						: FB_PM_ION9200 ; 	
+	
+
+FB_PPC_PE							: FB_PPC_PE ; 
+FB_UPS_MCSU4 						: FB_UPS_MCSU4 ; 
+FB_ProtectRelay_SMNS7SL86 			: FB_ProtectRelay_SMNS7SL86 ; 
+*)
+FB_INV_PE_HEMK : FB_INV_PE_HEMK ; 
+	FB_INV_PE_HEMG3 : FB_INV_PE_HEMG3 ; 
+END_VAR
+ ]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+moyenne_test(
+	In_fenetre_mesure := time_Test,
+	In_synchro := CalLocalTimeStruct.wSecond MOD 5 = 0,
+	In_valeur := word_to_real(CalLocalTimeStruct.wSecond)
+);
+moyenne_test.Calcul();
+
+(*
+FB_GRID_PLAN.M_Execute() ; 
+FB_CB_AuxMVCB.M_Execute() ; 					
+FB_CB_FeederMVCB.M_Execute() ; 			            	
+FB_CB_GridMVCB.M_Execute() ; 			               	
+FB_CB_MainHVCB.M_Execute() ; 			           		
+FB_CB_MainMVCB.M_Execute() ; 			           		
+FB_CB_MeasureMVCB.M_Execute() ; 			        		
+FB_CB_MVSwitch.M_Execute() ; 			             	
+FB_CB_Switch.M_Execute() ; 			               	
+FB_Fan_Basic.M_Execute() ; 		                	
+FB_FSS.M_Execute() ; 		                      	
+FB_GRID_Enedis.M_Execute() ; 		              	
+FB_GRID_MADI.M_Execute() ; 		                	
+FB_HVAC_Standard.M_Execute() ; 		            	
+FB_HVAC_MADI.M_Execute() ; 		                	
+FB_PM_520x230.M_Execute() ; 		               	
+FB_PM_A40.M_Execute() ; 		                   	
+FB_PM_ION7650.M_Execute() ; 		               	
+FB_PM_Janitza.M_Execute() ; 		               	
+FB_PM_PM3250.M_Execute() ; 		                	
+FB_PM_SM103E.M_Execute() ; 		                	
+FB_ProtectRelay_DM2.M_Execute() ; 		     		
+FB_ProtectRelay_PACE100ST.M_Execute() ; 		    	
+FB_ProtectRelay_REF615.M_Execute() ; 		       	
+FB_ProtectRelay_SEPAM10a.M_Execute() ; 		     	
+FB_ProtectRelay_SepamS48.M_Execute() ; 		     	
+FB_ProtectRelay_SepamT20.M_Execute() ; 		     	
+FB_ProtectRelay_VIP410.M_Execute() ; 		       	
+FB_ProtectRelay_WIP1.M_Execute() ; 		         	
+FB_ANA_Irra_Fx.M_Execute() ; 		               	
+FB_ANA_SMP1X.M_Execute() ; 		                 	
+FB_ANA_AllInOne.M_Execute() ; 		              	
+FB_TOR_CB.M_Execute() ; 		                    	
+FB_TOR_DS.M_Execute() ; 		                    	
+FB_TOR_ES.M_Execute() ; 		                    	
+FB_TOR_Fuse.M_Execute() ; 		                  	
+FB_TOR_Rain.M_Execute() ; 		                		
+FB_TOR_SD.M_Execute() ; 		                    	
+FB_TOR_Spd.M_Execute() ; 		                   	
+FB_TOR_ToS.M_Execute() ; 		                   	
+FB_EM_Pulse.M_Execute() ; 		                  	
+FB_Transfo_HVCom.M_Execute() ; 		             	
+FB_Transfo_MV.M_Execute() ; 		                	
+FB_Transfo_MVCom.M_Execute() ; 		             	
+FB_UPS_CXC.M_Execute() ; 		                   	
+FB_UPS_ENERIS.M_Execute() ; 		                	
+FB_BAT_KP_MK1.M_Execute() ; 							
+FB_BAT_M3.M_Execute() ; 								
+FB_BAT_Saft.M_Execute() ; 		                 	
+FB_BAT_Sams.M_Execute() ; 		                 	
+FB_Datalogger_IOWIT.M_Execute() ; 		         	
+FB_Datalogger_PPCVerrerie.M_Execute() ; 		   	
+FB_Datalogger_SchSkid.M_Execute() ; 		       	
+FB_Datalogger_SENECA.M_Execute() ; 		        	
+FB_HVAC_MeAcMbs1.M_Execute() ; 		            	
+*)
+FB_INV_Huawei_SL.M_Execute() ; 		            	
+FB_INV_Huawei_Sun2000KtlMo.M_Execute() ; 		  	
+FB_INV_JemaIFX6.M_Execute() ; 		             	
+FB_INV_Power_One.M_Execute() ; 		            	
+FB_INV_Sch4400.M_Execute() ; 		              	
+FB_INV_SmaSCXXXXCP_HE.M_Execute() ; 		       	
+FB_INV_SmaSCXXXXUP_US.M_Execute() ; 		       	
+
+
+(*
+FB_IPC.M_Execute() ; 		                      	
+FB_PM_Digiware.M_Execute() ; 		              	
+FB_PM_PM800.M_Execute() ; 		                 	
+FB_PM_Prometer.M_Execute() ; 		              	
+FB_PM_Q100.M_Execute() ; 		                  	
+FB_PCS_Jema.M_Execute() ; 		                 	
+FB_PCS_Jema_IBX3.M_Execute() ; 		            	
+FB_PCS_PE.M_Execute() ; 		                   	
+FB_PCS_Sma_SCS3450UP.M_Execute() ; 		       	
+FB_PPC_SmaKita.M_Execute() ; 		              	
+FB_ProtectRelay_Siprotec.M_Execute() ; 		    	
+FB_ProtectRelay_Flair23DM.M_Execute() ; 		   	
+FB_ProtectRelay_MaxI.M_Execute() ; 		        	
+FB_ProtectRelay_NSXCB.M_Execute() ; 		       	
+FB_Router.M_Execute() ; 		                   	
+FB_ANA_IO.M_Execute() ; 		                   	
+FB_ANA_Irra_Fx.M_Execute() ; 		              	
+FB_ANA_DustIQ.M_Execute() ; 		               	
+FB_ANA_SMP1X.M_Execute() ; 		               	
+FB_TOR_Digicode.M_Execute() ; 		             	
+FB_TOR_Standard.M_Execute() ; 		             	
+FB_TOR_MS.M_Execute() ; 		                   	
+FB_TOR_VP.M_Execute() ; 		                   	
+FB_TAC.M_Execute() ; 		                      	
+FB_EM_Pulse.M_Execute() ; 		                 	
+FB_NCU_Axial.M_Execute() ; 		                	
+FB_UPS_PS10048.M_Execute() ; 		              	
+FB_PM_PM5XXX.M_Execute() ; 
+FB_PM_ION9200.M_Execute() ; 
+FB_PPC_PE.M_Execute() ; 
+
+				  				
+FB_UPS_MCSU4.M_Execute() ;  				
+FB_ProtectRelay_SMNS7SL86.M_Execute() ;  	
+*)
+FB_INV_PE_HEMG3.M_Execute() ;  
+FB_INV_PE_HEMK.M_Execute();]]></ST>
+    </Implementation>
+    <LineIds Name="TEST">
+      <LineId Id="69" Count="0" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="64" Count="2" />
+      <LineId Id="63" Count="0" />
+      <LineId Id="68" Count="0" />
+      <LineId Id="406" Count="0" />
+      <LineId Id="80" Count="0" />
+      <LineId Id="203" Count="54" />
+      <LineId Id="407" Count="0" />
+      <LineId Id="258" Count="6" />
+      <LineId Id="408" Count="2" />
+      <LineId Id="265" Count="32" />
+      <LineId Id="94" Count="0" />
+      <LineId Id="411" Count="0" />
+      <LineId Id="298" Count="1" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

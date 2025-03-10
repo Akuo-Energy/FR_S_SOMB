@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="EM_Standard" Id="{a0097b18-868f-4b29-899f-7498dd2384fa}">
+    <Declaration><![CDATA[TYPE EM_Standard :
+STRUCT
+	
+	MesData			: EM ; 
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

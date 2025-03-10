@@ -1,0 +1,75 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="INV_Sch4400" Id="{6d894057-b358-44a7-b3b0-14c7172eb4d8}">
+    <Declaration><![CDATA[///////////
+// Structure For Inverter. Main Operating Data to be saved (ex: OPC).  
+//////////
+TYPE INV_Sch4400 :
+STRUCT
+	
+	// INV Measures
+	MesData					: INV ;					(* MesData *) 
+		            		
+	STR						: ARRAY[1..10] OF STR;	(* (NA) Strings *)
+
+	//Electrical Measurements
+	MesI1					: REAL; (* (A) Phase A RMS current at inverter side of AC circuit breaker CB501								*)
+	MesI2					: REAL; (* (A) Phase B RMS current at inverter side of AC circuit breaker CB501                             *)
+	MesI3					: REAL; (* (A) Phase C RMS current at inverter side of AC circuit breaker CB501                             *)
+	MesV1					: REAL; (* (V) Phase A RMSvoltage (line to virtual neutral)at grid side of AC circuit breaker CB501         *)
+	MesV2					: REAL; (* (V) Phase B RMSvoltage (line to virtual neutral)at grid side of AC circuit breaker CB501         *)
+	MesV3					: REAL; (* (V) Phase C RMSvoltage (line to virtual neutral)at grid side of AC circuit breaker CB501         *)
+	MesU12					: REAL; (* (V) Phase AB RMS voltage (line to line)at grid side of AC circuit breaker CB501                  *)
+	MesU23					: REAL; (* (V) Phase BC RMS voltage (line to line)at grid side of AC circuit breaker CB501                  *)
+	MesU31					: REAL; (* (V) Phase CA RMS voltage (line to line)at grid side of AC circuit breaker CB501                  *)
+	
+	//Production Measurements
+	MesEActProd				: REAL; (* (Wh) Active energy delivered.Integrates positive values of GenMMTR/DmdWhFil.Ignores negative values		*)
+	MesEActCons				: REAL; (* (Wh) Active energy consumed.Integrates negative values of GenMMTR/DmdWhFil.Ignores positive values       *)
+	MesEReactProd			: REAL; (* (VArh) Reactive energy delivered.Integrates positive values of GenMMTR/DmdVAhFil.Ignores negative values *)
+	MesEReactCons			: REAL; (* (VArh) Reactive energy consumed.Integratesnegative values of GenMMTR/DmdVAhFil.Ignores positive values   *)
+	MesEday					: REAL; (* (Wh) Active energy produced during the day                                                               *)
+	
+	//Communication Status
+	MesStateCom				: BOOL; (* (NA) False := Not communicating, True := Communicating 	*)
+	
+	//Status Summary
+	MesStateCBac			: BOOL; (* (NA) False := Open; True := Close, Status of event139 "CB501 Closed". AC circuit breaker CB501 is closed /INVx/AcXCBR/ClsActVal				 *)
+	MesStateCBdc			: BOOL; (* (NA) False := Open; True := Close, Status of event140 "CB201 Closed". DC circuit breaker CB201 is closed /INVx/DcXCBR/ClsActVal               *)
+	MesEarthing_Relay		: BOOL; (* (NA) False := Open; True := Close, Status of event157 "K202 Closed". Ground relay K202 is closed /INVx/GndXSWI/ClsActVal                      *)
+	MesFaultGnd				: BOOL; (* (NA) False := Alert; True := No alert, Ground fault status. Digital outputDO_121 follows the state of this register /INVx/RcdMMXU/GndFltDrvSt *)
+	MesStateNoAlert			: BOOL; (* (NA) False := Alert iverter has detected an abnormal event which prevents operation. ; True := No alert. /INVx/GenGGIO/NoFltDrvSt             *)
+	MesState				: UINT; (* (NA) This parameter should be used for informational status only //INVx/GenZINV/Stt                                                           *)
+	MesBdrigeCtlMod			: UINT;	(* (NA) Inverter bridge control mode /INVx/GenZINV/CtlMod                                                                                        *)
+	MesWorkingHr			: REAL; (* (Hr) Total duration that the inverter has been online since power up /INVx/GenGAPC/TmsCnt                                                	 *)
+	MesEvendID				: REAL;	(* (NA) Event ID of the currently active event. /INVx/EvtGGIO/ActId                                                                              *)
+	MesEventID_Stop			: REAL;	(* (NA) Event ID of the first event that caused the Inv to go offline (normal or not)/INVx/EvtGGIO/OflStrActId                                   *)
+	MesStateID_Recovery		: REAL;	(* (NA) Procedure for the Inv to recover: 0:No stop event, 1:Automatic, 2:Manual (=acknowledge), 3:Local (= physique) /INVx/EvtGGIO/RecovActTyp  *)
+	MesEventID_AbnormalOff	: REAL;	(* (NA) Abnormal offline status ID: ID of the event that caused an abnormal stop (0=No abnormal stop) /INVx/EvtGGIO/OflForcSt                    *)
+	MesState_TypeSetptP		: REAL;	(* (NA) Dominant limit or setpoint affecting active power production : 0: None, 11: CmdSetpt from comm, 15: MPPT /INVx/WMMXU/PriConId            *)
+	MesSetptP				: REAL;	(* (pu) Value of the dominant active power limit W                                                                                    			 *)
+	MesState_TypeSetptQ		: REAL; (* (NA) Dominant limit or setpoint affecting reactive power production : 0: None, 6: CmdSetpt from comm                                     	 *)
+	MesSetptQ				: REAL;	(* (pu) Value of the dominant reactive power limit VAr                                                                                			 *)
+	
+	MesStartDisabled		: BOOL; (* (NA) Start disable : False := Start can be abled 						 *)
+	MesStartDisabledPersis	: BOOL; (* (NA) Persistent start disable : must be the same as MesStartDisabled      *)
+	
+	// System Commands
+	// Persistent value of inverter enable command.The value set here defines the initial value of GenZINV/Ena when the inverter powers on
+	MesSetptP_CC 			: REAL;			(* (kW)   value of active power COMMAND																 *)
+	MesSetptQ_CC 			: REAL;			(* (kVar) value of reactive power COMMAND                                                            *)
+	MesSetptCosPhi_CC 		: REAL; 		(* (NA)  Power factor                                                            					 *)
+	ParamID_QType			: UINT := 1; 	(* (NA) reactive power is defined by : 1: Q command mode, 2: PF command mode, 3: Q(P) command mode   *)
+	ParamTP_RampP			: REAL; 		(* (s) Duration for the active power to reach the new setpoint                 						 *)
+	ParamTP_RampCosPhi		: REAL; 		(* (s) Duration for the active power to reach the new setpoint                 						 *)
+	ParamTP_RampQ			: REAL; 		(* (s) Duration for the active power to reach the new setpoint                 						 *)
+	                		        		
+	//Temp          		        		
+	MesTempExt				: REAL;			(* (C°) External temperature *)
+			
+END_STRUCT
+END_TYPE
+
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.9">
+  <DUT Name="AllDataWToggle" Id="{0d37945d-2067-46bc-b68f-d3d2a48275a6}">
+    <Declaration><![CDATA[TYPE AllDataWToggle :
+STRUCT
+	// Toggle command
+		CmdStopServer_SMS		: BOOL ;	(* Disable SMS Server *)
+		
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

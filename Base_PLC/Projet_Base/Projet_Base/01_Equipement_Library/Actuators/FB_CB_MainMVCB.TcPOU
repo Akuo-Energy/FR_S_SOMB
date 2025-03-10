@@ -1,0 +1,375 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_CB_MainMVCB" Id="{3c2ca278-f941-4a03-86fb-92696692f554}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_CB_MainMVCB EXTENDS FB_CB_Base
+//////////////////
+//  Motorized Circuit Breaker with telecommAND  Requires Open and Close impulsions.
+//////////////////
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance/model specific) 
+	ParamTP_Impulsion		    : TIME 		:= T#2S;	(* (s) Config : Tempo for the start or stop command impulsion*)
+	ParamComutNc			    : BOOL;					(* (NA) Local selector in normally closed. NC >> True = Selector in local *)
+	ParamSectLigne			    : BYTE      :=1;		(* (NA) Monitoring du sectionneur de ligne de la MainMVCB . 0 = TRUE := Monitoré . 1 = TRUE Close is connected*)
+	ParamUvCoil					: BOOL;					(* (NA) if the open and close order are linked to a undervoltage coil (Bobine à manque, Bobine Mn), this should be True*)
+	ParamAlarmPwr_NC			: BOOL;
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	OUT_CmdOpen_IO	           : BOOL ; 	          // (NA) Physical I/O Open Command IO
+	OUT_CmdClose_IO			   : BOOL ; 	          // (NA) Physical I/O Close Command IO
+	OUT_CmdMaintainClose_IO		: BOOL;					// (NA) Physical I/O close for the UV coil.
+END_VAR
+
+VAR_INPUT
+	A1_Sect				        : FB_CB_MVSwitch;
+
+// I/O Inputs              
+	IN_MesAlarmPwr_IO		    : BOOL ;	          // (NA)[P,H,B] Remote control Power supply Error  IO  	
+	IN_MesTripped_IO		  	: BOOL ; 	          // (NA) Tripped position of the CB Must Ack To switch in again
+	IN_MesComutLocal_IO			: BOOL := TRUE ; 	  // (NA) True if cell is in local position  
+	IN_MesEarth_IO 			    : BOOL ;
+	IN_MesRSE_IO				: BOOL ;  	
+
+	IN_MesSwitchG_IO			: BOOL ; 	  		    
+	IN_MesTest_Serv_IO 			: BOOL ;		
+	IN_MesOpened_Sect_IO 		: BOOL ;		
+	IN_MesDefaulr_48VCC_IO		: BOOL ; 	
+	
+	
+	
+	
+//M_Emulator
+	IN_GTE_Default_Emul			: BOOL;
+	
+	TON_GTE_Default_Emul		: TON;
+	
+	MesDataExd			        :  CB_MainMVCB_Sch ; 
+		
+END_VAR
+
+VAR
+	//M_OPENCLOSE VARIABLES//	
+		ParamTP_Open	 			: TP ;				(* (NA) Temporisation for Open pulse Command*)
+		ParamTP_Close 				: TP ;				(* (NA) Temporisation for Close pulse Command	*)
+		RS_MaintainClose			: RS ;				(* (NA) RS to manage UV Coil*)
+
+		TP_Opened					: TP ;
+		TP_ComutLocal				: TP ;
+		TP_SwitchG		            : TP ;
+		TP_Test_Serv 	            : TP ;
+		TP_Opened_Sect 	            : TP ;
+		TP_Defaulr_48VCC            : TP ;
+		
+		
+		
+		
+	//M_ALARMMANAGEMENT VARIABLES//
+	
+//M_STATEMANAGER VARIABLES//
+	
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{5486785e-7cc1-4c3d-a7f6-d555d3f9c585}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Manages Contactor alarms and warnings
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager			: FB_AlarmCodeManager ; 
+	
+	CmdOpenCloseIO				: BOOL; 				//Check IN/OUT_CMDOpenClose
+	bSectLigne					: BOOL;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Check if command and measures are matching after tempo
+FB_CheckCommand	(T:= ParamTimeOut_Close, bCmd:=OUT_CmdClose_IO , bMes := MesDataExd.MesData.MesClosed , bImpulsion := FALSE , bReset := CmdClearFault_G OR OUT_CmdClose_IO) ; 
+FB_CheckCommand2(T:= ParamTimeOut_Open , bCmd:= OUT_CmdOpen_IO , bMes :=NOT MesDataExd.MesData.MesClosed , bImpulsion := FALSE , bReset := CmdClearFault_G OR OUT_CmdOpen_IO) ; 
+
+TON_NotClosedAndNotOpened(IN:=  NOT MesClosed AND NOT MesOpened , PT := ParamTimeOut_Alarm) ; 
+TON_ClosedAndOpened(IN:=MesClosed AND MesOpened, PT := ParamTimeOut_Alarm) ; 
+
+
+
+TP_Opened			(IN:= NOT MesDataExd.MesData.MesOpened 		,PT:= ParamTimeOut_Alarm	);	
+TP_ComutLocal		(IN:= NOT MesDataExd.MesComutLocal	    	,PT:= ParamTimeOut_Alarm	);	
+TP_SwitchG		    (IN:= NOT MesDataExd.MesSwitchG		      	,PT:= ParamTimeOut_Alarm	);
+TP_Test_Serv 	    (IN:= NOT MesDataExd.MesTest_Serv 	    	,PT:= ParamTimeOut_Alarm	);
+TP_Opened_Sect 	    (IN:= NOT MesDataExd.MesOpened_Sect 	  	,PT:= ParamTimeOut_Alarm	);
+TP_Defaulr_48VCC 	(IN:= NOT MesDataExd.MesDefaulr_48VCC	 	,PT:= ParamTimeOut_Alarm	);
+
+// ALARM CODE //
+
+// Attention une alarm doit être mise en commentaire de la manière suivante (* *), l'utilisation du // pose pb sur Bazefield 
+
+	FB_AlarmCodeManager(
+		bAlarm1			:= MesDataExd.MesTripped,						// Cb is tripped
+		bAlarm2			:= TON_NotClosedAndNotOpened.Q,					// Incoherent State measure (Not Opened and not Closed)
+		bAlarm3 		:= TON_ClosedAndOpened.Q,	 					// Incoherent State measure (Opened and Closed)	
+		bAlarm4			:= FB_CheckCommAND.bWarning, 					// Close command failed
+		bAlarm5			:= FB_CheckCommand2.bWarning,	 				// Open Command failed
+		bAlarm6			:= MesDataExd.MesData.MesOpened ,               // Circuit breaker is opened      
+		bAlarm7			:= MesDataExd.MesComutLocal	    ,               // Local/remote operation
+		bAlarm8			:= MesDataExd.MesSwitchG		,               // Plant switch gear is Opened  
+		bAlarm9			:= MesDataExd.MesTest_Serv 	    ,               // test/service          
+		bAlarm10		:= MesDataExd.MesOpened_Sect 	,               // Utility switch gear is opened
+		bAlarm11		:= MesDataExd.MesDefaulr_48VCC	,               // 48Vcc default         
+		bAlarm12		:= FALSE,                                   	//
+		bAlarm13		:= FALSE,                                   	//
+		bAlarm14		:= FALSE,                                   	//
+		bAlarm15		:= FALSE , 										//
+		wAlarmCode		=>MesDataExd.MesData.MesAlarmCode);
+
+	//bSectLigne := SEL(ParamSectLigne.0 ,FALSE , NOT A1_Sect.MesDataExd.MesData.MesClosed);
+//WARNING CODE//
+		FB_AlarmCodeManager(
+		bAlarm1			:= FALSE,										//
+		bAlarm2			:= FALSE,										//
+		bAlarm3 		:= FALSE,										// 
+		bAlarm4			:= MesDataExd.MesAlarmPwr, 						// Power Supply Fault
+		bAlarm5			:= MesDataExd.MesComutLocal, 					// Commutator in local mode 
+		bAlarm6			:= MesDataExd.MesEarth, 						// The cell is connected to earth (earthing)
+		bAlarm7			:= bSectLigne,									// Line connector is opened (sectionneur)
+		bAlarm8			:= FALSE, 										//
+		bAlarm9			:= FALSE,                                       //
+		bAlarm10		:= FALSE,                                       //
+		bAlarm11		:= FALSE,                                       //
+		bAlarm12		:= FALSE,                                       //
+		bAlarm13		:= FALSE,                                       //
+		bAlarm14		:= FALSE,                                       //
+		bAlarm15		:= FALSE, 										//
+		wAlarmCode 		=>MesDataExd.MesData.MesWarningCode);
+
+// EVENT CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= OUT_CmdOpen_IO, 								// Open Command
+		bAlarm2			:= OUT_CmdClose_IO, 							// Close Command
+		bAlarm3			:= MesOpened, 									// Opened Position
+		bAlarm4			:= MesClosed, 									// Closed Position
+		bAlarm5			:= IN_CmdReset, 								// Reset command
+		bAlarm6			:= MesDataExd.MesComutLocal	    ,               // Local mode is activated
+		bAlarm7			:= TP_ComutLocal.Q		    ,           		// Remote operation is activated
+		bAlarm8			:= MesDataExd.MesTest_Serv 	    ,               // Test mode is activated  
+		bAlarm9			:= TP_Test_Serv.Q 	    ,           			// Service  mode is activated
+		bAlarm10		:= TP_Opened.Q,                   				// Circuit breaker is closed
+		bAlarm11		:= TP_SwitchG.Q,                   				// Plant switch gear is closed
+		bAlarm12		:= TP_Opened_Sect.Q,                   			// Utility switch gear is closed
+		bAlarm13		:= TP_Defaulr_48VCC.Q, 							// 48Vcc default alarm back to normal
+		bAlarm14		:= FALSE,                   					//
+		bAlarm15		:= FALSE,                   					//
+		wAlarmCode		=>MesDataExd.MesData.MesEventCode);                                               
+	                                                
+	// UPDATE STRUCTURE
+	
+	IF ParamNc THEN
+	MesDataExd.MesData.MesOpened	:= NOT IN_MesOpened_IO		    ; 
+	MesDataExd.MesComutLocal	  	:= NOT IN_MesComutLocal_IO	    ; 
+	MesDataExd.MesSwitchG		    := NOT IN_MesSwitchG_IO		    ; 
+	MesDataExd.MesTest_Serv 	  	:= NOT IN_MesTest_Serv_IO 	    ; 
+	MesDataExd.MesOpened_Sect 		:= NOT IN_MesOpened_Sect_IO 	; 
+	MesDataExd.MesDefaulr_48VCC		:= NOT IN_MesDefaulr_48VCC_IO	; 
+
+	ELSE
+	MesDataExd.MesData.MesOpened	:=  IN_MesOpened_IO		    	; 
+	MesDataExd.MesComutLocal	  	:=  IN_MesComutLocal_IO	    	; 
+	MesDataExd.MesSwitchG		    :=  IN_MesSwitchG_IO			; 
+	MesDataExd.MesTest_Serv 	  	:=  IN_MesTest_Serv_IO 	    	; 
+	MesDataExd.MesOpened_Sect 		:=  IN_MesOpened_Sect_IO 		; 
+	MesDataExd.MesDefaulr_48VCC		:=  IN_MesDefaulr_48VCC_IO		; 
+
+
+
+	END_IF
+
+
+
+
+
+
+	
+MesDataExd.MesAlarmPwr		    := IN_MesAlarmPwr_IO ; 
+MesDataExd.MesTripped			:= IN_MesTripped_IO ; 
+MesDataExd.OUT_CmdClose		    := OUT_CmdClose_IO ; 
+MesDataExd.OUT_CmdOpen		    := OUT_CmdOpen_IO ; 
+MesDataExd.MesEarth			    := IN_MesEarth_IO ; 
+//MesDataExd.MesOpened_Sect	    := SEL(ParamSectLigne.0, FALSE, A1_Sect.MesDataExd.MesData.MesOpened) ; 
+	
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Emulator" Id="{ca1dbc57-0a3d-4a4b-bf9e-78839c2304d8}">
+      <Declaration><![CDATA[METHOD M_Emulator
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+TON_GTE_Default_Emul (IN:= IN_GTE_Default_Emul, PT := (ParamTP_Impulsion-T#100MS));
+TON_OutputWait_Open(IN :=OUT_CmdOpen_IO, PT := (ParamTP_Impulsion-T#100MS));
+TON_OutputWait_Close(IN :=OUT_CmdClose_IO, PT := (ParamTP_Impulsion-T#100MS));
+
+R_TRIGOpen(CLK := TON_OutputWait_Open.Q);
+R_TRIGClose(CLK := TON_OutputWait_Close.Q);    
+
+RS_Emulate(SET := R_TRIGClose.Q OR CmdExternalClose_Emul , RESET1 := TON_GTE_Default_Emul.Q OR R_TRIGOpen.Q OR CmdExternalOpen_Emul ); 			// The Cell opens after receiving a open order or if receiving an external open ordre ( C13100 , .. ) 
+
+IF ParamNC THEN 
+	IN_MesOpened_IO 		:= RS_Emulate.Q1 ;  						
+	IN_MesClosed_IO 		:= NOT RS_Emulate.Q1 ; 						
+ELSE                                                                    
+	IN_MesOpened_IO 		:= NOT RS_Emulate.Q1 ;  					
+	IN_MesClosed_IO 		:= RS_Emulate.Q1 ; 							
+END_IF
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{c0f423eb-9a78-44d2-9964-c8d0f47ccdbd}">
+      <Declaration><![CDATA[METHOD M_Execute
+VAR_INPUT
+END_VAR
+
+VAR
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//MainMVCB avec etat de sectionneur de ligne
+IF ParamSectLigne.0 THEN 
+	A1_Sect.ParamNbFdbck := 1;
+	A1_Sect.ParamNC := ParamSectLigne.1;
+	A1_Sect.ParamClosedInput_Connected := TRUE ; 
+	A1_Sect.M_Execute();
+END_IF
+
+// PERMANENT CONDITIONS //	
+MesDataExd.MesData.MesCP_Open					:= IN_CmdOpen AND NOT IN_CmdReset;
+MesDataExd.MesData.MesCP_Close				:= NOT MesDataExd.MesData.MesClosed AND IN_CmdClose AND NOT MesDataExd.MesData.MesAlarmCode.0 AND NOT MesDataExd.MesData.MesCP_Open AND NOT IN_CmdReset ;
+
+
+SUPER^.M_Execute();]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_OpenClose" Id="{ba1c78bf-3a66-4994-9a0d-72ed2685714d}">
+      <Declaration><![CDATA[METHOD M_OpenClose
+//////////////////
+// Manages Opening and Closing of the contactor
+//////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//AJOUT EXEPTION MAIN CIRCUIT BREAKER 
+IF ParamSectLigne.0 THEN
+	MesDataExd.MesData.MesCP_Close := MesDataExd.MesData.MesCP_Close AND NOT MesDataExd.MesOpened_Sect; // A1_Sect.IN_MesClosed_IO; //Check
+END_IF
+(*
+
+Il peut y avoir 3 bobines :
+ Bobine d'ouverture = on envoie un créneau pour fermer la cellule
+ Bobine de fermeture = on envoie un créneau pour ouvrir la cellule
+ Bobine à manque = si pas alimentée, la cellule ne peut pas rester fermée ni se fermer.
+ Dans certaines cellules, il n'y a pas de bobine d'ouverture : il faut enlever l'alimentation de la bobine à manque pour que la cellule s'ouvre. 
+
+*)
+
+// ATTENTION : CODE NON TESTE ENCORE.
+IF ParamUvCoil THEN
+	RS_MaintainClose(set := MesDataExd.MesData.MesCP_Close OR NOT MesDataExd.MesData.MesCP_Open, RESET1 := MesDataExd.MesData.MesCP_Open);
+	// je pourrais mettre que le Not CP_Open : il me permet d'être sûr que la bobine à manque est désactivée que quelques secondes
+	OUT_CmdMaintainClose_IO := RS_MaintainClose.Q1;
+END_IF
+
+
+// Open Command
+	ParamTP_Open(IN:= MesDataExd.MesData.MesCP_Open , PT:=ParamTP_Impulsion) ;
+	OUT_CmdOpen_IO	 := ParamTP_Open.Q ;	// Impulsion that goes back to zero as soon as the state of the TP goes down. 
+
+// Close Command
+	ParamTP_Close(IN:= MesDataExd.MesData.MesCP_Close , PT:=ParamTP_Impulsion) ;
+	OUT_CmdClose_IO	 := ParamTP_Close.Q ;   // Impulsion that goes back to zero as soon as the state of the TP goes down.
+	
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_StateManager" Id="{330dfe50-7462-4175-86dd-27915f4eef5b}">
+      <Declaration><![CDATA[METHOD M_StateManager
+//////////////////
+// Manages Contactor State
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[MesState := 0 ; 
+IF MesOpened THEN		// If the cell seems opens and closed in the same time, we will consider it as opened. 
+	
+	MesState.0 := 1 ; 
+MesDataExd.MesData.MesClosed := FALSE ; 
+MesDataExd.MesData.MesOpened := TRUE ; 
+ELSIF MesClosed THEN
+	
+	MesState.1 := 1 ; 
+MesDataExd.MesData.MesClosed := TRUE ; 
+MesDataExd.MesData.MesOpened := FALSE ; 
+ELSE 
+	MesState.0 := 1 ;		// if the cell seems neither opened and neither closed , we will consider it as opened. 
+MesDataExd.MesData.MesClosed := FALSE ; 	
+MesDataExd.MesData.MesOpened := TRUE ; 
+END_IF
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_CB_MainMVCB">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_CB_MainMVCB.M_AlarmManagement">
+      <LineId Id="939" Count="5" />
+      <LineId Id="1029" Count="105" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_CB_MainMVCB.M_Emulator">
+      <LineId Id="1" Count="18" />
+    </LineIds>
+    <LineIds Name="FB_CB_MainMVCB.M_Execute">
+      <LineId Id="157" Count="5" />
+      <LineId Id="138" Count="1" />
+      <LineId Id="146" Count="4" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_CB_MainMVCB.M_OpenClose">
+      <LineId Id="119" Count="3" />
+      <LineId Id="154" Count="0" />
+      <LineId Id="167" Count="0" />
+      <LineId Id="152" Count="1" />
+      <LineId Id="157" Count="3" />
+      <LineId Id="155" Count="0" />
+      <LineId Id="168" Count="0" />
+      <LineId Id="166" Count="0" />
+      <LineId Id="162" Count="3" />
+      <LineId Id="156" Count="0" />
+      <LineId Id="170" Count="0" />
+      <LineId Id="169" Count="0" />
+      <LineId Id="146" Count="5" />
+      <LineId Id="123" Count="0" />
+      <LineId Id="161" Count="0" />
+      <LineId Id="136" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_CB_MainMVCB.M_StateManager">
+      <LineId Id="87" Count="16" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

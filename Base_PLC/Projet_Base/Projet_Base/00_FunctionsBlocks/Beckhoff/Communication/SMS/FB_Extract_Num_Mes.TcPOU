@@ -1,0 +1,50 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_Extract_Num_Mes" Id="{2b35b72a-e976-4c56-91cc-4bcdfdd0d2ff}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Extract_Num_Mes
+// extract phone number from the received message
+VAR_INPUT
+    InMessage     : STRING(255);
+END_VAR
+VAR_OUTPUT
+    OutDataEntry  :ST_SMSDataSetEntry_Read;
+END_VAR
+VAR
+    ChaineTmp     : STRING(255);
+    Num           : STRING(255);
+    Pos           : INT;
+    Pos1          : INT;
+    Pos2          : INT;
+    Pos3          : INT;    
+	Offset		: INT ; 
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[//+CMGR: "REC UNREAD","+33776039883",,"18/04/19,18:25:44+08"$R$NBonjour je m'appelle henry$R$N 50
+Pos:=FIND(InMessage,',"');
+chaineTmp:=MID(InMessage,LEN(InMessage)-21,POS+2);
+Pos1:=FIND(chaineTmp,'",,');
+Num:=MID(chaineTmp,Pos1-1,1);
+Pos3:= FIND(Num,'+');
+OutDataEntry.Num:= SEL(Pos3= 0 ,Num ,CONCAT(STR1:= CstPhoneIndicator_G, STR2:= Num) );
+Pos2:=FIND(InMessage,'$R$N');
+Offset := FIND(MID(InMessage,LEN(InMessage)-Pos2,Pos2+2),'$R$N') ;
+
+
+OutDataEntry.Message:=MID(InMessage,Offset-1,Pos2+2);//OutDataEntry.Message:=MID(InMessage,LEN(InMessage)-Pos2-3,LEN(InMessage));	// OutDataEntry.Message:=MID(InMessage,LEN(InMessage)-Pos2-3,Pso2+2);
+    
+    
+  
+  
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_Extract_Num_Mes">
+      <LineId Id="72" Count="7" />
+      <LineId Id="102" Count="0" />
+      <LineId Id="107" Count="0" />
+      <LineId Id="104" Count="0" />
+      <LineId Id="80" Count="5" />
+      <LineId Id="38" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,52 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="ReplaceAll" Id="{72f340f5-a212-4f1e-b7bc-d916a20ed1ec}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM ReplaceAll
+// Replaces all the instances of the input string with another string
+// If In_StringToSearch := 'aaaaa123aaaaa123aaaaaaa123aaaaa123'
+// In_StringToFind := '123'
+// In_StringToReplace : = 'ABC'
+// Then : OUT_StringToSearch := 'aaaaaABCaaaaaABCaaaaaaaABCaaaaaABC'
+// Equivalent to CTRL + H
+VAR_INPUT
+	IN_StringToSearch	: T_MaxString;		// String to search : main string with instances we wish to replace
+	IN_StringToFind		: STRING;			// String we are looking to find in the String_To_Seach
+	IN_StringToReplace 	: STRING;			// String with which we want to replace the String To Find in String To Search
+END_VAR
+
+VAR_OUTPUT
+	OUT_StringToSearch : T_MaxString;		// Output String
+END_VAR
+
+VAR
+	KK: INT;
+	Test_INT : INT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[OUT_StringToSearch := IN_StringToSearch;
+FOR KK := 1 TO LEN(STR := OUT_StringToSearch) DO
+	Test_INT := FIND(STR1 := OUT_StringToSearch, STR2 := IN_StringToFind);
+	IF Test_INT > 0 THEN
+		OUT_StringToSearch := REPLACE(STR1 := OUT_StringToSearch, STR2 := IN_StringToReplace, P := Test_INT, L := len(IN_StringToFind));
+		KK := Test_Int;
+	END_IF
+END_FOR
+
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="ReplaceAll">
+      <LineId Id="58" Count="0" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="15" Count="0" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="16" Count="0" />
+      <LineId Id="59" Count="0" />
+      <LineId Id="17" Count="0" />
+      <LineId Id="13" Count="0" />
+      <LineId Id="40" Count="1" />
+      <LineId Id="39" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

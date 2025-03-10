@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="CB_MainMVCB_Sch" Id="{41d5b8dc-cb86-4150-ab67-592d90ff176d}">
+    <Declaration><![CDATA[///////////
+// Structure for MainMVCB Schneider. Main Operating Data to be saved (ex: OPC).  
+//////////
+
+TYPE CB_MainMVCB_Sch :
+STRUCT
+	//DI
+	MesData					: CB   ;    (* Object*)
+	MesComutLocal		    : BOOL ; 	(* The cell selector is in local position*)
+	MesAlarmPwr		        : BOOL ; 	(* The cell motorization has a power supply fault*)
+	MesEarth				: BOOL ; 	(* The cell is grounded (earthing)*)
+	MesTripped	    	    : BOOL ; 	(* The cell is tripped (opened and locked due to alarm)*)
+	OUT_CmdOpen				: BOOL ; 	(* The SCADA sends an Open command to the cell*)
+	OUT_CmdClose			: BOOL ; 	(* The SCADA sends a Close command to the cell*)
+	MesOpened_Sect			: BOOL ; 	(* The associated switchgear is opened*)
+	
+
+	MesSwitchG				: BOOL ;    (* Plant switch gear     *)
+	MesTest_Serv 			: BOOL ;	(* test/service          *)
+	MesDefaulr_48VCC		: BOOL ;    (* 48Vcc default         *)
+	
+	
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

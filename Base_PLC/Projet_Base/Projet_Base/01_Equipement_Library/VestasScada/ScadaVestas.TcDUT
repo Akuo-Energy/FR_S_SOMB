@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.9">
+  <DUT Name="ScadaVestas" Id="{d8c8a22d-4560-4267-b57f-e61232ffef13}">
+    <Declaration><![CDATA[TYPE ScadaVestas :
+STRUCT
+	//ordre depuis scada AKUo VERS VESTAS EN DI
+	OUT_CmdPRegOn 							: BOOL; 		// Passage à P0 order from Akuo to Vestas
+	OUT_CmdQregOn 							: BOOL; 		// Passage à Q0 order from Akuo to Vestas											
+	OUT_CmdNoGridFeedingOrder				: BOOL;			//Demande de decouplage (arret turbines) de akuo vers Vestas
+
+	// retour de Vestas vers AKUO
+	Ackno_MesPRegOn 						: BOOL; 		// Passage à P0 
+	Ackno_MesQregOn 						: BOOL; 		// Passage à Q0 DI												
+	Ackno_Turbines_Off						: BOOL;			// Turbines arretées.
+	Watchdog								: BOOL;			// Scada vestas Watchdog
+	
+	//Values Of P&Q send to Vestas
+	OUT_P0_4_20ma							: REAL;			// Active Power from deie into 4-20ma to vestas
+	OUT_Q0_4_20ma							: REAL;			// Reactive Power from deie into 4-20ma to vestas
+	IN_SetptP								: REAL;			// Value in Kw from DEIE of active power
+	IN_SetptQ								: REAL;			// Value in Kw from DEIE for reactive power
+	
+	MesAlarmCode							: WORD ;  	// Object Alarm Code
+	MesWarningCode							: WORD ; 	// Object Warning Code
+	MesEventCode							: WORD; 	// Object Event  Code
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

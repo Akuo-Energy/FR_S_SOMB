@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<FBExchangeFile>
+	<fileHeader company="Schneider Automation" product="Control Expert V15.0-SP1 - 210706C" dateTime="date_and_time#2023-4-5-11:42:29" content="Fichier source bloc fonctions" DTDVersion="41"></fileHeader>
+	<contentHeader name="Projet" version="0.0.2406" dateTime="date_and_time#2023-4-5-12:12:12"></contentHeader>
+	<FBSource nameOfFBType="MOYENNE" version="0.09" dateTime="dt#2023-04-05-11:41:59">
+		<attribute name="TypeCodeCheckSumString" value="DD01"></attribute>
+		<attribute name="TypeSignatureCheckSumString" value="BE86"></attribute>
+		<attribute name="UseNewTplSignAlgo" value="TRUE"></attribute>
+		<inputParameters>
+			<variables name="In_synchro" typeName="EBOOL">
+				<comment>Déclenchement calcul de moyenne sur ce front montant</comment>
+				<attribute name="PositionPin" value="1"></attribute>
+			</variables>
+			<variables name="In_valeur" typeName="REAL">
+				<comment>Process Value</comment>
+				<attribute name="PositionPin" value="2"></attribute>
+			</variables>
+			<variables name="In_fenetre_mesure" typeName="TIME">
+				<comment>Paramétrage temps de la fenêtre mesure</comment>
+				<attribute name="PositionPin" value="3"></attribute>
+			</variables>
+		</inputParameters>
+		<outputParameters>
+			<variables name="Out_Moyenne_0" typeName="REAL">
+				<comment>Moyenne en cours</comment>
+				<attribute name="PositionPin" value="1"></attribute>
+			</variables>
+			<variables name="Out_fenetre_mesure" typeName="TIME">
+				<comment>Temps restant de la fenêtre mesure</comment>
+				<attribute name="PositionPin" value="2"></attribute>
+			</variables>
+			<variables name="Out_fin" typeName="EBOOL">
+				<comment>1 : Fenetre mesure terminée / 0 : Fenetre mesure en cours</comment>
+				<attribute name="PositionPin" value="3"></attribute>
+			</variables>
+			<variables name="Out_Moyenne_1" typeName="REAL">
+				<comment>Moyenne N-1</comment>
+				<attribute name="PositionPin" value="4"></attribute>
+			</variables>
+		</outputParameters>
+		<publicLocalVariables>
+			<variables name="Nbr_valeur_mesure" typeName="REAL"></variables>
+		</publicLocalVariables>
+		<privateLocalVariables>
+			<variables name="TOF_0" typeName="TOF"></variables>
+			<variables name="Fenetre_mesure_active" typeName="EBOOL"></variables>
+		</privateLocalVariables>
+		<FBProgram name="Script">
+			<STSource>
+
+
+If RE(In_Synchro) then  (* Initialisation des valeurs au lancement de la synchronisation *)
+
+	Out_fin:=False; 
+	Nbr_valeur_mesure:=0.0; (* RAZ nbr de cycle automate *)
+
+End_if;
+
+TOF_0 (IN := RE(In_Synchro),(* Gestion de la fenêtre de mesure  *)
+      PT := In_fenetre_mesure,
+      Q =&gt; Fenetre_mesure_active,
+      ET =&gt; Out_fenetre_mesure);
+
+
+If Fenetre_mesure_active then (* Traitement durant la fenêtre de mesure *) 
+
+	Out_Moyenne_0:=(Out_Moyenne_0*Nbr_valeur_mesure+In_valeur)/(Nbr_valeur_mesure+1.0); (* calcul moyenne *)
+
+	Nbr_valeur_mesure:=Nbr_valeur_mesure+1.0; (* calcul nbr de cycle automate *)
+
+Elsif FE(Fenetre_mesure_active) then (* Traitement en fin de fenêtre de mesure *)
+
+	Out_fin:=true;
+	Out_Moyenne_1:=Out_Moyenne_0; (* Sauvegarde de la moyenne calculée *)
+	Out_Moyenne_0:=0.0; (* RAZ moyenne calculée *)
+
+End_if;
+</STSource>
+		</FBProgram>
+	</FBSource>
+</FBExchangeFile>

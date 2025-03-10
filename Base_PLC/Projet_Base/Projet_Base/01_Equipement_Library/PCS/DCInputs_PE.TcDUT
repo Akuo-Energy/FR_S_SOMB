@@ -1,0 +1,61 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.10">
+  <DUT Name="DCInputs_PE" Id="{df8d7ba7-6110-4c04-8eed-ae25ba72472f}">
+    <Declaration><![CDATA[///////////
+// Structure For PE Disconecting Unit 
+//////////
+TYPE DCInputs_PE :
+STRUCT
+		
+	MesIdc				: REAL ; (* (A) DC Current SV10.2   *)
+//	MesUdc				: REAL ; // (V) DC Voltage 	
+//	MesIDState			: WORD ; // (NA) DU State
+	
+END_STRUCT
+END_TYPE
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

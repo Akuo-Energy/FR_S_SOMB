@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.9">
+  <DUT Name="Datalogger_SENECA" Id="{273a4f3f-70ba-41e7-9479-d7fbc27855ce}">
+    <Declaration><![CDATA[TYPE Datalogger_SENECA :
+STRUCT
+	
+	MesData			: Datalogger ; 			  (* (NA) MesData *)
+                        			                			                            	
+	MesWindSp		: REAL ;				  (* (km/h) Wind speed of the weather station on SPP zone	 		*)
+	MesWindDir		: REAL ;  				  (* (deg) Wind direction of the weather station on SPP zone	    *)
+	 	 						
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

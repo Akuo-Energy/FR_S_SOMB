@@ -1,0 +1,58 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_CheckSetpt" Id="{72dd864e-1721-4731-9f17-7f51972ffe0a}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_CheckSetpt
+////////////////// 
+// Compare SetPoint with measure and raise warning if inconsistance.
+// The measure has to be within a range around the setpoint after a certain delay  . 
+//////////////////	
+VAR_INPUT
+	T					: TIME ;		// Time to reacbh the range . 
+	Tolerance			: INT := 5 ; 	// (%) Tolerance Window  
+	Range 				: REAL ; 		// Maximal Range of the Setpoint
+	bTrigger			: BOOL ; 		// Moment from which the setpoint is taken as reference
+	bSetpt				: REAL ; 		// Input setpoint 
+	bMes				: REAL ; 		// Measure feedback 
+	bReset				: BOOL ; 		// Reset 
+	
+END_VAR
+
+VAR_OUTPUT
+	bWarning 			: BOOL ; 		// Warning if inconsistancy . 
+	
+END_VAR
+VAR
+	R_TRIG				: R_TRIG ; 		// Detect Trigger activation
+	TOF					: TOF ; 		// Creates a falling edge T time after trigger activation
+	F_TRIG				: F_TRIG ; 		// Detect end of timer. 
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// Inconsistency detection
+
+R_TRIG(CLK := bTrigger)  ;
+TOF(IN := R_TRIG.Q , PT := T); 
+F_TRIG(CLK := TOF.Q) ;
+
+
+IF F_TRIG.Q AND ABS(bMes-bSetpt)>Tolerance/100*Range  THEN
+	bWarning := TRUE ; 
+END_IF
+
+// Reset warning
+IF bReset THEN
+	bWarning := FALSE ; 
+END_IF
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_CheckSetpt">
+      <LineId Id="41" Count="0" />
+      <LineId Id="3" Count="8" />
+      <LineId Id="40" Count="0" />
+      <LineId Id="12" Count="4" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,89 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_Ramp_Time" Id="{a4122806-80fa-4a60-a990-3a5a59d8d3ca}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Ramp_Time
+// Y := Ax + B while bStart is set
+// Works with time : You can set a max time, and a duration of the ramp :
+// if pause is True, the Y value freezes until pause goes to False
+// if max time is reached, the Y value goes to the value at maxtime
+
+VAR_INPUT
+	A 								: REAL ;	// Slope of the ramp
+	B 								: REAL ;	// Initial value of the ramp
+	bStart 							: BOOL ;	// Rising edge detection to start the ramp, if false, the ramp stops
+	bPause							: BOOL ; 	// Pause signal : the value stop, then continues when bPause goes to false
+	RampTime						: TIME ;	// Duration of the ramp
+	MaxRampTime						: TIME ; 	// Maximum duration of the ramp (including breaks)
+END_VAR                 			
+
+VAR_OUTPUT              			
+	Y 								: REAL;
+	OutCompleted					: BOOL; 	// Rising edge detection to indicate the ramp is done
+END_VAR                 		
+	
+VAR                     			
+	TimeStart 						: TIME;
+	TimeDurationPause 				: TIME;
+	TimeOnGoing						: TIME;
+	TimePauseold					: TIME;
+	
+	Trig_Start						: R_TRIG;
+	Trig_Stop						: F_TRIG;
+	Trig_PauseStart					: R_TRIG;
+    Trig_OutCompleted				: R_TRIG;
+            			
+	Real_TimeSinceInit 				: REAL;
+	                    	
+	RS_TimerOn						: RS;
+	TP_RampMaxTime					: TP;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[Trig_Start(CLK := bStart);
+TP_RampMaxTime(IN := Trig_Start.Q, PT := MaxRampTime);
+
+
+//Trig_Stop(Clk := bStart AND TP_RampMaxTime.Q );
+Trig_PauseStart(CLK := bPause);
+Trig_OutCompleted(CLK := RS_TimerOn.Q1 AND TimeOnGoing = RampTime);
+
+RS_TimerOn(SET := Trig_Start.Q, RESET1 := TimeOnGoing = RampTime OR Trig_Stop.Q OR Trig_OutCompleted.Q);
+
+
+OutCompleted := Trig_OutCompleted.Q;
+IF Trig_Start.Q THEN
+	TimeStart := TIME();
+	TimeDurationPause := T#0S;
+	TimePauseOld := T#0S;
+END_IF
+
+IF Trig_PauseStart.Q THEN
+	TimePauseOld := TIME();
+END_IF
+
+IF Trig_OutCompleted.Q THEN
+	Trig_OutCompleted(CLK := FALSE);
+	TimeOnGoing := T#0S;
+END_IF
+
+IF bPause THEN
+	TimeDurationPause := TimeDurationPause + TIME() - TimePauseOld;
+	TimePauseOld := TIME();
+END_IF
+
+IF RS_TimerOn.Q1 THEN
+	TimeOnGoing := TIME() - TimeStart - TimeDurationPause;
+	Real_TimeSinceInit := TIME_TO_REAL(TimeOnGoing);
+	IF TimeStart > T#0S THEN
+		Y := B + A * (Real_TimeSinceInit);
+	END_IF
+END_IF
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_Ramp_Time">
+      <LineId Id="250" Count="39" />
+      <LineId Id="25" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

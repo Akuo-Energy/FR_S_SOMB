@@ -1,0 +1,788 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_NCU_Axial" Id="{26802654-1e7e-497e-9cc8-c7f3a249ad3b}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK  FB_NCU_Axial EXTENDS FB_NCU_Base
+//////////////////
+// NCU Function 
+//////////////////
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance/model specific) 
+
+	                                                		
+	ParamNbReadAtOnce			: BYTE:= 4 ; 				// Maximum 6	
+	ParamTempoWindAlarm			: TIME 	:=T#10S		 ; 		// (s) Config : Tempo to detect Wind Alarm
+END_VAR
+
+VAR_INPUT 
+	//Child objects
+		IN_CmdEmergency 			: BOOL ; 				// (NA)  
+		IN_CmdCleaning 				: BOOL ; 
+		IN_CmdWind					: BOOL ; 
+		IN_CmdSnow					: BOOL ; 
+		IN_CmdReleaseAll			: BOOL; 
+		IN_SetptGroupCmd			: WORD ; 
+		MesDataExd						: NCU_Axial ; 
+END_VAR
+
+
+VAR
+	//M_ROTATE VARIABLES//
+		R_TRIG3					: R_TRIG;
+		F_TRIG3					: F_TRIG;
+		R_TRIG4					: R_TRIG;
+		F_TRIG4					: F_TRIG;		
+	
+		R_TRIG2					: R_TRIG;
+		F_TRIG2					: F_TRIG;
+		R_TRIG1					: R_TRIG;
+		F_TRIG1					: F_TRIG;
+		
+		RS1						: RS ; 
+		RS2						: RS;
+		RS3						: RS;		
+		RS4						: RS;		
+		
+		
+		MesForceWindCmd_save	: WORD;
+		MesForceSnowCmd_save	: WORD;
+		MesForceCleaning_save	: WORD ; 
+		
+		BlockWriteTemp		:ARRAY[1..4] OF WORD ; 
+
+		
+		
+	//M_ALARMMANAGEMENT VARIABLES//
+
+		TON_WindAlarm				: TON ;													// Tempo before detecting Wind Alarm. 
+	
+	
+	
+		
+	//M_READ VARAIBLES 
+		FB_ModbusRead	          	: ARRAY[1..6] OF  FB_ModbusRead; 	            // (NA) FB for Modbus Reading
+		FB_ModbusRead_NCU          	: ARRAY[1..2] OF  FB_ModbusRead; 	            // (NA) FB for Modbus Reading
+		FB_ModbusWrite				: ARRAY[1..4] OF FB_ModbusWrite;
+		AX_ModbusReadAlarm			: ARRAY[1..6] OF BOOL;		
+		AX_ModbusReadAlarmId		: ARRAY[1..6] OF UDINT;
+		AX_ModbusReadAlarm_NCU		: ARRAY[1..2] OF BOOL;		
+		AX_ModbusReadAlarmId_NCU	: ARRAY[1..2] OF UDINT;
+
+	
+		AX_ModbusWriteAlarm			: ARRAY[1..4] OF BOOL;
+		AX_ModbusWriteAlarmId		: ARRAY[1..4] OF UDINT;
+		
+		
+		MesBlock_Temp 				: ARRAY[1..6] OF  ARRAY [1..125] OF WORD ; 		// (NA) Temporary Block with multiple modbus reading (Caution : Double Word variables)	
+		MesBlock_Temp_NCU			: ARRAY[1..2] OF ARRAY[1..125] OF WORD ; 
+		
+		CTU							: CTU ; 
+		
+	//M_STATEMANAGER VARIABLES//
+	
+
+		CalState					: BYTE ; 				// (NA) [P,H,B] Bit 0: Standby , Bit 1: Working 
+
+		
+	// M_EXECUTE VARIABLES 	//      
+	
+        
+		CP_Rotate					: BOOL ; 				// (NA) Permanent Conditions
+		CalCPEmergency					: BOOL ; 
+		CalCPWindPos					: BOOL ;
+		CalCPSnowPos					: BOOL ;
+		CalCPCleaningPos				: BOOL ;
+
+				
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{ba67ac08-48d7-4552-83b4-1d1105c992dd}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Manages Contactor alarms and warnings
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager			: FB_AlarmCodeManager ; 
+	
+	KK: INT;
+	MesAlarmSynthesis: BOOL;
+	MesBlockSynthesis: BOOL;
+
+	ForceCmd: BOOL;
+	ComWriteAlarm: BOOL;
+	ComReadAlarm: BOOL;
+	JJ: INT;
+	bTest: BOOL;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// At lesat one tracker has an alarm 
+MesAlarmSynthesis 	:=  TRUE  ;
+MesBlockSynthesis 	:=  FALSE  ;
+
+FOR KK:= 1 TO ParamNbTracker DO 
+	MesAlarmSynthesis := MesAlarmSynthesis AND MesDataExd.AX_TRK[KK].MesStatusSynthesis.13 ; // At least one alarm is active	
+	MesBlockSynthesis := MesBlockSynthesis OR MesDataExd.AX_TRK[KK].MesStatusSynthesis.14 ; // At least one tracker is blocked .  
+END_FOR
+
+
+ForceCmd := MesDataExd.MesForceCleaningCmd>0 OR  MesDataExd.MesForceSnowCmd>0 OR MesDataExd.MesForceWindCmd>0 ; // NCU is in force command
+
+
+ComWriteAlarm :=AX_ModbusWriteAlarm[1] OR AX_ModbusWriteAlarm[2] OR AX_ModbusWriteAlarm[3] OR AX_ModbusWriteAlarm[4] ;  
+
+ComReadAlarm := AX_ModbusReadAlarm_NCU[1] OR AX_ModbusReadAlarm_NCU[2]; 
+FOR JJ:= 1 TO ParamNbReadAtOnce DO 
+	ComReadAlarm :=  ComReadAlarm OR AX_ModbusReadAlarm[KK] ; 
+END_FOR
+
+TON_ComAlarm(IN:= ComReadAlarm, PT:= ParamTempoComAlarm, Q=>MesDataExd.MesData.MesAlarmCom) ;	
+TON_WindAlarm(IN:=  MesDataExd.MesRSUGlobal.1, PT:= ParamTempoWindAlarm, Q=>MesDataExd.MesWindAlarm) ;
+
+// ALARM CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= MesAlarmSynthesis , 		// At least one tracker has a fault
+		bAlarm2			:= MesBlockSynthesis , 		// At least one tracker is blocked
+		bAlarm3			:= FALSE, 
+		bAlarm4			:= FALSE,
+		bAlarm5			:= FALSE,
+		bAlarm6			:= MesDataExd.MesRSUGlobal.15,	// Flood Alarm
+		bAlarm7			:= MesDataExd.MesRSUGlobal.6,	// Gust Wind NCU Alarm,	  	//,
+		bAlarm8			:= MesDataExd.MesRSUGlobal.5,	// Snow  alarm,	  	//,
+		bAlarm9			:= MEsDataExd.MesWindAlarm,	// Wind Alarm
+		bAlarm10		:= FALSE,
+		bAlarm11		:= FALSE,
+		bAlarm12		:= FALSE,
+		bAlarm13		:= FALSE,
+		bAlarm14		:= FALSE,
+		bAlarm15		:= ComWriteAlarm,
+		wAlarmCode		=> MesDataExd.MesData.MesAlarmCode);
+		
+
+// WARNING CODE //
+	FB_AlarmCodeManager(
+ 		bAlarm1			:= MesDataExd.MesComNCUAlarm>0 , // At least one NCU has a commuication alarm,		//
+		bAlarm2			:= FALSE ,
+		bAlarm3			:= MesDataExd.MesRSUGlobal.10,	// Flood Sensor communication alarm,	  	//
+		bAlarm4			:= MesDataExd.MesRSUGlobal.9,	// Snow Sensor communication alarm,	  	//,		//
+		bAlarm5			:= MesDataExd.MesRSUGlobal.8,	// Wind Sensor communication alarm,	  	//,		//
+		bAlarm6			:= MesDataExd.MesRSUGlobal.0 , 		// Communication alarm with all RSUs . 
+		bAlarm7			:= NOT MesAlarmSynthesis,		// at least on TCU has an alarm
+		bAlarm8			:= MesBlockSynthesis,		// at least one tracker is blocked . ,       //
+		bAlarm9			:= ForceCmd,       //	some TCU of the NCU are forced in a certain position
+		bAlarm10		:= IN_CmdCleaning AND IN_CmdSnow OR IN_CmdCleaning AND IN_CmdWind OR IN_CmdSnow AND IN_CmdWind,       // Several commmands at the same time. 
+		bAlarm11		:= FALSE,       //
+		bAlarm12		:= FALSE,       //
+		bAlarm13		:= FALSE, 
+		bAlarm14		:= FALSE, 
+		bAlarm15		:= MesDataExd.MesData.MesAlarmCom, 
+		wAlarmCode		=> MesDataExd.MesData.MesWarningCode);	
+
+	FB_AlarmCodeManager(
+ 		bAlarm1			:= IN_CmdCleaning, 
+		bAlarm2			:= IN_CmdEmergency, 
+		bAlarm3			:= IN_CmdSnow, 
+		bAlarm4			:= IN_CmdWind, 
+		bAlarm5			:= FALSE, 
+		bAlarm6			:= FALSE, 
+		bAlarm7			:= FALSE, 
+		bAlarm8			:= FALSE, 
+		bAlarm9			:= FALSE, 
+		bAlarm10		:= FALSE, 
+		bAlarm11		:= FALSE,       //
+		bAlarm12		:= FALSE,       //
+		bAlarm13		:= FALSE, 
+		bAlarm14		:= FALSE, 
+		bAlarm15		:= FALSE, 
+		wAlarmCode		=> MesDataExd.MesData.MesEventCode);	 
+
+	
+		]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_CP" Id="{204bddca-8790-45b6-a340-5f966248923f}">
+      <Declaration><![CDATA[METHOD M_CP 
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+SUPER^.M_CP() ; 
+
+
+
+
+Trig_Cmd_Read(CLK:=IN_CmdToggleRead);
+Trig_Cmd_Write(CLK:=IN_CmdToggleWrite);
+	
+IF Trig_Cmd_Read.Q THEN
+	IN_CmdToggleRead := FALSE;
+	MesDataExd.MesData.MesCP_Read := NOT MesDataExd.MesData.MesCP_Read;
+END_IF
+
+
+IF Trig_Cmd_Write.Q THEN
+	IN_CmdToggleWrite := FALSE;
+	MesDataExd.MesData.MesCP_Write := NOT MesDataExd.MesData.MesCP_Write;
+END_IF
+
+
+
+	CP_Rotate					:= NOT MesDataExd.MesData.MesAlarmCode.0 ; // No alarms on NCU
+
+	CalCPEmergency				:= TRUE  ; //  CmdEmergency OR CmdWind OR CmdCleaning ; 
+	                        	
+	CalCPWindPos				:=NOT IN_CmdEmergency AND NOT IN_CmdSnow AND NOT IN_CmdCleaning AND NOT MesDataExd.MesData.MesAlarmCode.0  ; 
+	CalCPSnowPos				:=NOT IN_CmdEmergency AND NOT IN_CmdWind AND NOT IN_CmdCleaning AND NOT MesDataExd.MesData.MesAlarmCode.0  ; 
+	CalCPCleaningPos			:=NOT IN_CmdEmergency AND NOT IN_CmdWind AND NOT IN_CmdSnow AND NOT MesDataExd.MesData.MesAlarmCode.0 ; 
+	
+	
+	MesDataExd.CalCPWindPos		:=CalCPWindPos		;
+	MesDataExd.CalCPSnowPos		:=CalCPSnowPos		;
+	MesDataExd.CalCPCleaningPos	:=CalCPCleaningPos	;
+	
+	
+	
+	
+	
+	]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{fb767957-1b60-4172-bd19-4b2e7226173e}">
+      <Declaration><![CDATA[METHOD M_Execute
+VAR_INPUT
+END_VAR
+
+VAR
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+// READING AND WRITING CLOCK //
+	TP1(IN:=NOT TP1.Q , PT:= ParamClockReadTime);
+	ClockRead 				:= TP1.Q;
+
+	TP2(IN:=NOT TP2.Q , PT:= ParamClockWriteTime);
+	ClockWrite 				:= TP2.Q;
+
+// PERMANENT CONDITIONS //	
+
+
+
+
+	
+
+	
+//Methods call	
+	M_Read();
+	M_Rotate(); 
+
+	M_AlarmManagement(); ]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Read" Id="{dccb2874-23bb-47b7-ad0c-3a2aafbc8926}">
+      <Declaration><![CDATA[METHOD M_Read
+//////////////////
+// Manages Opening of the contactor
+//////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	KK: WORD ; 
+	LL: WORD ; 
+	JJ: WORD;
+	MW: FB_MergeWordsToDint;
+	MF : FB_MergeWordsToFloat ; 
+
+	MesFlag				: ARRAY[1..5] OF  WORD;	
+	MesAlarm2			: ARRAY[1..5] OF WORD;
+	MesAlarm			: ARRAY[1..5] OF WORD;
+	MesStatus			: ARRAY[1..5] OF WORD ; 
+	MesStatusSynthesis	: WORD ; 
+
+	CalTraNb: UINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+IF MesDataExd.MesData.MesCP_Read THEN 
+
+	// READ NCU DAta 
+		FB_ModbusRead_NCU[1]
+		(
+			nTCPPort	:= ParamTcpPort,
+			ClockRead:= MesDataExd.MesData.MesCP_Read AND ClockRead, 
+			Reset:= CmdClearFault_G,
+			sIPAddr:=ParamIPAddress ,
+			nUnitID:= 1, 
+			tTimeout:= ParamTimeout,
+			nQuantity		:= 125 , 
+			nMBAddr			:=  30000, 
+			cbLength		:= SIZEOF(MesBlock_Temp_NCU[1]) , 
+			pDestAddr		:= ADR(MesBlock_Temp_NCU[1]) , 
+			ModbusReadAlarm	=>AX_ModbusReadAlarm_NCU[1] , 
+			ErrorId			=> AX_ModbusReadAlarmId_NCU[1]
+		);
+	
+	
+	MesDataExd.MesRSuGlobal:=MesBlock_Temp_NCU[1][3];
+	//MesData.MesAnemoAlarm:=MesBlock_Temp_NCU[1][4];
+	MesDataExd.MesComNCUAlarm:=MesBlock_Temp_NCU[1][37];
+	MF( WORD_STRONG:= MesBlock_Temp_NCU[1][47],  WORD_WEAK := MesBlock_Temp_NCU[1][48],  VAR_OUT :=MesDataExd.MesWindSpeed);
+	MF( WORD_STRONG:= MesBlock_Temp_NCU[1][67],  WORD_WEAK := MesBlock_Temp_NCU[1][68],  VAR_OUT:=MesDataExd.MesSnow);
+	MF( WORD_STRONG:= MesBlock_Temp_NCU[1][107], WORD_WEAK := MesBlock_Temp_NCU[1][108], VAR_OUT:=MesDataExd.MesWindDir);
+	
+	
+	// READ TCU DATA 
+	CTU(CU:=ClockRead , PV:= REAL_TO_WORD(ParamNbTracker/(ParamNbReadAtOnce*5))+1 ) ; 
+	CTU(RESET:= CTU.Q ) ; 
+	LL:= (CTU.CV)  ; // At every Clock Read , we read a new 4 blocks of 5 trackers >> 20 trackers . We reset once all trackers have been read.  
+	
+	// MODBUS REQUEST//
+		// Lecture de 4 block en meme temps modbus  
+		//Chaque block contient les infos de 5 TCU 
+		// A chaque clock read , 20 TCU sont lus . 
+		// On fait une rotation 
+	
+	FOR KK := 1 TO ParamNbReadAtOnce DO 	
+		FB_ModbusRead[KK]
+		(
+			nTCPPort	:= ParamTcpPort,
+			ClockRead:= MesDataExd.MesData.MesCP_Read AND ClockRead, 
+			Reset:= CmdClearFault_G,
+			sIPAddr:=ParamIPAddress ,
+			nUnitID:= 1, 
+			tTimeout:= ParamTimeout,
+			nQuantity		:= 110 , 
+			nMBAddr			:= 30146 + (KK-1)*110 + (LL)*ParamNbReadAtOnce*110 , 
+			cbLength		:= SIZEOF(MesBlock_Temp[KK]) , 
+			pDestAddr		:= ADR(MesBlock_Temp[KK]) , 
+			ModbusReadAlarm	=>AX_ModbusReadAlarm[KK] , 
+			ErrorId			=> AX_ModbusReadAlarmId[KK]
+		);
+		
+		CalTraNb := 5*ParamNbReadAtOnce*LL+5*(KK-1) ; 
+		
+		// Read 
+			// TCU #1
+			FOR JJ:= 1 TO 5 DO 
+				CalTraNb := CalTraNb +1 ; 	
+				IF CalTraNb > ParamNbTracker THEN 
+					EXIT ; 
+				END_IF
+				MesStatus[JJ]	:=MesBlock_Temp[KK][2+22*(JJ-1)];
+				MesAlarm[JJ]	:=MesBlock_Temp[KK][3+22*(JJ-1)];
+				MesAlarm2[JJ]	:=MesBlock_Temp[KK][4+22*(JJ-1)];
+				MesFlag[JJ]		:=MesBlock_Temp[KK][5+22*(JJ-1)];
+				
+				MF( WORD_STRONG:= MesBlock_Temp[KK][7+22*(JJ-1)], WORD_WEAK := MesBlock_Temp[KK][8+22*(JJ-1)], VAR_OUT:=MesDataExd.AX_TRK[CalTraNb].MesData.MesAngle);
+				MW(WORD_STRONG:= MesBlock_Temp[KK][ 9+22*(JJ-1)], 	SIGNED:=TRUE, FIX:=3 , SIZE:=1, VAR_OUT:=MesDataExd.AX_TRK[CalTraNb].MesImotor);
+				MW(WORD_STRONG:= MesBlock_Temp[KK][ 10+22*(JJ-1)], 	SIGNED:=TRUE, FIX:=3 , SIZE:=1, VAR_OUT:=MesDataExd.AX_TRK[CalTraNb].MesImaxmotor);
+				MF( WORD_STRONG:= MesBlock_Temp[KK][11+22*(JJ-1)], WORD_WEAK := MesBlock_Temp[KK][12+22*(JJ-1)], VAR_OUT:=MesDataExd.AX_TRK[CalTraNb].MesData.MesAngleTarget);
+			
+				
+				MesStatusSynthesis.0 := NOT(MesStatus[JJ].8) AND NOT(MesStatus[JJ].9) ; // OFF 
+				MesStatusSynthesis.1 := NOT(MesStatus[JJ].8) AND MesStatus[JJ].9; // MANUAL
+				MesStatusSynthesis.2 := MesStatus[JJ].8 AND NOT(MesStatus[JJ].9) ; // AUTO 
+				MesStatusSynthesis.3 := MesStatus[JJ].12 ; 
+				MesStatusSynthesis.4 := MesStatus[JJ].11 ; 
+				MesStatusSynthesis.5 := MesStatus[JJ].0 ; 
+				MesStatusSynthesis.6 := MesAlarm[JJ].8	; 
+				MesStatusSynthesis.7 := MesAlarm[JJ].7; 
+				MesStatusSynthesis.8 := MesAlarm[JJ].5 ; 
+				MesStatusSynthesis.9 := MesAlarm[JJ].4 ; 
+				MesStatusSynthesis.10:= MesAlarm2[JJ].14 ; 
+				MesStatusSynthesis.11:= MesAlarm2[JJ].5 ; 
+				MesStatusSynthesis.12:= MesAlarm2[JJ].4 ; 
+				MesStatusSynthesis.13:= NOT MesFlag[JJ].15 ; // One alarm is active  
+				MesStatusSynthesis.14:= MesFlag[JJ].11 ; 
+				MesStatusSynthesis.15:= MesFlag[JJ].7 ; 
+				
+				MesDataExd.AX_TRK[CalTraNb].MesStatusSynthesis:= MesStatusSynthesis ; 
+				// angle en degres. 
+				MesDataExd.AX_TRK[CalTraNb].MesData.MesAngle:= MesDataExd.AX_TRK[CalTraNb].MesData.MesAngle * 360 / (2*PI) ; 
+				MesDataExd.AX_TRK[CalTraNb].MesData.MesAngleTarget:= MesDataExd.AX_TRK[CalTraNb].MesData.MesAngleTarget * 360 / (2*PI) ;
+			END_FOR
+	
+	END_FOR 
+
+
+END_IF
+	
+	]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Rotate" Id="{e1b288f0-eca4-4d30-845c-5ad26e2342e0}">
+      <Declaration><![CDATA[METHOD M_Rotate
+//////////////////
+// Manages Opening of the contactor
+//////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+	CHECK: BOOL ;
+	WriteCmd: BOOL ;
+	CHECK1: BOOL ;
+	WriteCmd1: BOOL ;	
+	CHECK2: BOOL ;
+	WriteCmd2: BOOL ;	
+	CHECK3: BOOL ;
+	WriteCmd3: BOOL ;	
+		
+	
+	SetptGroupCmd		: WORD ; 
+
+
+
+
+	FRS1: BOOL;
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+// Realease all 
+IF IN_CmdReleaseAll THEN 
+	MesForceWindCmd_save := 0 ; 
+	MesForceSnowCmd_save := 0 ; 
+	MesForceCleaning_save :=0 ; 
+END_IF
+
+
+// Protect 
+SetptGroupCmd :=  IN_SetptGroupCmd AND NOT(MesDataExd.MesForceCleaningCmd OR MesDataExd.MesForceSnowCmd OR MesDataExd.MesForceWindCmd ) ; 
+
+// READ Force Status 
+
+	FB_ModbusRead_NCU[2]
+	(
+		nTCPPort	:= ParamTcpPort,
+		ClockRead:= MesDataExd.MesData.MesCP_Read AND ClockRead, 
+		Reset:= CmdClearFault_G,
+		sIPAddr:=ParamIPAddress ,
+		nUnitID:= 1, 
+		tTimeout:= ParamTimeout,
+		nQuantity		:= 3 , 
+		nMBAddr			:=  50086, 
+		cbLength		:= SIZEOF(MesBlock_Temp_NCU[2]) , 
+		pDestAddr		:= ADR(MesBlock_Temp_NCU[2]) , 
+		ModbusReadAlarm	=>AX_ModbusReadAlarm_NCU[2] , 
+		ErrorId			=> AX_ModbusReadAlarmId_NCU[2]
+	);
+
+MesDataExd.MesForceWindCmd	:= MesBlock_Temp_NCU[2][1] ; 
+MesDataExd.MesForceSnowCmd	:= MesBlock_Temp_NCU[2][2] ; 
+MesDataExd.MesForceCleaningCmd := MesBlock_Temp_NCU[2][3] ; 
+
+
+// EMERGENCY POSITION . 
+// On regarde l'état de la variable forcée avant écriture que l'on mémorise . Une fois la commande d'urgence relachee, on retourne au même état que précédemment? 
+
+BlockWriteTemp[1] := MesDataExd.MesForceWindCmd ; 
+
+// On mémorise l'état d'avant commande 
+
+R_TRIG1(CLK:=IN_CmdEmergency ) ; 
+F_TRIG1(CLK:= IN_CmdEmergency ) ; 
+IF R_TRIG1.Q AND NOT RS1.Q1 THEN 
+	MesForceWindCmd_save	:= MesDataExd.MesForceWindCmd ; 
+END_IF
+// On reattribue la commande sauvegardée  et on la maintient jusqu'à ce que la commande soit passée 
+RS1(SET:= F_TRIG1.Q , RESET1:=FB_ModbusWrite[1].Completed ); 
+IF RS1.Q1 THEN 
+	BlockWriteTemp[1] :=  MesForceWindCmd_save ; 
+END_IF
+
+IF IN_CmdEmergency THEN 
+	BlockWriteTemp[1] := SEL(IN_CmdReleaseAll ,   2#1111111111  , 0) ; 
+
+END_IF 
+	
+
+// WRITE ON CHANGE //
+	// Detect if another status is already forced . 
+	CHECK := BlockWriteTemp[1] <> MesDataExd.MesForceWindCmd ; 
+
+	WriteCmd 			:=(CHECK AND  ClockWrite) AND CalCPEmergency; 
+	
+			FB_ModbusWrite[1]
+		(
+			pSrcAddr := ADR (BlockWriteTemp[1]),
+			sIPAddr := ParamIPAddress,
+			tTimeout := ParamTimeout,
+			nMBAddr := 50086, // 
+			nTCPport := ParamTCPPort,
+			cbLength := SIZEOF(BlockWriteTemp[1]),
+			nQuantity := 1,
+			nUnitID := ParamUnitID,
+			WriteCmd := WriteCmd AND MesDataExd.MesData.MesCP_Write,
+			Reset := CmdClearFault_G ,
+			ErrorId => AX_ModbusWriteAlarmId[1],
+			ModbusWriteAlarm => AX_ModbusWriteAlarm[1]
+		);
+		
+// WIND POSITION 
+// On attribue la commande à ce qui est lu sur le registre pour ne pas écraser une commande reçue sauf si une écriture est en cours. 
+
+
+
+BlockWriteTemp[2] := MesDataExd.MesForceWindCmd ; 
+
+
+
+// On mémorise l'état d'avant commande 
+R_TRIG2(CLK:=CalCPWindPos AND IN_CmdWind ) ; 
+F_TRIG2(CLK:= CalCPWindPos AND IN_CmdWind ) ; 
+IF R_TRIG2.Q AND NOT RS2.Q1 THEN 
+	MesForceWindCmd_save	:= MesDataExd.MesForceWindCmd ; 
+END_IF
+// On reattribue la commande sauvegardée  et on la maintient jusqu'à ce que la commande soit passée 
+RS2(SET:= F_TRIG2.Q , RESET1:=FB_ModbusWrite[2].Completed ) ; 
+IF RS2.Q1 THEN 
+	BlockWriteTemp[2] :=  MesForceWindCmd_save ; 
+END_IF
+
+IF CalCPWindPos AND IN_CmdWind AND (SetptGroupCmd<>0) THEN 
+	BlockWriteTemp[2] :=  SetptGroupCmd OR MesForceWindCmd_save ; 
+
+END_IF 
+	
+// WRITE ON CHANGE //
+	// Detect if another status is already forced . 
+	CHECK1 := BlockWriteTemp[2] <> MesDataExd.MesForceWindCmd ; 
+
+	WriteCmd1 			:=(CHECK1 AND  ClockWrite) AND CalCPWindPos; 
+	
+			FB_ModbusWrite[2]
+		(
+			pSrcAddr := ADR (BlockWriteTemp[2]),
+			sIPAddr := ParamIPAddress,
+			tTimeout := ParamTimeout,
+			nMBAddr := 50086, // 
+			nTCPport := ParamTCPPort,
+			cbLength := SIZEOF(BlockWriteTemp[2]),
+			nQuantity := 1,
+			nUnitID := ParamUnitID,
+			WriteCmd := WriteCmd1 AND MesDataExd.MesData.MesCP_Write,
+			Reset := CmdClearFault_G ,
+			ErrorId => AX_ModbusWriteAlarmId[2],
+			ModbusWriteAlarm => AX_ModbusWriteAlarm[2]
+		);		
+		
+// SNOW  POSITION 
+// On attribue la commande à ce qui est lu sur le registre pour ne pas écraser une commande reçue sauf si une écriture est en cours. 
+
+BlockWriteTemp[3] := MesDataExd.MesForceSnowCmd ; 
+
+// On mémorise l'état d'avant commande 
+R_TRIG3(CLK:=CalCPSnowPos AND IN_CmdSnow ) ; 
+F_TRIG3(CLK:= CalCPSnowPos AND IN_CmdSnow ) ; 
+IF R_TRIG3.Q AND NOT RS3.Q1 THEN 
+	MesForceSnowCmd_save	:= MesDataExd.MesForceSnowCmd ; 
+END_IF
+// On reattribue la commande sauvegardée  et on la maintient jusqu'à ce que la commande soit passée 
+RS3(SET:= F_TRIG3.Q , RESET1:=FB_ModbusWrite[3].Completed ) ; 
+IF RS3.Q1 THEN 
+	BlockWriteTemp[3] :=  MesForceSnowCmd_save ; 
+END_IF
+
+IF CalCPSnowPos AND IN_CmdSnow AND (SetptGroupCmd<>0)THEN 
+	BlockWriteTemp[3] :=  SetptGroupCmd OR MesForceSnowCmd_save ; 
+
+END_IF 
+	
+// WRITE ON CHANGE //
+	// Detect if another status is already forced . 
+	CHECK2 := BlockWriteTemp[3] <> MesDataExd.MesForceSnowCmd ; 
+
+	WriteCmd2 			:=(CHECK2 AND  ClockWrite) AND CalCPSnowPos; 
+	
+			FB_ModbusWrite[3]
+		(
+			pSrcAddr := ADR (BlockWriteTemp[3]),
+			sIPAddr := ParamIPAddress,
+			tTimeout := ParamTimeout,
+			nMBAddr := 50087, // 
+			nTCPport := ParamTCPPort,
+			cbLength := SIZEOF(BlockWriteTemp[3]),
+			nQuantity := 1,
+			nUnitID := ParamUnitID,
+			WriteCmd := WriteCmd2 AND MesDataExd.MesData.MesCP_Write,
+			Reset := CmdClearFault_G ,
+			ErrorId => AX_ModbusWriteAlarmId[3],
+			ModbusWriteAlarm => AX_ModbusWriteAlarm[3]
+		);		
+				
+// CLEANING  POSITION 
+// On attribue la commande à ce qui est lu sur le registre pour ne pas écraser une commande reçue sauf si une écriture est en cours. 
+
+BlockWriteTemp[4] := MesDataExd.MesForceCleaningCmd ; 
+
+// On mémorise l'état d'avant commande 
+R_TRIG4(CLK:=CalCPCleaningPos AND IN_CmdCleaning ) ; 
+F_TRIG4(CLK:= CalCPCleaningPos AND IN_CmdCleaning ) ; 
+IF R_TRIG4.Q AND NOT RS4.Q1 THEN 
+	MesForceCleaning_save	:= MesDataExd.MesForceCleaningCmd ; 
+END_IF
+// On reattribue la commande sauvegardée  et on la maintient jusqu'à ce que la commande soit passée 
+RS4(SET:= F_TRIG4.Q , RESET1:=FB_ModbusWrite[4].Completed) ; 
+IF RS4.Q1 THEN 
+	BlockWriteTemp[4] :=  MesForceCleaning_save ; 
+END_IF
+
+IF CalCPCleaningPos AND IN_CmdCleaning AND (SetptGroupCmd<>0) THEN 
+	BlockWriteTemp[4] :=  SetptGroupCmd OR MesForceCleaning_save ; 
+
+END_IF 
+	
+// WRITE ON CHANGE //
+	// Detect if another status is already forced . 
+	CHECK3 := BlockWriteTemp[4] <> MesDataExd.MesForceCleaningCmd ; 
+
+	WriteCmd3 			:=(CHECK3 AND  ClockWrite) AND CalCPCleaningPos; 
+	
+			FB_ModbusWrite[4]
+		(
+			pSrcAddr := ADR (BlockWriteTemp[4]),
+			sIPAddr := ParamIPAddress,
+			tTimeout := ParamTimeout,
+			nMBAddr := 50088, // 
+			nTCPport := ParamTCPPort,
+			cbLength := SIZEOF(BlockWriteTemp[4]),
+			nQuantity := 1,
+			nUnitID := ParamUnitID,
+			WriteCmd := WriteCmd3 AND MesDataExd.MesData.MesCP_Write,
+			Reset := CmdClearFault_G ,
+			ErrorId => AX_ModbusWriteAlarmId[4],
+			ModbusWriteAlarm => AX_ModbusWriteAlarm[4]
+		);		
+						
+		]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_NCU_Axial">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_NCU_Axial.M_AlarmManagement">
+      <LineId Id="319" Count="80" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_NCU_Axial.M_CP">
+      <LineId Id="56" Count="18" />
+      <LineId Id="48" Count="0" />
+      <LineId Id="25" Count="8" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="34" Count="0" />
+      <LineId Id="36" Count="2" />
+      <LineId Id="49" Count="1" />
+      <LineId Id="52" Count="0" />
+      <LineId Id="51" Count="0" />
+      <LineId Id="39" Count="0" />
+      <LineId Id="35" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_NCU_Axial.M_Execute">
+      <LineId Id="120" Count="0" />
+      <LineId Id="124" Count="1" />
+      <LineId Id="121" Count="1" />
+      <LineId Id="147" Count="0" />
+      <LineId Id="123" Count="0" />
+      <LineId Id="104" Count="1" />
+      <LineId Id="143" Count="2" />
+      <LineId Id="154" Count="1" />
+      <LineId Id="160" Count="0" />
+      <LineId Id="133" Count="0" />
+      <LineId Id="109" Count="0" />
+      <LineId Id="115" Count="0" />
+      <LineId Id="110" Count="1" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_NCU_Axial.M_Read">
+      <LineId Id="1129" Count="2" />
+      <LineId Id="762" Count="26" />
+      <LineId Id="791" Count="0" />
+      <LineId Id="1092" Count="0" />
+      <LineId Id="792" Count="0" />
+      <LineId Id="794" Count="22" />
+      <LineId Id="1105" Count="0" />
+      <LineId Id="1093" Count="1" />
+      <LineId Id="819" Count="0" />
+      <LineId Id="1037" Count="0" />
+      <LineId Id="1106" Count="0" />
+      <LineId Id="1102" Count="1" />
+      <LineId Id="1107" Count="1" />
+      <LineId Id="821" Count="5" />
+      <LineId Id="828" Count="2" />
+      <LineId Id="1038" Count="0" />
+      <LineId Id="1027" Count="0" />
+      <LineId Id="1010" Count="16" />
+      <LineId Id="1009" Count="0" />
+      <LineId Id="1062" Count="2" />
+      <LineId Id="962" Count="6" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_NCU_Axial.M_Rotate">
+      <LineId Id="345" Count="0" />
+      <LineId Id="332" Count="0" />
+      <LineId Id="429" Count="1" />
+      <LineId Id="432" Count="1" />
+      <LineId Id="431" Count="0" />
+      <LineId Id="428" Count="0" />
+      <LineId Id="331" Count="0" />
+      <LineId Id="202" Count="0" />
+      <LineId Id="207" Count="0" />
+      <LineId Id="206" Count="0" />
+      <LineId Id="109" Count="0" />
+      <LineId Id="116" Count="14" />
+      <LineId Id="115" Count="0" />
+      <LineId Id="110" Count="1" />
+      <LineId Id="132" Count="0" />
+      <LineId Id="131" Count="0" />
+      <LineId Id="112" Count="1" />
+      <LineId Id="106" Count="0" />
+      <LineId Id="134" Count="0" />
+      <LineId Id="105" Count="0" />
+      <LineId Id="95" Count="0" />
+      <LineId Id="140" Count="0" />
+      <LineId Id="135" Count="0" />
+      <LineId Id="401" Count="0" />
+      <LineId Id="136" Count="0" />
+      <LineId Id="142" Count="0" />
+      <LineId Id="137" Count="2" />
+      <LineId Id="398" Count="0" />
+      <LineId Id="144" Count="0" />
+      <LineId Id="399" Count="0" />
+      <LineId Id="145" Count="1" />
+      <LineId Id="133" Count="0" />
+      <LineId Id="96" Count="1" />
+      <LineId Id="148" Count="0" />
+      <LineId Id="100" Count="0" />
+      <LineId Id="99" Count="0" />
+      <LineId Id="73" Count="0" />
+      <LineId Id="80" Count="1" />
+      <LineId Id="108" Count="0" />
+      <LineId Id="84" Count="1" />
+      <LineId Id="90" Count="0" />
+      <LineId Id="23" Count="13" />
+      <LineId Id="2" Count="0" />
+      <LineId Id="88" Count="1" />
+      <LineId Id="195" Count="0" />
+      <LineId Id="150" Count="0" />
+      <LineId Id="372" Count="1" />
+      <LineId Id="151" Count="0" />
+      <LineId Id="370" Count="1" />
+      <LineId Id="194" Count="0" />
+      <LineId Id="153" Count="6" />
+      <LineId Id="196" Count="0" />
+      <LineId Id="160" Count="8" />
+      <LineId Id="170" Count="19" />
+      <LineId Id="149" Count="0" />
+      <LineId Id="198" Count="0" />
+      <LineId Id="209" Count="42" />
+      <LineId Id="199" Count="0" />
+      <LineId Id="260" Count="42" />
+      <LineId Id="200" Count="1" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

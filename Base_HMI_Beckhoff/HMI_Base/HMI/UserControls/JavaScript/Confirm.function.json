@@ -1,0 +1,83 @@
+﻿{
+  "function": {
+    "name": "Confirm",
+    "displayName": "Confirm",
+    "visible": true,
+    "category": "",
+    "waitMode": "Asynchronous",
+    "injectContextObject": true,
+    "description": "",
+    "returnValue": {
+      "type": "tchmi:general#/definitions/BOOL"
+    },
+    "arguments": [
+      {
+        "name": "ctx",
+        "displayName": "ctx",
+        "type": "tchmi:framework#/definitions/ContextReference",
+        "description": "Context Reference",
+        "defaultValue": "",
+        "required": true,
+        "bindable": false,
+        "restParameter": false,
+        "asReference": false
+      },
+      {
+        "name": "title",
+        "displayName": "title",
+        "type": "tchmi:general#/definitions/String",
+        "description": "This is an important Parameter which does... This text is used in a tooltip.",
+        "defaultValue": "",
+        "required": true,
+        "bindable": true,
+        "restParameter": false,
+        "asReference": false
+      },
+      {
+        "name": "msg",
+        "displayName": "msg",
+        "type": "tchmi:general#/definitions/String",
+        "description": "",
+        "defaultValue": "",
+        "required": true,
+        "bindable": true,
+        "restParameter": false,
+        "asReference": false
+      },
+      {
+        "name": "$true",
+        "displayName": "$true",
+        "type": "tchmi:general#/definitions/String",
+        "description": "",
+        "defaultValue": "",
+        "required": true,
+        "bindable": true,
+        "restParameter": false,
+        "asReference": false
+      },
+      {
+        "name": "$false",
+        "displayName": "$false",
+        "type": "tchmi:general#/definitions/String",
+        "description": "",
+        "defaultValue": "",
+        "required": true,
+        "bindable": true,
+        "restParameter": false,
+        "asReference": false
+      },
+      {
+        "name": "$link",
+        "displayName": "$link",
+        "type": "tchmi:general#/definitions/String",
+        "description": "",
+        "defaultValue": "",
+        "required": true,
+        "bindable": true,
+        "restParameter": false,
+        "asReference": false
+      }
+    ]
+  },
+  "$schema": "../../../../Packages/Beckhoff.TwinCAT.HMI.Framework.12.742.5/runtimes/native1.12-tchmi/Schema/FunctionDescription.Schema.json"
+}

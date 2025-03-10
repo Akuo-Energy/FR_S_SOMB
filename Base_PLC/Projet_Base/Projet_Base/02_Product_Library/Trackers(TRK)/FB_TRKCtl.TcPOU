@@ -1,0 +1,266 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_TRKCtl" Id="{630e3ed1-7d97-4f38-8b8f-a73a88e2f910}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_TRKCtl 
+VAR_INPUT PERSISTENT
+	
+END_VAR
+
+VAR_INPUT
+	IN_CmdReset_L 					: BOOL ;  					//(NA) [P,H]   Reset Command . 
+	
+	AX_NCU							: ARRAY[1..4] OF FB_NCU_Base ;
+	MesDataExd						: TRKCtl ;						// (NA) [P,H,B] SPP concept Data structure
+	
+END_VAR
+
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//
+	
+		
+	                                             
+	//M_STATEMANAGER VARIABLES//
+	
+		
+	//M_EVALUATE VARIABLES//
+ 
+	// M_EXECUTE //             	
+		KK							: BYTE ; 					// (NA) Loop over child objects 
+		
+	//M_INIT VARIABLES // 	
+		bInit						: BOOL := TRUE ; 			// (NA) Initialize object parameters at first cycle 
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{33c4809b-1303-4522-af32-d0bd2cebe24c}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Generates object alarms and manages resets. 
+//////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager			: FB_AlarmCodeManager ; 
+
+
+	CalAlarmCodeNCU: WORD;		// at least one has an alarm 
+	CalWarningCodeNCU: WORD;	// at least one has a warning . 
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[CalAlarmCodeNCU	 	:=  0 ; 
+CalWarningCodeNCU 	:= 0 ; 
+//Temperature exterieur
+	FOR KK:=1 TO CstNbNCU_G DO
+		CalAlarmCodeNCU 	:= CalAlarmCodeNCU OR AX_NCU[KK].MesData.MesAlarmCode;	
+		CalWarningCodeNCU 	:= CalAlarmCodeNCU OR AX_NCU[KK].MesData.MesAlarmCode;
+	END_FOR	
+
+// ALARM CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= FALSE ,
+		bAlarm2			:= FALSE ,
+		bAlarm3			:= FALSE ,
+		bAlarm4			:= FALSE ,
+		bAlarm5			:= CalAlarmCodeNCU.5 ,	// Wind Alarm anemo
+		bAlarm6			:= CalAlarmCodeNCU.6 ,	// Flood Alarm
+		bAlarm7			:= CalAlarmCodeNCU.7 ,	// Gust Wind NCU Alarm	  
+		bAlarm8			:= CalAlarmCodeNCU.8 ,	// Snow  alarm
+		bAlarm9			:= CalAlarmCodeNCU.9 ,	// Wind Alarm
+		bAlarm10		:= FALSE ,            
+		bAlarm11		:= FALSE ,
+		bAlarm12		:= FALSE ,
+		bAlarm13		:= FALSE ,
+		bAlarm14		:= FALSE ,
+		bAlarm15		:= FALSE ,
+		wAlarmCode		=> MesDataExd.MesAlarmCode); 
+	
+
+// WARNING CODE //
+	FB_AlarmCodeManager(
+ 		bAlarm1			:= CalWarningCodeNCU.1 , 		// At least one NCU has a commuication alarm,
+		bAlarm2			:= CalWarningCodeNCU.2 ,		// Communication alarm with anenometer
+		bAlarm3			:= CalWarningCodeNCU.3 ,		// Flood Sensor communication alarm   
+		bAlarm4			:= CalWarningCodeNCU.4 ,		// Snow Sensor communication alarm
+		bAlarm5			:= CalWarningCodeNCU.5 ,		// Wind Sensor communication alarm
+		bAlarm6			:= CalWarningCodeNCU.6 ,		// Communication alarm with all RSUs          
+		bAlarm7			:= FALSE ,
+		bAlarm8			:= FALSE ,
+		bAlarm9			:= FALSE ,
+		bAlarm10		:= FALSE ,
+		bAlarm11		:= FALSE ,
+		bAlarm12		:= FALSE ,
+		bAlarm13		:= FALSE ,
+		bAlarm14		:= FALSE ,
+		bAlarm15		:= FALSE ,
+		wAlarmCode		=> MesDataExd.MesWarningCode);		
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_EquipmentCalls" Id="{f89ea2d4-bf05-44e7-ac71-544a8e50ad6b}">
+      <Declaration><![CDATA[METHOD M_EquipmentCalls
+//////////////////
+// Evaluate AMS characteristics
+//////////////////
+
+VAR
+	// Method local variables (reinitialized at each cycle) 
+
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[FOR KK:=1 TO CstNbNCU_G DO 
+	AX_NCU[KK].M_Execute();	
+
+END_FOR
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Evaluate" Id="{30c360e8-6544-4ee8-932e-26f98545b790}">
+      <Declaration><![CDATA[METHOD M_Evaluate
+//////////////////
+// Evaluate available Powers and AMG characteristics . 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[FOR KK:=1 TO CstNbNCU_G DO 
+	MesDataExd.AX_NCU[KK] := AX_NCU[KK].MesData; 
+	
+	
+END_FOR
+
+MesDataExd.MesSnow := SEL( AX_NCU[1].MesData.MesComAlarm ,  AX_NCU[1].MesData.MesSnow , SEL(AX_NCU[2].MesData.MesComAlarm , AX_NCU[2].MesData.MesSnow , SEL(AX_NCU[3].MesData.MesComAlarm ,AX_NCU[3].MesData.MesSnow  , AX_NCU[4].MesData.MesSnow)))  ; 
+MesDataExd.MesWindSpeed := SEL( AX_NCU[1].MesData.MesComAlarm ,  AX_NCU[1].MesData.MesWindSpeed , SEL(AX_NCU[2].MesData.MesComAlarm , AX_NCU[2].MesData.MesWindSpeed , SEL(AX_NCU[3].MesData.MesComAlarm ,AX_NCU[3].MesData.MesWindSpeed  , AX_NCU[4].MesData.MesWindSpeed)))  ; 
+MesDataExd.MesWindDir := SEL( AX_NCU[1].MesData.MesComAlarm ,  AX_NCU[1].MesData.MesWindDir , SEL(AX_NCU[2].MesData.MesComAlarm , AX_NCU[2].MesData.MesWindDir , SEL(AX_NCU[3].MesData.MesComAlarm ,AX_NCU[3].MesData.MesWindDir  , AX_NCU[4].MesData.MesWindDir)))  ; 
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{52d2448e-7e21-40cf-a114-484765417a86}">
+      <Declaration><![CDATA[METHOD M_Execute
+/////////////////////
+// Action Calls and Object Calls
+/////////////////////
+VAR
+	
+
+
+
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+// INITIALIZE // 
+	IF bInit THEN
+		M_Init() ; 
+		bInit		:= FALSE ; 
+		
+	ELSIF CmdInit_G OR IN_CmdReset_L THEN 
+		bInit		:= TRUE ;
+		
+	END_IF
+
+// OBJECT CALLS //
+	M_EquipmentCalls() ; 
+	
+// METHODS CALLS //
+	// Order is important 
+
+	M_Evaluate();
+	
+	M_AlarmManagement(); 
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{18689f22-9d5e-434e-ac37-66f157d6e6b2}">
+      <Declaration><![CDATA[METHOD M_Init 
+VAR
+	KK 				: INT;
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// TRA
+
+FOR KK:= 1 TO CstNbNCU_G DO 
+
+	AX_NCU[KK].ParamIPAddress :=  CONCAT(STR1:= '192.168.240.' , STR2:= INT_TO_STRING(3*(KK-1)+10)) ;  
+	AX_NCU[KK].ParamTcpPort := 502;
+
+	AX_NCU[KK].ParamClockReadTime 	:= T#30S; 
+	AX_NCU[KK].ParamClockWriteTime	:= T#10S ;
+	AX_NCU[KK].ParamNbReadAtOnce	:= 4 ; 
+	AX_NCU[KK].ParamNCUNum			:= KK ;
+	AX_NCU[KK].ParamTimeOut			:= T#30S ;
+	AX_NCU[KK].ParamUnitID			:= 1 ; 
+	AX_NCU[KK].ParamTempoComAlarm	:= T#10s ;
+END_FOR
+
+	AX_NCU[1].ParamNbTracker := 148 ; 
+	AX_NCU[2].ParamNbTracker := 142 ; 
+	AX_NCU[3].ParamNbTracker := 129 ; 
+	AX_NCU[4].ParamNbTracker := 154 ; 
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_TRKCtl">
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_TRKCtl.M_AlarmManagement">
+      <LineId Id="51" Count="0" />
+      <LineId Id="60" Count="0" />
+      <LineId Id="54" Count="3" />
+      <LineId Id="52" Count="1" />
+      <LineId Id="12" Count="37" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_TRKCtl.M_EquipmentCalls">
+      <LineId Id="49" Count="0" />
+      <LineId Id="60" Count="0" />
+      <LineId Id="62" Count="0" />
+      <LineId Id="61" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_TRKCtl.M_Evaluate">
+      <LineId Id="12" Count="0" />
+      <LineId Id="2" Count="0" />
+      <LineId Id="25" Count="0" />
+      <LineId Id="21" Count="0" />
+      <LineId Id="14" Count="0" />
+      <LineId Id="19" Count="1" />
+      <LineId Id="23" Count="1" />
+      <LineId Id="16" Count="0" />
+      <LineId Id="18" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_TRKCtl.M_Execute">
+      <LineId Id="184" Count="11" />
+      <LineId Id="227" Count="0" />
+      <LineId Id="208" Count="2" />
+      <LineId Id="213" Count="1" />
+      <LineId Id="239" Count="0" />
+      <LineId Id="215" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_TRKCtl.M_Init">
+      <LineId Id="15" Count="0" />
+      <LineId Id="25" Count="1" />
+      <LineId Id="24" Count="0" />
+      <LineId Id="16" Count="7" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="28" Count="0" />
+      <LineId Id="27" Count="0" />
+      <LineId Id="35" Count="0" />
+      <LineId Id="34" Count="0" />
+      <LineId Id="36" Count="3" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

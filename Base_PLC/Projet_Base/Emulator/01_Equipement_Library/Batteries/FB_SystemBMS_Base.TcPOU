@@ -1,0 +1,169 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_SystemBMS_Base" Id="{a634983f-1ef8-474c-a73d-fd80748d86f7}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_SystemBMS_Base
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance specific) 
+	ParamTempoComAlarm			: TIME 		:= T#10S ; 				// (s) Config : Tempo to detect LOC Alarm
+	ParamTimeOutStart           : TIME 		:= T#60S ;				// (s) Config : Tempo to start before Timeout warning
+	ParamTimeOutStop        	: TIME 		:= T#5S ;				// (s) Config : Tempo to start before Timeout warning
+
+	ParamEnomRack				: REAL 	:= 97.2 ;  	  	// (kWh) Nominal Energy Capacity of one Rack 
+	
+	ParamClockReadTime 			: TIME := TIME#1S;	  				// (Time) Read Modbus Frequency .   
+	ParamClockWriteTime 		: TIME := TIME#1S;   			// (Time) Write Modbus Frequency .         
+	ParamTimeout				: TIME  := T#1S ;		  			// (Time) Timeout for modbus reading
+	ParamTimeWatchdog			: TIME := T#30S;						// (Time) Time after which a fixed watchdog raises an alarm
+	
+	
+	ParamNbRacks				: BYTE 	:= 17 ; 					// (NA) Number of racks controlled .
+	ParamEssNum					: UINT := 1;						// (NA) ID number of the SystemBms' father PCS
+	ParamSystemBmsNum			: UINT := 1;						// Ctrl Bat Index in case of several CtrlBat 						
+	
+
+	
+	
+END_VAR
+
+VAR_INPUT
+	//Child objects
+	  
+END_VAR
+
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//
+
+	MesDataExd				AT%Q* : SystemBMS ;											// (NA) [P,H,B] CTRLbat  Data Structure
+	
+	
+		ClockRead				AT %Q*		: BOOL;							// (NA) Modbus reading Clock
+		ClockWrite 				AT %Q*		: BOOL;							// (NA) Modbus writing Clock 	
+		
+	//M_INIT VARIABLES //
+		bInit						: BOOL 				:= TRUE ; 		// (NA) Initialize object parameters at first cycle 
+		
+
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_Evaluate" Id="{63ad09ac-234c-4494-ac70-665074e1a3e2}">
+      <Declaration><![CDATA[METHOD M_Evaluate : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{8c11854a-779d-41a7-8308-1cdcef9d3e9a}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	KK		: INT;
+
+	MesModbusReadAlarm: INT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// READING AND WRITING CLOCK //
+	TP1(IN:=NOT TP1.Q , PT:= ParamClockReadTime);
+	ClockRead 	:= TP1.Q ;
+	
+	TP2(IN:=NOT TP2.Q , PT:= ParamClockWriteTime);
+	ClockWrite 	:= TP2.Q;	
+	
+// PERMANENT CONDITIONS //
+	M_CP() ; 
+
+// METHODS CALLS//
+	IF bInit THEN
+		M_Init() ; 
+		bInit	:= FALSE ; 
+	ELSIF CmdInit_G  THEN 
+		bInit:= TRUE ;
+	END_IF
+	
+	M_Read();
+	
+	M_Evaluate();
+		
+	M_StateManager() ; 
+	M_Write();
+	M_StartStop() ; 
+	
+
+	
+	M_AlarmManagement(); 
+	]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{81bb018a-9807-4305-a6e1-f84f81d43b8a}">
+      <Declaration><![CDATA[METHOD M_Init
+VAR 
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Read" Id="{e6f74216-8167-4f74-b24e-88fb7463509e}">
+      <Declaration><![CDATA[METHOD M_Read
+//////////////////
+//  Read Modbus Variable for racks and BBMS .  
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Write" Id="{0af6edca-55db-4fba-bf0b-91922ce8b0bb}">
+      <Declaration><![CDATA[METHOD M_Write
+VAR_INPUT
+END_VAR
+VAR
+	AX_ADDR 	: ARRAY[1..1] OF UINT := [1];
+	AX_QTY		: ARRAY[1..1] OF BYTE := [3];
+	AX_UnitID	: ARRAY[1..1] OF BYTE := [1];
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_SystemBMS_Base">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SystemBMS_Base.M_Evaluate">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SystemBMS_Base.M_Execute">
+      <LineId Id="540" Count="28" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SystemBMS_Base.M_Init">
+      <LineId Id="3" Count="1" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SystemBMS_Base.M_Read">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SystemBMS_Base.M_Write">
+      <LineId Id="7" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.9">
+  <DUT Name="TOR" Id="{5600b5e0-108a-43f9-91dc-d81228b141bd}">
+    <Declaration><![CDATA[TYPE TOR :
+STRUCT
+	
+	MesAlarmState 		 		: BOOL  ;		(* TRUE = ALARM													*)
+	MesCountAlarm				: UDINT ; 		(* Count the number of time the alarm has been triggered.       *)
+                                                (*                                                              *)
+	MesAlarmCode				: WORD ;		(* (NA) Internal Akuo AlarmCode                                 *)
+	MesWarningCode				: WORD ;   	 	(* (NA) Internal Akuo WarningCode                               *)
+	MesEventCode				: WORD ;	 	(* (NA) Internal Akuo EventCode		                            *)
+
+END_STRUCT		
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

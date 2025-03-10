@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="IN_EMS" Id="{017179c0-4dbc-41ed-a2c9-77731b9766db}">
+    <Declaration><![CDATA[{attribute 'pack_mode' := '1'}
+TYPE IN_EMS :
+// Input for the SCADA
+STRUCT
+	
+IN_Watchdog 						: REAL ; (* Value from EMS. Reinitializes to 1 at 1000. *)
+IN_StateProduction 					: REAL ; (* Between the start of the montée and the end of the end of the pic du soir descente. "1" means True and "0" means False, pas utile pour le moment sur Janar mais je peux le garder au cas où*)
+IN_SetptP_GRID_max 					: REAL ; (* Puissance max que l'on peut injecter sur le réseau*)
+IN_SetptP_GRID_min 					: REAL ; (* Puissance min que l'on peut injecter sur le réseau*)
+IN_SetptP_GRID						: REAL ; (* At Sub MV at Q100 power meter*)
+IN_SetptShare_ESS1_PCS1 			: REAL ; (* Setpoint share between ESS1_PCS1, ESS1_PCS2, ESS2_PCS1, ESS2_PCS2, ESS3_PCS1 and ESS3_PCS2 at Sub MV*)
+IN_CalCRateDischarge_ESS1_BAT1 		: REAL ; (* Average Discharge Crate of the year*)
+IN_CalCRateCharge_ESS1_BAT1 		: REAL ; (* Average Charge Crate of the year*)
+IN_CalRSoC_ESS1_BAT1 				: REAL ; (* Average rest SoC of the year*)
+IN_CalCSoC_ESS1_BAT1 				: REAL ; (* Average center SoC of the year*)
+IN_CalEnergyThroughput_ESS1_BAT1 	: REAL ; (* Energy throughput of the year*)
+IN_CalPdc_ESS1_BAT1 				: REAL ; (* DC power of the year*)
+IN_CalCRateDischarge_ESS1_BAT2		: REAL ; (* Average Discharge Crate of the year*)
+IN_CalCRateCharge_ESS1_BAT2			: REAL ; (* Average Charge Crate of the year*)
+IN_CalRSoC_ESS1_BAT2 				: REAL ; (* Average rest SoC of the year*)
+IN_CalCSoC_ESS1_BAT2 				: REAL ; (* Average center SoC of the year*)
+IN_CalEnergyThroughput_ESS1_BAT2 	: REAL ; (* Energy throughput of the year*)
+IN_CalPdc_ESS1_BAT2 				: REAL ; (* DC power of the year*)
+
+IN_TimeApplySetpoint_LINT           : LINT; (* EPOCH : Time at which the setpoint should be applied*)
+END_STRUCT
+END_TYPE
+
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

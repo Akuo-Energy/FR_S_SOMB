@@ -1,0 +1,254 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_Datalogger_SENECA" Id="{d8f8041b-0359-4468-b05c-00ce5d1bef92}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Datalogger_SENECA EXTENDS FB_Datalogger_Base
+ 
+
+VAR_INPUT PERSISTENT
+	ParamWriteTimeout			: TIME  	:= T#5S ;		  					(* (Time) Timeout for modbus reading*)
+END_VAR
+
+       	
+VAR_INPUT           	
+	// I/O Inputs 
+	MesDataExd				: Datalogger_SENECA;    
+END_VAR             	
+      	
+VAR 
+            		
+	
+//INPUT Modbus
+	FB_ModbusRead	          	: ARRAY[1..2] OF FB_ModbusRead; 	            // (NA) FB for Modbus Reading	
+	MesBlock1_Temp				: ARRAY [1..8] OF WORD ; 
+	
+	AlarmModbusInput			: BOOL;
+	AlarmID_ModbusInput			: UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{57795d67-999a-4b87-9dec-3212855707c3}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Generates object alarms and manages resets 
+//////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager		: FB_AlarmCodeManager;  
+	Transfo_Synthesis		: INT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[	
+// ALARM CODE //
+	FB_AlarmCodeManager(
+		bAlarm1				:= FALSE,														// 
+		bAlarm2				:= FALSE,														// 
+		bAlarm3				:= FALSE,														// 
+		bAlarm4				:= FALSE,														//
+		bAlarm5				:= FALSE,														//
+		bAlarm6				:= FALSE,														//
+		bAlarm7				:= FALSE,														//
+		bAlarm8				:= FALSE,														//
+		bAlarm9				:= FALSE,														//
+		bAlarm10			:= FALSE,														//
+		bAlarm11			:= FALSE, 														// 
+		bAlarm12			:= FALSE, 														// 
+		bAlarm13			:= FALSE, 														//                                          
+		bAlarm14			:= FALSE,														//                                          
+		bAlarm15			:= FALSE,														// 		
+		wAlarmCode			=>MesDataExd.MesData.MesAlarmCode);										//
+			
+// WARNING CODE //
+	FB_AlarmCodeManager(
+		bAlarm1				:= AlarmModbusInput, 											// Error Modbus read of the datalogger data
+		bAlarm2				:= FALSE, 														//
+		bAlarm3				:= FALSE,														//
+		bAlarm4				:= FALSE,														//
+		bAlarm5				:= FALSE,														//
+		bAlarm6				:= FALSE,														//
+		bAlarm7				:= FALSE,														//
+		bAlarm8				:= FALSE,														//
+		bAlarm9				:= FALSE,														//
+		bAlarm10			:= FALSE,														//
+		bAlarm11			:= FALSE,														//
+		bAlarm12			:= FALSE,														//
+		bAlarm13			:= FALSE,														//
+		bAlarm14			:= FALSE,														//
+		bAlarm15			:= FALSE,														//
+		wAlarmCode			=>MesDataExd.MesData.MesWarningCode);										//
+		                                                        							
+// EVENT CODE //                                                							                                                     							
+	FB_AlarmCodeManager(                                        							
+		bAlarm1				:= FALSE,						    							//  
+		bAlarm2				:= FALSE, 														//  
+		bAlarm3				:= FALSE,														//
+		bAlarm4				:= FALSE,														//
+		bAlarm5				:= FALSE,														//
+		bAlarm6				:= FALSE,														//
+		bAlarm7				:= FALSE,														//
+		bAlarm8				:= FALSE,														//
+		bAlarm9				:= FALSE,														//
+		bAlarm10			:= FALSE,														//
+		bAlarm11			:= FALSE,														//
+		bAlarm12			:= FALSE,														//
+		bAlarm13			:= FALSE,														//
+		bAlarm14			:= FALSE,														//
+		bAlarm15			:= FALSE,														//
+		wAlarmCode			=>MesDataExd.MesData.MesEventCode);										//
+		
+MesDataExdMesDataExd		:= MesDataExd.MesData.]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_CP" Id="{f626d896-f1b2-4263-a44c-67279e1b4a2b}">
+      <Declaration><![CDATA[METHOD M_CP
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+SUPER^.M_CP() ; 
+
+
+
+
+Trig_Cmd_Read(CLK:=IN_CmdToggleRead);
+Trig_Cmd_Write(CLK:=IN_CmdToggleWrite);
+	
+IF Trig_Cmd_Read.Q THEN
+	IN_CmdToggleRead := FALSE;
+	MesDataExd.MesData.MesCP_Read := NOT MesDataExd.MesData.MesCP_Read;
+END_IF
+
+
+IF Trig_Cmd_Write.Q THEN
+	IN_CmdToggleWrite := FALSE;
+	MesDataExd.MesData.MesCP_Write := NOT MesDataExd.MesData.MesCP_Write;
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{c0150839-c625-4e37-97bc-b7a33ae566c4}">
+      <Declaration><![CDATA[METHOD M_Execute : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF bInit THEN
+	M_Init();
+	bInit := FALSE;
+ELSIF CmdInit_G THEN 
+	bInit:= TRUE ;
+END_IF
+
+SUPER^.M_Execute() ; 
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{5b266da4-f89e-4b61-8ff9-8b25b53800a6}">
+      <Declaration><![CDATA[METHOD M_Init : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Read" Id="{5efc2756-b6cd-4eab-b3c1-e3f7ac4e25d9}">
+      <Declaration><![CDATA[
+METHOD M_Read : BOOL
+VAR_INPUT
+END_VAR
+
+VAR
+	MW					: FB_MergeWordsToFloat;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// CP-Read / Write 
+
+
+IF MesDataExd.MesData.MesCP_Read  THEN	
+// MODBUS Read	
+	FB_ModbusRead[1]
+		(
+			nTCPPort		:= ParamTcpPort,
+			ClockRead		:= MesDataExd.MesData.MesCP_Read AND ClockRead, 
+			Reset			:= CmdClearFault_G OR IN_CmdReset_L,
+			sIPAddr			:= ParamIPAddress ,
+			nUnitID			:= 1, 
+			tTimeout		:= ParamWriteTimeout,
+			nQuantity		:= 4, 
+			nMBAddr			:= 40005, 
+			cbLength		:= SIZEOF(MesBlock1_Temp), 
+			pDestAddr		:= ADR(MesBlock1_Temp), 
+			ModbusReadAlarm	=> AlarmModbusInput, 
+			ErrorId			=> AlarmID_ModbusInput
+		);
+	
+// Wind Data : Float AB CD	
+	MW( WORD_STRONG:= MesBlock1_Temp[1  ],	WORD_WEAK := MesBlock1_Temp[2  ], VAR_OUT := MesDataExd.MesData.MesWindSp);		
+	MW( WORD_STRONG:= MesBlock1_Temp[3  ],	WORD_WEAK := MesBlock1_Temp[4  ], VAR_OUT := MesDataExd.MesData.MesWindDir);
+END_IF 	]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Write" Id="{f4f87d52-d7d5-49a2-8d2c-331cfa34bf50}">
+      <Declaration><![CDATA[METHOD M_Write : BOOL
+VAR
+		
+		
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_Datalogger_SENECA">
+      <LineId Id="151" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Datalogger_SENECA.M_AlarmManagement">
+      <LineId Id="1940" Count="14" />
+      <LineId Id="2032" Count="1" />
+      <LineId Id="1955" Count="0" />
+      <LineId Id="2031" Count="0" />
+      <LineId Id="1956" Count="18" />
+      <LineId Id="1993" Count="1" />
+      <LineId Id="1996" Count="16" />
+      <LineId Id="2021" Count="1" />
+    </LineIds>
+    <LineIds Name="FB_Datalogger_SENECA.M_CP">
+      <LineId Id="204" Count="19" />
+      <LineId Id="51" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Datalogger_SENECA.M_Execute">
+      <LineId Id="83" Count="1" />
+      <LineId Id="90" Count="0" />
+      <LineId Id="92" Count="0" />
+      <LineId Id="91" Count="0" />
+      <LineId Id="85" Count="1" />
+      <LineId Id="82" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Datalogger_SENECA.M_Init">
+      <LineId Id="16" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Datalogger_SENECA.M_Read">
+      <LineId Id="267" Count="0" />
+      <LineId Id="270" Count="1" />
+      <LineId Id="244" Count="0" />
+      <LineId Id="164" Count="15" />
+      <LineId Id="197" Count="0" />
+      <LineId Id="252" Count="0" />
+      <LineId Id="259" Count="0" />
+      <LineId Id="257" Count="0" />
+      <LineId Id="147" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Datalogger_SENECA.M_Write">
+      <LineId Id="41" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

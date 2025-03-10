@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="St_AlarmsV2" Id="{2914076c-28bb-4d6a-b96b-68c587de1a36}">
+    <Declaration><![CDATA[TYPE St_AlarmsV2 :
+STRUCT
+	TIMESTAMP_START : DT;
+	TIMESTAMP_STOP	: DT;
+	ALARMSID 		: DINT;
+	ACT				: INT;
+	ACK				: INT;
+	
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,85 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="InfluxDb_AlarmsManagement" Id="{4170de36-ae16-41b7-91dd-65ef15f64549}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM InfluxDb_AlarmsManagement
+
+VAR_INPUT
+	IN_FIFO										: FB_DBDatasetFifo;
+	IN_Reset									: BOOL;
+	//MesDataExd								: LoggerInfluxDb;
+END_VAR
+
+VAR
+	// M_Init
+   		bInit 									: BOOL;
+	// Reset                					
+		Trig_Reset								: R_TRIG;
+	// Interface values
+		bGet: BOOL;
+		bRem: BOOL;
+		Out_Alarms 				: ST_ValuesAlarms;
+		Out_Alarms_Null 		: ST_ValuesAlarms;
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF NOT bInit THEN
+	M_Init();
+END_IF
+
+Trig_Reset(CLK := IN_Reset OR CmdClearFault_G);
+IF Trig_Reset.Q THEN
+	IN_Reset := FALSE;
+	IN_FIFO.A_Reset();
+	Out_Alarms := Out_Alarms_Null;
+END_IF
+
+IF bRem THEN
+	bRem := FALSE;
+	IN_FIFO.A_Remove();
+	Out_Alarms := Out_Alarms_Null;
+END_IF
+
+IF bGet THEN
+	bGet := FALSE;
+	IN_FIFO.A_Get();
+	Out_Alarms := IN_FIFO.Out;
+END_IF
+
+]]></ST>
+    </Implementation>
+    <Method Name="M_Init" Id="{d7a143e0-b419-4721-938f-ee9ca092b150}">
+      <Declaration><![CDATA[METHOD M_Init : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//Initialisation BUFFER
+	//Buffer pour la lecture des sms
+	//IN_FIFO.A_Reset();
+	//IN_FIFO.A_Add();
+	//IN_FIFO.A_Get();
+	//IN_FIFO.A_Remove();
+	
+	IN_FIFO.In.Message :=  'Code Activation';
+	IN_FIFO.IN.TimeStamp_Act := SYSTEMTIME_TO_STRING(CalLocalTimeStruct);
+	IN_FIFO.A_Add();
+	bInit := TRUE;
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="InfluxDb_AlarmsManagement">
+      <LineId Id="3" Count="9" />
+      <LineId Id="48" Count="0" />
+      <LineId Id="44" Count="3" />
+      <LineId Id="13" Count="0" />
+      <LineId Id="49" Count="0" />
+      <LineId Id="14" Count="5" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="InfluxDb_AlarmsManagement.M_Init">
+      <LineId Id="3" Count="10" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,281 @@
+﻿<div id="I_TO_Command_Alarms_1" data-tchmi-type="TcHmi.Controls.System.TcHmiContent" data-tchmi-top="0" data-tchmi-left="0" data-tchmi-width="633.6" data-tchmi-height="640" data-tchmi-left-unit="px" data-tchmi-top-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-width-unit="px" data-tchmi-height-unit="px" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px">
+
+
+<script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
+{
+  "color": "rgba(242, 242, 242, 1)"
+}
+</script>
+<div id="PCS1" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiDatagrid" data-tchmi-height="563" data-tchmi-height-unit="px" data-tchmi-left="15" data-tchmi-left-unit="px"    data-tchmi-top="10" data-tchmi-top-unit="px" data-tchmi-width="584" data-tchmi-width-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-row-height-unit="px" data-tchmi-table-border-width-unit="px" data-tchmi-grid-font-size-unit="px" data-tchmi-show-row-numbers="False" data-tchmi-row-numbers-resizable="False" data-tchmi-row-numbers-width-unit="px" data-tchmi-row-numbers-font-size-unit="px" data-tchmi-header-height-unit="px" data-tchmi-header-font-size-unit="px" data-tchmi-header-height="0" data-tchmi-table-border-width="0" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px" data-tchmi-src-data="%s%PLC1.BESS_HMI.AX_AlarmWordsPCS1%/s%" data-tchmi-visibility="%i%PCS1_Alarms_Visu%/i%">
+<script data-tchmi-target-attribute="data-tchmi-src-column" type="application/json">
+[
+  {
+    "name": "Message",
+    "label": "Message",
+    "control": "TextBox",
+    "width": 96,
+    "widthUnit": "%",
+    "resize": false,
+    "sortable": false,
+    "minWidth": 70,
+    "minWidthUnit": "px",
+    "cellBackground": {
+      "color": "rgba(255, 255, 255, 1)"
+    },
+    "textColor": null,
+    "editable": true,
+    "horizontalAlignment": "Center",
+    "verticalAlignment": "Center",
+    "headerHorizontalAlignment": "Center",
+    "headerVerticalAlignment": "Center",
+    "format": null
+  }
+]
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-cell-content-padding" type="application/json">
+{
+  "left": 3,
+  "right": 3,
+  "top": 0,
+  "bottom": 0,
+  "leftUnit": "px",
+  "rightUnit": "px",
+  "topUnit": "px",
+  "bottomUnit": "px"
+}
+</script>
+
+
+<script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
+{
+  "color": "None"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-color" type="application/json">
+{
+  "color": "None"
+}
+</script>
+
+
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-filter" type="application/json">
+[
+  {
+    "path": "Message",
+    "comparator": "!=",
+    "value": ""
+  }
+]
+</script>
+</div>
+
+<div id="PCS2" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiDatagrid" data-tchmi-height="563" data-tchmi-height-unit="px" data-tchmi-left="15" data-tchmi-left-unit="px"    data-tchmi-top="10" data-tchmi-top-unit="px" data-tchmi-width="584" data-tchmi-width-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-row-height-unit="px" data-tchmi-table-border-width-unit="px" data-tchmi-grid-font-size-unit="px" data-tchmi-show-row-numbers="False" data-tchmi-row-numbers-resizable="False" data-tchmi-row-numbers-width-unit="px" data-tchmi-row-numbers-font-size-unit="px" data-tchmi-header-height-unit="px" data-tchmi-header-font-size-unit="px" data-tchmi-header-height="0" data-tchmi-table-border-width="0" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px" data-tchmi-src-data="%s%PLC1.BESS_HMI.AX_AlarmWordsPCS2%/s%" data-tchmi-visibility="%i%PCS2_Alarms_Visu%/i%">
+<script data-tchmi-target-attribute="data-tchmi-src-column" type="application/json">
+[
+  {
+    "name": "Message",
+    "label": "Message",
+    "control": "TextBox",
+    "width": 96,
+    "widthUnit": "%",
+    "resize": false,
+    "sortable": false,
+    "minWidth": 70,
+    "minWidthUnit": "px",
+    "cellBackground": {
+      "color": "rgba(255, 255, 255, 1)"
+    },
+    "textColor": null,
+    "editable": true,
+    "horizontalAlignment": "Center",
+    "verticalAlignment": "Center",
+    "headerHorizontalAlignment": "Center",
+    "headerVerticalAlignment": "Center",
+    "format": null
+  }
+]
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-cell-content-padding" type="application/json">
+{
+  "left": 3,
+  "right": 3,
+  "top": 0,
+  "bottom": 0,
+  "leftUnit": "px",
+  "rightUnit": "px",
+  "topUnit": "px",
+  "bottomUnit": "px"
+}
+</script>
+
+
+<script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
+{
+  "color": "None"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-color" type="application/json">
+{
+  "color": "None"
+}
+</script>
+
+
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-filter" type="application/json">
+[
+  {
+    "path": "Message",
+    "comparator": "!=",
+    "value": ""
+  }
+]
+</script>
+</div>
+
+<div id="HVAC1" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiDatagrid" data-tchmi-height="563" data-tchmi-height-unit="px" data-tchmi-left="15" data-tchmi-left-unit="px"    data-tchmi-top="10" data-tchmi-top-unit="px" data-tchmi-width="584" data-tchmi-width-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-row-height-unit="px" data-tchmi-table-border-width-unit="px" data-tchmi-grid-font-size-unit="px" data-tchmi-show-row-numbers="False" data-tchmi-row-numbers-resizable="False" data-tchmi-row-numbers-width-unit="px" data-tchmi-row-numbers-font-size-unit="px" data-tchmi-header-height-unit="px" data-tchmi-header-font-size-unit="px" data-tchmi-header-height="0" data-tchmi-table-border-width="0" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px" data-tchmi-src-data="%s%PLC1.BESS_HMI.AX_AlarmWordsHVAC1%/s%" data-tchmi-visibility="%i%HVAC1_Alarms_Visu%/i%">
+<script data-tchmi-target-attribute="data-tchmi-src-column" type="application/json">
+[
+  {
+    "name": "Message",
+    "label": "Message",
+    "control": "TextBox",
+    "width": 96,
+    "widthUnit": "%",
+    "resize": false,
+    "sortable": false,
+    "minWidth": 70,
+    "minWidthUnit": "px",
+    "cellBackground": {
+      "color": "rgba(255, 255, 255, 1)"
+    },
+    "textColor": null,
+    "editable": true,
+    "horizontalAlignment": "Center",
+    "verticalAlignment": "Center",
+    "headerHorizontalAlignment": "Center",
+    "headerVerticalAlignment": "Center",
+    "format": null
+  }
+]
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-cell-content-padding" type="application/json">
+{
+  "left": 3,
+  "right": 3,
+  "top": 0,
+  "bottom": 0,
+  "leftUnit": "px",
+  "rightUnit": "px",
+  "topUnit": "px",
+  "bottomUnit": "px"
+}
+</script>
+
+
+<script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
+{
+  "color": "None"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-color" type="application/json">
+{
+  "color": "None"
+}
+</script>
+
+
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-filter" type="application/json">
+[
+  {
+    "path": "Message",
+    "comparator": "!=",
+    "value": ""
+  }
+]
+</script>
+</div>
+
+<div id="HVAC2" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiDatagrid" data-tchmi-height="563" data-tchmi-height-unit="px" data-tchmi-left="15" data-tchmi-left-unit="px"    data-tchmi-top="10" data-tchmi-top-unit="px" data-tchmi-width="584" data-tchmi-width-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-row-height-unit="px" data-tchmi-table-border-width-unit="px" data-tchmi-grid-font-size-unit="px" data-tchmi-show-row-numbers="False" data-tchmi-row-numbers-resizable="False" data-tchmi-row-numbers-width-unit="px" data-tchmi-row-numbers-font-size-unit="px" data-tchmi-header-height-unit="px" data-tchmi-header-font-size-unit="px" data-tchmi-header-height="0" data-tchmi-table-border-width="0" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px" data-tchmi-src-data="%s%PLC1.BESS_HMI.AX_AlarmWordsHVAC2%/s%" data-tchmi-visibility="%i%HVAC2_Alarms_Visu%/i%">
+<script data-tchmi-target-attribute="data-tchmi-src-column" type="application/json">
+[
+  {
+    "name": "Message",
+    "label": "Message",
+    "control": "TextBox",
+    "width": 96,
+    "widthUnit": "%",
+    "resize": false,
+    "sortable": false,
+    "minWidth": 70,
+    "minWidthUnit": "px",
+    "cellBackground": {
+      "color": "rgba(255, 255, 255, 1)"
+    },
+    "textColor": null,
+    "editable": true,
+    "horizontalAlignment": "Center",
+    "verticalAlignment": "Center",
+    "headerHorizontalAlignment": "Center",
+    "headerVerticalAlignment": "Center",
+    "format": null
+  }
+]
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-cell-content-padding" type="application/json">
+{
+  "left": 3,
+  "right": 3,
+  "top": 0,
+  "bottom": 0,
+  "leftUnit": "px",
+  "rightUnit": "px",
+  "topUnit": "px",
+  "bottomUnit": "px"
+}
+</script>
+
+
+<script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
+{
+  "color": "None"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-color" type="application/json">
+{
+  "color": "None"
+}
+</script>
+
+
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-filter" type="application/json">
+[
+  {
+    "path": "Message",
+    "comparator": "!=",
+    "value": ""
+  }
+]
+</script>
+</div>
+
+</div>

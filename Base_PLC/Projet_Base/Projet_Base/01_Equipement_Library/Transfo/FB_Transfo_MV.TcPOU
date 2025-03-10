@@ -1,0 +1,175 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_Transfo_MV" Id="{da8719be-58e8-42fb-913f-fea94216332d}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Transfo_MV EXTENDS FB_Transfo_Base
+//////////////////
+// High Voltage transformer with DGPT2 detection . 
+//////////////////
+
+VAR_INPUT PERSISTENT
+	
+	// Parameters of the Object (instance/model specific) 
+	
+		ParamNC					: BOOL  ; 			(* Normally closed inputs . If TRUE , 1 =  no alarms. *)
+		
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	
+END_VAR
+
+VAR_INPUT
+	
+	// Transfo
+	
+		IN_MesWarningTemp_IO				: BOOL ; 		// (NA) Oil Temperature Warning IO
+		IN_MesAlarmTemp_IO					: BOOL ; 		// (NA) Oil Temperature Alarm IO
+		IN_MesAlarmGas_IO					: BOOL ; 		// (NA) Gas Alarm IO
+		IN_MesAlarmPressure_IO				: BOOL ; 		// (NA) Pressure Alarm IO
+		IN_MesAlarmsSynthesis_IO			: BOOL ;        // (NA) Synthesis Alarms  IO 
+		IN_MesAlarmOilLevel_IO				: BOOL ;		// (NA) Oil level Alarm IO
+		IN_MesAlarmPowerSupply_IO			: BOOL ;		// (NA) Power Supply Alarm IO
+	
+		MesDataExd				   			: Transfo_MV ; 
+	
+END_VAR
+
+VAR
+	
+	// Transfo
+	
+		TP_AlarmTemp 			: TP ;		
+		TP_AlarmGas   		    : TP ;
+		TP_AlarmOilLevel   		: TP ;
+		TP_AlarmsSynthesis 		: TP ;
+		TP_WarningTemp   	    : TP ;
+		TP_AlarmPressure		: TP ;
+		TP_AlarmPowerSupply		: TP ;
+
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{34bc130d-144b-43c6-ab7d-2ca3381ffce9}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Manages High Voltage Transformer Alarms
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager : FB_AlarmCodeManager ; 
+
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF ParamNC THEN 
+	
+	MesDataExd.MesData.MesAlarmPowerSupply		:= NOT IN_MesAlarmPowerSupply_IO ; 
+	MesDataExd.MesData.MesAlarmsSynthesis		:= NOT IN_MesAlarmsSynthesis_IO ; 
+	MesDataExd.MesData.MesAlarmGas				:= NOT IN_MesAlarmGas_IO ; 
+	MesDataExd.MesData.MesAlarmOilLevel 		:= NOT IN_MesAlarmOilLevel_IO ; 
+	MesDataExd.MesData.MesAlarmTemp				:= NOT IN_MesAlarmTemp_IO ; 
+	MesDataExd.MesData.MesWarningTemp			:= NOT  IN_MesWarningTemp_IO ;
+	MesDataExd.MesData.MesAlarmPressure			:= NOT IN_MesAlarmPressure_IO ; 
+	
+ELSE
+	
+	MesDataExd.MesData.MesAlarmPowerSupply		:= IN_MesAlarmPowerSupply_IO ; 
+	MesDataExd.MesData.MesAlarmsSynthesis		:= IN_MesAlarmsSynthesis_IO ; 
+	MesDataExd.MesData.MesAlarmGas				:= IN_MesAlarmGas_IO ; 
+	MesDataExd.MesData.MesAlarmOilLevel 		:= IN_MesAlarmOilLevel_IO ; 
+	MesDataExd.MesData.MesAlarmTemp				:= IN_MesAlarmTemp_IO ;  
+	MesDataExd.MesData.MesWarningTemp			:= IN_MesWarningTemp_IO ; 
+	MesDataExd.MesData.MesAlarmPressure			:= IN_MesAlarmPressure_IO ;
+
+END_IF
+
+
+
+TP_AlarmTemp 		  (	IN:=NOT MesDataExd.MesData.MesAlarmTemp 	   	,PT := ParamTimeOut_Alarm  );
+TP_AlarmGas   		  (	IN:=NOT MesDataExd.MesData.MesAlarmGas   	  	,PT := ParamTimeOut_Alarm  );
+TP_AlarmOilLevel      (	IN:=NOT MesDataExd.MesData.MesAlarmOilLevel  	,PT := ParamTimeOut_Alarm  );
+TP_AlarmsSynthesis    (	IN:=NOT MesDataExd.MesData.MesAlarmsSynthesis	,PT := ParamTimeOut_Alarm  );
+TP_WarningTemp   	  (	IN:=NOT MesDataExd.MesData.MesWarningTemp   	,PT := ParamTimeOut_Alarm  );
+TP_AlarmPowerSupply   (	IN:=NOT MesDataExd.MesData.MesAlarmPowerSupply  ,PT := ParamTimeOut_Alarm  );
+TP_AlarmPressure	  (	IN:=NOT MesDataExd.MesData.MesAlarmPressure     ,PT := ParamTimeOut_Alarm  );
+
+// ALARM CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= MesDataExd.MesData.MesAlarmTemp ,				// Transfo Temperature Alarm
+		bAlarm2			:= MesDataExd.MesData.MesAlarmGas  , 				// Transfo Gas Alarm
+		bAlarm3			:= MesDataExd.MesData.MesAlarmOilLevel  , 			// Transfo Oil Level Alarm	
+		bAlarm4			:= MesDataExd.MesData.MesAlarmsSynthesis, 			// Transfo Synthesis Alarm 
+		bAlarm5			:= MesDataExd.MesData.MesAlarmPowerSupply ,			// Transfo Power Supply Alarm             
+		bAlarm6			:= MesDataExd.MesData.MesAlarmPressure ,            // Pressure Alarm              
+		bAlarm7			:= FALSE ,//            
+		bAlarm8			:= FALSE ,//
+		bAlarm9			:= FALSE, 								//
+		bAlarm10		:= FALSE,                               //
+		bAlarm11		:= FALSE,                               //
+		bAlarm12		:= FALSE,                               //
+		bAlarm13		:= FALSE, 								//
+		bAlarm14		:= FALSE,                               //
+		bAlarm15		:= FALSE , 								//      
+		wAlarmCode		=>MesDataExd.MesData.MesAlarmCode);               
+
+// WARNING CODE //
+	FB_AlarmCodeManager(
+		bAlarm1 		:= MesDataExd.MesData.MesWarningTemp,   			// Transfo Temperature Warning
+		bAlarm2			:= FALSE ,//
+		bAlarm3			:= FALSE, 		                      	//
+		bAlarm4			:= FALSE, 		                    	//
+		bAlarm5			:= FALSE,                               //
+		bAlarm6			:= FALSE,                               //
+		bAlarm7			:= FALSE,                               //
+		bAlarm8			:= FALSE,                               //
+		bAlarm9			:= FALSE,                               //
+		bAlarm10		:= FALSE,                               //
+		bAlarm11		:= FALSE,                               //
+		bAlarm12		:= FALSE,                               //
+		bAlarm13		:= FALSE,                               //
+		bAlarm14		:= FALSE,                               //
+		bAlarm15		:= FALSE,                               //
+		wAlarmCode		=>MesDataExd.MesData.MesWarningCode);
+		
+// EVENT CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= TP_AlarmTemp.Q ,						// Transfo Temperature Alarm back to normal             
+		bAlarm2			:= TP_AlarmGas .Q ,						// Transfo Gas Alarm back to normal                   
+		bAlarm3			:= TP_AlarmOilLevel.Q ,					// Transfo Oil Level Alarm back to normal     
+		bAlarm4			:= TP_AlarmsSynthesis.Q ,				// Transfo Synthesis Alarm back to normal          
+		bAlarm5			:= TP_WarningTemp.Q ,					// Transfo Temperature Warning back to normal 
+		bAlarm6			:= TP_AlarmPowerSupply.Q ,				// Transfo Power Supply Alarm back to normal  
+		bAlarm7			:= FALSE,         	//
+		bAlarm8			:= FALSE,         	//
+		bAlarm9			:= FALSE,         	//
+		bAlarm10		:= FALSE,         	//
+		bAlarm11		:= FALSE,         	//
+		bAlarm12		:= FALSE,         	//
+		bAlarm13		:= FALSE,         	//
+		bAlarm14		:= FALSE,         	//
+		bAlarm15		:= FALSE,         	//
+		wAlarmCode		=>MesDataExd.MesData.MesEventCode);
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_Transfo_MV">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Transfo_MV.M_AlarmManagement">
+      <LineId Id="426" Count="7" />
+      <LineId Id="516" Count="0" />
+      <LineId Id="434" Count="8" />
+      <LineId Id="517" Count="0" />
+      <LineId Id="443" Count="10" />
+      <LineId Id="518" Count="0" />
+      <LineId Id="454" Count="49" />
+      <LineId Id="2" Count="0" />
+      <LineId Id="82" Count="5" />
+      <LineId Id="504" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

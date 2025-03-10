@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="TOR_Standard" Id="{537a626d-2b23-4174-a18a-acfa710e3fe4}">
+    <Declaration><![CDATA[TYPE TOR_Standard :
+STRUCT
+	
+	MesData					: TOR ;		(* MesData 											 *)
+
+END_STRUCT		
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

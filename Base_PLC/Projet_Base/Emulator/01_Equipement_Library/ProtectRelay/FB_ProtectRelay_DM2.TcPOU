@@ -1,0 +1,155 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_ProtectRelay_DM2" Id="{27c114cd-bc55-43a2-9873-4b85ce66e506}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_ProtectRelay_DM2 EXTENDS FB_ProtectRelay_Base
+//////////////////
+// REF615 + REU615 : communication not allowed by EDF 
+
+VAR_OUTPUT
+	//Child objects
+
+END_VAR
+
+VAR_INPUT
+	IN_AlarmIMax_IO								: BOOL; //Max I Alarm, Losing autorisation and not possible to consumed
+	IN_AlarmUmin_IO									: BOOL; //Min U , Keeping autorisation, If we have 3 gte in 30 min ==> Stop fedding and consumed during 2h
+	IN_MesWatchdogREU615_IO						: BOOL:=TRUE ;// Watchdog . 0= alarm
+	
+END_VAR
+
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//
+	MesDataExd		: ProtectRelay_Standard ; 
+	
+	// EVALUATE //
+	TON_GteIsLong	: TON ; 
+	
+	
+
+
+		
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{0f9f2a20-4ad1-4eae-9694-e712df37da3c}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Manages Sepam Alarms. Alarms opens HT CB until Sepam manual Reset . Warning Opens CB-L but does not maintain warning
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager 	: FB_AlarmCodeManager ; 
+
+ 
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+// ALARM CODE //
+	FB_AlarmCodeManager(
+		bAlarm1				:= MesDataExd.MesData.MesAlarmImax , 						// Max I>>0  fault 	 	
+		bAlarm2				:= MesDataExd.MesData.MesAlarmUmin ,							// GTE fault 
+		bAlarm3				:= MesDataExd.MesData.MesAlarmCom,						// Communication Alarm #COM
+		bAlarm4				:= NOT IN_MesWatchDog_IO, 						// Watchdog REF615 not received      #COM 
+		bAlarm5				:= NOT IN_MesWatchdogREU615_IO, 				// Watchdog REU615 not received	 #COM
+		bAlarm6				:= FALSE, 									// 
+		bAlarm7				:= FALSE, 									//
+		bAlarm8				:= FALSE,                                   //
+		bAlarm9				:= FALSE,                                   //
+		bAlarm10			:= FALSE,                                   //
+		bAlarm11			:= FALSE,                                   //
+		bAlarm12			:= FALSE,                                   //
+		bAlarm13			:= FALSE, 									//
+		bAlarm14			:= FALSE, 									//
+		bAlarm15			:= FALSE ,									// 
+		wAlarmCode			=>MesDataExd.MesData.MesAlarmCode);
+
+// WARNING CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= FALSE , //
+		bAlarm2			:= FALSE , //	
+		bAlarm4			:= MesDataExd.MesData.MesAlarmUmin_Long, 						// GTE long 
+		bAlarm5			:= FALSE, 									//
+		bAlarm6			:= FALSE,                                   //
+		bAlarm7			:= FALSE,                                   //
+		bAlarm8			:= FALSE,                                   //
+		bAlarm9			:= FALSE,                                   //
+		bAlarm10		:= FALSE,                                   //
+		bAlarm11		:= FALSE,                                   //
+		bAlarm12		:= FALSE,                                   //
+		bAlarm13		:= FALSE,                                   //
+		bAlarm14		:= FALSE,                                   //
+		bAlarm15		:= FALSE, 									//
+		wAlarmCode		=>MesDataExd.MesData.MesWarningCode);
+
+// EVENT CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:=FALSE, 		//  
+		bAlarm2			:=FALSE, 		//  
+		bAlarm3			:=FALSE, 		//  
+		bAlarm4			:=FALSE, 		// 
+		bAlarm5			:=FALSE,        //
+		bAlarm6			:=FALSE,        //
+		bAlarm7			:=FALSE,        //
+		bAlarm8			:=FALSE,        //
+		bAlarm9			:=FALSE,        //
+		bAlarm10		:=FALSE,        //
+		bAlarm11		:=FALSE,        //
+		bAlarm12		:=FALSE,        //
+		bAlarm13		:=FALSE,        //
+		bAlarm14		:=FALSE,        //
+		bAlarm15		:=FALSE, 
+		wAlarmCode		=>MesDataExd.MesData.MesEventCode);
+		
+			
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Evaluate" Id="{ad095a7f-32eb-493f-b0ff-861c574704aa}">
+      <Declaration><![CDATA[METHOD M_Evaluate
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//Need to check the GTE FAULT
+
+
+// GTE IS LONG AFTER 50S
+TON_GteIsLong(IN:=IN_AlarmUmin_IO ,PT:=T#50S); 
+MesData.MesAlarmUmin_Long := TON_GteIsLong.Q ; 
+
+
+//Update MesData
+
+MesData.MesAlarmUmin 			:= IN_AlarmUmin_IO;
+
+TON_ComAlarm(IN:=NOT IN_MesWatchDog_IO OR NOT IN_MesWatchdogREU615_IO , PT:=ParamTempoComAlarm ) ; 
+MesData.MesAlarmCom		:=TON_ComAlarm.Q  ; 
+MesData.MesAlarmImax		:= IN_AlarmIMax_IO;
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_ProtectRelay_DM2">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ProtectRelay_DM2.M_AlarmManagement">
+      <LineId Id="121" Count="58" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ProtectRelay_DM2.M_Evaluate">
+      <LineId Id="14" Count="2" />
+      <LineId Id="70" Count="3" />
+      <LineId Id="65" Count="0" />
+      <LineId Id="52" Count="2" />
+      <LineId Id="78" Count="0" />
+      <LineId Id="77" Count="0" />
+      <LineId Id="55" Count="1" />
+      <LineId Id="59" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.9">
+  <DUT Name="Rack" Id="{ef41e032-8a3b-4ad0-8bf7-69d8d125c838}">
+    <Declaration><![CDATA[{attribute 'pack_mode' := '1'}
+
+TYPE Rack :
+STRUCT
+	
+		// Info of Rack BBMS  
+		ParamNbStrings			: UINT ; 	// 		Number of strings for the rack set in BBMS 
+		MesHeartBeat			: UINT;		// (NA) Rack's Heartbeat, increases by 1 every second
+		MesAlarm1				: WORD;		// (NA) bit0: 
+		MesAlarm2				: WORD;		// (NA) bit0: 
+		MesProtection1			: WORD;		// (NA) bit0: 
+		MesProtection2			: WORD;		// (NA) bit0: 		
+		MesSwitchControlStatus	: WORD ; 	// Control status
+		MesSwitchSensorStatus	: WORD ; 	// Sensor status
+		MesUSwtchGrPackPlus		: REAL;		// (V)	a measured value of voltage applied to pack(+) of switchgear
+		MesTempPCB				: REAL ; 	// (°C) Temperature Rack PCB 
+		MesIdcFaultLvl			: UINT ;	//		Current Level when power is cut (1/2/3/4/5/6/7/8/9/10 : 1200A/700A/500A/200A/0A/-0A/-200A/-500A/-700A/-1200A)
+		MesDcOpenCount			: UINT ; 	// Count number of dc opening 
+		MesDcCloseCount			: UINT ; 	// Count number of dc closing 
+		
+		AX_RACKSTRING			: ARRAY[1..1] OF RackString ; 	// object 
+	
+		CalRackClosed			: BOOL ; 		// Rack ( Main DC contactor )is closed 
+
+END_STRUCT
+END_TYPE
+	]]></Declaration>
+  </DUT>
+</TcPlcObject>

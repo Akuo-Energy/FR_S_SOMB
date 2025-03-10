@@ -1,0 +1,55 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="SKID_PE_HEMG3" Id="{55840335-51a4-4771-9c45-bd11535ade39}">
+    <Declaration><![CDATA[///////////
+// Structure for PE SKID. Main Operating Data to be saved (ex: OPC).  
+//////////
+TYPE SKID_PE_HEMG3:
+STRUCT
+	
+	MesCP_Read							: BOOL := TRUE;		(* (NA) Cal : Permanent Condition for Read		*)
+	MesCP_Write							: BOOL := TRUE;		(* (NA) Cal : Permanenent Condition for Write   *)
+	
+	MesDisparoTemp_Transformador1 		: BOOL; (* (NA) alarm transformer*)
+	MesAlarmTemp_Transformador1	 		: BOOL; (* (NA) warning temp transformer*)
+	MesDisparoPresion_Transformador1 	: BOOL; (* (NA) alarm pressure transformer*)
+	MesDisparoOil_Transformador1 		: BOOL; (* (NA) alarm oil transformer*)
+
+	MesDisparoTemp_Transformador2 		: BOOL; (* (NA) alarm transformer*)
+	MesAlarmTemp_Transformador2	 		: BOOL; (* (NA) warning temp transformer*)
+	MesDisparoPresion_Transformador2 	: BOOL; (* (NA) alarm pressure transformer*)
+	MesDisparoOil_Transformador2 		: BOOL; (* (NA) alarm oil transformer*)
+
+	MesSeccionador1_Abierto				: BOOL; (* (NA) Secc opened*)
+	MesEarth1_Abierto					: BOOL; (* (NA) Earth switch Opened opened*)
+	MesMonitorGas						: BOOL; (* (NA) *)
+	MesMonitorGas2						: BOOL; (* (NA) *)
+	MesSeccionador2_Abierto				: BOOL; (* (NA) Secc opened*)
+	MesEarth2_Abierto					: BOOL; (* (NA) Earth switch Opened opened*)
+	MesSeccionadorMain1_Abierto			: BOOL; (* (NA) Secc opened*)
+	MesEarthMain1_Abierto				: BOOL; (* (NA) Earth switch Opened opened*)
+	MesCb1_Abierto						: BOOL; (* (NA) Circuit breaker*)
+	MesProtectRelay1_fallo				: BOOL; (* (NA) protect relay fault*)
+	MesProtectRelay1_overvoltage		: BOOL; (* (NA) protect relay fault*)
+	MesProtectRelay1_springloaded		: BOOL; (* (NA) *)
+
+	MesSeccionadorMain2_Abierto			: BOOL; (* (NA) Secc opened*)
+	MesEarthMain2_Abierto				: BOOL; (* (NA) Earth switch Opened opened*)
+	MesCb2_Abierto						: BOOL; (* (NA) Circuit breaker*)
+	MesProtectRelay2_fallo				: BOOL; (* (NA) protect relay fault*)
+	MesProtectRelay2_overvoltage		: BOOL; (* (NA) protect relay fault*)
+	MesProtectRelay2_springloaded		: BOOL; (* (NA) *)
+
+	MesTemp1							: REAL;(* (°C) temperature of the transformer*)
+	MesTemp2							: REAL;(* (°C) temperature of the transformer*)
+	
+	MesAlarmCom							: BOOL;
+	MesAlarmCode						: WORD; 			(* (NA) Internal Akuo AlarmCode                 *)
+	MesWarningCode						: WORD; 			(* (NA) Internal Akuo WarningCode               *)
+	MesEventCode						: WORD;		 		(* (NA) Internal Akuo EventCode                 *)                                                                            															
+END_STRUCT
+END_TYPE
+
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

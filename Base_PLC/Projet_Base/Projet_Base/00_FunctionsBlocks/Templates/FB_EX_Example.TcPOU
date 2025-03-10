@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4022.11">
+  <POU Name="FB_EX_Example" Id="{e6e46052-580b-4f9e-9d2f-58544beacc17}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_EX_Example
+//////////////////
+// 
+//////////////////
+VAR CONSTANT PERSISTENT
+	// Characteristics of the object (Same for all instances)
+	
+END_VAR
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance specific) 
+	
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	
+END_VAR
+VAR
+	//M_METHOD2 VARIABLES//
+	
+	
+	//M_METHOD2 VARIABLES//
+	
+	
+	//M_METHOD3 VARIABLES//
+	
+	
+	//GET/SET PROPERTY MANAGEMENT//
+	
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <LineIds Name="FB_EX_Example">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

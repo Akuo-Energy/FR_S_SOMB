@@ -1,0 +1,41 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_RestartService" Id="{cdfbc0ef-9f90-46e2-b410-f4c3f0db0ead}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_RestartService
+VAR_INPUT
+	IN_Directory			: T_MaxString; // directory of the file to compress
+	ParamNetID				: STRING ; // Net ID of the PC with HH collector
+	IN_ServiceName			: STRING  ;
+	Start					: BOOL;
+END_VAR
+VAR
+	StartProcess 			: NT_StartProcess;
+	TrigStart				: R_TRIG;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[TrigStart(CLK:=Start);
+	StartProcess
+	(
+		NETID := ParamNetID,
+		PATHSTR := concat(str1:= IN_Directory, str2 := IN_ServiceName),
+		DIRNAME := IN_Directory,
+		COMNDLINE := '',
+		Start := TrigStart.Q,
+		TMOUT := T#3M
+	);
+	IF NOT StartProcess.BUSY THEN
+		IF NOT StartProcess.ERR THEN
+			StartProcess(Start := FALSE);
+		ELSE
+			StartProcess(Start := FALSE);
+		END_IF
+	END_IF	
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_RestartService">
+      <LineId Id="48" Count="16" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

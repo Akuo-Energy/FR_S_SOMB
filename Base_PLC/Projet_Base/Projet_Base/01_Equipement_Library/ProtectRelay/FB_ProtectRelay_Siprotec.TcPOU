@@ -1,0 +1,342 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1">
+  <POU Name="FB_ProtectRelay_Siprotec" Id="{5b4a21c3-01f3-4982-8d10-d1b4c483f67b}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_ProtectRelay_Siprotec EXTENDS FB_ProtectRelay_Base
+// Hypothèse : défaut GTE entraîne ouverture automatique CB
+
+VAR_INPUT PERSISTENT
+	ParamTimeGteIsLong					: TIME := T#60S; 	(* Time after which a GTE fault is considered long *)
+	ParamTimeBeforeReconnect			: TIME := T#5M;		(* Time after a Short GTE when we can reconnect *)
+	                                                                                                        
+	// Parameters of the Object (instance specific)                                                         
+	ParamIPAddress			: STRING := '127.0.0.1'; 		(* (NA)Config: IP Adress of RPN                 *)
+	ParamnTcpPort			: UINT := 502;					(* TCP Port                                     *)
+	ParamUnitID 			: BYTE  := 1; 			  		(* (NA)   SMA Modbus Unit ID.                   *)
+	ParamInvNum				: BYTE ; 						(* (NA) Config :Numerous of the ESS in the HPP  *)
+	ParamOffsetRegisters	: UINT;
+	ParamCommunicating		: BOOL;
+	ParamAlarmUmin_NC		: BOOL;
+	ParamAlarmImax_NC		: BOOL;
+	ParamWatchdog_NC		: BOOL;
+	
+END_VAR
+
+
+VAR_INPUT
+	IN_MesAlarmIMax_IO						: BOOL; // C 13 100 Fault (internal)
+	IN_MesAlarmUmin_IO						: BOOL; // GTE Fault (external)
+	IN_MesComut_IO							: BOOL;
+	IN_TCSAlarm								: BOOL; // Alarme TCS (Supervision circuit de déclenchement)
+	IN_VrAnomaly							: BOOL; // Anomalie VR (Tension résiduelle)
+	IN_TripSynthesis						: BOOL; // Trip Synthesis
+	IN_CmdReset_3GTEFault					: BOOL; // 3GTE Fault Reset 
+	
+	MesDataExd						: ProtectRelay_Siprotec;
+END_VAR                         		
+VAR_OUTPUT                      		
+	OUT_CmdCloseMainCB						: BOOL;	// Cmd to close the main CB : if after 60s Gte is short OR if gte long AND after the grid stab
+	OUT_CmdOpenMainCB						: BOOL;
+	OUT_CmdAutoRecouplage_GteShort			: BOOL;	// 
+	OUT_MesC13100Fault_IO					: BOOL;
+END_VAR                         		
+VAR 
+	// M_READ VARIABLES 
+
+		FB_ModbusRead_RPN_3X		: FB_ModbusReadInputRegs ; 	// (NA) FB for Modbus Reading
+		
+		MesBlock_Temp 				: ARRAY[1..4] OF ARRAY [1..125] OF WORD ; 			// (NA) Temporary Block with multiple modbus reading (Caution : Double Word variables)
+		
+		AX_Error					: ARRAY[1..4] OF BOOL;
+		AX_ErrorID					: ARRAY[1..4] OF UDINT;
+                            		
+	//EVALUATE VARIABLES        	
+		TON_Communication_Alarm			: TON;
+		// GTE                  		
+		
+	//M_EVALUATE                			
+		TON_GteIsLong							: TON;
+		
+		FB_3GTE							: FB_CountNinTimeWindow; 
+		
+			
+
+		MesFreq_Old						: REAL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{802ed951-313f-40a8-a664-4a7dd0f0a2d4}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Manages Sepam Alarms. Alarms opens HT CB until Sepam manual Reset . Warning Opens CB-L but does not maintain warning
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager 	: FB_AlarmCodeManager ; 
+
+ 
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF ParamCommunicating THEN
+	TON_Communication_Alarm(in:=MesFreq_Old = MesDataExd.MesFreq, PT := T#3S, Q=> MesDataExd.MesData.MesAlarmCom);
+	IF MesFreq_Old <> MesDataExd.MesFreq THEN
+		MesFreq_Old := MesDataExd.MesFreq;
+	END_IF
+ELSE
+	MesDataExd.MesData.MesAlarmCom := FALSE;
+
+END_IF
+
+
+MesDataExd.MesComutLocal			:= IN_MesComut_IO ; 
+MesDataExd.MesTCSAlarm				:= IN_TCSAlarm;
+MesDataExd.MesVrAnomaly				:= IN_VrAnomaly;
+MesDataExd.MesTripSynthesis			:= IN_TripSynthesis;
+
+// ALARM CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:=MesdataExd.MesData.MesAlarmUmin, 		// GTE Fault in Siprotec
+		bAlarm2			:=MesDataExd.MesData.MesAlarmUmin_Long, 	// GTE Fault Long
+		bAlarm3			:=FALSE,
+		bAlarm4			:=MesDataExd.MesData.MesAlarmImax, 	// C13100 Fault in Siprotec
+		bAlarm5			:=MesDataExd.MesData.MesWatchdog,	// Watchdog fault if FALSE
+		bAlarm6			:=MesDataExd.MesData.MesAlarmCom,	// Communication alarm: no comm at all for 3s
+		bAlarm7			:=MesDataExd.MesTCSAlarm,           // Alarme TCS (Supervision circuit de déclenchement)
+		bAlarm8			:=MesDataExd.MesVrAnomaly,      	// Anomalie VR (tension résiduelle)
+		bAlarm9			:=MesDataExd.MesTripSynthesis,      // Trip Synthesis
+		bAlarm10		:=FALSE,                        	//
+		bAlarm11		:=FALSE,                        	//
+		bAlarm12		:=FALSE,                        	//
+		bAlarm13		:=FALSE,                        	//
+		bAlarm14		:=FALSE,                        	//
+		bAlarm15		:=FALSE, 							//
+		wAlarmCode		=> MesDataExd.MesData.MesAlarmCode);
+
+// WARNING CODE //
+	FB_AlarmCodeManager(		
+		bAlarm1			:=MesDataExd.MesComutLocal, 	// COMMUTATOR IN LOCAL
+		bAlarm2			:=FALSE,						//
+		bAlarm3			:=FALSE,                        //
+		bAlarm4			:=FALSE,                        //
+		bAlarm5			:=FALSE,                        //
+		bAlarm6			:=FALSE,                        //
+		bAlarm7			:=FALSE,                        //
+		bAlarm8			:=FALSE,                        //
+		bAlarm9			:=FALSE,                        //
+		bAlarm10		:=FALSE,                        //
+		bAlarm11		:=FALSE,                        //
+		bAlarm12		:=FALSE,                        //
+		bAlarm13		:=FALSE,                        //
+		bAlarm14		:=FALSE,                        //
+		bAlarm15		:=FALSE,                        //
+		wAlarmCode		=> MesDataExd.MesData.MesWarningCode);	
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_CP" Id="{1ddbb734-7068-43c8-b4a9-a73142a02003}">
+      <Declaration><![CDATA[METHOD M_CP 
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+SUPER^.M_CP() ; 
+
+
+
+
+Trig_Cmd_Read(CLK:=IN_CmdToggleRead);
+Trig_Cmd_Write(CLK:=IN_CmdToggleWrite);
+	
+IF Trig_Cmd_Read.Q THEN
+	IN_CmdToggleRead := FALSE;
+	MesDataExd.MesData.MesCP_Read := NOT MesDataExd.MesData.MesCP_Read;
+END_IF
+
+
+IF Trig_Cmd_Write.Q THEN
+	IN_CmdToggleWrite := FALSE;
+	MesDataExd.MesData.MesCP_Write := NOT MesDataExd.MesData.MesCP_Write;
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Evaluate" Id="{4633f138-8abe-46f4-94c0-7cdb981b8b18}">
+      <Declaration><![CDATA[METHOD M_Evaluate
+VAR_INPUT
+END_VAR
+VAR
+	MesOneFault 			: BOOL;		// at least one fault active;
+	PDLState				: BYTE;		//  Bit0: Decouplée , Bit1: Couplée ,BIT2 : effacée
+	KK: INT;
+	btest : bool;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+// GTE IS LONG AFTER 50S
+TON_GteIsLong(IN:=IN_MesAlarmUmin_IO ,PT:=T#50S); 
+MesDataExd.MesData.MesAlarmUmin_Long := TON_GteIsLong.Q ; 
+
+FB_3GTE(IN_bInput := IN_MesAlarmUmin_IO , IN_bReset := IN_CmdReset_3GTEFault , IN_CountMax := 3 , ParamTimeToMeasure := T#30M , OUT_FlagNinT =>MesDataExd.MesData.MesAlarm_GTE3Time ) ; 
+	
+//Update MesData
+MesDataExd.MesI			:= (MesDataExd.MesI1 + MesDataExd.MesI2 + MesDataExd.MesI3) / 3 ;
+
+	IF ParamAlarmUmin_NC THEN
+		MesDataExd.MesData.MesAlarmUmin	:= NOT IN_MesAlarmUmin_IO ; 
+	ELSE
+		MesDataExd.MesData.MesAlarmUmin	:= IN_MesAlarmUmin_IO ; 
+	END_IF
+	
+	IF ParamAlarmImax_NC THEN
+		MesDataExd.MesData.MesAlarmImax	:= NOT IN_MesAlarmIMax_IO ; 
+	ELSE
+		MesDataExd.MesData.MesAlarmImax	:= IN_MesAlarmIMax_IO ; 
+	END_IF
+	
+	IF ParamWatchdog_NC THEN
+		MesDataExd.MesData.MesWatchdog	:= NOT IN_MesWatchDog_IO ; 
+	ELSE
+		MesDataExd.MesData.MesWatchdog	:= IN_MesWatchDog_IO ; 
+	END_IF
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{d9e3f3b2-06e6-47f7-b936-d090f7e2fbbc}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SUPER^.M_Execute() ; ]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{4206f644-536e-4d86-9378-e23025646389}">
+      <Declaration><![CDATA[METHOD M_Init
+VAR_INPUT
+END_VAR
+
+VAR
+	KK: INT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//A1_ProtectRelay.ParamClockReadTime := T#2S ; 
+//A1_ProtectRelay.ParamTimeOut	:= T#5S ; 
+//A1_ProtectRelay.ParamUnitID := 1 ; 
+//A1_ProtectRelay.ParamAlarmUmin_NC:= TRUE;
+//A1_ProtectRelay.ParamAlarmImax_NC:= TRUE;
+//A1_ProtectRelay.ParamWatchdog_NC:= TRUE;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Read" Id="{4e20a7c6-c11a-427f-81bd-81119c4e9e13}">
+      <Declaration><![CDATA[METHOD M_Read
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle)
+	i 					: INT;
+	MW					: FB_MergeWordsToDint; 
+	AX_Adr				: ARRAY[1..4] OF WORD 		:= [32,	00001,	00000,	00129];
+	AX_Qty				: ARRAY[1..4] OF WORD		:= [1,		107,	16,		83];
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// MODBUS REQUESTS//
+IF MesDataExd.MesData.MesCP_Read THEN
+		
+	FB_ModbusRead_RPN_3X(
+		nTcpPort 		:= ParamnTcpPort,
+		tTimeout		:= ParamTimeout,
+		nUnitID			:= ParamUnitID, 
+		sIPAddr			:= ParamIPAddress , 
+		ClockRead		:= ClockRead AND MesDataExd.MesData.MesCP_Read,
+		Reset			:= CmdClearFault_G ,
+		nQuantity		:= AX_Qty[3], 
+		nMBAddr			:= AX_Adr[3] + ParamOffsetRegisters,  
+		cbLength		:= SIZEOF(MesBlock_Temp[3]) , 
+		pDestAddr		:= ADR(MesBlock_Temp[3]) , 
+		ModbusReadAlarm	=> AX_Error[3] , 
+		ErrorId			=> AX_ErrorID[3]
+	);
+			
+	// MODBUS BLOCKS SEPARATION	
+		
+		MW(WORD_STRONG := MesBlock_Temp[3][1], FIX := 1, SIGNED := TRUE, VAR_OUT := MesdataExd.MesI1);
+		MW(WORD_STRONG := MesBlock_Temp[3][2], FIX := 1, SIGNED := TRUE, VAR_OUT := MesdataExd.MesI2);
+		MW(WORD_STRONG := MesBlock_Temp[3][3], FIX := 1, SIGNED := TRUE, VAR_OUT := MesdataExd.MesI3);
+		MW(WORD_STRONG := MesBlock_Temp[3][4], FIX := 1, SIGNED := TRUE, VAR_OUT := MesdataExd.MesIn);
+		MW(WORD_STRONG := MesBlock_Temp[3][5], FIX := 2, SIGNED := TRUE, VAR_OUT := MesdataExd.MesV1);
+		MW(WORD_STRONG := MesBlock_Temp[3][6], FIX := 2, SIGNED := TRUE, VAR_OUT := MesdataExd.MesV2);
+		MW(WORD_STRONG := MesBlock_Temp[3][7], FIX := 2, SIGNED := TRUE, VAR_OUT := MesdataExd.MesV3);
+		MW(WORD_STRONG := MesBlock_Temp[3][8], FIX := 2, SIGNED := TRUE, VAR_OUT := MesdataExd.MesU12);
+		MW(WORD_STRONG := MesBlock_Temp[3][9], FIX := 2, SIGNED := TRUE, VAR_OUT := MesdataExd.MesU23);
+		MW(WORD_STRONG := MesBlock_Temp[3][10], FIX := 2, SIGNED := TRUE, VAR_OUT := MesdataExd.MesU31);
+		MW(WORD_STRONG := MesBlock_Temp[3][11], FIX := 2, SIGNED := TRUE, VAR_OUT := MesdataExd.MesUn);
+	//	MW(WORD_STRONG := MesBlock_Temp[3][12], FIX := -1, SIGNED := TRUE, VAR_OUT := MesdataExd.MesP);
+		MW(WORD_STRONG := MesBlock_Temp[3][13], FIX := -1, SIGNED := TRUE, VAR_OUT := MesdataExd.MesQ);
+		MW(WORD_STRONG := MesBlock_Temp[3][14], FIX := -1, SIGNED := TRUE, VAR_OUT := MesdataExd.MesS);
+		MW(WORD_STRONG := MesBlock_Temp[3][15], FIX := 2, SIGNED := TRUE, VAR_OUT := MesdataExd.MesFreq);
+		MW(WORD_STRONG := MesBlock_Temp[3][16], FIX := 4, SIGNED := TRUE, VAR_OUT := MesdataExd.MesCosPhi);
+		
+	IF abs(MesDataExd.MesCosPhi) < 1 THEN
+		MesdataExd.MesP := (MesDataExd.MesI1*MesDataExd.MesV1 + MesDataExd.MesI2*MesDataExd.MesV2 + MesDataExd.MesI3*MesDataExd.MesV3 )* abs(MesDataExd.MesCosPhi);
+	ELSE
+		MesdataExd.MesP := (MesDataExd.MesI1*MesDataExd.MesV1 + MesDataExd.MesI2*MesDataExd.MesV2 + MesDataExd.MesI3*MesDataExd.MesV3 );
+	END_IF
+		
+
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_ProtectRelay_Siprotec">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ProtectRelay_Siprotec.M_AlarmManagement">
+      <LineId Id="303" Count="11" />
+      <LineId Id="316" Count="40" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ProtectRelay_Siprotec.M_CP">
+      <LineId Id="42" Count="19" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ProtectRelay_Siprotec.M_Evaluate">
+      <LineId Id="91" Count="0" />
+      <LineId Id="79" Count="7" />
+      <LineId Id="110" Count="4" />
+      <LineId Id="109" Count="0" />
+      <LineId Id="115" Count="0" />
+      <LineId Id="117" Count="3" />
+      <LineId Id="116" Count="0" />
+      <LineId Id="121" Count="0" />
+      <LineId Id="123" Count="3" />
+      <LineId Id="122" Count="0" />
+      <LineId Id="100" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ProtectRelay_Siprotec.M_Execute">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ProtectRelay_Siprotec.M_Init">
+      <LineId Id="9" Count="4" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ProtectRelay_Siprotec.M_Read">
+      <LineId Id="3" Count="44" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

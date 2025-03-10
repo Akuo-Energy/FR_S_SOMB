@@ -1,0 +1,176 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_HeartBeatMasterBackup" Id="{d4de200d-dfec-401b-8116-dbd27b4029dc}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_HeartBeatMasterBackup
+//////////////////
+// heart beat detector using ADS . 
+//////////////////
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance specific) 
+	ParamTempoImpulsion3		: TIME := T#500MS ;			// (s) Config : Tempo command impulsion
+	ParamTimeout				: TIME  := T#100MS ;				// (Time) Timeout for modbus reading
+	                                                    
+END_VAR                                                 
+                                                        
+VAR_INPUT                                               
+	//M_Backup Variables//       
+//{attribute 'OPC.UA.DA' := '1'}                       
+	sNetId 				   		: STRING(20);      					// (NA) ADS device identification Adress
+	nPort				  		: UINT := 851;					    // (NA) ADS device Port
+	IdxGroup					: UDINT:=16#4020;		// Counter TMC Group Index
+	IdxOff						: UDINT:=4; 		// Counter TMC Offset Index
+END_VAR                                                             
+                                                                    
+VAR_OUTPUT                                                          
+	bHeartBeat					: BOOL := FALSE;					// (NA) Heart beat detector : False if complete loss of communication with the master
+	nCounter                     AT%Q* : BYTE;					    // (NA) Variable to increment in the master	
+END_VAR                                                 
+                                                        
+VAR                                                     
+	//M_Backup Variables//                              
+	ADSREADEX1                  : ADSREADEX;						// (NA) Functionnal Block to request data from an ADS device
+	                                                    			
+	TP1							: TP ; 							// (NA) Tempo to define ADS Reading Frequency 
+	R_TRIG1						: R_TRIG;							// (NA) Tempo Rising edge detection for ADS Reading
+	TON_Freeze					: TON;                                                    			
+	ClockRead					: BOOL;								// (NA) ADS reading Clock
+	nResult  					: BYTE;            					// (NA) Variable in which the read data have to be stored
+	nResult_Temp				: BYTE;	
+	bBusy						: BOOL;                             // (NA) Busy Flag
+	bError						: BOOL;            					// (NA) Error Flag
+	ErrorId						: UDINT;           					// (NA) Error Id returned by FB (see ADS error Code)
+	//M_Master Variables//  
+
+	CountError					: UINT ;
+	CountOK						: UINT ; 
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_Backup" Id="{2a11f1eb-2a17-42eb-93c1-f69ed46d2b07}">
+      <Declaration><![CDATA[METHOD M_Backup
+
+VAR
+	// Method local variables (reinitialized at each cycle) 
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[TP1(IN:= NOT TP1.Q,PT:=ParamTempoImpulsion3);
+R_TRIG1(CLK:=TP1.Q,Q=>ClockRead);
+
+ADSREADEX1(NETID:=sNetId,
+		   PORT:=nPort,
+		   IDXGRP:=IdxGroup,
+		   IDXOFFS:=IdxOff,
+		   LEN:=1,
+		   READ:=ClockRead,
+		   DESTADDR:=ADR(nResult),
+		   TMOUT:=ParamTimeout,
+		   BUSY=>bBusy,
+		   ERR=>bError,
+		   ERRID=>ErrorId);
+		   
+
+TON_Freeze(IN:= (nResult =nResult_Temp), PT:=ParamTempoImpulsion3 ) ; 		    	   
+
+// Case : after a restart of the master , the Counter  = 0 fixed . Then the slave detects a change 
+		   
+IF NOT bBusy AND bError THEN
+	// IF ADS fails ( Beckhoff is down, not answering ADS) 
+	CountError := CountError +1 ; 
+
+ELSIF NOT bBusy AND NOT bError AND NOT TON_Freeze.Q  THEN
+	// Return to PLC master OK . OR  Data is incrementing
+	CountOK := CountOK+1 ; 
+	//bHeartBeat:=TRUE;
+	CountError := 0 ; 
+	nResult_Temp := nResult ;
+ELSIF NOT bBusy AND NOT bError AND TON_Freeze.Q THEN 
+	// Counter is frozen ( Master untime stopped , or no stable operation ) 
+	bHeartBeat:=FALSE;
+	CountError := 0 ; 
+	CountOK:= 0 ; 
+	nResult_Temp := nResult ;
+END_IF
+
+
+IF CountError > 2  THEN 
+	bHeartBeat:=FALSE;
+	CountOK:= 0 ; 
+ELSIF CountOK>=2 THEN 
+	// Return to PLC MAster OK ( makes sure that the change of variables is steady ) 
+	bHeartBeat:=TRUE;
+END_IF
+
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Master" Id="{977a4953-a408-45ec-83ae-7082d900d861}">
+      <Declaration><![CDATA[METHOD M_Master
+
+VAR
+	// Method local variables (reinitialized at each cycle) 
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF MAIN.CalStableOp_G THEN 
+	nCounter:=MAX(1,nCounter +1); 			// Return to Master PLC possible . Safe operation
+	
+ELSE
+	
+	nCounter:=0;
+	
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_HeartBeatMasterBackup">
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_HeartBeatMasterBackup.M_Backup">
+      <LineId Id="31" Count="14" />
+      <LineId Id="65" Count="0" />
+      <LineId Id="46" Count="0" />
+      <LineId Id="77" Count="0" />
+      <LineId Id="76" Count="0" />
+      <LineId Id="67" Count="0" />
+      <LineId Id="47" Count="0" />
+      <LineId Id="75" Count="0" />
+      <LineId Id="48" Count="0" />
+      <LineId Id="23" Count="0" />
+      <LineId Id="22" Count="0" />
+      <LineId Id="49" Count="0" />
+      <LineId Id="80" Count="0" />
+      <LineId Id="24" Count="1" />
+      <LineId Id="64" Count="0" />
+      <LineId Id="59" Count="0" />
+      <LineId Id="74" Count="0" />
+      <LineId Id="63" Count="0" />
+      <LineId Id="60" Count="0" />
+      <LineId Id="82" Count="0" />
+      <LineId Id="26" Count="4" />
+      <LineId Id="50" Count="0" />
+      <LineId Id="81" Count="0" />
+      <LineId Id="78" Count="0" />
+      <LineId Id="84" Count="0" />
+      <LineId Id="83" Count="0" />
+      <LineId Id="2" Count="0" />
+      <LineId Id="57" Count="1" />
+      <LineId Id="56" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_HeartBeatMasterBackup.M_Master">
+      <LineId Id="5" Count="0" />
+      <LineId Id="4" Count="0" />
+      <LineId Id="13" Count="0" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="14" Count="0" />
+      <LineId Id="6" Count="0" />
+      <LineId Id="15" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

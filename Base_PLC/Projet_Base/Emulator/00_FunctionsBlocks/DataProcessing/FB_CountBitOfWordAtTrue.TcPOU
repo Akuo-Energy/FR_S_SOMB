@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_CountBitOfWordAtTrue" Id="{4a54b3a5-b49f-4340-b760-2fb473fc8543}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_CountBitOfWordAtTrue
+// Count the number of active bit of a word
+VAR_INPUT
+	MyWord		 	: WORD;		
+END_VAR
+VAR_OUTPUT
+	NbrBitAtTrue 	: BYTE;
+	PosOfLastOne	: BYTE;
+END_VAR
+VAR
+	KK 			 	: BYTE;
+	VarTemp		 	: WORD;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+NbrBitAtTrue := 0;
+FOR KK := 1 TO 16 DO
+	Vartemp := ROL(MyWord, KK);
+	IF VARtemp.0 THEN
+		NbrBitAtTrue := NbrBitAtTrue +1 ;
+		PosOfLastOne := KK;
+	END_IF
+END_FOR]]></ST>
+    </Implementation>
+    <LineIds Name="FB_CountBitOfWordAtTrue">
+      <LineId Id="42" Count="5" />
+      <LineId Id="61" Count="0" />
+      <LineId Id="48" Count="0" />
+      <LineId Id="40" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

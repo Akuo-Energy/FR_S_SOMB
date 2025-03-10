@@ -1,0 +1,15 @@
+{
+    "CERTIFICATEEXPIRATION": "P365D",
+    "REQUIREAUTH": 2,
+    "VIRTUALDIRECTORIES": {
+        "/": "C:\\Users\\ggy\\Desktop\\Twincat Code\\OnlineCode\\MQ_ST_MADI\\MADI_HMI",
+        "/Beckhoff.TwinCAT.HMI.Controls": "C:\\Users\\ggy\\Desktop\\Twincat Code\\OnlineCode\\MQ_ST_MADI\\Packages\\Beckhoff.TwinCAT.HMI.Controls.12.742.5\\runtimes\\native1.12-tchmi",
+        "/Beckhoff.TwinCAT.HMI.EventLogger": "C:\\Users\\ggy\\Desktop\\Twincat Code\\OnlineCode\\MQ_ST_MADI\\Packages\\Beckhoff.TwinCAT.HMI.EventLogger.12.742.5",
+        "/Beckhoff.TwinCAT.HMI.Functions": "C:\\Users\\ggy\\Desktop\\Twincat Code\\OnlineCode\\MQ_ST_MADI\\Packages\\Beckhoff.TwinCAT.HMI.Functions.12.742.5\\runtimes\\native1.12-tchmi",
+        "/Beckhoff.TwinCAT.HMI.RecipeManagement": "C:\\Users\\ggy\\Desktop\\Twincat Code\\OnlineCode\\MQ_ST_MADI\\Packages\\Beckhoff.TwinCAT.HMI.RecipeManagement.12.742.5",
+        "/Beckhoff.TwinCAT.HMI.SqliteHistorize": "C:\\Users\\ggy\\Desktop\\Twincat Code\\OnlineCode\\MQ_ST_MADI\\Packages\\Beckhoff.TwinCAT.HMI.SqliteHistorize.12.742.5",
+        "/bin": "C:\\Users\\ggy\\Desktop\\Twincat Code\\OnlineCode\\MQ_ST_MADI\\MADI_HMI\\bin\\",
+        "/bin/framework": "C:\\Users\\ggy\\Desktop\\Twincat Code\\OnlineCode\\MQ_ST_MADI\\MADI_HMI\\bin\\framework",
+        "/framework": "C:\\Users\\ggy\\Desktop\\Twincat Code\\OnlineCode\\MQ_ST_MADI\\Packages\\Beckhoff.TwinCAT.HMI.Framework.12.742.5\\runtimes\\native1.12-tchmi"
+    }
+}

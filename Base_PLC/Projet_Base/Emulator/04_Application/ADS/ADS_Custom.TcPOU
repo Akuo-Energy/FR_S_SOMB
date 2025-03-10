@@ -1,0 +1,162 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="ADS_Custom" Id="{3001ac1a-8aa7-497b-80cf-6defbf7b12ac}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM ADS_Custom
+
+VAR_INPUT PERSISTENT
+	ParamVarAds				: UINT := 82 ; // Number of ADS variable to exchange 
+	ParamPortPrincipal 		: UINT := 851 ; // ADS Port of the main code  
+END_VAR
+
+VAR
+	
+bAlarmADSSize				: BOOL;		// Raise an alarm if one structure has a different size on the emulator than on the main code. 
+
+
+ReadAds						: ARRAY[1..ParamVarAdsMax_G ] OF  Adsread ;
+WriteAds					: ARRAY[1..ParamVarAdsMax_G ] OF  AdsWrite ;
+KK							: UINT ; 
+PLC_ReadSymInfoByName 		: ARRAY[1..ParamVarAdsMax_G] OF PLC_ReadSymInfoByName ;
+SignalName 					: ARRAY[1..ParamVarAdsMax_G] OF STRING ; 	// Tableau des noms de variable à aller chercher sur le code principal
+Address						: ARRAY[1..ParamVarAdsMax_G] OF PVOID ;	// Tableau des adresses mémoires de la variable sur l'émulator
+bClockIO					: ARRAY[1..ParamVarAdsMax_G] OF BOOL ; // If True , update every 100 ms , else every 1 sec . 
+
+Taille						: ARRAY[1..ParamVarAdsMax_G] OF PVOID ;	// Tableau de la taille pris par la variable sur l'émulatOR  
+ReadAdsType					: ARRAY[1..ParamVarAdsMax_G] OF BOOL ; 	// Tableau pour savoir si la variable doit etre importé vers l'emulator
+WriteAdsType				: ARRAY[1..ParamVarAdsMax_G] OF BOOL ; //  Tableau pour savoir si la variable doit etre exporté vers le code principal
+CP_Read						: ARRAY[1..ParamVarAdsMax_G] OF BOOL ; 	// Condition de lecture ou d'ecriture ads
+
+
+BInit						: BOOL:= TRUE;
+
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF BInit THEN 
+	M_Init();
+END_IF
+
+bAlarmADSSize := FALSE; 
+FOR KK:= 1 TO MIN(ParamVarAds, ParamVarAdsMax_G) DO 
+	// Get Infos only if output is empty
+	IF PLC_ReadSymInfoByName[KK].SYMINFO.symEntryLen = 0 OR bInit THEN
+		PLC_ReadSymInfoByName[KK](NETid := '', Port:=ParamPortPrincipal,Symname:=SignalName[KK], Start:= CalLocalTimeStruct.wSecond= KK MOD 60 OR bInit,TMOUT:= T#5S) ;
+	END_IF
+	
+	CP_Read[KK] := SEL( bClockIO[KK] ,MAIN_Emul.ClockReadCOM , MAIN_Emul.ClockReadIO)  AND NOT (PLC_ReadSymInfoByName[KK].SYMINFO.idxOffset=0) AND NOT PLC_ReadSymInfoByName[KK].ERR AND NOT ReadAds[KK].BUSY  ; 
+
+	// Control that Source and destination Structure have the same size. 
+	IF  PLC_ReadSymInfoByName[KK].SYMINFO.byteSize <> Taille[KK] THEN 
+		bAlarmADSSize := TRUE; 
+	END_IF
+
+	// Read signal 
+	IF ReadAdsType[KK] AND (PLC_ReadSymInfoByName[KK].SYMINFO.byteSize = Taille[KK]) THEN 
+	
+		ReadAds[KK](NETID:='',
+					   PORT:=ParamPortPrincipal,
+					   IDXGRP:=	PLC_ReadSymInfoByName[KK].SYMINFO.idxGroup,
+					   IDXOFFS:=PLC_ReadSymInfoByName[KK].SYMINFO.idxOffset,
+					   LEN:=PLC_ReadSymInfoByName[KK].SYMINFO.byteSize,
+					   READ:=CP_Read[KK],
+					   DESTADDR:=Address[KK], 
+					   TMOUT:= T#100MS);
+					   
+	ELSIF WriteAdsType[KK] AND (PLC_ReadSymInfoByName[KK].SYMINFO.byteSize = Taille[KK]) THEN 
+		WriteAds[KK]
+		(
+			NETID := '',
+			PORT := ParamPortPrincipal,
+			IDXGRP := PLC_ReadSymInfoByName[KK].SYMINFO.idxGroup,
+			IDXOFFS := PLC_ReadSymInfoByName[KK].SYMINFO.idxOffset,
+			LEN := PLC_ReadSymInfoByName[KK].SYMINFO.byteSize,
+			SRCADDR := Address[KK],
+			WRITE := CP_Read[KK],
+			TMOUT := T#100MS
+		);					   
+	END_IF		   	   
+END_FOR
+
+bInit:= FALSE ; ]]></ST>
+    </Implementation>
+    <Method Name="M_Init" Id="{7b009759-dd59-4abd-93b9-5de0f0f8af99}">
+      <Declaration><![CDATA[METHOD M_Init
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SignalName[1]:='GVL_CFG.AX_PTR[1].A1_Datalogger.MesDataExd';	bClockIO[1]:=FALSE;	Taille[1]:=SIZEOF(GVL_CFG.AX_PTR[1].A1_Datalogger.MesDataExd);	Address[1]:=ADR(GVL_CFG.AX_PTR[1].A1_Datalogger.MesDataExd);	ReadAdsType[1]:=FALSE;	WriteAdsType[1]:=TRUE;
+SignalName[2]:='GVL_CFG.AX_PTR[2].A1_Datalogger.MesDataExd';	bClockIO[2]:=FALSE;	Taille[2]:=SIZEOF(GVL_CFG.AX_PTR[2].A1_Datalogger.MesDataExd);	Address[2]:=ADR(GVL_CFG.AX_PTR[2].A1_Datalogger.MesDataExd);	ReadAdsType[2]:=FALSE;	WriteAdsType[2]:=TRUE;
+SignalName[3]:='GVL_CFG.AX_PTR[3].A1_Datalogger.MesDataExd';	bClockIO[3]:=FALSE;	Taille[3]:=SIZEOF(GVL_CFG.AX_PTR[3].A1_Datalogger.MesDataExd);	Address[3]:=ADR(GVL_CFG.AX_PTR[3].A1_Datalogger.MesDataExd);	ReadAdsType[3]:=FALSE;	WriteAdsType[3]:=TRUE;
+SignalName[4]:='GVL_CFG.AX_PTR[4].A1_Datalogger.MesDataExd';	bClockIO[4]:=FALSE;	Taille[4]:=SIZEOF(GVL_CFG.AX_PTR[4].A1_Datalogger.MesDataExd);	Address[4]:=ADR(GVL_CFG.AX_PTR[4].A1_Datalogger.MesDataExd);	ReadAdsType[4]:=FALSE;	WriteAdsType[4]:=TRUE;
+SignalName[5]:='GVL_CFG.AX_PTR[1].A1_Datalogger.CmdbyCom';	bClockIO[5]:=FALSE;	Taille[5]:=SIZEOF(GVL_CFG.AX_PTR[1].A1_Datalogger.CmdbyCom);	Address[5]:=ADR(GVL_CFG.AX_PTR[1].A1_Datalogger.CmdbyCom);	ReadAdsType[5]:=TRUE;	WriteAdsType[5]:=FALSE;
+SignalName[6]:='GVL_CFG.AX_PTR[2].A1_Datalogger.CmdbyCom';	bClockIO[6]:=FALSE;	Taille[6]:=SIZEOF(GVL_CFG.AX_PTR[2].A1_Datalogger.CmdbyCom);	Address[6]:=ADR(GVL_CFG.AX_PTR[2].A1_Datalogger.CmdbyCom);	ReadAdsType[6]:=TRUE;	WriteAdsType[6]:=FALSE;
+SignalName[7]:='GVL_CFG.AX_PTR[3].A1_Datalogger.CmdbyCom';	bClockIO[7]:=FALSE;	Taille[7]:=SIZEOF(GVL_CFG.AX_PTR[3].A1_Datalogger.CmdbyCom);	Address[7]:=ADR(GVL_CFG.AX_PTR[3].A1_Datalogger.CmdbyCom);	ReadAdsType[7]:=TRUE;	WriteAdsType[7]:=FALSE;
+SignalName[8]:='GVL_CFG.AX_PTR[4].A1_Datalogger.CmdbyCom';	bClockIO[8]:=FALSE;	Taille[8]:=SIZEOF(GVL_CFG.AX_PTR[4].A1_Datalogger.CmdbyCom);	Address[8]:=ADR(GVL_CFG.AX_PTR[4].A1_Datalogger.CmdbyCom);	ReadAdsType[8]:=TRUE;	WriteAdsType[8]:=FALSE;
+SignalName[9]:='GVL_CFG.AX_PTR[1].AX_INV[1].MesDataExd';	bClockIO[9]:=FALSE;	Taille[9]:=SIZEOF(GVL_CFG.AX_PTR[1].AX_INV[1].MesDataExd);	Address[9]:=ADR(GVL_CFG.AX_PTR[1].AX_INV[1].MesDataExd);	ReadAdsType[9]:=FALSE;	WriteAdsType[9]:=TRUE;
+SignalName[10]:='GVL_CFG.AX_PTR[1].AX_INV[2].MesDataExd';	bClockIO[10]:=FALSE;	Taille[10]:=SIZEOF(GVL_CFG.AX_PTR[1].AX_INV[2].MesDataExd);	Address[10]:=ADR(GVL_CFG.AX_PTR[1].AX_INV[2].MesDataExd);	ReadAdsType[10]:=FALSE;	WriteAdsType[10]:=TRUE;
+SignalName[11]:='GVL_CFG.AX_PTR[2].AX_INV[1].MesDataExd';	bClockIO[11]:=FALSE;	Taille[11]:=SIZEOF(GVL_CFG.AX_PTR[2].AX_INV[1].MesDataExd);	Address[11]:=ADR(GVL_CFG.AX_PTR[2].AX_INV[1].MesDataExd);	ReadAdsType[11]:=FALSE;	WriteAdsType[11]:=TRUE;
+SignalName[12]:='GVL_CFG.AX_PTR[2].AX_INV[2].MesDataExd';	bClockIO[12]:=FALSE;	Taille[12]:=SIZEOF(GVL_CFG.AX_PTR[2].AX_INV[2].MesDataExd);	Address[12]:=ADR(GVL_CFG.AX_PTR[2].AX_INV[2].MesDataExd);	ReadAdsType[12]:=FALSE;	WriteAdsType[12]:=TRUE;
+SignalName[13]:='GVL_CFG.AX_PTR[3].AX_INV[1].MesDataExd';	bClockIO[13]:=FALSE;	Taille[13]:=SIZEOF(GVL_CFG.AX_PTR[3].AX_INV[1].MesDataExd);	Address[13]:=ADR(GVL_CFG.AX_PTR[3].AX_INV[1].MesDataExd);	ReadAdsType[13]:=FALSE;	WriteAdsType[13]:=TRUE;
+SignalName[14]:='GVL_CFG.AX_PTR[3].AX_INV[2].MesDataExd';	bClockIO[14]:=FALSE;	Taille[14]:=SIZEOF(GVL_CFG.AX_PTR[3].AX_INV[2].MesDataExd);	Address[14]:=ADR(GVL_CFG.AX_PTR[3].AX_INV[2].MesDataExd);	ReadAdsType[14]:=FALSE;	WriteAdsType[14]:=TRUE;
+SignalName[15]:='GVL_CFG.AX_PTR[4].AX_INV[1].MesDataExd';	bClockIO[15]:=FALSE;	Taille[15]:=SIZEOF(GVL_CFG.AX_PTR[4].AX_INV[1].MesDataExd);	Address[15]:=ADR(GVL_CFG.AX_PTR[4].AX_INV[1].MesDataExd);	ReadAdsType[15]:=FALSE;	WriteAdsType[15]:=TRUE;
+SignalName[16]:='GVL_CFG.AX_PTR[4].AX_INV[2].MesDataExd';	bClockIO[16]:=FALSE;	Taille[16]:=SIZEOF(GVL_CFG.AX_PTR[4].AX_INV[2].MesDataExd);	Address[16]:=ADR(GVL_CFG.AX_PTR[4].AX_INV[2].MesDataExd);	ReadAdsType[16]:=FALSE;	WriteAdsType[16]:=TRUE;
+SignalName[17]:='GVL_CFG.AX_PTR[1].AX_INV[1].ClockRead';	bClockIO[17]:=TRUE;	Taille[17]:=SIZEOF(GVL_CFG.AX_PTR[1].AX_INV[1].ClockRead);	Address[17]:=ADR(GVL_CFG.AX_PTR[1].AX_INV[1].ClockRead);	ReadAdsType[17]:=TRUE;	WriteAdsType[17]:=FALSE;
+SignalName[18]:='GVL_CFG.AX_PTR[1].AX_INV[2].ClockRead';	bClockIO[18]:=TRUE;	Taille[18]:=SIZEOF(GVL_CFG.AX_PTR[1].AX_INV[2].ClockRead);	Address[18]:=ADR(GVL_CFG.AX_PTR[1].AX_INV[2].ClockRead);	ReadAdsType[18]:=TRUE;	WriteAdsType[18]:=FALSE;
+SignalName[19]:='GVL_CFG.AX_PTR[2].AX_INV[1].ClockRead';	bClockIO[19]:=TRUE;	Taille[19]:=SIZEOF(GVL_CFG.AX_PTR[2].AX_INV[1].ClockRead);	Address[19]:=ADR(GVL_CFG.AX_PTR[2].AX_INV[1].ClockRead);	ReadAdsType[19]:=TRUE;	WriteAdsType[19]:=FALSE;
+SignalName[20]:='GVL_CFG.AX_PTR[2].AX_INV[2].ClockRead';	bClockIO[20]:=TRUE;	Taille[20]:=SIZEOF(GVL_CFG.AX_PTR[2].AX_INV[2].ClockRead);	Address[20]:=ADR(GVL_CFG.AX_PTR[2].AX_INV[2].ClockRead);	ReadAdsType[20]:=TRUE;	WriteAdsType[20]:=FALSE;
+SignalName[21]:='GVL_CFG.AX_PTR[3].AX_INV[1].ClockRead';	bClockIO[21]:=TRUE;	Taille[21]:=SIZEOF(GVL_CFG.AX_PTR[3].AX_INV[1].ClockRead);	Address[21]:=ADR(GVL_CFG.AX_PTR[3].AX_INV[1].ClockRead);	ReadAdsType[21]:=TRUE;	WriteAdsType[21]:=FALSE;
+SignalName[22]:='GVL_CFG.AX_PTR[3].AX_INV[2].ClockRead';	bClockIO[22]:=TRUE;	Taille[22]:=SIZEOF(GVL_CFG.AX_PTR[3].AX_INV[2].ClockRead);	Address[22]:=ADR(GVL_CFG.AX_PTR[3].AX_INV[2].ClockRead);	ReadAdsType[22]:=TRUE;	WriteAdsType[22]:=FALSE;
+SignalName[23]:='GVL_CFG.AX_PTR[4].AX_INV[1].ClockRead';	bClockIO[23]:=TRUE;	Taille[23]:=SIZEOF(GVL_CFG.AX_PTR[4].AX_INV[1].ClockRead);	Address[23]:=ADR(GVL_CFG.AX_PTR[4].AX_INV[1].ClockRead);	ReadAdsType[23]:=TRUE;	WriteAdsType[23]:=FALSE;
+SignalName[24]:='GVL_CFG.AX_PTR[4].AX_INV[2].ClockRead';	bClockIO[24]:=TRUE;	Taille[24]:=SIZEOF(GVL_CFG.AX_PTR[4].AX_INV[2].ClockRead);	Address[24]:=ADR(GVL_CFG.AX_PTR[4].AX_INV[2].ClockRead);	ReadAdsType[24]:=TRUE;	WriteAdsType[24]:=FALSE;
+SignalName[25]:='GVL_CFG.AX_PTR[1].AX_INV[1].ClockWrite';	bClockIO[25]:=TRUE;	Taille[25]:=SIZEOF(GVL_CFG.AX_PTR[1].AX_INV[1].ClockWrite);	Address[25]:=ADR(GVL_CFG.AX_PTR[1].AX_INV[1].ClockWrite);	ReadAdsType[25]:=TRUE;	WriteAdsType[25]:=FALSE;
+SignalName[26]:='GVL_CFG.AX_PTR[1].AX_INV[2].ClockWrite';	bClockIO[26]:=TRUE;	Taille[26]:=SIZEOF(GVL_CFG.AX_PTR[1].AX_INV[2].ClockWrite);	Address[26]:=ADR(GVL_CFG.AX_PTR[1].AX_INV[2].ClockWrite);	ReadAdsType[26]:=TRUE;	WriteAdsType[26]:=FALSE;
+SignalName[27]:='GVL_CFG.AX_PTR[2].AX_INV[1].ClockWrite';	bClockIO[27]:=TRUE;	Taille[27]:=SIZEOF(GVL_CFG.AX_PTR[2].AX_INV[1].ClockWrite);	Address[27]:=ADR(GVL_CFG.AX_PTR[2].AX_INV[1].ClockWrite);	ReadAdsType[27]:=TRUE;	WriteAdsType[27]:=FALSE;
+SignalName[28]:='GVL_CFG.AX_PTR[2].AX_INV[2].ClockWrite';	bClockIO[28]:=TRUE;	Taille[28]:=SIZEOF(GVL_CFG.AX_PTR[2].AX_INV[2].ClockWrite);	Address[28]:=ADR(GVL_CFG.AX_PTR[2].AX_INV[2].ClockWrite);	ReadAdsType[28]:=TRUE;	WriteAdsType[28]:=FALSE;
+SignalName[29]:='GVL_CFG.AX_PTR[3].AX_INV[1].ClockWrite';	bClockIO[29]:=TRUE;	Taille[29]:=SIZEOF(GVL_CFG.AX_PTR[3].AX_INV[1].ClockWrite);	Address[29]:=ADR(GVL_CFG.AX_PTR[3].AX_INV[1].ClockWrite);	ReadAdsType[29]:=TRUE;	WriteAdsType[29]:=FALSE;
+SignalName[30]:='GVL_CFG.AX_PTR[3].AX_INV[2].ClockWrite';	bClockIO[30]:=TRUE;	Taille[30]:=SIZEOF(GVL_CFG.AX_PTR[3].AX_INV[2].ClockWrite);	Address[30]:=ADR(GVL_CFG.AX_PTR[3].AX_INV[2].ClockWrite);	ReadAdsType[30]:=TRUE;	WriteAdsType[30]:=FALSE;
+SignalName[31]:='GVL_CFG.AX_PTR[4].AX_INV[1].ClockWrite';	bClockIO[31]:=TRUE;	Taille[31]:=SIZEOF(GVL_CFG.AX_PTR[4].AX_INV[1].ClockWrite);	Address[31]:=ADR(GVL_CFG.AX_PTR[4].AX_INV[1].ClockWrite);	ReadAdsType[31]:=TRUE;	WriteAdsType[31]:=FALSE;
+SignalName[32]:='GVL_CFG.AX_PTR[4].AX_INV[2].ClockWrite';	bClockIO[32]:=TRUE;	Taille[32]:=SIZEOF(GVL_CFG.AX_PTR[4].AX_INV[2].ClockWrite);	Address[32]:=ADR(GVL_CFG.AX_PTR[4].AX_INV[2].ClockWrite);	ReadAdsType[32]:=TRUE;	WriteAdsType[32]:=FALSE;
+SignalName[33]:='GVL_CFG.A1_SUBMV.A1_ProtectRelay.MesDataExd';	bClockIO[33]:=FALSE;	Taille[33]:=SIZEOF(GVL_CFG.A1_SUBMV.A1_ProtectRelay.MesDataExd);	Address[33]:=ADR(GVL_CFG.A1_SUBMV.A1_ProtectRelay.MesDataExd);	ReadAdsType[33]:=FALSE;	WriteAdsType[33]:=TRUE;
+SignalName[34]:='GVL_CFG.A1_SUBMV.A1_ProtectRelay.ClockRead';	bClockIO[34]:=TRUE;	Taille[34]:=SIZEOF(GVL_CFG.A1_SUBMV.A1_ProtectRelay.ClockRead);	Address[34]:=ADR(GVL_CFG.A1_SUBMV.A1_ProtectRelay.ClockRead);	ReadAdsType[34]:=TRUE;	WriteAdsType[34]:=FALSE;
+SignalName[35]:='GVL_CFG.A1_SUBMV.A1_PM.MesDataExd';	bClockIO[35]:=FALSE;	Taille[35]:=SIZEOF(GVL_CFG.A1_SUBMV.A1_PM.MesDataExd);	Address[35]:=ADR(GVL_CFG.A1_SUBMV.A1_PM.MesDataExd);	ReadAdsType[35]:=FALSE;	WriteAdsType[35]:=TRUE;
+SignalName[36]:='GVL_CFG.A1_SUBMV.A1_PM.ClockRead';	bClockIO[36]:=TRUE;	Taille[36]:=SIZEOF(GVL_CFG.A1_SUBMV.A1_PM.ClockRead);	Address[36]:=ADR(GVL_CFG.A1_SUBMV.A1_PM.ClockRead);	ReadAdsType[36]:=TRUE;	WriteAdsType[36]:=FALSE;
+SignalName[37]:='GVL_CFG.A1_SUBMV.A1_PM_Aux.MesDataExd';	bClockIO[37]:=FALSE;	Taille[37]:=SIZEOF(GVL_CFG.A1_SUBMV.A1_PM_Aux.MesDataExd);	Address[37]:=ADR(GVL_CFG.A1_SUBMV.A1_PM_Aux.MesDataExd);	ReadAdsType[37]:=FALSE;	WriteAdsType[37]:=TRUE;
+SignalName[38]:='GVL_CFG.A1_SUBMV.A1_PM_Aux.ClockRead';	bClockIO[38]:=TRUE;	Taille[38]:=SIZEOF(GVL_CFG.A1_SUBMV.A1_PM_Aux.ClockRead);	Address[38]:=ADR(GVL_CFG.A1_SUBMV.A1_PM_Aux.ClockRead);	ReadAdsType[38]:=TRUE;	WriteAdsType[38]:=FALSE;
+SignalName[39]:='GVL_CFG.A1_SUBMV.A1_UPS_48v.ClockRead';	bClockIO[39]:=TRUE;	Taille[39]:=SIZEOF(GVL_CFG.A1_SUBMV.A1_UPS_48v.ClockRead);	Address[39]:=ADR(GVL_CFG.A1_SUBMV.A1_UPS_48v.ClockRead);	ReadAdsType[39]:=TRUE;	WriteAdsType[39]:=FALSE;
+SignalName[40]:='GVL_CFG.A1_SUBMV.A1_UPS_24v.ClockRead';	bClockIO[40]:=TRUE;	Taille[40]:=SIZEOF(GVL_CFG.A1_SUBMV.A1_UPS_24v.ClockRead);	Address[40]:=ADR(GVL_CFG.A1_SUBMV.A1_UPS_24v.ClockRead);	ReadAdsType[40]:=TRUE;	WriteAdsType[40]:=FALSE;
+SignalName[41]:='PRG_IO.MesCouplerStateSUBMV';	bClockIO[41]:=TRUE;	Taille[41]:=SIZEOF(PRG_IO.MesCouplerStateSUBMV);	Address[41]:=ADR(PRG_IO.MesCouplerStateSUBMV);	ReadAdsType[41]:=FALSE;	WriteAdsType[41]:=TRUE;
+SignalName[42]:='PRG_IO.MesIO_SUBMV_EL1809_1';	bClockIO[42]:=TRUE;	Taille[42]:=SIZEOF(PRG_IO.MesIO_SUBMV_EL1809_1);	Address[42]:=ADR(PRG_IO.MesIO_SUBMV_EL1809_1);	ReadAdsType[42]:=FALSE;	WriteAdsType[42]:=TRUE;
+SignalName[43]:='PRG_IO.MesIO_SUBMV_EL1809_2';	bClockIO[43]:=TRUE;	Taille[43]:=SIZEOF(PRG_IO.MesIO_SUBMV_EL1809_2);	Address[43]:=ADR(PRG_IO.MesIO_SUBMV_EL1809_2);	ReadAdsType[43]:=FALSE;	WriteAdsType[43]:=TRUE;
+SignalName[44]:='PRG_IO.MesIO_SUBMV_EL1809_3';	bClockIO[44]:=TRUE;	Taille[44]:=SIZEOF(PRG_IO.MesIO_SUBMV_EL1809_3);	Address[44]:=ADR(PRG_IO.MesIO_SUBMV_EL1809_3);	ReadAdsType[44]:=FALSE;	WriteAdsType[44]:=TRUE;
+SignalName[45]:='PRG_IO.MesIO_SUBMV_EL2809_4';	bClockIO[45]:=TRUE;	Taille[45]:=SIZEOF(PRG_IO.MesIO_SUBMV_EL2809_4);	Address[45]:=ADR(PRG_IO.MesIO_SUBMV_EL2809_4);	ReadAdsType[45]:=TRUE;	WriteAdsType[45]:=FALSE;
+SignalName[46]:='PRG_IO.MesIO_SUBMV_EL3024_5';	bClockIO[46]:=TRUE;	Taille[46]:=SIZEOF(PRG_IO.MesIO_SUBMV_EL3024_5);	Address[46]:=ADR(PRG_IO.MesIO_SUBMV_EL3024_5);	ReadAdsType[46]:=FALSE;	WriteAdsType[46]:=TRUE;
+SignalName[47]:='PRG_IO.MesIO_PTR_1_EL3024_8';	bClockIO[47]:=TRUE;	Taille[47]:=SIZEOF(PRG_IO.MesIO_PTR_1_EL3024_8);	Address[47]:=ADR(PRG_IO.MesIO_PTR_1_EL3024_8);	ReadAdsType[47]:=FALSE;	WriteAdsType[47]:=TRUE;
+SignalName[48]:='PRG_IO.MesIO_PTR_1_EL1809_9';	bClockIO[48]:=TRUE;	Taille[48]:=SIZEOF(PRG_IO.MesIO_PTR_1_EL1809_9);	Address[48]:=ADR(PRG_IO.MesIO_PTR_1_EL1809_9);	ReadAdsType[48]:=FALSE;	WriteAdsType[48]:=TRUE;
+SignalName[49]:='PRG_IO.MesIO_PTR_1_EL2809_10';	bClockIO[49]:=TRUE;	Taille[49]:=SIZEOF(PRG_IO.MesIO_PTR_1_EL2809_10);	Address[49]:=ADR(PRG_IO.MesIO_PTR_1_EL2809_10);	ReadAdsType[49]:=TRUE;	WriteAdsType[49]:=FALSE;
+SignalName[50]:='PRG_IO.MesIO_PTR_2_EL3024_8';	bClockIO[50]:=TRUE;	Taille[50]:=SIZEOF(PRG_IO.MesIO_PTR_2_EL3024_8);	Address[50]:=ADR(PRG_IO.MesIO_PTR_2_EL3024_8);	ReadAdsType[50]:=FALSE;	WriteAdsType[50]:=TRUE;
+SignalName[51]:='PRG_IO.MesIO_PTR_2_EL1809_9';	bClockIO[51]:=TRUE;	Taille[51]:=SIZEOF(PRG_IO.MesIO_PTR_2_EL1809_9);	Address[51]:=ADR(PRG_IO.MesIO_PTR_2_EL1809_9);	ReadAdsType[51]:=FALSE;	WriteAdsType[51]:=TRUE;
+SignalName[52]:='PRG_IO.MesIO_PTR_2_EL2809_10';	bClockIO[52]:=TRUE;	Taille[52]:=SIZEOF(PRG_IO.MesIO_PTR_2_EL2809_10);	Address[52]:=ADR(PRG_IO.MesIO_PTR_2_EL2809_10);	ReadAdsType[52]:=TRUE;	WriteAdsType[52]:=FALSE;
+SignalName[53]:='PRG_IO.MesIO_PTR_3_EL3024_8';	bClockIO[53]:=TRUE;	Taille[53]:=SIZEOF(PRG_IO.MesIO_PTR_3_EL3024_8);	Address[53]:=ADR(PRG_IO.MesIO_PTR_3_EL3024_8);	ReadAdsType[53]:=FALSE;	WriteAdsType[53]:=TRUE;
+SignalName[54]:='PRG_IO.MesIO_PTR_3_EL1809_9';	bClockIO[54]:=TRUE;	Taille[54]:=SIZEOF(PRG_IO.MesIO_PTR_3_EL1809_9);	Address[54]:=ADR(PRG_IO.MesIO_PTR_3_EL1809_9);	ReadAdsType[54]:=FALSE;	WriteAdsType[54]:=TRUE;
+SignalName[55]:='PRG_IO.MesIO_PTR_3_EL2809_10';	bClockIO[55]:=TRUE;	Taille[55]:=SIZEOF(PRG_IO.MesIO_PTR_3_EL2809_10);	Address[55]:=ADR(PRG_IO.MesIO_PTR_3_EL2809_10);	ReadAdsType[55]:=TRUE;	WriteAdsType[55]:=FALSE;
+SignalName[56]:='GVL_CFG.AX_PTR[1].AX_INV[1].MesDataExd';	bClockIO[56]:= TRUE;Taille[56]:=SIZEOF(GVL_CFG.AX_PTR[1].AX_INV[1].MesDataExd);	Address[56]:=ADR(GVL_CFG.AX_PTR[1].AX_INV[1].MesDataExd_IN);ReadAdsType[56]:=TRUE;	WriteAdsType[56]:=FALSE;
+SignalName[57]:='GVL_CFG.AX_PTR[1].AX_INV[2].MesDataExd';	bClockIO[57]:=TRUE;	Taille[57]:=SIZEOF(GVL_CFG.AX_PTR[1].AX_INV[2].MesDataExd);	Address[57]:=ADR(GVL_CFG.AX_PTR[1].AX_INV[2].MesDataExd_IN);ReadAdsType[57]:=TRUE;	WriteAdsType[57]:=FALSE;
+SignalName[58]:='GVL_CFG.AX_PTR[2].AX_INV[1].MesDataExd';	bClockIO[58]:=TRUE;	Taille[58]:=SIZEOF(GVL_CFG.AX_PTR[2].AX_INV[1].MesDataExd);	Address[58]:=ADR(GVL_CFG.AX_PTR[2].AX_INV[1].MesDataExd_IN);ReadAdsType[58]:=TRUE;	WriteAdsType[58]:=FALSE;
+SignalName[59]:='GVL_CFG.AX_PTR[2].AX_INV[2].MesDataExd';	bClockIO[59]:=TRUE;	Taille[59]:=SIZEOF(GVL_CFG.AX_PTR[2].AX_INV[2].MesDataExd);	Address[59]:=ADR(GVL_CFG.AX_PTR[2].AX_INV[2].MesDataExd_IN);ReadAdsType[59]:=TRUE;	WriteAdsType[59]:=FALSE;
+SignalName[60]:='GVL_CFG.AX_PTR[3].AX_INV[1].MesDataExd';	bClockIO[60]:=TRUE;	Taille[60]:=SIZEOF(GVL_CFG.AX_PTR[3].AX_INV[1].MesDataExd);	Address[60]:=ADR(GVL_CFG.AX_PTR[3].AX_INV[1].MesDataExd_IN);ReadAdsType[60]:=TRUE;	WriteAdsType[60]:=FALSE;
+SignalName[61]:='GVL_CFG.AX_PTR[3].AX_INV[2].MesDataExd';	bClockIO[61]:=TRUE;	Taille[61]:=SIZEOF(GVL_CFG.AX_PTR[3].AX_INV[2].MesDataExd);	Address[61]:=ADR(GVL_CFG.AX_PTR[3].AX_INV[2].MesDataExd_IN);ReadAdsType[61]:=TRUE;	WriteAdsType[61]:=FALSE;
+SignalName[62]:='GVL_CFG.AX_PTR[4].AX_INV[1].MesDataExd';	bClockIO[62]:=TRUE;	Taille[62]:=SIZEOF(GVL_CFG.AX_PTR[4].AX_INV[1].MesDataExd);	Address[62]:=ADR(GVL_CFG.AX_PTR[4].AX_INV[1].MesDataExd_IN);ReadAdsType[62]:=TRUE;	WriteAdsType[62]:=FALSE;
+SignalName[63]:='GVL_CFG.AX_PTR[4].AX_INV[2].MesDataExd';	bClockIO[63]:=TRUE;	Taille[63]:=SIZEOF(GVL_CFG.AX_PTR[4].AX_INV[2].MesDataExd);	Address[63]:=ADR(GVL_CFG.AX_PTR[4].AX_INV[2].MesDataExd_IN);ReadAdsType[63]:=TRUE;	WriteAdsType[63]:=FALSE;]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="ADS_Custom">
+      <LineId Id="356" Count="44" />
+      <LineId Id="125" Count="0" />
+    </LineIds>
+    <LineIds Name="ADS_Custom.M_Init">
+      <LineId Id="1875" Count="61" />
+      <LineId Id="1866" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

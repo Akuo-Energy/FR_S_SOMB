@@ -1,0 +1,160 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="PowerCol_Jema" Id="{6ee639b7-59bd-41fc-a6f1-c7333d999d69}">
+    <Declaration><![CDATA[///////////
+// Structure For Jema Module 
+//////////
+TYPE PowerCol_Jema :
+STRUCT
+		MesPac 				: REAL; 		(* (kW) Active Power output (AC) of PCS										*)
+		MesQac 				: REAL; 		(* (kVAr) Reactive AC Power Produced by PCS                                 *)
+		MesPdc				: REAL ; 		(* (kW) DC Power .                                                          *)
+		MesCosPhi 			: REAL;  		(* (p.u) Power factor                                                       *)
+		MesFreq				: REAL ; 		(* (Hz) Frequency                                                           *)
+		MesU 				: REAL;  		(* (V) AC Voltage measure                                                   *)
+		MesUdc 				: REAL;  		(* (V) DC Voltage measure                                                   *)
+		MesI 				: REAL; 		(* (A) Total AC current                                                     *)
+		MesI1				: REAL ; 		(* (A) Phase 1 AC Current                                                   *)
+		MesI2				: REAL ;        (* (A) Phase 2 AC Current                                                   *)
+		MesI3				: REAL ;        (* (A) Phase 3 AC Current                                                   *)
+		MesIdc 				: REAL; 		(* (A) Total DC current from batteries (+ = discharge)                      *)
+		MesAcSwitchClosed	: BOOL ; 		(* (NA) Position of the AC Switch : True = Switch closed                    *)
+		MesTempControl      : REAL ; 		(* (°C) Temperature of control card                                         *)
+		MesTempPowerUnit    : REAL ;		(* (°C) Temperature of Power Unit                                           *)
+		MesTempCabinet      : REAL ; 		(* (°C) Cabinet temperature                                                 *)
+		MesRegAlarm0        : WORD ; 		(* Alarm Word of PCS                                                        *)
+		MesRegAlarm1        : WORD ; 		(* Alarm Word of PCS                                                        *)
+		MesRegAlarm2        : WORD ; 		(* Alarm Word of PCS                                                        *)
+		MesRegAlarm3        : WORD ;  		(* Alarm Word of PCS                                                        *)
+		MesRegAlarm4        : WORD ;  		(* Alarm Word of PCS                                                        *)
+		MesDeratingWord		: WORD ;		(* Derating word of PCS                                                     *)
+		MesHeartbit			: REAL ;		(* Heartbit                                                                 *)
+		MesDoorOpened		: BOOL ; 		(* PCS Door is opened .                                                     *)
+		MesMaster			: BOOL ; 		(* Power column is master ( stop in last ) .                                *)
+		
+		MesJemaAlarms		: PowerCol_Jema_Alarms;	(* Object *)
+
+		
+			
+
+END_STRUCT
+END_TYPE
+
+// ALARM WORD SUB-EQUIPEMNT 
+(*
+//RegAlarm0
+	FB_AlarmCodeManager
+(
+		bAlarm0			:= ,// I1_Alm      
+ 		bAlarm1			:= ,// I2_Alm      					   
+		bAlarm2			:= ,// I3_Alm                               
+		bAlarm3			:= ,// Vdc_High_Alm                         
+		bAlarm4			:= ,// Vdc_Low_Alm                          
+		bAlarm5			:= ,//                                      
+		bAlarm6			:= ,// U12_High_Alm                         
+		bAlarm7			:= ,// U12_Low_Alm                          
+		bAlarm8			:= ,// U23_High_Alm                         
+		bAlarm9			:= ,// U23_Low_Alm                          
+		bAlarm10		:= ,// U31_High_Alm                         
+		bAlarm11		:= ,// U31_Low_Alm                          
+		bAlarm12		:= ,// Vd_High_Alm 						
+		bAlarm13		:= ,// Vd_Low_Alm                           
+		bAlarm14		:= ,// Vdc_Neg                              
+		bAlarm15		:= ,//                                  
+		wAlarmCode		=> 				
+);   
+//RegAlarm1
+	FB_AlarmCodeManager
+(
+		bAlarm0			:= ,// U1223_Unbalance 
+ 		bAlarm1			:= ,// U2331_Unbalance 				   
+		bAlarm2			:= ,// U3112_Unbalance                           
+		bAlarm3			:= ,// InvertedPhase                             
+		bAlarm4			:= ,// I12_Unbalance                             
+		bAlarm5			:= ,// I23_Unbalance                             
+		bAlarm6			:= ,// I31_Unbalance                             
+		bAlarm7			:= ,// CouplingTimeout                           
+		bAlarm8			:= ,// F_High                                    
+		bAlarm9			:= ,// F_Low                                     
+		bAlarm10		:= ,//                                           
+		bAlarm11		:= ,// SPD Failure                               
+		bAlarm12		:= ,// PcbOverTemp     					
+		bAlarm13		:= ,// HeatsinkOverTemp                          
+		bAlarm14		:= ,//                                           
+		bAlarm15		:= ,// OvertempHyst                            
+		wAlarmCode		=> 				
+);   
+
+	FB_AlarmCodeManager
+(
+		bAlarm0			:= ,//                   
+ 		bAlarm1			:= ,//                   			   
+		bAlarm2			:= ,//                                        
+		bAlarm3			:= ,//                                        
+		bAlarm4			:= ,// GridCbOpened                           
+		bAlarm5			:= ,// GridCbTrip                             
+		bAlarm6			:= ,//                                        
+		bAlarm7			:= ,//                                        
+		bAlarm8			:= ,// GridContactFail                        
+		bAlarm9			:= ,// DoorOpened                             
+		bAlarm10		:= ,//                                        
+		bAlarm11		:= ,//                                        
+		bAlarm12		:= ,// VdcPrechargewrong 				
+		bAlarm13		:= ,//                                        
+		bAlarm14		:= ,// OverVoltHyst                           
+		bAlarm15		:= ,// IdcMax                              
+		wAlarmCode		=> 				
+);   
+
+	FB_AlarmCodeManager
+(
+		bAlarm0			:= ,// SKIIP1         
+ 		bAlarm1			:= ,// SKIIP2         	   
+		bAlarm2			:= ,// SKIIP3                        
+		bAlarm3			:= ,// SIIP_OT                       
+		bAlarm4			:= ,// IMax                          
+		bAlarm5			:= ,// EmergencyStop                 
+		bAlarm6			:= ,// FPGA_WdogTrip                 
+		bAlarm7			:= ,// StopEverything                
+		bAlarm8			:= ,// ImdWarning                    
+		bAlarm9			:= ,// ImdFault                      
+		bAlarm10		:= ,//                               
+		bAlarm11		:= ,// CoilOverTemp                  
+		bAlarm12		:= ,//                		
+		bAlarm13		:= ,// AlrmGrp1_Curr                 
+		bAlarm14		:= ,// AlrmGrp2_Curr                 
+		bAlarm15		:= ,// ShortCircuit_DC            
+		wAlarmCode		=> 				
+);   
+
+	FB_AlarmCodeManager
+(
+		bAlarm0			:= ,//               
+ 		bAlarm1			:= ,//               	   
+		bAlarm2			:= ,//                                
+		bAlarm3			:= ,// PowerUnbalance                 
+		bAlarm4			:= ,// Overpower                      
+		bAlarm5			:= ,// IOutRMS                        
+		bAlarm6			:= ,//                                
+		bAlarm7			:= ,//                                
+		bAlarm8			:= ,//                                
+		bAlarm9			:= ,//                                
+		bAlarm10		:= ,//                                
+		bAlarm11		:= ,//                                
+		bAlarm12		:= ,//               		
+		bAlarm13		:= ,//                                
+		bAlarm14		:= ,//                                
+		bAlarm15		:= ,//                             
+		wAlarmCode		=> 				
+);   
+
+
+
+
+
+
+
+
+*)]]></Declaration>
+  </DUT>
+</TcPlcObject>

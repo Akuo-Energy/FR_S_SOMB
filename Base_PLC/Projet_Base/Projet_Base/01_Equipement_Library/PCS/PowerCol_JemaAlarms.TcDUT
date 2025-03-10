@@ -1,0 +1,129 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="PowerCol_JemaAlarms" Id="{e6fe33e1-6a49-4b11-841c-dd4d32ba5176}">
+    <Declaration><![CDATA[TYPE PowerCol_JemaAlarms :
+STRUCT
+
+// ALARM0 bAlarm1
+		MesI1_Alm			: BOOL; 	//RegAlarms0: I1_Alm
+		MesI2_Alm			: BOOL; 	//RegAlarms0: I2_Alm
+		MesI3_Alm			: BOOL; 	//RegAlarms0: I3_Alm
+		MesVdc_High_Alm		: BOOL; 	//RegAlarms0: Vdc_High_Alm
+		MesVdc_Low_Alm		: BOOL; 	//RegAlarms0: Vdc_Low_Alm
+		                            	// 
+		MesU12_High_Alm		: BOOL; 	//RegAlarms0: U12_High_Alm
+		MesU12_Low_Alm		: BOOL; 	//RegAlarms0: U12_Low_Alm
+		MesU23_High_Alm		: BOOL; 	//RegAlarms0: U23_High_Alm
+		MesU23_Low_Alm		: BOOL; 	//RegAlarms0: U23_Low_Alm
+		MesU31_High_Alm		: BOOL; 	//RegAlarms0: U31_High_Alm
+		MesU31_Low_Alm		: BOOL; 	//RegAlarms0: U31_Low_Alm
+		MesVd_High_Alm		: BOOL; 	//RegAlarms0: Vd_High_Alm
+		MesVd_Low_Alm		: BOOL; 	//RegAlarms0: Vd_Low_Alm
+		MesVdc_Neg			: BOOL; 	//RegAlarms0: Vdc_Neg
+		                            	//   :blabla
+										//wAlarmCode
+		
+// ALARM1 bAlarm1
+		MesU1223_Unbalance	: BOOL;		//RegAlarms1: U1223_Unbalance
+		MesU2331_Unbalance	: BOOL;		//RegAlarms1: U2331_Unbalance
+		MesU3112_Unbalance	: BOOL;		//RegAlarms1: U3112_Unbalance
+		MesInvertedPhase	: BOOL;		//RegAlarms1: InvertedPhase
+		MesI12_Unbalance	: BOOL;		//RegAlarms1: I12_Unbalance
+		MesI23_Unbalance	: BOOL;		//RegAlarms1: I23_Unbalance
+		MesI31_Unbalance	: BOOL;		//RegAlarms1: I31_Unbalance
+		MesCouplingTimeout	: BOOL;		//RegAlarms1: CouplingTimeout
+		MesF_High			: BOOL;		//RegAlarms1: F_High
+		MesF_Low			: BOOL;		//RegAlarms1: F_Low
+		MesGrndFault		: BOOL;		//RegAlarms1: GrndFault
+		MesVaristor			: BOOL;		//RegAlarms1: Varistor
+		MesPcbOverTemp		: BOOL;		//RegAlarms1: PcbOverTemp
+		MesHeatsinkOverTemp	: BOOL;		//RegAlarms1: HeatsinkOverTemp
+		                           		// 
+		MesOvertempHyst		: BOOL;		//RegAlarms1: OvertempHyst
+		//wAlarmCode
+// ALARM2 bAlarm1
+										// 
+                                    	// 
+                                    	// 
+                                    	// 
+		MesGridCbOpened		: BOOL;		//RegAlarms2: GridCbOpened
+		MesGridCbTrip		: BOOL;		//RegAlarms2: GridCbTrip
+										//
+		                           		// 
+		MesGridContactFail	: BOOL;		//RegAlarms2: GridContactFail 
+		MesDoorOpened		: BOOL;		//RegAlarms2: DoorOpened 
+		                           		// 
+		                           		// 
+		MesVdcPrechargewrong: BOOL;		//RegAlarms2: VdcPrechargewrong 
+		                           		// 
+		MesOverVoltHyst		: BOOL;		//RegAlarms2: OverVoltHyst 
+		MesIdcMax			: BOOL;		//RegAlarms2: IdcMax 
+		//wAlarmCode
+		
+//ALARM3   bAlarm1                         
+		MesSKIIP1			: BOOL; 	//RegAlarms3: SKIIP1
+		MesSKIIP2			: BOOL; 	//RegAlarms3: SKIIP2
+		MesSKIIP3			: BOOL; 	//RegAlarms3: SKIIP3
+		MesSKIIP_OT			: BOOL; 	//RegAlarms3: SIIP_OT
+		MesFPGA_WdogTrip	: BOOL; 	//RegAlarms3: FPGA_WdogTrip
+		MesStopEverything	: BOOL; 	//RegAlarms3: StopEverything
+		MesIMax				: BOOL; 	//RegAlarms3: IMax
+		MesEmergencyStop	: BOOL; 	//RegAlarms3: EmergencyStop
+		MesImdWarning		: BOOL; 	//RegAlarms3: ImdWarning
+		MesImdFault			: BOOL; 	//RegAlarms3: ImdFault
+		                            	//RegAlarms3:  
+		MesCoilOverTemp		: BOOL; 	//RegAlarms3: CoilOverTemp
+		                            	//RegAlarms3:  
+		MesAlrmGrp1_Curr	: BOOL; 	//RegAlarms3: AlrmGrp1_Curr
+		MesAlrmGrp2_Curr	: BOOL; 	//RegAlarms3: AlrmGrp2_Curr
+		MesShortCircuit_DC	: BOOL; 	//RegAlarms3: ShortCircuit_DC
+		//wAlarmCode
+// ALARM4 bAlarm1
+		MesBatError			: BOOL;		//RegAlarms4: BatError
+		MesBatCtlStop		: BOOL;		//RegAlarms4: BatCtlStop
+		MesBatComErrors		: BOOL;		//RegAlarms4: BatComErrors
+		MesPowerUnbalance	: BOOL;		//RegAlarms4: PowerUnbalance
+		MesOverpower		: BOOL;		//RegAlarms4: Overpower
+		//wAlarmCode
+		
+END_STRUCT
+END_TYPE
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

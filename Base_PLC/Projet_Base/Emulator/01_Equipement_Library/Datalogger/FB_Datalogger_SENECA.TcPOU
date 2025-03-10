@@ -1,0 +1,50 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.9">
+  <POU Name="FB_Datalogger_SENECA" Id="{fb95c73f-0b84-438b-a7a8-699e8ea07c46}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Datalogger_SENECA EXTENDS FB_Datalogger_Base
+ 
+
+VAR_INPUT PERSISTENT
+	ParamWriteTimeout			: TIME  	:= T#5S ;		  					(* (Time) Timeout for modbus reading*)
+END_VAR
+
+       	
+VAR_INPUT           	
+	// I/O Inputs 
+	
+END_VAR             	
+      	
+VAR 
+MesDataExd				: Datalogger_SENECA;                		
+	
+//INPUT Modbus
+	FB_ModbusRead	          	: ARRAY[1..2] OF FB_ModbusRead; 	            // (NA) FB for Modbus Reading	
+	MesBlock1_Temp				: ARRAY [1..8] OF WORD ; 
+	
+	AlarmModbusInput			: BOOL;
+	AlarmID_ModbusInput			: UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_Execute" Id="{ea5cf854-5e24-4528-8f3c-4a96b530c3d1}">
+      <Declaration><![CDATA[METHOD M_Execute : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+		MesDataExd.MesData.MesWindSp := 14;
+		MesDataExd.MesWindDir := 80;]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_Datalogger_SENECA">
+      <LineId Id="151" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Datalogger_SENECA.M_Execute">
+      <LineId Id="82" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

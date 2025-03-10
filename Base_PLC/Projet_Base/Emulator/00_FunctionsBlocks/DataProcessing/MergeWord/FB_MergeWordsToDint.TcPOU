@@ -1,0 +1,75 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_MergeWordsToDint" Id="{6587cded-55a6-47e6-9831-0829e0d89f48}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_MergeWordsToDint
+////////////////// 
+// Merge two words or one word into a DINT or UDINT with big endian coding. And finally Output a Real. 
+//////////////////	
+
+VAR_IN_OUT
+	VAR_OUT 		: REAL ; 	
+	
+END_VAR
+
+VAR_INPUT
+	WORD_STRONG 	: WORD; 			// Strong Word. Word to consider if size equals 1.
+	WORD_WEAK 		: WORD 	:= 0; 		// Weak Word. 
+	
+	SIZE 			: INT	:=1 ; 		// Nomber of words to considers. SIZE is equals to one (defaut) or two
+	FIX 			: INT 	:=0 ; 		// Number of decimals (defaut 0)
+	
+	SIGNED 			: BOOL	:=FALSE; 	// Is the data signed or not (defaut) ? 
+	SmaDevice 		: BOOL 	:= FALSE ; 	// True if device is SMA. 
+
+END_VAR
+
+VAR
+	VAR_AUX 		: REAL ;			// Temporary variable before applying FIX
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// Specific code to SMA 250000TL which provide weird data in case of no power on AC or DC Side
+IF SmaDevice AND SIGNED AND (WORD_STRONG = 32768 OR WORD_STRONG = 65535)  THEN
+		WORD_STRONG := 0 ;
+		WORD_WEAK 	:= 0 ;
+		
+ELSIF SIGNED AND (WORD_STRONG = 32767 AND WORD_WEAK = 65535  )	THEN 	// Digiware 
+		WORD_STRONG := 0 ;
+		WORD_WEAK 	:= 0 ;
+
+ELSIF WORD_STRONG=65535 AND WORD_WEAK = 65535 AND SIZE=2 AND NOT SIGNED THEN 
+		WORD_STRONG := 0 ;
+		WORD_WEAK 	:= 0 ;
+		
+ELSIF WORD_STRONG=65535 AND NOT SIGNED AND SIZE=1 THEN 
+	WORD_STRONG := 0 ;
+
+END_IF
+
+
+
+
+IF SIGNED  THEN
+	IF SIZE=2 THEN
+		VAR_AUX := DINT_TO_REAL(DWORD_TO_DINT(SHL(WORD_TO_DWORD(WORD_STRONG),16) OR WORD_TO_DWORD(WORD_WEAK))) ; 
+	ELSE
+		VAR_AUX := INT_TO_REAL(WORD_TO_INT(WORD_STRONG)); 
+	END_IF
+ELSE
+	IF SIZE=2 THEN
+		VAR_AUX := DWORD_TO_REAL(SHL(WORD_TO_DWORD(WORD_STRONG),16) OR WORD_TO_DWORD(WORD_WEAK)) ;
+	ELSE
+		VAR_AUX := WORD_TO_REAL((WORD_STRONG));
+	END_IF	
+END_IF
+
+VAR_OUT := VAR_AUX/(EXPT(10,FIX));
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_MergeWordsToDint">
+      <LineId Id="239" Count="35" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

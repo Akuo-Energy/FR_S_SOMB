@@ -1,0 +1,262 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_TOR_Rain" Id="{cbf909a3-b333-4e53-b531-e0cd015bd491}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_TOR_Rain EXTENDS FB_TOR_Base
+//////////////////
+//  Rain sensor system.
+//////////////////
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance/model specific) 
+	ParamRainPerPulse				: REAL := 10 ; (* (mm) Number of mm of rain per pulse		*)
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	
+END_VAR
+
+VAR_INPUT
+	// I/O Inputs 		                                     				
+    ParamVarHrWarning   			: REAL :=8 ;  // (mm) Max of raining before warning mm of rain for last hour --> Mean it is raining a lot  Defaut value 8       
+    ParamVarDayWarning  			: REAL :=48;  // (mm )max of raining before warning mm of rain for last day  --> Mean it rained a lot during 1 day defaut value 48
+	ParamVarMinAlarm				: REAL :=-5;  // (%)  Config : Minimal allowed Site Hygrometry 
+
+
+
+	MesDataExd			: TOR_Rain;
+END_VAR
+
+VAR
+
+
+	//M_ALARMMANAGEMENT VARIABLES//
+		WarningDay					: BOOL;
+		WarningHr					: BOOL;
+		WarningValue				: BOOL;
+	
+	
+	//M_Execute
+		FB_AverageHr				: FB_Average; 	
+	    FB_AverageDay               : FB_Average;
+	    FB_AverageMonth             : FB_Average;
+		CTUHr						: CTU;
+		CTUDay						: CTU;
+		CTUMonth					: CTU;
+		Hour 						: INT;
+		PluvioHr_Avg		        : REAL ; 
+		PluvioDay_Avg		        : REAL ; 
+		PluvioMonth_Avg		        : REAL ;     
+		PluvioHr_Max		        : REAL;
+		PluvioDay_Max		        : REAL ; 
+		PluvioMonth_Max		        : REAL ; 
+        PluvioHr					: REAL ; 
+		PluvioDay					: REAL ; 
+		PluvioMonth					: REAL ; 
+
+	
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{ca46844c-04f7-4a0d-ac89-5dba98bd6ad2}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Manages Door sensor alarms and warnings
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager : FB_AlarmCodeManager ; 
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[	WarningDay	:= PluvioDay >= ParamVarDayWarning;
+	WarningHr	:= PluvioHr >= ParamVarHrWarning;
+	WarningValue:= PluvioDay <= ParamVarMinAlarm OR PluvioHr <= ParamVarMinAlarm;
+
+// ALARM CODE //
+	FB_AlarmCodeManager(
+ 		bAlarm1			:= FALSE,    								// 
+		bAlarm2			:= FALSE, 									// 
+		bAlarm3			:= FALSE, 									// 
+		bAlarm4			:= FALSE, 									// 
+		bAlarm5			:= FALSE,     								//
+		bAlarm6			:= FALSE,  									//
+		bAlarm7			:= FALSE,  									//
+		bAlarm8			:= FALSE,  									//
+		bAlarm9			:= FALSE,    								// 
+		bAlarm10		:= FALSE, 									// 
+		bAlarm11		:= FALSE, 									// 
+		bAlarm12		:= FALSE, 									// 
+		bAlarm13		:= FALSE,									// 
+		bAlarm14		:= FALSE,									// 
+		bAlarm15		:= FALSE,									// 
+		wAlarmCode		=>MesDataExd.MesData.MesAlarmCode);
+
+// WARNING CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= WarningHr,   							// Raining too hard 
+		bAlarm2			:= WarningDay, 								// Raining a lot during one day
+		bAlarm3			:= WarningValue, 							// Raining value not coherent
+		bAlarm4			:= FALSE, 									// 
+		bAlarm5			:= FALSE,    								// 
+		bAlarm6			:= FALSE, 									// 
+		bAlarm7			:= FALSE, 									// 
+		bAlarm8			:= FALSE, 									// 
+		bAlarm9			:= FALSE,    								// 
+		bAlarm10		:= FALSE, 									// 
+		bAlarm11		:= FALSE, 									// 
+		bAlarm12		:= FALSE, 									// 
+		bAlarm13		:= FALSE,									// 
+		bAlarm14		:= FALSE,									// 
+		bAlarm15		:= FALSE,									// 
+		wAlarmCode		=>MesDataExd.MesData.MesWarningCode);
+
+// EVENT CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= MesDataExd.MesData.MesAlarmState, 		// 0.2mm of water falled
+		bAlarm2			:= FALSE, 									// 
+		bAlarm3			:= FALSE, 									// 
+		bAlarm4			:= FALSE, 									// 
+		bAlarm5			:= FALSE, 									// 
+		bAlarm6			:= FALSE, 									// 
+		bAlarm7			:= FALSE, 									// 
+		bAlarm8			:= FALSE, 									// 
+		bAlarm9			:= FALSE, 									// 
+		bAlarm10		:= FALSE, 									// 
+		bAlarm11		:= FALSE, 									// 
+		bAlarm12		:= FALSE, 									// 
+		bAlarm13		:= FALSE, 									// 
+		bAlarm14		:= FALSE, 									//  
+		bAlarm15		:= FALSE, 									//  
+		wAlarmCode		=>MesDataExd.MesData.MesEventCode);
+		
+		
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{cf8b742a-c207-4559-abcd-732d2386b9d5}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// EMULATOR I/O //
+
+//MAIN CODE HERE
+Hour 							:=CstCycleTime_G/1000/3600  ;                        
+
+CTUHr   (CU:= MesDataExd.MesData.MesAlarmState , RESET :=  Hour MOD 1 = 0) ; 
+CTUDay  (CU:= MesDataExd.MesData.MesAlarmState , RESET := Hour MOD 24 = 0 ) ; 
+CTUMonth(CU:= MesDataExd.MesData.MesAlarmState , RESET := Hour MOD 24*30 = 0 ) ; 
+
+PluvioHr_Max := SEL( Hour MOD 1 = 0  ,   PluvioHr_Max , PluvioHr_Max:= PluvioHr)  ; 
+PluvioHr := CTUHr.CV * ParamRainPerPulse ; 
+
+PluvioDay_Max := SEL( Hour MOD 24 = 0  ,   PluvioDay_Max , PluvioDay_Max:= PluvioDay)  ; 
+PluvioDay := CTUDay.CV * ParamRainPerPulse ; 
+
+PluvioMonth_Max := SEL( Hour MOD 24*30 = 0  ,   PluvioMonth_Max , PluvioMonth_Max:= PluvioMonth)  ; 
+PluvioMonth := CTUMonth.CV * ParamRainPerPulse ; 
+
+
+//FB_AverageHr(ValueIn:=PluvioHr_Max  , WindowDuration := 24*3600*1000 , ValueOut => PluvioHr_Avg) ; 
+//FB_AverageDay(ValueIn:=PluvioDay_Max  , WindowDuration := 24*30*3600*1000 , ValueOut => PluvioDay_Avg) ; 
+//FB_AverageMonth(ValueIn:=PluvioMonth_Max  , WindowDuration := 24*365*3600*1000 , ValueOut => PluvioMonth_Avg) ;
+//EVALUATE
+
+MesDataExd.MesRainFall_LastHour 	:= PluvioHr;
+MesDataExd.MesRainFall_LastDay		:= PluvioDay;
+MesDataExd.MesRainFall_LastMonth	:= PluvioMonth;
+MesDataExd.AvgmmHour				:= PluvioHr_Avg;
+MesDataExd.AvgmmDay					:= PluvioDay_Avg;
+MesDataExd.AvgmmMonth				:= PluvioMonth_Avg;
+
+SUPER^.M_Execute(); ]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_StateManager" Id="{476a2809-d654-4084-ae69-e2a805cb5dee}">
+      <Declaration><![CDATA[METHOD M_StateManager
+//////////////////
+// Detect when fire occurs
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle)
+ 	MesStateInterm1 : BOOL;
+	MesStateInterm2 : BOOL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+IF ParamCableCutSecurity THEN
+	MesStateInterm1 := NOT IN_MesState1_IO ; 
+	MesStateInterm2 := NOT IN_MesState2_IO ; 
+ELSE 
+	MesStateInterm1 := IN_MesState1_IO;
+	MesStateInterm2 := IN_MesState2_IO;
+END_IF
+
+IF ParamNbSensors = 1 THEN 
+	MesStateInterm2 := MesStateInterm1 ;
+END_IF
+
+IF ParamAtleastOne THEN 
+MesDataExd.MesData.MesAlarmState := MesStateInterm1 OR MesStateInterm2 ; 
+ELSE
+MesDataExd.MesData.MesAlarmState := MesStateInterm1 AND MesStateInterm2 ; 
+END_IF
+
+R_TRIGAlarm(CLK:= MesDataExd.MesData.MesAlarmState ) ; 
+IF R_TRIGAlarm.Q THEN
+	MesCountAlarm :=  MIN(MesCountAlarm + 1 ,4294967295 ) ; 
+ELSIF IN_ResetCounter THEN 
+	MesCountAlarm := 0 ; 
+END_IF
+
+MesDataExd.MesData.MesCountAlarm	:= MesCountAlarm ; 
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_TOR_Rain">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_TOR_Rain.M_AlarmManagement">
+      <LineId Id="138" Count="61" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_TOR_Rain.M_Execute">
+      <LineId Id="168" Count="17" />
+      <LineId Id="199" Count="2" />
+      <LineId Id="189" Count="5" />
+      <LineId Id="202" Count="1" />
+      <LineId Id="197" Count="1" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_TOR_Rain.M_StateManager">
+      <LineId Id="153" Count="0" />
+      <LineId Id="110" Count="2" />
+      <LineId Id="155" Count="0" />
+      <LineId Id="157" Count="1" />
+      <LineId Id="113" Count="10" />
+      <LineId Id="135" Count="1" />
+      <LineId Id="124" Count="0" />
+      <LineId Id="137" Count="0" />
+      <LineId Id="141" Count="1" />
+      <LineId Id="138" Count="0" />
+      <LineId Id="140" Count="0" />
+      <LineId Id="139" Count="0" />
+      <LineId Id="125" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

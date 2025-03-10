@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="HPP_HMI" Id="{a93e9070-7611-4686-acb3-183de167836c}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM HPP_HMI
+VAR
+	
+	bTrig_SetptP					: BOOL;
+	bTrig_SetptQ					: BOOL;
+	bTrig_TargetSoCSoC				: BOOL;
+	bTrig_TargetSoCP				: BOOL;
+	bTrig_FreqRegParam				: BOOL;
+	bTrig_UregParam					: BOOL;
+
+	
+	SetptP_IO						: REAL;
+	SetptQ_IO						: REAL;
+	                            	
+	CalHppData						: PP;
+	KK 								: UINT;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <LineIds Name="HPP_HMI">
+      <LineId Id="54" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

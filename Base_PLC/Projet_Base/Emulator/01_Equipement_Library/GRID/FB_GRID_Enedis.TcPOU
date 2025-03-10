@@ -1,0 +1,136 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_GRID_Enedis" Id="{b3c345b5-f3d5-49d3-b7fc-c48c766ae3fa}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_GRID_Enedis
+//////////////////
+// Grid Operator interface . Base FB
+//////////////////
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance specific) 
+		ParamRseAvailable							: BOOL:=TRUE	; // GRID with RSE option
+		ParamTaAvailable							: BOOL:=TRUE	; // GRID with Teleaction option
+		ParamP0Available							: BOOL:=TRUE	; // GRID with P regulation option
+		ParamQ0Available							: BOOL:=TRUE	; // GRID with Q regulation option
+		ParamTONFiltering							: TIME:=T#200MS	; // Minimum tempo filter before command validation (Noise filtering)
+		ParamPmaxPark								: REAL;			  //(kW) Contractual maximal power plant active power
+		ParamQMax									: REAL;			  // (Kvar)   Contractual maximal power plant reactive power
+		ParamQMin									: REAL; 		  // (Kvar)  Contractual maximal power plant reactive power
+		ParamPMin									: REAL;			  // (kW) Contractual minimal power plant active power
+END_VAR
+
+
+VAR_INPUT
+	// I/O Inputs 
+		//FROM ENEDIS
+		IN_CmdAutCpl_IO								: BOOL; 	//	Autorisation de couplage
+		IN_CmdDisconnect_End_IO						: BOOL; 	//	Fin de demande de decouplage
+		IN_CmdDisconnect_IO							: BOOL;		//	Demande de decouplage
+		IN_CmdRSEOn_IO								: BOOL;		//	Mise en RSE
+		IN_CmdRSEOff_IO								: BOOL;		//	Mise Hors RSE
+		IN_CmdTAOn_IO								: BOOL; 	//	Teleaction en service
+		IN_CmdTAOff_IO								: BOOL; 	//	Teleaction Hors service
+		IN_CmdStopPReg_IO							: BOOL;		//	Fin de passage a P0
+		IN_CmdStartPReg_IO							: BOOL;		//	Passage a P0
+		IN_CmdStopQReg_IO							: BOOL;		//	Fin de passage a Q0
+		IN_CmdStartQreg_IO							: BOOL;		//	Passage a Q0
+		IN_CmdEndDisconnectOrder_IO					: BOOL;		//	Fin demande déconnection d'urgence		
+		IN_CmdEmergencyDisconnect_IO				: BOOL;		//	Demande d'effacement d'urgence
+		IN_CmdEmergencyDisconnect_End_IO			: BOOL; 	//	 Fin demande d'effacement d'urgence	
+		IN_CmdDisconnectFromTac_IO					: BOOL; 	//	Decouplage par tac
+		IN_CmdTacInFault_IO							: BOOL; 	//	Défaut Tac
+		(* 4..20mA *)                                       	
+		IN_MesP0Reg_IO								: INT; 		// Kw
+		IN_MesQ0Reg_IO								: INT; 		// Kvar
+		
+		
+		//FROM AKSES
+		IN_CmdAutCpl_other							: BOOL;
+		IN_CmdEmergencyDisconnect_other				: BOOL;
+		IN_CmdEmergencyDisconnect_End_other			: BOOL;
+		IN_CmdDisconnect_other						: BOOL;
+		IN_CmdDisconnect_end_other					: BOOL;
+		IN_CmdStartPReg_other						: BOOL;
+		IN_CmdStartQReg_other						: BOOL;
+		IN_CmdStopPReg_other						: BOOL;
+		IN_CmdStopQReg_other						: BOOL;
+		
+		(*TC Relais Protection*)
+		IN_ConnectAuthorizationLost					: BOOL; (*Tous les cas pour un Reset aut Couplage recu*)
+		IN_Unavailable								: BOOL; (*Disjoncteur général en Local, ou tous les départs en Local ou Bouton d'arret d'urgence *)
+		IN_PP_Connected								: BOOL; (*Centrale Couplée si DG = Fermé et au moins 1 départ antenne en production et au moins un onduleur en Prod*)
+
+END_VAR 
+
+
+VAR_OUTPUT
+		OUT_MesPPUnavailable_IO					: BOOL; // TS centrale indisponible*)
+		OUT_MesPPConnected_IO					: BOOL; // Centrale couplée(1)/Centrale Découplée(0)*)
+		OUT_MesAutCpl_IO 						: BOOL; // Autorisation de couplage reçue(1)/Attente d'autorisation de couplage(0)*)
+		OUT_MesDisconnect_IO 					: BOOL; // Demande de découplage reçue(1)/Fin de demande de découplage(0)*)
+		OUT_MesEmergencyDisconnect_IO 			: BOOL; // Demande d effacement d'urgence reçue*)
+		OUT_MesRSEON_IO							: BOOL; // Demande mise en RSE reçue*)
+		OUT_MesRSEOff_IO						: BOOL; // Demande mise en RSE en attente*)
+		OUT_MesTAOn_IO							: BOOL; // Demande mise en TeleAction reçue*)
+		OUT_MesTAOff_IO							: BOOL; // Demande mise en TeleAction en attente*)
+		OUT_MesStartPReg_IO						: BOOL; // Demande mise en regulation de P reçue*)
+		OUT_MesStopPReg_IO						: BOOL; // Demande mise en regulation de P en attente*)
+		OUT_MesStartQReg_IO						: BOOL; // Demande mise en regulation de Q reçue*)
+		OUT_MesStopQReg_IO						: BOOL; // Demande mise en regulation de Q en attente*)	
+	
+END_VAR
+
+
+VAR PERSISTENT
+	MesDataExd						: GRID_Enedis;	
+END_VAR
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//                                                    								
+
+
+	//M_EVALUATE VARIABLES//
+		//
+		MesDataInit									: GRID_Enedis;					
+		//TON                                   	
+		TONConnectAuthorization						: TON;
+		TONEmergencyDisconnect	               		: TON;
+	    TONEmergencyDisconnect_end	            	: TON;
+	    TONDisconnect	               				: TON;
+	    TONDisconnect_end               	 		: TON;
+	    TONPRegOn				                	: TON;
+	    TONPRegOff				                	: TON;
+	    TONQregOn				                	: TON;
+	    TONQRegOff				                	: TON;
+	    TONRSEOn				                	: TON;
+	    TONRSEOff				                	: TON;
+	    TONTAOn					                	: TON;
+	    TONTAOff				                	: TON;
+		
+				
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_Execute" Id="{be54af99-9f82-43b2-9a4d-9ed6587a78ca}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	// EMULATOR
+
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_GRID_Enedis">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_GRID_Enedis.M_Execute">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

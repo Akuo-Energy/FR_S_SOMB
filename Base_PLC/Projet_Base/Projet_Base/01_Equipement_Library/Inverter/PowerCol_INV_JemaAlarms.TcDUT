@@ -1,0 +1,144 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="PowerCol_INV_JemaAlarms" Id="{b8e4ca2f-c6a8-4745-9bc6-e52f07b0ef9b}">
+    <Declaration><![CDATA[TYPE PowerCol_INV_JemaAlarms :
+STRUCT
+
+// ALARM0 bAlarm1
+		MesI1_Alm				: BOOL; 	//RegAlarms0: I1_Alm
+		MesI2_Alm				: BOOL; 	//RegAlarms0: I2_Alm
+		MesI3_Alm				: BOOL; 	//RegAlarms0: I3_Alm
+		MesVdc_High_Alm			: BOOL; 	//RegAlarms0: Vdc_High_Alm
+		MesVdc_Low_Alm			: BOOL; 	//RegAlarms0: Vdc_Low_Alm
+		                    	        	// 
+		MesU12_High_Alm			: BOOL; 	//RegAlarms0: U12_High_Alm
+		MesU12_Low_Alm			: BOOL; 	//RegAlarms0: U12_Low_Alm
+		MesU23_High_Alm			: BOOL; 	//RegAlarms0: U23_High_Alm
+		MesU23_Low_Alm			: BOOL; 	//RegAlarms0: U23_Low_Alm
+		MesU31_High_Alm			: BOOL; 	//RegAlarms0: U31_High_Alm
+		MesU31_Low_Alm			: BOOL; 	//RegAlarms0: U31_Low_Alm
+		MesVd_High_Alm			: BOOL; 	//RegAlarms0: Vd_High_Alm
+		MesVd_Low_Alm			: BOOL; 	//RegAlarms0: Vd_Low_Alm
+		MesVdc_Neg				: BOOL; 	//RegAlarms0: Vdc_Neg
+		MesIdc_Neg				: BOOL;		//RegAlarms0: Idc_Neg
+											//MesAlarm0
+		                    	
+// ALARM1 bAlarm1           	
+		MesU1223_Unbalance		: BOOL;		//RegAlarms1: U1223_Unbalance
+		MesU2331_Unbalance		: BOOL;		//RegAlarms1: U2331_Unbalance
+		MesU3112_Unbalance		: BOOL;		//RegAlarms1: U3112_Unbalance
+		MesInvertedPhase		: BOOL;		//RegAlarms1: InvertedPhase
+		MesI12_Unbalance		: BOOL;		//RegAlarms1: I12_Unbalance
+		MesI23_Unbalance		: BOOL;		//RegAlarms1: I23_Unbalance
+		MesI31_Unbalance		: BOOL;		//RegAlarms1: I31_Unbalance
+											//
+		MesF_High				: BOOL;		//RegAlarms1: F_High
+		MesF_Low				: BOOL;		//RegAlarms1: F_Low
+											//
+											//
+		MesPcbOverTemp			: BOOL;		//RegAlarms1: PcbOverTemp
+		//wAlarmCode
+// ALARM2 bAlarm1
+											// 
+                                    		// 
+                                    		// 
+                                    		// 
+		MesGridCbOpened			: BOOL;		//RegAlarms2: GridCbOpened
+		MesGridCbTrip			: BOOL;		//RegAlarms2: GridCbTrip
+											//
+		                    	       		// 
+		MesGridContactFail		: BOOL;		//RegAlarms2: GridContactFail 
+		MesDoorOpened			: BOOL;		//RegAlarms2: DoorOpened 
+		                    	       		// 
+		                    	       		// 
+		                    	       		// 
+		MesAuxCbOpened			: BOOL;		//RegAlarms2: AuxCbOpened 
+		MesOverVoltHyst			: BOOL;		//RegAlarms2: OverVoltHyst 
+		MesIdcMax				: BOOL;		//RegAlarms2: IdcMax 
+		//wAlarmCode
+		
+//ALARM3   bAlarm1                         
+		MesSKIIP1				: BOOL; 	//RegAlarms3: SKIIP1
+		MesSKIIP2				: BOOL; 	//RegAlarms3: SKIIP2
+		MesSKIIP3				: BOOL; 	//RegAlarms3: SKIIP3
+		MesSKIIP_OT				: BOOL; 	//RegAlarms3: SIIP_OT
+		MesHardwareOverCurrent	: BOOL; 	//RegAlarms3: FPGA_WdogTrip
+		MesStopEverything		: BOOL; 	//RegAlarms3: StopEverything
+		MesIMax					: BOOL; 	//RegAlarms3: IMax
+		MesEmergencyStop		: BOOL; 	//RegAlarms3: EmergencyStop
+		MesImdWarning			: BOOL; 	//RegAlarms3: ImdWarning
+		MesImdFault				: BOOL; 	//RegAlarms3: ImdFault
+		                    	        	//RegAlarms3:  
+		MesCoilOverTemp			: BOOL; 	//RegAlarms3: CoilOverTemp
+		                    	        	//RegAlarms3:  
+		MesAlrmGrp1_Curr		: BOOL; 	//RegAlarms3: AlrmGrp1_Curr
+		MesAlrmGrp2_Curr		: BOOL; 	//RegAlarms3: AlrmGrp2_Curr
+		MesShortCircuit_DC		: BOOL; 	//RegAlarms3: ShortCircuit_DC
+		//wAlarmCode		
+		
+	//Input1                		
+		Es							: BOOL; // Emergency Stop 
+		DsAc						: BOOL;	// AC Door Open 
+		AcSurge						: BOOL;	// FeedBack Parafoudre AC Burned
+		GridCircuitBreakerDrop		: BOOL; // Circuit Breaker DC Open ??
+		VaristorProtCabAux			: BOOL; // Varistor protection cabinet auxiliaire
+		PlcOverTemp					: BOOL;	// Warning not alarms : Temp PLC under 40°
+		UnderTemp					: BOOL; // Low temperature, under 5°
+		Humidity					: BOOL;	// Humidity
+		Es_Or_CbDcOpen				: BOOL;	// Emergy Stop or circuit breaker dc open
+		
+	//Input2
+		CB_Motor1_Closed			: BOOL;	// Sectionneur DC 1 fermé
+		CB_Motor2_Closed			: BOOL;	// Sectionneur DC 1 fermé
+		CB_Motor3_Closed			: BOOL;	// Sectionneur DC 1 fermé
+		Ground_Fault_Lvl1_Bender	: BOOL; // Warning Lvl 1 ground fault from bender
+		Ground_Fault_Lvl2_Bender	: BOOL; // Alarms  Lvl 2 ground fault from bender
+		DsDc						: BOOL;	// Porte gauche fermé
+		DsSafe						: BOOL;	// Porte droite fermé
+		DcSurge						: BOOL; // FeedBack DC Surge
+		HeatingFail					: BOOL; // Error on heating system
+		CapaDischarge				: BOOL; // IS discharging Capacity
+		GFDI_Close					: BOOL;	// GFDHI IS CLOSE
+		GFDI_Open					: BOOL;	// GFDI IS OPEN
+		GFDI_Trip					: BOOL;	// GFDI HAS TRIPPED
+END_STRUCT
+END_TYPE
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

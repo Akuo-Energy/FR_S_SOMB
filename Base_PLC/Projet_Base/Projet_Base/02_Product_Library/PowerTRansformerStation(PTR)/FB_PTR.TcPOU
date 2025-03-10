@@ -1,0 +1,530 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_PTR" Id="{54d314e6-66f3-4116-a2db-e4ce7e1ead13}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_PTR EXTENDS FB_PTR_Base
+//////////////////
+//  AMGv1 product (2 to 4 inverters per containers). One contacteur per product.
+//////////////////
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance specific) 
+	ParamUnitID				: BYTE;                     (* (NA) Unit ID*)
+	ParamOrder_INV			: BOOL; 					(* (NA) Order of inverters on site. 1 = INV.1 on the right, 0 = INV.1 on the left *)
+	ParamPdc				: REAL;						(* (kWc) Power Crête use for power repartition *)
+END_VAR
+
+VAR_OUTPUT
+	//Child object
+	// Instances
+	
+END_VAR
+
+VAR_INPUT
+	// I/O Inputs 
+		// ALARM MANAGEMENT //
+		IN_MesCouplerState_IO				: UINT ; 				// Coupler State	 IO	
+
+		//A1_INV_Smartlogger			 		:  FB_INV_Smartlogger  ; // (NA) INV Object INstance (= Sma SC2750)
+		
+		A1_Datalogger						: FB_Datalogger_SchSkid;
+		AX_INV								: ARRAY[1..CstNbInv_PTR_G] OF  FB_INV_Huawei_Sun2000KtlMo ; // Schneider 
+                            				
+		A1_MainMVCB_PTR						: FB_CB_MainMVCB ; 
+                            				
+		A1_SD_Transfo						: FB_TOR_Sd ;			// (NA)TOR Smoke detector object instance Post Transformator
+		A1_SD_INV							: FB_TOR_Sd ;			// (NA)TOR Smoke detector object instance SCADA
+		A1_DS_Transfo						: FB_TOR_Ds ;			// (NA)TOR Door Sensor object instance Post Transformator
+		A1_DS_INV							: FB_TOR_Ds ;			// (NA)TOR Door Sensor object instance SCADA
+		A1_Transfo							: FB_Transfo_MV;		// Transfo 
+		A1_MainCBAux						: FB_TOR_Standard; 
+		A1_Fan								: FB_Fan_Basic;		
+
+				
+		A1_TempTR					: FB_ANA_IO;
+		
+		
+	MesDataExd					: PTR_Exd ;					// (NA) [P,H,B] AMG specific data structure 	
+
+		
+END_VAR
+
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//
+		R_TRIG_Event						: ARRAY[1..15] OF R_TRIG ; 
+		MesComErrorEthercat	 				: BOOL;						//(NA) Communication Error with Ethercat coupler 
+		TOF_Ethercat						: TOF ;	
+		
+	//M_EVALUATE VARIABLES//
+	
+	// I/O //
+		// Outputs	
+		CmdEmergencyStop					: BOOL ; 					// Emergency Stop from PTR. IO
+
+
+		AX_AlarmWords					: ARRAY[1..60] OF ST_ValuesAlarms;
+		AX_AlarmWords_Null				: ARRAY[1..60] OF ST_ValuesAlarms;
+		NumAlarmsActive					: UINT;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{c4589a37-2b57-467e-8198-ec5b9cf1e4a6}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Generates object alarms and manages resets. 
+//////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager			: FB_AlarmCodeManager ;
+
+	KK								: UINT;
+	MesAlarmSynthesis				: BOOL;
+	MesWarningSynthesis				: BOOL;
+
+
+	GG: INT ; 
+	LL: INT;
+	ID_Journal: INT;
+	WordTest: WORD;
+	NbAlarmsToParse : UINT := 1; // number of alarms to parse (if AlarmCode + WarningCode + EventCode = 3)
+	InitialNumberOfAlarms : UINT := 12; // ID of the first alarms of the first structure to parse, to be retrieved in FUN_Alarms.M_AlarmManager
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// ALARM AGGREGATION //
+
+	//COMMUNCATION //	
+	TOF_Ethercat(IN:= NOT (SHR(SHL(UINT_TO_BYTE(IN_MesCouplerState_IO),4),4)=8),PT:=T#5S)  ; 	// IN_MesCouplerState_IO à mapper dans IO
+	MesComErrorEthercat 			:= TOF_Ethercat.Q  ; 							// Not OP State . 
+	
+// ALARM CODE //
+
+// Attention une alarm doit être mise en commentaire de la manière suivante (* *), l'utilisation du // pose pb sur Bazefield 
+
+	FB_AlarmCodeManager(
+		bAlarm1			:= FALSE , //
+		bAlarm2			:= FALSE , //
+		bAlarm3			:= FALSE , //
+		bAlarm4			:= FALSE , //
+		bAlarm5			:= FALSE , //
+		bAlarm6			:= FALSE , //
+		bAlarm7			:= FALSE , //
+		bAlarm8			:= FALSE , //
+		bAlarm9			:= FALSE , //
+		bAlarm10		:= FALSE,  //          
+		bAlarm11		:= FALSE,  //                  
+		bAlarm12		:= FALSE,  //
+		bAlarm13		:= FALSE,  //     
+		bAlarm14		:= FALSE,  //  
+		bAlarm15		:= FALSE ,
+		wAlarmCode		=>MesDataExd.MesData.MesAlarmCode);
+
+// WARNING CODE //
+	FB_AlarmCodeManager(
+ 		bAlarm1			:= FALSE ,  							
+		bAlarm2			:= FALSE ,
+		bAlarm3			:= FALSE ,
+		bAlarm4			:= MesComErrorEthercat, 							//Ethercat communication Error #COM
+		bAlarm5			:= FALSE,//            				
+		bAlarm6			:= FALSE,
+		bAlarm7			:= FALSE,	//
+		bAlarm8			:= FALSE,	//
+		bAlarm9			:= FALSE,   //
+		bAlarm10		:= FALSE,   //           
+		bAlarm11		:= FALSE,   //           
+		bAlarm12		:= FALSE,	//
+		bAlarm13		:= FALSE,   //
+		bAlarm14		:= FALSE,	//
+        bAlarm15		:= FALSE, 	//
+		wAlarmCode		=>MesDataExd.MesData.MesWarningCode);
+		
+// EVENT CODE //
+		FB_AlarmCodeManager
+		(
+			bAlarm1 := R_TRIG_Event[1].Q,		// Start command
+			bAlarm2 := R_TRIG_Event[2].Q,		// Stop Command
+			bAlarm3 := R_TRIG_Event[3].Q,        // Disconnect command
+			bAlarm4 := R_TRIG_Event[4].Q,        // Reset command
+			bAlarm5 := R_TRIG_Event[5].Q,		
+			bAlarm6 := R_TRIG_Event[6].Q,       
+			bAlarm7 := R_TRIG_Event[7].Q,       
+			bAlarm8 := R_TRIG_Event[8].Q,        //  
+			bAlarm9 := R_TRIG_Event[9].Q,        //
+			bAlarm10 :=R_TRIG_Event[10].Q,        //
+			bAlarm11 :=R_TRIG_Event[11].Q,        //
+			bAlarm12 :=R_TRIG_Event[12].Q,        //
+			bAlarm13 :=R_TRIG_Event[13].Q,        //
+			bAlarm14 :=R_TRIG_Event[14].Q,        //
+			bAlarm15 :=R_TRIG_Event[15].Q,        //
+			wAlarmCode =>MesDataExd.MesData.MesEventCode
+		);
+		
+		
+R_TRIG_Event[1](CLK:=IN_CmdStart			       ) ;	
+R_TRIG_Event[2](CLK:=IN_CmdStop               	) ;	
+R_TRIG_Event[3](CLK:=IN_CmdDisconnect      ) ;  
+R_TRIG_Event[4](CLK:=IN_CmdReset     ) ;  
+R_TRIG_Event[5](CLK:=FALSE)	            	    ;  
+R_TRIG_Event[6](CLK:=FALSE           ) ;  
+R_TRIG_Event[7](CLK:=FALSE  ) ;  
+R_TRIG_Event[8](CLK:=FALSE   ) ;  
+R_TRIG_Event[9](CLK:=FALSE                ) ;  
+R_TRIG_Event[10](CLK:= FALSE              ) ; 
+R_TRIG_Event[11](CLK:= FALSE             	) ; 
+R_TRIG_Event[12](CLK:= FALSE                  ) ; 
+R_TRIG_Event[13](CLK:= FALSE              	) ;	
+R_TRIG_Event[14](CLK:= FALSE              	) ;	
+R_TRIG_Event[15](CLK:= FALSE             ) ;	
+
+
+NumAlarmsActive := 0;
+AX_AlarmWords := AX_AlarmWords_Null;
+FOR GG := 1 TO NbAlarmsToParse DO	// Loop over alarm , warning and event , system stop operation . ..  
+	FOR LL := 1 TO 15 DO
+		ID_Journal := InitialNumberOfAlarms + (ParamPTRNum - 1) + (GG - 1)*CstNbPTR_G;
+		
+		WordTest := ROR(FUN_Alarms.AX_RecupWord[ID_Journal],LL);
+		IF WordTest.0 AND NumAlarmsActive<60 THEN
+			NumAlarmsActive := NumAlarmsActive + 1;
+			AX_AlarmWords[NumAlarmsActive].Message := FUN_Alarms.AX_Journal[ID_Journal][LL].Message;
+		//ELSE
+		//	AX_AlarmWords[NumAlarmsActive+1].Message := '';
+		END_IF
+	END_FOR
+END_FOR]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_CurtailPower" Id="{82d83cae-bcc7-48c4-96bf-bfa7905f9e6c}">
+      <Declaration><![CDATA[METHOD M_CurtailPower
+//////////////////
+// Split Active Power curtailing limit among all active inverters. 
+/////////////////
+
+VAR 
+
+	KK							: UINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF MesDataExd.MesData.MesNbInv_Connected > 0 THEN
+	FOR KK:= 1 TO ParamNbINV DO
+		AX_INV[KK].IN_SetptPlimit := IN_SetptPlimit*(AX_INV[KK].ParamPdc/ParamPdc);
+		AX_INV[KK].IN_SetptQ := IN_SetptQlimit*(AX_INV[KK].ParamPdc/ParamPdc);
+	END_FOR
+ELSE 
+	AX_INV[KK].IN_SetptPlimit := 0;
+	AX_INV[KK].IN_SetptQ := 0;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_EquipmentCalls" Id="{563233e8-a73d-441f-8535-25b15eb0b6ad}">
+      <Declaration><![CDATA[METHOD M_EquipmentCalls
+//////////////////
+// Evaluate AMS characteristics
+//////////////////
+
+VAR
+	// Method local variables (reinitialized at each cycle) 
+
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[FOR KK:= 1 TO ParamNbINV DO 
+	AX_INV[KK].M_Execute();
+END_FOR
+
+A1_Datalogger.M_Execute();
+//A1_INV_Smartlogger.M_Execute();
+A1_MainMVCB_PTR.M_Execute() ;		 	
+A1_SD_Transfo.M_Execute();			
+A1_SD_INV.M_Execute();		
+A1_DS_Transfo.M_Execute();			
+A1_DS_INV.M_Execute();				
+A1_Transfo.M_Execute();			
+A1_MainCBAux.M_Execute();	
+A1_Fan.M_Execute();			
+A1_TempTR.M_Execute();]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Evaluate" Id="{fe658358-2c36-417f-af8c-a5016831d00e}">
+      <Declaration><![CDATA[METHOD M_Evaluate
+//////////////////
+// Evaluate available Powers and AMG characteristics . 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+MesDataExd.MesData.MesP					:= 0 ; 
+MesDataExd.MesData.MesQ					:= 0 ; 
+MesDataExd.MesData.MesI					:= 0 ; 
+MesDataExd.MesData.MesNbInv_Connected 	:= 0 ; 
+MesDataExd.MesData.MesPConnected 		:= 0 ;
+
+FOR KK:= 1 TO ParamNbINV DO 
+
+	MesDataExd.MesData.MesP 				:= MesDataExd.MesData.MesP + AX_INV[KK].MesDataExd.MesData.MesP;
+	MesDataExd.MesData.MesQ 				:= MesDataExd.MesData.MesQ + AX_INV[KK].MesDataExd.MesData.MesQ;
+	MesDataExd.MesData.MesI 				:= MesDataExd.MesData.MesI + AX_INV[KK].MesDataExd.MesData.MesI;
+	MesDataExd.MesData.MesNbInv_Connected	:= MesDataExd.MesData.MesNbInv_Connected + BOOL_TO_BYTE(AX_INV[KK].MesDataExd.MesData.MesState.1 OR AX_INV[KK].MesDataExd.MesData.MesState.4); // MPPT or Throttle
+	MesDataExd.MesData.MesPConnected        := MesDataExd.MesData.MesPConnected + SEL(AX_INV[KK].MesDataExd.MesData.MesState.1 OR AX_INV[KK].MesDataExd.MesData.MesState.4 ,0 , AX_INV[KK].MesDataExd.MesData.ParamPn ) ;
+														
+END_FOR
+
+// Data Reaffection 
+// SubEquipement properties assignment 
+
+FOR KK:=1 TO ParamNbINV DO
+	MesDataExd.AX_INV[KK] 	:= AX_INV[KK].MesDataExd;
+END_FOR
+
+MesDataExd.Datalogger		:= A1_Datalogger.MesDataExd ; 
+MesDataExd.MainMVCB_PTR		:= A1_MainMVCB_PTR.MesDataExd; 
+MesDataExd.SD_Transfo		:= A1_SD_Transfo.MesDataExd; 
+MesDataExd.SD_INV			:= A1_SD_INV.MesDataExd;
+MesDataExd.DS_Transfo		:= A1_DS_Transfo.MesDataExd; 
+MesDataExd.DS_INV			:= A1_DS_INV.MesDataExd	;
+MesDataExd.Transfo			:= A1_Transfo.MesDataExd ;
+MesDataExd.MainCBAux		:= A1_MainCBAux.MesDataExd ;
+MesDataExd.Fan_Reg			:= A1_Fan.MesDataExd ;
+MesDataExd.TempTR				:= A1_TempTR.MesDataExd;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{acbc6353-a8a8-41fe-bfd0-664d074124d5}">
+      <Declaration><![CDATA[METHOD M_Init 
+VAR
+	MesIPAdressINV			: STRING ; 
+	KK						: BYTE;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[(*
+A1_INV_Smartlogger.ParamTempoComAlarm	:= T#5S ; 
+A1_INV_Smartlogger.ParamTimeOutCurtail  := T#5S ; 
+A1_INV_Smartlogger.ParamClockReadTime 	:= T#1S ; 
+A1_INV_Smartlogger.ParamClockWriteTime  := T#1S ; 
+A1_INV_Smartlogger.ParamTimeout		    :=  T#2S; 
+A1_INV_Smartlogger.ParamPn            := 15000 ; 
+A1_INV_Smartlogger.ParamIPAdress	    := '10.0.0.50' ; // '192.168.1.10'; 
+A1_INV_Smartlogger.ParamUnitID 		    :=  1; 
+A1_INV_Smartlogger.ParamNbINV			:= 2 ; 		
+A1_INV_Smartlogger.ParamnTcpPort		:=  502; 
+A1_INV_Smartlogger.ParamPnomINV		    := 1500; 
+A1_INV_Smartlogger.ParamSLNum			:= ParamPTRNum ; 
+*)
+FOR KK:= 1 TO ParamNbINV DO 
+	AX_INV[KK].ParamTempoComAlarm	:= T#5S ; 
+	AX_INV[KK].ParamTimeOutCurtail  := T#5S ; 
+	AX_INV[KK].ParamClockReadTime 	:= T#1S ; 
+	AX_INV[KK].ParamClockWriteTime  := T#1S ; 
+	AX_INV[KK].ParamTimeout		    := T#2S; 
+	AX_INV[KK].ParamPn              := 15000 ; 
+	AX_INV[KK].ParamIPAddress	    := CONCAT(STR1:= '192.168.1.' , STR2:= INT_TO_STRING(KK+10)) ; 
+	AX_INV[KK].ParamUnitID 		    := 1; 
+	AX_INV[KK].ParamTcpPort			:= 502; 
+	AX_INV[KK].ParamNumInv			:= KK ; 
+END_FOR		 
+
+
+A1_MainMVCB_PTR.ParamClosedInput_Connected := TRUE ; 
+A1_MainMVCB_PTR.ParamNC := TRUE ;
+A1_MainMVCB_PTR.ParamNbFdbck := 1 ; 
+A1_MainMVCB_PTR.ParamSectLigne := 0 ; 
+A1_MainMVCB_PTR.ParamTP_Impulsion := T#2S ; 
+A1_MainMVCB_PTR.ParamTimeOut_Alarm := T#500MS ; 
+A1_MainMVCB_PTR.ParamTimeOut_Close := T#1S ; 
+A1_MainMVCB_PTR.ParamTimeOut_Open := T#1S ;
+
+
+
+A1_SD_Transfo.ParamAtleastOne := TRUE; 
+A1_SD_Transfo.ParamNbSensors := 1; 				
+A1_SD_Transfo.ParamCableCutSecurity	:= TRUE; 
+A1_SD_Transfo.ParamTempoFire := T#5S ; 
+
+A1_SD_INV.ParamAtleastOne := TRUE; 
+A1_SD_INV.ParamNbSensors := 1; 				
+A1_SD_INV.ParamCableCutSecurity	:= TRUE; 
+A1_SD_INV.ParamTempoFire := T#5S ; 
+
+A1_DS_Transfo.ParamAtleastOne := TRUE ; 
+A1_DS_Transfo.ParamNbSensors := 1 ; 
+A1_DS_Transfo.ParamCableCutSecurity := TRUE ; 	
+A1_DS_Transfo.ParamTempoDoorAlarm := T#60S ; 
+		
+A1_DS_INV.ParamAtleastOne := TRUE ; 
+A1_DS_INV.ParamNbSensors := 1 ; 
+A1_DS_INV.ParamCableCutSecurity := TRUE ; 	
+A1_DS_INV.ParamTempoDoorAlarm := T#60S ;		
+
+		
+A1_MainCBAux.ParamAtleastOne := TRUE ; 
+A1_MainCBAux.ParamNbSensors := 1 ; 
+A1_MainCBAux.ParamCableCutSecurity := TRUE ;	
+
+A1_Fan.ParamNbSensors := 2 ; 			]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_StartStop" Id="{5f61d5a1-818a-4ded-a462-a32ef86ba8d1}">
+      <Declaration><![CDATA[METHOD M_StartStop
+//////////////////
+// Start and Stop AMG
+/////////////////
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+FB_TapVariable_1 : FB_TapVariable ; 
+FB_TapVariable_2 : FB_TapVariable ; 
+Temp_Tab1 			:BOOL;
+Temp_Tab2 			:BOOL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//SUPER^.M_StartStop() ; 
+
+// Set SetptLimit to zero if Stop command
+//IF RS_StartStop.Q1 THEN //True = start, False = stops
+		//A1_INV_Smartlogger.IN_CmdStart := TRUE;
+	//	A1_INV_Smartlogger.IN_CmdStop := FALSE;
+//ELSE
+	//  A1_INV_Smartlogger.IN_CmdStart := FALSE;
+	//	A1_INV_Smartlogger.IN_CmdStop := TRUE;
+//END_IF
+
+SUPER^.M_StartStop() ; 
+// Set SetptLimit to zero if Stop command
+IF RS_StartStop.Q1 THEN //True = start, False = stop
+	FOR KK := 1 TO ParamNbINV DO	
+		AX_INV[KK].IN_CmdStart := TRUE;
+		AX_INV[KK].IN_CmdStop  := FALSE;
+	END_FOR	
+ELSE
+	FOR KK := 1 TO ParamNbINV DO	
+		AX_INV[KK].IN_CmdStart := FALSE;
+		AX_INV[KK].IN_CmdStop  := TRUE;
+	END_FOR	
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_StateManager" Id="{1f4875b8-760c-48cc-89e4-09d81df4757e}">
+      <Declaration><![CDATA[METHOD M_StateManager
+//////////////////
+// Manages AMG State
+//////////////////
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	KK 			: BYTE ; 	// Loop over the number of Inverters 
+	
+	INVState	: BYTE;
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// STATIC STATE //
+	MesState := 0 ; 
+
+	
+IF A1_MainMVCB_PTR.MesDataExd.MesData.MesClosed THEN // Choose here if there is a motorized switchgear associated to the PTR
+
+	IF MesDataExd.MesData.MesNbInv_Connected = 0 AND (MesDataExd.MesData.MesI)  < 0.0001   THEN
+		MesState.1 := 1;  // Couplée mais pas d'injecton . 
+	ELSIF MesDataExd.MesData.MesNbInv_Connected > 0 THEN 
+		// At least one inverter is feeding to the grid. 
+		MesState.2 := 1;
+	ELSE 
+		MesState.3 := 0 ; // Incoherent . 
+	END_IF
+ELSE
+	MesState.0	:= 1;		// Effacée. 
+END_IF	
+
+SUPER^.M_StateManager() ; ]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_PTR">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PTR.M_AlarmManagement">
+      <LineId Id="2182" Count="0" />
+      <LineId Id="2194" Count="0" />
+      <LineId Id="2197" Count="2" />
+      <LineId Id="2284" Count="0" />
+      <LineId Id="2206" Count="76" />
+      <LineId Id="1461" Count="0" />
+      <LineId Id="2299" Count="15" />
+      <LineId Id="2298" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PTR.M_CurtailPower">
+      <LineId Id="277" Count="3" />
+      <LineId Id="292" Count="3" />
+      <LineId Id="281" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PTR.M_EquipmentCalls">
+      <LineId Id="267" Count="2" />
+      <LineId Id="292" Count="0" />
+      <LineId Id="291" Count="0" />
+      <LineId Id="280" Count="0" />
+      <LineId Id="246" Count="0" />
+      <LineId Id="257" Count="3" />
+      <LineId Id="264" Count="2" />
+      <LineId Id="303" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PTR.M_Evaluate">
+      <LineId Id="1027" Count="18" />
+      <LineId Id="1050" Count="13" />
+      <LineId Id="1077" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PTR.M_Init">
+      <LineId Id="490" Count="0" />
+      <LineId Id="502" Count="1" />
+      <LineId Id="491" Count="10" />
+      <LineId Id="379" Count="0" />
+      <LineId Id="391" Count="0" />
+      <LineId Id="381" Count="3" />
+      <LineId Id="386" Count="0" />
+      <LineId Id="394" Count="1" />
+      <LineId Id="387" Count="0" />
+      <LineId Id="389" Count="0" />
+      <LineId Id="309" Count="0" />
+      <LineId Id="468" Count="1" />
+      <LineId Id="478" Count="6" />
+      <LineId Id="471" Count="2" />
+      <LineId Id="397" Count="0" />
+      <LineId Id="401" Count="2" />
+      <LineId Id="399" Count="1" />
+      <LineId Id="404" Count="2" />
+      <LineId Id="398" Count="0" />
+      <LineId Id="407" Count="0" />
+      <LineId Id="409" Count="2" />
+      <LineId Id="408" Count="0" />
+      <LineId Id="369" Count="0" />
+      <LineId Id="412" Count="2" />
+      <LineId Id="370" Count="0" />
+      <LineId Id="375" Count="0" />
+      <LineId Id="454" Count="0" />
+      <LineId Id="461" Count="1" />
+      <LineId Id="377" Count="0" />
+      <LineId Id="456" Count="0" />
+      <LineId Id="378" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PTR.M_StartStop">
+      <LineId Id="2" Count="0" />
+      <LineId Id="16" Count="2" />
+      <LineId Id="20" Count="1" />
+      <LineId Id="23" Count="0" />
+      <LineId Id="25" Count="1" />
+      <LineId Id="14" Count="0" />
+      <LineId Id="40" Count="12" />
+      <LineId Id="39" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PTR.M_StateManager">
+      <LineId Id="138" Count="17" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

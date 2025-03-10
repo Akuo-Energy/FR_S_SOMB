@@ -1,0 +1,64 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.9">
+  <DUT Name="ProtectRelay_SchP30U30" Id="{6e072feb-5733-4632-aa73-25f581087640}">
+    <Declaration><![CDATA[///////////
+// Structure for Schneider P30U30. Main Operating Data to be saved (ex: OPC).  
+//////////
+TYPE ProtectRelay_SchP30U30:
+STRUCT
+
+		MesData						: ProtectRelay;		(*	(NA) Protection relay									    *)                                                                                                     
+		                                    			                                                             
+		MesU						: REAL;				(* (V) Average Phase to Phase Voltage                           *)
+		MesV1						: REAL;        		(* (V) Average Phase to Phase Voltage                           *)
+		MesV2						: REAL;				(* (V) Average Phase to Phase Voltage                           *)
+		MesV3						: REAL;				(* (V) Average Phase to Phase Voltage                           *)
+       	MesV0						: REAL;				(* (%) Residual voltage				                            *)
+       			                                                           
+		MesP						: REAL; 			(* (Kw)Power on Grid                                            *)
+		MesQ						: REAL;				(* (kvar) Power on grid                                         *)
+		MesS						: REAL;				(* (KVA) Power apparent                                         *)
+		MesCosPhi					: REAL;				(* (NA) Power factor                                            *)
+		MesTanPhi					: REAL; 			(* (NA) Tan Phi                                                 *)		                                    			                                                       
+
+	// Energy		                                    			                                                          
+		E_P_Prod					: REAL; 			(* (MWh) Active Energy Produced                                 *)
+		E_P_Cons					: REAL; 			(* (MWh) Active Energy Consummed                                *)
+		E_Q_Prod					: REAL; 			(* (MVArh) Reactive Energy Produced                             *)
+		E_Q_Cons					: REAL; 			(* (MVArh) Reactive Energy Consummed                            *)
+	
+	// Positions
+		MesInterr_Opened			: BOOL;				(* (NA) Interruptor opened*)
+		MesSect_Opened				: BOOL;				(* (NA) Interruptor opened*)
+		MesEartch_Opened			: BOOL;				(* (NA) Earthing switch opened*)
+		MesSpring_Charged			: BOOL;				(* (NA) Spring  charged*)
+		MesComutLocal				: BOOL; 			(* (NA) Selector state local/remote. 0 = remote, 1 = local		*)
+		MesCtoDisparo_Opened		: BOOL;				(* (NA) cto disparo opened*)
+		                                    			                                                           
+	// Relais Input                         			                                                              
+		Input11						: BOOL;				(* (NA) Input 11 du relais de protection                        *)
+		Input12                     : BOOL;				(* (NA) Input 12 du relais de protection                        *)
+		Input13                     : BOOL;				(* (NA) Input 13 du relais de protection                        *)
+		Input14                     : BOOL;				(* (NA) Input 14 du relais de protection                        *)
+		Input21						: BOOL;				(* (NA) Input 21 du relais de protection                        *)
+		Input22						: BOOL;				(* (NA) Input 22 du relais de protection                        *)
+		Input23						: BOOL;				(* (NA) Input 23 du relais de protection                        *)
+		Input24						: BOOL;				(* (NA) Input 24 du relais de protection                        *)
+		Input25						: BOOL;				(* (NA) Input 25 du relais de protection                        *)
+		Input26						: BOOL;				(* (NA) Input 26 du relais de protection                        *)
+		
+	// Trip / alarms
+		MesAlarmImax				: BOOL; 		 	(* (NA) Imax alarm 50/51 										*)
+		MesAlarmImin				: BOOL; 		 	(* (NA) Imin alarm 37									  		*)		
+		MesAlarmUmin				: BOOL;		 		(* (NA) Umin alarm 27											*)
+		MesAlarmUmax				: BOOL;		 		(* (NA) Umax alarm 59											*)		
+		MesAlarmFmax				: BOOL;		 		(* (NA) Fmax and Fmin alarm fX81								*)
+		MesAlarmFmin				: BOOL;		 		(* (NA) Fmin alarm 81U											*)
+		
+		MesPPStop_Lgte				: BOOL; 			(* (NA) PP is stopping during 2min, because of a long GTE fault	*)
+		
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

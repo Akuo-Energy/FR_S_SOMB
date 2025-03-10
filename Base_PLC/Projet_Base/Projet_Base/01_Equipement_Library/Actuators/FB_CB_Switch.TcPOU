@@ -1,0 +1,236 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_CB_Switch" Id="{6cd33a18-9d41-44bd-887e-fb78f89aa497}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_CB_Switch EXTENDS FB_CB_Base
+//////////////////
+//  Motorized Circuit Breaker with telecommAND   Requires Open and Close impulsions.
+//////////////////
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance/model specific) 
+	ParamTP_Impulsion		    : TIME 		:= T#2S;	(* (s) Config : Tempo for the start or stop command impulsion*)
+END_VAR
+
+VAR_INPUT
+	
+
+// I/O Inputs              
+	IN_MesAlarmPwr_IO		   : BOOL ;	              // (NA)[P,H,B] Remote control Power supply Error IO  	
+	MesDataExd					: CB_Switch ; 		
+END_VAR
+
+VAR_OUTPUT
+	
+	//Child objects
+	OUT_CmdOpen_IO	           : BOOL ; 	          // (NA) Physical I/O Open Command IO
+	OUT_CmdClose_IO			   : BOOL ; 	          // (NA) Physical I/O Close Command IO
+	
+END_VAR
+
+
+VAR
+	
+	//M_OPENCLOSE VARIABLES//
+
+	//M_OPENCLOSE VARIABLES//	
+	ParamTP_Open	 			: TP ;				(* (NA) Temporisation for Open pulse Command*)
+	ParamTP_Close 				: TP ;				(* (NA) Temporisation for Close pulse Command	*)
+		
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{1d98083c-efc6-49f1-a540-b1546a6a4ad7}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Manages Contactor alarms and warnings
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager			: FB_AlarmCodeManager ; 
+
+END_VAR
+VAR_INPUT
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Check if command and measures are matching after tempo
+FB_CheckCommand	(T:= ParamTimeOut_Close, bCmd:=OUT_CmdClose_IO , bMes := MesDataExd.MesData.MesClosed , bImpulsion := FALSE , bReset := CmdClearFault_G OR OUT_CmdClose_IO) ; 
+FB_CheckCommand2(T:= ParamTimeOut_Open , bCmd:= OUT_CmdOpen_IO , bMes :=NOT MesDataExd.MesData.MesClosed , bImpulsion := FALSE , bReset := CmdClearFault_G OR OUT_CmdOpen_IO) ; 
+
+TON_NotClosedAndNotOpened(IN:=  NOT MesClosed AND NOT MesOpened , PT := ParamTimeOut_Alarm) ; 
+TON_ClosedAndOpened(IN:=MesClosed AND MesOpened, PT := ParamTimeOut_Alarm) ; 
+
+// ALARM CODE //
+
+	FB_AlarmCodeManager(
+		bAlarm1			:= FALSE 	, 								// 
+		bAlarm2			:= TON_NotClosedAndNotOpened.Q,					// Incoherent State measure (Not Opened and not Closed)
+		bAlarm3 		:= TON_ClosedAndOpened.Q   , 					// Incoherent State measure (Opened and Closed)	
+		bAlarm4			:= FB_CheckCommAND.bWarning , 					// Close command failed
+		bAlarm5			:= FB_CheckCommand2.bWarning  , 				// Open Command failed
+		bAlarm6			:= FALSE,                                   	//
+		bAlarm7			:= FALSE,                                   	//
+		bAlarm8			:= FALSE,                                   	//
+		bAlarm9			:= FALSE,                                   	//
+		bAlarm10		:= FALSE,                                   	//
+		bAlarm11		:= FALSE,                                   	//
+		bAlarm12		:= FALSE,                                   	//
+		bAlarm13		:= FALSE,                                   	//
+		bAlarm14		:= FALSE,                                   	//
+		bAlarm15		:= FALSE , 										//
+		wAlarmCode		=>MesDataExd.MesData.MesAlarmCode);
+
+		
+
+//WARNING CODE//
+		FB_AlarmCodeManager(
+		bAlarm1			:= FALSE,										//
+		bAlarm2			:= FALSE,										//
+		bAlarm3 		:= FALSE,										// 
+		bAlarm4			:= MesDataExd.MesAlarmPwr, 						// Power supply fault
+		bAlarm5			:= FALSE , //
+		bAlarm6			:= FALSE , 
+		bAlarm7			:=FALSE , //
+		bAlarm8			:= FALSE, 										//
+		bAlarm9			:= FALSE,                                       //
+		bAlarm10		:= FALSE,                                       //
+		bAlarm11		:= FALSE,                                       //
+		bAlarm12		:= FALSE,                                       //
+		bAlarm13		:= FALSE,                                       //
+		bAlarm14		:= FALSE,                                       //
+		bAlarm15		:= FALSE, 										//
+		wAlarmCode 		=>MesDataExd.MesData.MesWarningCode);
+
+// EVENT CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= OUT_CmdOpen_IO, 								// Open Command
+		bAlarm2			:= OUT_CmdClose_IO, 							// Close Command
+		bAlarm3			:= MesOpened, 									// Opened Position
+		bAlarm4			:= MesClosed, 									// Closed Position
+		bAlarm5			:= IN_CmdReset, 								// Reset command
+		bAlarm6			:= FALSE, 										//
+		bAlarm7			:= FALSE,                   					//
+		bAlarm8			:= FALSE,                   					//
+		bAlarm9			:= FALSE,                   					//
+		bAlarm10		:= FALSE,                   					//
+		bAlarm11		:= FALSE,                   					//
+		bAlarm12		:= FALSE,                   					//
+		bAlarm13		:= FALSE, 										//
+		bAlarm14		:= FALSE,                   					//
+		bAlarm15		:= FALSE,                   					//
+		wAlarmCode		=>MesDataExd.MesData.MesEventCode);   
+                                           
+
+MesDataExd.MesAlarmPwr		    := IN_MesAlarmPwr_IO ; 
+
+MesDataExd.OUT_CmdClose		    := OUT_CmdClose_IO ; 
+MesDataExd.OUT_CmdOpen		    := OUT_CmdOpen_IO ; 
+
+	]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{3acd9a71-553a-4611-9946-6248bc0bd583}">
+      <Declaration><![CDATA[METHOD M_Execute
+VAR_INPUT
+END_VAR
+
+VAR
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+// PERMANENT CONDITIONS //	
+MesDataExd.MesData.MesCP_Open					:= IN_CmdOpen AND NOT IN_CmdReset;
+MesDataExd.MesData.MesCP_Close				:= NOT MesDataExd.MesData.MesClosed AND IN_CmdClose AND NOT MesDataExd.MesData.MesAlarmCode.0 AND NOT MesDataExd.MesData.MesCP_Open AND NOT IN_CmdReset ;
+
+
+SUPER^.M_Execute();]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_OpenClose" Id="{07325515-8284-40b7-8bc6-48776e1caa36}">
+      <Declaration><![CDATA[METHOD M_OpenClose
+//////////////////
+// Manages Opening and Closing of the contactor
+//////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+// Open Command
+ParamTP_Open(IN:= MesDataExd.MesData.MesCP_Open , PT:=ParamTP_Impulsion) ;
+OUT_CmdOpen_IO	 := ParamTP_Open.Q ;                               			 // Impulsion that goes back to zero as soon as the state of the TP goes down. 
+
+// Close Command
+ParamTP_Close(IN:= MesDataExd.MesData.MesCP_Close , PT:=ParamTP_Impulsion) ;
+OUT_CmdClose_IO	 := ParamTP_Close.Q ;                          			 // Impulsion that goes back to zero as soon as the state of the TP goes down.
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_StateManager" Id="{eb814ad1-84e2-4e72-8033-32729ea3953d}">
+      <Declaration><![CDATA[METHOD M_StateManager
+//////////////////
+// Manages Contactor State
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[MesState := 0 ; 
+IF MesOpened THEN		// If the cell seems opens and closed in the same time, we will consider it as opened. 
+	
+	MesState.0 := 1 ; 
+MesDataExd.MesData.MesClosed := FALSE ; 
+MesDataExd.MesData.MesOpened := TRUE ; 
+ELSIF MesClosed THEN
+	
+	MesState.1 := 1 ; 
+MesDataExd.MesData.MesClosed := TRUE ; 
+MesDataExd.MesData.MesOpened := FALSE ; 
+ELSE 
+	MesState.0 := 1 ;		// if the cell seems neither opened and neither closed , we will consider it as opened. 
+MesDataExd.MesData.MesClosed := FALSE ; 	
+MesDataExd.MesData.MesOpened := TRUE ; 
+END_IF
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_CB_Switch">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_CB_Switch.M_AlarmManagement">
+      <LineId Id="435" Count="7" />
+      <LineId Id="540" Count="0" />
+      <LineId Id="443" Count="16" />
+      <LineId Id="526" Count="0" />
+      <LineId Id="460" Count="0" />
+      <LineId Id="527" Count="0" />
+      <LineId Id="461" Count="37" />
+      <LineId Id="505" Count="4" />
+      <LineId Id="512" Count="1" />
+    </LineIds>
+    <LineIds Name="FB_CB_Switch.M_Execute">
+      <LineId Id="78" Count="0" />
+      <LineId Id="134" Count="4" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_CB_Switch.M_OpenClose">
+      <LineId Id="78" Count="9" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_CB_Switch.M_StateManager">
+      <LineId Id="87" Count="16" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,50 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_TapVariable" Id="{dac937c1-0b80-41f8-9b17-bf2db77aa0c0}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_TapVariable
+////////////////// 
+// TAp a variable when input is active and reset after 
+//////////////////	
+
+VAR_IN_OUT
+	TapOut			: BOOL;		// Output VTap Variable
+	
+END_VAR
+
+VAR_INPUT
+	TapTrigger		: BOOL;		// Input Trigger
+	
+END_VAR
+
+VAR
+	F_TRIG_Trigger	: F_TRIG;	// Trigger detection 
+	R_TRIG_Trigger	: R_TRIG;	// Trigger detection 		
+	
+	
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[R_TRIG_Trigger(CLK:= TapTrigger);
+F_TRIG_Trigger(CLK:= TapTrigger);
+
+IF R_TRIG_Trigger.Q THEN
+	TapOut			:=TRUE;
+	
+ELSIF F_TRIG_Trigger.Q  THEN 
+	TapOut			:=FALSE ;
+			
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="FB_TapVariable">
+      <LineId Id="96" Count="0" />
+      <LineId Id="74" Count="0" />
+      <LineId Id="73" Count="0" />
+      <LineId Id="64" Count="0" />
+      <LineId Id="77" Count="0" />
+      <LineId Id="71" Count="0" />
+      <LineId Id="76" Count="0" />
+      <LineId Id="65" Count="0" />
+      <LineId Id="67" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

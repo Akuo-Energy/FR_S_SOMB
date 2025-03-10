@@ -1,0 +1,42 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="HVAC" Id="{0d008cce-d7b6-4910-b67c-1b7718ca3351}">
+    <Declaration><![CDATA[TYPE HVAC :
+STRUCT
+
+	MesSetptTemp		: REAL ;    	 (*(°C)  Temperature setpoint*)
+
+	MesSetptHygro		: REAL ;    	 (*(%)   Hygrometry setpoint      *)
+
+	MesOn				: BOOL ;    	 (*      HVAC is on *)
+
+	MesAlarmCom			: BOOL ;    	 (*      Communication alarm *)
+
+	WorkingHr 			: TIME ; 		 (* 	 Time AC has been on*)
+	MesCP_Read			: BOOL := FALSE; (* 	 Read function enable*)
+	MesCP_Write			: BOOL := FALSE; (* 	 Write function enable*)
+	
+	MesAlarmCode		: WORD ;		 (* 	 AlarmCode for the TGBT*)
+	MesWarningCode		: WORD ;		 (* 	 WarningCode for the TGBT*)
+	                                     
+
+	
+END_STRUCT
+END_TYPE
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

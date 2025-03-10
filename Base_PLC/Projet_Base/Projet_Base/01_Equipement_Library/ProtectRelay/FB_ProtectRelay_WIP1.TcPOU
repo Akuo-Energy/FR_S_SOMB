@@ -1,0 +1,175 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_ProtectRelay_WIP1" Id="{c640a9dc-01b0-4e53-8152-541f5f2dedeb}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_ProtectRelay_WIP1 EXTENDS FB_ProtectRelay_Base
+VAR_INPUT
+						
+	
+	
+
+END_VAR
+
+VAR_INPUT
+	// I/O Inputs 		                                     				
+		IN_MesAlarmImax_IO		: BOOL ; // IO max I  fault
+		IN_MesAlarmUmin_IO		: BOOL ;  // IO Min U  Fault 
+		MesDataExd 		    AT %Q*  	: ProtectRelay_WIP1; 	
+		
+
+END_VAR
+
+
+VAR
+// M_ALARMMNGMT VARIABLES //
+                            		
+	CmdResetHVCell				: BOOL ; 
+	// M_READ VARIABLES//
+	
+
+
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{50586635-e794-409b-aa90-06b7a9556803}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager : FB_AlarmCodeManager ; 
+
+	ComWarning: BOOL;
+	ComAlarm: BOOL;
+	KK: BYTE;
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Detection Variables
+
+MesDataExd.MesData.MesAlarmImax	:= IN_MesAlarmImax_IO ; 
+MesDataExd.MesData.MesAlarmUmin :=  IN_MesAlarmUmin_IO ; 
+
+
+// ALARM CODE //
+	FB_AlarmCodeManager(
+		bAlarm1	 := MesDataExd.MesData.MesAlarmImax,// Max I Fault 
+		bAlarm2	 := MesDataExd.MesData.MesAlarmUmin,// Min U  Fault
+		bAlarm3	 := FALSE, //
+		bAlarm4	 := FALSE,//
+		bAlarm5	 := FALSE, //
+		bAlarm6	 := FALSE,//
+		bAlarm7	 := FALSE, //
+		bAlarm8	 := FALSE,//
+		bAlarm9	 := FALSE, //
+		bAlarm10 := FALSE,//
+		bAlarm11 := FALSE, //
+		bAlarm12 := FALSE,//
+		bAlarm13 := FALSE, //
+		bAlarm14 := FALSE,//														   
+		bAlarm15 := FALSE,//									                      
+		wAlarmCode	=>MesDataExd.MesData.MesAlarmCode);
+
+
+// WARNING CODE //
+	FB_AlarmCodeManager(
+ 		bAlarm1			:= FALSE, //
+		bAlarm2			:= FALSE,//
+        bAlarm3			:= FALSE, //
+		bAlarm4			:= FALSE,// 
+		bAlarm5			:= FALSE, // 
+		bAlarm6			:= FALSE,// 
+		bAlarm7			:= FALSE, // 
+		bAlarm8			:= FALSE,// 
+		bAlarm9			:= FALSE, // 
+		bAlarm10		:= FALSE,// 
+		bAlarm11		:= FALSE, // 
+		bAlarm12		:= FALSE,//		 
+		bAlarm13		:= FALSE,//		 
+		bAlarm14		:= FALSE,  //
+		bAlarm15		:= FALSE, //
+		wAlarmCode	=>MesDataExd.MesData.MesWarningCode);	
+		
+
+		]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_CP" Id="{aa5627b3-4950-4311-9b81-79e34fffa9fe}">
+      <Declaration><![CDATA[METHOD M_CP 
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+SUPER^.M_CP() ; 
+
+
+
+
+Trig_Cmd_Read(CLK:=IN_CmdToggleRead);
+Trig_Cmd_Write(CLK:=IN_CmdToggleWrite);
+	
+IF Trig_Cmd_Read.Q THEN
+	IN_CmdToggleRead := FALSE;
+	MesDataExd.MesData.MesCP_Read := NOT MesDataExd.MesData.MesCP_Read;
+END_IF
+
+
+IF Trig_Cmd_Write.Q THEN
+	IN_CmdToggleWrite := FALSE;
+	MesDataExd.MesData.MesCP_Write := NOT MesDataExd.MesData.MesCP_Write;
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{ec53dfa2-6fc3-4a59-b8d3-82ea98f1a380}">
+      <Declaration><![CDATA[METHOD M_Execute
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+// INITIALIZE // 
+	IF bInit THEN
+		M_Init() ; 
+		bInit		:= FALSE ; 
+		
+	ELSIF IN_CmdReset_L THEN 
+		bInit		:= TRUE ;
+		
+	END_IF
+
+
+
+
+
+M_AlarmManagement() ; 
+
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_ProtectRelay_WIP1">
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ProtectRelay_WIP1.M_AlarmManagement">
+      <LineId Id="143" Count="3" />
+      <LineId Id="98" Count="0" />
+      <LineId Id="29" Count="39" />
+      <LineId Id="109" Count="0" />
+      <LineId Id="112" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ProtectRelay_WIP1.M_CP">
+      <LineId Id="42" Count="19" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ProtectRelay_WIP1.M_Execute">
+      <LineId Id="90" Count="0" />
+      <LineId Id="74" Count="8" />
+      <LineId Id="59" Count="0" />
+      <LineId Id="70" Count="2" />
+      <LineId Id="63" Count="0" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="67" Count="1" />
+      <LineId Id="66" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

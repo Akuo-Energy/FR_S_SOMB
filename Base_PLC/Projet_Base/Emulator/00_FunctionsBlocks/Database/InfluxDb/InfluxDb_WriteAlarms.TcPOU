@@ -1,0 +1,137 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="InfluxDb_WriteAlarms" Id="{211a2f67-35c3-478f-98ca-be89ae2e5746}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM InfluxDb_WriteAlarms
+
+VAR_INPUT
+	IN_Dbid										: UINT;
+	IN_FIFO										: FB_DBDatasetFifo_Influx;
+	IN_Reset									: BOOL;
+MesDataExd								: LoggerInfluxDb;
+END_VAR
+
+VAR
+	// M_Init
+		TP_Init									: TP;
+		F_TRIG_Init								: F_TRIG;
+   		bInit 									: BOOL;
+	// Reset                					
+		Trig_Reset								: R_TRIG;
+	// Insert value             				
+		CmdStart								: BOOL;
+    	QueryOption_TSDB_Insert 				: T_QueryOptionTimeSeriesDB_Insert; // defines detailed Queryparameter
+    	fbNoSQLQueryBuilder_TimeSeriesDB 		: FB_NoSQLQueryBuilder_TimeSeriesDB; // defines database type specific api
+    	fbNoSqlQueryEvt 						: FB_NoSQLQueryEvt(sNetID := '', tTimeout := T#15S); // functionblock to execute queries
+		nState 									: UINT;
+		ValueToInsert							: ST_InfluxAlarmsInsert;
+    // error handling helper values
+    sErrorMessage								: STRING(255);
+
+	
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF NOT bInit THEN
+	M_Init();
+END_IF
+
+Trig_Reset(CLK := IN_Reset OR CmdClearFault_G);
+IF Trig_Reset.Q THEN
+	IN_Reset := FALSE;
+	IN_FIFO.A_Reset();
+END_IF
+
+CmdStart := IN_FIFO.nCount >0 ;
+IF CmdStart THEN
+	CmdStart := FALSE;
+	
+	fbNoSQLQueryBuilder_TimeSeriesDB.pQueryOptions := ADR(QueryOption_TSDB_Insert);
+	fbNoSQLQueryBuilder_TimeSeriesDB.cbQueryOptions := SIZEOF(QueryOption_TSDB_Insert);
+	IN_FIFO.A_Get();
+	ValueToInsert	:= IN_FIFO.Out;
+	QueryOption_TSDB_Insert.sTableName 			:= 'Alarms';			
+	QueryOption_TSDB_Insert.sDataType 			:= 'ST_InfluxAlarmsInsert';	
+	QueryOption_TSDB_Insert.pSymbol 			:= ADR(ValueToInsert); 	
+	QueryOption_TSDB_Insert.cbSymbol 			:= SIZEOF(ValueToInsert); 
+	QueryOption_TSDB_Insert.nDataCount 			:= 1;					
+	QueryOption_TSDB_Insert.nStartTimestamp 	:= F_GetSystemTime(); 	
+
+	nState := 3;
+END_IF
+
+CASE nState OF 
+    3:
+        IF fbNoSqlQueryEvt.Execute(IN_Dbid, fbNoSQLQueryBuilder_TimeSeriesDB) THEN
+			IF fbNoSqlQueryEvt.bError THEN
+			MesDataExd.MesData.MesAlarmCode.1 := TRUE;
+				nState := 1;
+			ELSE
+			MesDataExd.MesData.MesAlarmCode.1 := FALSE;
+			   	nState := 1;
+ 				IN_FIFO.A_Remove();
+           END_IF
+        END_IF
+END_CASE
+
+
+
+    ]]></ST>
+    </Implementation>
+    <Method Name="M_Init" Id="{42406720-acc4-4d4e-8f59-4f79fdae0ca0}">
+      <Declaration><![CDATA[METHOD M_Init : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//Initialisation BUFFER
+	//Buffer pour la lecture des sms
+	IN_FIFO.A_Reset();
+	IN_FIFO.A_Add();
+	IN_FIFO.A_Get();
+	IN_FIFO.A_Remove();
+	
+	IN_FIFO.In.Message :=  'Activation du code';
+	IN_FIFO.A_Add();
+	bInit := TRUE;
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="InfluxDb_WriteAlarms">
+      <LineId Id="610" Count="0" />
+      <LineId Id="613" Count="1" />
+      <LineId Id="620" Count="0" />
+      <LineId Id="615" Count="1" />
+      <LineId Id="629" Count="0" />
+      <LineId Id="617" Count="0" />
+      <LineId Id="611" Count="0" />
+      <LineId Id="475" Count="0" />
+      <LineId Id="487" Count="1" />
+      <LineId Id="641" Count="1" />
+      <LineId Id="632" Count="2" />
+      <LineId Id="677" Count="0" />
+      <LineId Id="635" Count="5" />
+      <LineId Id="631" Count="0" />
+      <LineId Id="489" Count="1" />
+      <LineId Id="452" Count="0" />
+      <LineId Id="351" Count="0" />
+      <LineId Id="364" Count="2" />
+      <LineId Id="645" Count="0" />
+      <LineId Id="422" Count="0" />
+      <LineId Id="368" Count="0" />
+      <LineId Id="647" Count="0" />
+      <LineId Id="423" Count="0" />
+      <LineId Id="370" Count="0" />
+      <LineId Id="678" Count="0" />
+      <LineId Id="371" Count="0" />
+      <LineId Id="299" Count="2" />
+      <LineId Id="350" Count="0" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="InfluxDb_WriteAlarms.M_Init">
+      <LineId Id="6" Count="7" />
+      <LineId Id="15" Count="1" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

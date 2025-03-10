@@ -1,0 +1,211 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_PCS_Base" Id="{e5a5a59e-73ba-47d2-89f3-d25deb8d38a8}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_PCS_Base
+//////////////////
+// PCS controller . Base FB
+//////////////////
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance specific) 
+	ParamUnitID 					: BYTE  	:= 1; 			  		// (NA)   CTRLPcs Modbus Unit ID.
+	ParamIPAddress			   		: STRING 	:= '192.168.1.64'; 		// (NA) Config IP Adress of CTRLPCs
+	ParamTcpPort					: UINT		:= 502;
+	ParamNbPcs						: BYTE	 	:= 3 ; 					// (NA) Config : Number of Pcs/Module controlled . 
+                                                                
+	ParamTempoComAlarm				: TIME 		:= T#10S ; 				// (s) Config : Tempo to detect LOC Alarm
+	ParamTempoComWarning			: TIME 		:= T#5S ; 				// (s) Config : Tempo to detect LOC Alarm
+//	ParamTimeOutBlckStrt			: TIME 		:= T#3M ;				// (s) Config : Tempo to start before Timeout warning
+
+	ParamClockReadTime 				: TIME 		:= TIME#200MS;	  		// (ms) Read Modbus Frequency .   
+	ParamClockWriteTime 			: TIME 		:= TIME#500MS;   		// (ms) Write Modbus Frequency .         
+	ParamTimeout					: TIME  	:= T#4S ;		  		// (s) Timeout for modbus reading                                                              	
+	ParamTimePulseTrig				: TIME 		:= T#4S;            	// (s)
+	                                                                	
+	ParamEssNum						: UINT 		:= 1;					// (NA) ID number of the Pcs' father PCS
+	ParamPcsNum						: UINT 		:= 1;					// (NA) ID number of the PCS 
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	
+END_VAR
+
+VAR_INPUT
+	// I/O Inputs 
+		// ALARM MANAGEMENT //
+		IN_SetptP					: REAL ;						// (kW)   [P,H] Dynamic aCtive Power  setpoint 
+		IN_SetptQ					: REAL ;						// (kVAr) [P,H] Dynamic reactive Power setpoint 
+		IN_SetptU					: REAL ;						// (kW)   [P,H] Dynamic aCtive Power  setpoint 
+		IN_SetptF					: REAL ;						// (kW)   [P,H] Dynamic aCtive Power  setpoint 
+		IN_SetptCosPhi				: REAL;							// (NA)  [P,H] Dynamic CosPhi setpoint	
+		IN_CmdReset					: BOOL ;
+		IN_CmdToggleRead			: BOOL;
+        IN_CmdToggleWrite			: BOOL;
+		
+		
+	
+END_VAR
+
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//
+		TON_ComAlarm				: TON ; 			// Tempo before deteting loss of communication. 
+		TON_ComWarning				: TON ; 			// Tempo before deteting loss of communication. 
+		
+                                         
+		CmdResetPcs					: BOOL ; 			// (NA) [P,H] 	Reset alarms and warning
+		MesWarningCom				: BOOL ; 			// (NA) [P,H]   True if bad communication 
+		MesAlarmCom					: BOOL ; 			// (NA) True if complete loss of modbus communication 
+
+	//M_CP VARIABLES//
+		Trig_Cmd_Read				: R_TRIG;                                                                                        
+		Trig_Cmd_Write				: R_TRIG;                                                                                        
+        
+        
+		
+	//M_WRITECOMMAND VARIABLES//
+	
+		CmdStart					: BOOL;							// (NA) [P,H] External Start Command
+		CmdStop 					: BOOL; 						// (NA) [P,H] External Stop CommAND   
+
+	//M_STATEMANAGER VARIABLES//
+		MesState					: BYTE ; 						// (NA) Cal [P,H,B] Bit0: 1 = Not Available (AC or DC breaker open or AllAcContactorsOpened), Bit1: GridMode: 1=grid	
+	
+	//M_WRITESETPOINTS VARIABLES//
+	
+		FB_CheckSetpt1				: FB_CheckSetpt ; 				// (NA) Functionnal Block to check if active power Writing Successful
+		FB_CheckSetpt2				: FB_CheckSetpt ; 				// (NA) Functionnal Block to check if reactive power Writing Successful
+
+	//M_INIT VARIABLES //
+		bInit						: BOOL 			:= TRUE ; 		// (NA) Initialize object parameters at first cycle 
+		
+	// M_EXECUTE VARIABLES //
+		TP1							: TP ; 						// (NA) Tempo to define Modbus Reading Frequency 
+		TP2 						: TP ; 						// (NA) Tempo to define Modbus Writing Frequency
+                                    
+		ClockRead		AT%Q*		: BOOL;							// (NA) Modbus reading Clock
+		TrigRead 					: R_TRIG;							// (NA) Modbus writing Clock 	
+		ClockWrite 		AT%Q*		: BOOL;							// (NA) Modbus writing Clock 	
+		TrigWrite 					: R_TRIG;							// (NA) Modbus writing Clock 	
+		CalCP_Start                 : BOOL ; 						// (NA) Permanent conditions to activate method
+		CalCP_Stop                  : BOOL ;                       	// (NA) Permanent conditions to activate method   	
+	    CalCP_Reset                 : BOOL ; 						// (NA) Permanent conditions to activate method  
+		MesCP_Read					: BOOL := TRUE;	(* Read function enable *)
+		MesCP_Write					: BOOL := TRUE;	(* Write function enable *)	
+		
+		
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+	]]></ST>
+    </Implementation>
+    <Method Name="M_Evaluate" Id="{924c2864-dc63-4982-a399-dbcc588877a3}">
+      <Declaration><![CDATA[METHOD M_Evaluate : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{e3dbbfd4-f1b2-4cd7-9347-b0fd339eded3}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	KK			: BYTE;			// For Loop 
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+// METHODS CALLS //
+	IF bInit THEN
+		M_Init() ; 
+		bInit					:= FALSE ; 
+	ELSIF CmdInit_G THEN 
+		bInit:= TRUE ;
+		
+	END_IF
+
+	M_Read() ; 
+	M_Evaluate();                                                               
+	M_WriteCommand() ; 
+	
+// COM MANAGER //
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{05cb87c0-154f-40c8-b70b-b004f1b4f12a}">
+      <Declaration><![CDATA[METHOD M_Init
+
+VAR 
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Read" Id="{518c451d-4334-44d1-a842-eb39d6b9e6d7}">
+      <Declaration><![CDATA[METHOD M_Read
+//////////////////
+//  Read Modbus Variable for PCS . 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_WriteCommand" Id="{9db5eb9e-a069-43be-a82b-eb45ea3ea62e}">
+      <Declaration><![CDATA[METHOD M_WriteCommand
+//////////////////
+//  Modbus Write of the command for the PCS. 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_PCS_Base">
+      <LineId Id="3" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PCS_Base.M_Evaluate">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PCS_Base.M_Execute">
+      <LineId Id="774" Count="11" />
+      <LineId Id="793" Count="0" />
+      <LineId Id="796" Count="2" />
+      <LineId Id="806" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PCS_Base.M_Init">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PCS_Base.M_Read">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PCS_Base.M_WriteCommand">
+      <LineId Id="881" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

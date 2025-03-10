@@ -1,0 +1,64 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="PM_PM5XXX" Id="{cb099258-f0b7-4f21-aa28-5936d44a1f39}">
+    <Declaration><![CDATA[///////////
+// Structure for Schneider PM models : PM5560, PM5563, PM5563RD. Main Operating Data to be saved (ex: OPC).  
+//////////
+TYPE PM_PM5XXX :
+STRUCT
+	
+	MesData					: PM ; 
+                        	
+	MesEAppCons				: REAL; (*(kVArh) Recieved apparent energy           	*)
+	MesEAppProd				: REAL; (*(kWh) Delivered apparent energy            	*)
+	                    	                                                     	
+	MesUnbalanced_I1		: REAL; (*(%) Unbalanced current phase 1			 	*)
+	MesUnbalanced_I2		: REAL; (*(%) Unbalanced current phase 2			 	*)
+	MesUnbalanced_I3		: REAL; (*(%) Unbalanced current phase 3			 	*)	
+	                    	                                                     	
+	MesUnbalanced_U12		: REAL; (*(%) Unbalanced voltage U12			 	 	*)
+	MesUnbalanced_U23		: REAL; (*(%) Unbalanced voltage U23				 	*)
+	MesUnbalanced_U31		: REAL; (*(%) Unbalanced voltage U31				 	*)	
+	                    	                                                     	
+	MesUnbalanced_V1		: REAL; (*(%) Unbalanced voltage phase 1			 	*)
+	MesUnbalanced_V2		: REAL; (*(%) Unbalanced voltage phase 2			 	*)
+	MesUnbalanced_V3		: REAL; (*(%) Unbalanced voltage phase 3			 	*)	
+		                	
+	MesTHD_I1 				: REAL;	(* (%) Current Total Harmonic Distortion Phase 1. THD = (RMS of harmonics / RMS of fundamental) * 100 *)
+	MesTHD_I2 				: REAL;	(* (%) Current Total Harmonic Distortion Phase 2. THD = (RMS of harmonics / RMS of fundamental) * 100 *)
+	MesTHD_I3 				: REAL;	(* (%) Current Total Harmonic Distortion Phase 3. THD = (RMS of harmonics / RMS of fundamental) * 100 *)
+	MesTHD_In				: REAL; (* (%) Current Total Harmonic Distortion In. THD = (RMS of harmonics / RMS of fundamental) * 100 	  *)
+		                	
+	MesTHD_U12				: REAL;	(* (%) Voltage U12 Total Harmonic Distortion Phase 1. THD = (RMS of harmonics / RMS of fundamental) * 100 *)
+	MesTHD_U23				: REAL;	(* (%) Voltage U23 Total Harmonic Distortion Phase 2. THD = (RMS of harmonics / RMS of fundamental) * 100 *)
+	MesTHD_U31				: REAL;	(* (%) Voltage U31 Total Harmonic Distortion Phase 3. THD = (RMS of harmonics / RMS of fundamental) * 100 *)
+	                    	
+	MesTHD_V1 				: REAL;	(* (%) Voltage V1 Total Harmonic Distortion Phase 1 - Neutre *)
+	MesTHD_V2 				: REAL;	(* (%) Voltage V2 Total Harmonic Distortion Phase 2 - Neutre *)
+	MesTHD_V3 				: REAL;	(* (%) Voltage V3 Total Harmonic Distortion Phase 3 - Neutre *)
+	
+// Alarmes 	
+	MesAlarmImax			: UINT;	(* (NA) Phase over current   *) 
+	MesAlarmImin 			: UINT;	(* (NA) Phase under current  *) 
+	MesAlarmInmax 			: UINT;	(* (NA) Neutral over current *) 
+	MesAlarmIgmax			: UINT;	(* (NA) Ground over current  *) 
+	MesAlarmUmax			: UINT;	(* (NA) L-L over voltage     *) 
+	MesAlarmUmin			: UINT;	(* (NA) L-L under voltage    *) 
+	MesAlarmVmax			: UINT;	(* (NA) L-N over voltage     *) 
+	MesAlarmVmin			: UINT;	(* (NA) L-N under Voltage    *) 
+	MesAlarmPmax			: UINT;	(* (NA) Over active Power    *) 
+	MesAlarmQmax			: UINT;	(* (NA) Over reactive Power  *) 
+	MesAlarmSmax			: UINT;	(* (NA) Over apparent Power  *) 
+	MesAlarmFreqmax			: UINT;	(* (NA) Over frequency	     *) 
+	MesAlarmFreqmin			: UINT;	(* (NA) Under frequency	     *)		
+	MesAlarm_PhaseLoss  	: UINT; (* (NA) Phase loss			 *) 
+	MesAlarm_PhaseReversal  : UINT; (* (NA) Phase reversal		 *)	
+	MesAlarmReset  			: UINT; (* (NA) PM reset 			 *) 
+ 	
+	MesAlarmSW_Open			: BOOL; (* (NA) PM switch open 	TO BE CLARIFIED	 *)		
+									 
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,112 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="InfluxDb_WriteStruct" Id="{88044e91-dd75-4663-bca7-a642d81bfb05}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK InfluxDb_WriteStruct
+VAR_INPUT PERSISTENT
+	ParamInitTime							: TIME := T#1S;
+END_VAR                 					
+VAR_INPUT               					
+	IN_Table 								: STRING;
+	IN_StructureName 						: STRING;
+	IN_DataAddr								: PVOID;
+	IN_DataSize								: UDINT;
+	IN_NumberStructure						: UDINT;		// ArrayLength
+	IN_DataFrequency						: TIME;
+	IN_Dbid									: UINT;
+END_VAR
+
+VAR
+    QueryOption_TSDB_Insert 				: T_QueryOptionTimeSeriesDB_Insert; // defines detailed Queryparameter
+    fbNoSQLQueryBuilder_TimeSeriesDB 		: FB_NoSQLQueryBuilder_TimeSeriesDB; // defines database type specific api
+    fbNoSqlQueryEvt 						: FB_NoSQLQueryEvt(sNetID := '', tTimeout := T#15S); // functionblock to execute queries
+    bInit 									: BOOL;
+	nState 									: UINT;
+    Name 									: STRING;
+	Current_Time 							: TIME;
+	Old_Time	 							: TIME;
+	
+    // error handling helper values
+    bError									: BOOL;
+    sErrorMessage							: STRING(255);
+                    						
+	// InitWait     						
+	TP_Init									: TP;
+	F_TRIG_Init								: F_TRIG;
+	
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[fbNoSQLQueryBuilder_TimeSeriesDB.pQueryOptions := ADR(QueryOption_TSDB_Insert);
+fbNoSQLQueryBuilder_TimeSeriesDB.cbQueryOptions := SIZEOF(QueryOption_TSDB_Insert);
+
+QueryOption_TSDB_Insert.sTableName 			:= IN_Table;			//'PcsTable1';
+QueryOption_TSDB_Insert.sDataType 			:= IN_StructureName;	//'ST_Pcs';
+QueryOption_TSDB_Insert.pSymbol 			:= IN_DataAddr; 		//ADR(AX_InvData);
+QueryOption_TSDB_Insert.cbSymbol 			:= IN_DataSize; 		//SIZEOF(AX_InvData);
+QueryOption_TSDB_Insert.nDataCount 			:= IN_NumberStructure;	//CstNbInv*CstNbPcs_Inv; 
+QueryOption_TSDB_Insert.nStartTimestamp 	:= F_GetSystemTime(); 	// get current twincat time 
+QueryOption_TSDB_Insert.nCycleTime		 	:= 0; 					// 0 : insert all structures at the same time
+
+TP_Init(IN := NOT bInit OR CmdInit_G, PT := ParamInitTime);
+F_TRIG_Init(CLK := TP_Init.Q);
+IF F_TRIG_Init.Q THEN
+	nState := 1;
+END_IF
+
+
+CASE nState OF 
+    1: // init 
+		Current_Time := TIME();
+		IF Current_Time > Old_Time + IN_DataFrequency - INT_TO_TIME(CstCycleTime_G) THEN
+			nState := 3;
+			
+		END_IF
+    3: // write values 
+		Old_Time := TIME();
+        IF fbNoSqlQueryEvt.Execute(IN_Dbid, fbNoSQLQueryBuilder_TimeSeriesDB) THEN
+            IF fbNoSqlQueryEvt.bError THEN
+               bError := TRUE;
+			   nState := 1;
+            ELSE
+				bError := FALSE;
+			   	nState := 1;
+            END_IF
+        END_IF
+	
+END_CASE
+
+
+
+    ]]></ST>
+    </Implementation>
+    <LineIds Name="InfluxDb_WriteStruct">
+      <LineId Id="466" Count="7" />
+      <LineId Id="451" Count="0" />
+      <LineId Id="572" Count="0" />
+      <LineId Id="486" Count="0" />
+      <LineId Id="475" Count="0" />
+      <LineId Id="487" Count="3" />
+      <LineId Id="452" Count="0" />
+      <LineId Id="493" Count="0" />
+      <LineId Id="351" Count="1" />
+      <LineId Id="495" Count="0" />
+      <LineId Id="363" Count="0" />
+      <LineId Id="498" Count="0" />
+      <LineId Id="500" Count="0" />
+      <LineId Id="499" Count="0" />
+      <LineId Id="364" Count="0" />
+      <LineId Id="501" Count="0" />
+      <LineId Id="365" Count="2" />
+      <LineId Id="422" Count="0" />
+      <LineId Id="368" Count="0" />
+      <LineId Id="373" Count="0" />
+      <LineId Id="423" Count="0" />
+      <LineId Id="370" Count="1" />
+      <LineId Id="474" Count="0" />
+      <LineId Id="299" Count="2" />
+      <LineId Id="350" Count="0" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

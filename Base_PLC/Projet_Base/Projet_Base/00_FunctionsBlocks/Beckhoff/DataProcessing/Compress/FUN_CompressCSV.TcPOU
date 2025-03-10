@@ -1,0 +1,69 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FUN_CompressCSV" Id="{4cf48221-b3aa-42d6-a823-7e6fa567f05f}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM FUN_CompressCSV
+VAR_INPUT
+	InDirectory 		: T_MaxString;
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	Directory1		: T_MaxString;
+	Directory2		: T_MaxString;
+	FB_Time 			: FB_LocalSystemTime;
+	CompressFile	: FB_CompressFile;
+	PreviousMonth 	: WORD := 12;
+	PreviousYear 	: WORD := 2018;
+	CalDirectory 	: T_MaxString;
+	DirChange		: BOOL;
+	bTest 			: BOOL;
+	TimeStruct_Local : TIMESTRUCT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[FB_Time(sNetID := '', bEnable := TRUE, dwCycle := 1, dwOpt := 1, tTimeout := T#50MS, systemTime => TimeStruct_Local);
+IF FB_TIME.bValid THEN 
+	IF PreviousMonth <> TimeStruct_Local.wMonth THEN
+		Directory1 := Concat(InDirectory, concat(WORD_TO_STRING(TimeStruct_Local.wYear), '\'));
+		
+		IF PreviousYear <> TimeStruct_Local.wYear THEN
+			Directory1 := Concat(InDirectory, concat(WORD_TO_STRING(TimeStruct_Local.wYear-1), '\'));
+			PreviousYear := TimeStruct_Local.wYear;
+		END_IF
+		
+		Directory2 := Concat(Directory1, concat(WORD_TO_STRING(PreviousMonth), '\'));
+		PreviousMonth := TimeStruct_Local.wMonth;
+		DirChange := TRUE;
+	END_IF
+
+	
+	IF DirChange THEN	
+		bTest := TRUE;
+		CompressFile(IN_Directory := Directory2);	
+		DirChange := FALSE;
+	END_IF
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="FUN_CompressCSV">
+      <LineId Id="89" Count="1" />
+      <LineId Id="125" Count="1" />
+      <LineId Id="159" Count="0" />
+      <LineId Id="164" Count="0" />
+      <LineId Id="160" Count="1" />
+      <LineId Id="158" Count="0" />
+      <LineId Id="163" Count="0" />
+      <LineId Id="130" Count="0" />
+      <LineId Id="127" Count="0" />
+      <LineId Id="131" Count="0" />
+      <LineId Id="124" Count="0" />
+      <LineId Id="95" Count="0" />
+      <LineId Id="157" Count="0" />
+      <LineId Id="106" Count="0" />
+      <LineId Id="121" Count="0" />
+      <LineId Id="111" Count="0" />
+      <LineId Id="133" Count="0" />
+      <LineId Id="122" Count="0" />
+      <LineId Id="76" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

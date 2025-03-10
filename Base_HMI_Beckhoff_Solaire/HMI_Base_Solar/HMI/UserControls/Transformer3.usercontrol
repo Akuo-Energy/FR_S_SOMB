@@ -1,0 +1,15 @@
+﻿<div id="Transformer3" data-tchmi-type="TcHmi.Controls.System.TcHmiUserControl" data-tchmi-top="0" data-tchmi-left="0" data-tchmi-width="471" data-tchmi-height="515" data-tchmi-width-unit="px" data-tchmi-height-unit="px" data-tchmi-creator-viewport-width="500" data-tchmi-creator-viewport-height="500" data-tchmi-left-unit="px" data-tchmi-top-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px">
+
+<div id="Right_" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiEllipse" data-tchmi-height="%pp%Size%/pp%" data-tchmi-height-unit="px" data-tchmi-left-unit="px" data-tchmi-top="%f%%pp%Size%/pp%-%pp%Size%/pp%/2%/f%" data-tchmi-top-unit="px" data-tchmi-width="%pp%Size%/pp%" data-tchmi-width-unit="px" data-tchmi-stroke-thickness="3" data-tchmi-zindex="6" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px" data-tchmi-left="%f%%pp%Size%/pp%-%pp%Size%/pp%/4%/f%">
+
+</div>
+
+<div id="Left_" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiEllipse" data-tchmi-height="%pp%Size%/pp%" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-top-unit="px" data-tchmi-width-unit="px" data-tchmi-stroke-thickness="3" data-tchmi-zindex="6" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px" data-tchmi-width="%pp%Size%/pp%" data-tchmi-top="%f%%pp%Size%/pp%-%pp%Size%/pp%/2%/f%">
+
+</div>
+
+<div id="Top_" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiEllipse" data-tchmi-height="%pp%Size%/pp%" data-tchmi-height-unit="px" data-tchmi-left-unit="px" data-tchmi-width-unit="px" data-tchmi-stroke-thickness="3" data-tchmi-zindex="6" data-tchmi-bottom-unit="px" data-tchmi-top="0" data-tchmi-left="%f%%pp%Size%/pp% -%pp%Size%/pp%/1.5%/f%" data-tchmi-top-unit="px" data-tchmi-stroke-thickness-unit="px" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px" data-tchmi-width="%pp%Size%/pp%" data-tchmi-creator-visibility="Visible" data-tchmi-right-unit="px">
+
+</div>
+
+</div>

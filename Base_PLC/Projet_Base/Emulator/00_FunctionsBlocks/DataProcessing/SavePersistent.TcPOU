@@ -1,0 +1,40 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="SavePersistent" Id="{1952dfde-46c3-44d7-a6d7-00d979227d56}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM SavePersistent
+///////////////////
+// Save persistent data regularly
+///////////////////
+VAR
+	FB_WritePersistentData : WritePersistentData  ;
+	
+	LTP2: TP;
+	ClockPersistent: BOOL;
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// WRITING CLOCK //
+	LTP2(IN:=NOT LTP2.Q , PT:= T#1M);
+	ClockPersistent := LTP2.Q;
+
+FB_WritePersistentData(
+						NETID:='', 
+						PORT:= 851 ,
+						START :=  ClockPersistent AND NOT FB_WritePersistentData.BUSY , 
+						TMOUT := T#10S ) ;
+						
+						
+						
+						
+						]]></ST>
+    </Implementation>
+    <LineIds Name="SavePersistent">
+      <LineId Id="143" Count="1" />
+      <LineId Id="141" Count="1" />
+      <LineId Id="2" Count="0" />
+      <LineId Id="130" Count="3" />
+      <LineId Id="135" Count="4" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

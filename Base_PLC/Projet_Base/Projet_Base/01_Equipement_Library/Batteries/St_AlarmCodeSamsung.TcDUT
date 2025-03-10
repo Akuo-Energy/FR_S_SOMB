@@ -1,0 +1,282 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.9">
+  <DUT Name="St_AlarmCodeSamsung" Id="{feb52c46-6aa0-43a9-9908-645604cfe1d6}">
+    <Declaration><![CDATA[TYPE St_AlarmCodeSamsung :
+STRUCT
+	
+
+// System Alarm1 bAlarm1	
+BMS_Protection4_module_pcb_ut              : BOOL; 		// SystemBms Protection 4 : module pcb ut
+BMS_Protection4_module_pcb_ot              : BOOL; 		// SystemBms Protection 4 : module pcb ot
+BMS_Protection4_dcsw_count_fail            : BOOL; 		// SystemBms Protection 4 : dcsw count fail
+                                           				// 
+                                           				// 
+                                           				// 
+                                           				// 
+                                           				// 
+BMS_Protection4_fuse_or_dcsw_sensing_fail  : BOOL; 		// SystemBms Protection 4 : fuse or dcsw sensing fail
+                                           				// 
+                                           				// 
+                                           				// 
+                                           				// 
+                                           				// 
+                                           				// 
+                                           				// 
+														// : wAlarmCode
+
+
+
+// System Alarm1 bAlarm1
+                                           				// 
+                                           				// 
+                                           				// 
+                                           				// 
+                                           				// 
+                                           				// 
+                                           				// 
+                                           				// 
+BMS_Protection3_dcsw1_sensing_fail         : BOOL; 		// SystemBms Protection3 : dcsw1_sensing_fail
+BMS_Protection3_dcsw2_sensing_fail         : BOOL; 		// SystemBms Protection3 : dcsw2_sensing_fail
+BMS_Protection3_dcsw1_fail                 : BOOL; 		// SystemBms Protection3 : dcsw1_fail
+BMS_Protection3_dcsw2_fail                 : BOOL; 		// SystemBms Protection3 : dcsw2_fail
+BMS_Protection3_fan_fail_Option            : BOOL; 		// SystemBms Protection3 : fan fail [Option]
+BMS_Protection3_additional_protection_fail : BOOL; 		// SystemBms Protection3 : additional protection fail
+BMS_Protection3_cell_chg_operation_limit   : BOOL; 		// SystemBms Protection3 : cell chg operation limit
+BMS_Protection3_cell_dchg_operation_limit  : BOOL; 		// SystemBms Protection3 : cell dchg operation limit
+														// : wAlarmCode
+
+
+
+// System Alarm1 bAlarm1
+BMS_Protection1_module_UT                  : BOOL; 		// SystemBms Protection1 : module UT
+BMS_Protection1_module_OT                  : BOOL; 		// SystemBms Protection1 : module OT
+BMS_Protection1_module_UV                  : BOOL; 		// SystemBms Protection1 : module UV
+BMS_Protection1_module_OV                  : BOOL; 		// SystemBms Protection1 : module OV
+BMS_Protection1_module_V_imb               : BOOL; 		// SystemBms Protection1 : module V-imb
+BMS_Protection1_module_T_imb               : BOOL; 		// SystemBms Protection1 : module T-imb
+BMS_Protection1_R_M_comm_fail              : BOOL; 		// SystemBms Protection1 : R-M comm fail
+BMS_Protection1_R_S_comm_fail              : BOOL; 		// SystemBms Protection1 : R-S comm fail
+BMS_Protection1_rack_ChgOC                 : BOOL; 		// SystemBms Protection1 : rack ChgOC
+BMS_Protection1_rack_DchgOC                : BOOL; 		// SystemBms Protection1 : rack DchgOC
+BMS_Protection1_rack_UV                    : BOOL; 		// SystemBms Protection1 : rack UV
+BMS_Protection1_rack_OV                    : BOOL; 		// SystemBms Protection1 : rack OV
+BMS_Protection1_rack_V_sensing_diff        : BOOL; 		// SystemBms Protection1 : rack V sensing diff
+BMS_Protection1_rack_I_senser_fail         : BOOL; 		// SystemBms Protection1 : rack I senser fail
+BMS_Protection1_rack_fuse_fail_Option      : BOOL; 		// SystemBms Protection1 : rack fuse fail [Option]
+BMS_Protection1_permanent_uv               : BOOL; 		// SystemBms Protection1 : permanent  uv
+														// : wAlarmCode
+
+
+
+// System Alarm1 bAlarm1
+BMS_Alarm4_module_pcb_ut                   : BOOL; 		// SystemBms Alarm4 : module pcb ut
+BMS_Alarm4_module_pcb_ot                   : BOOL; 		// SystemBms Alarm4 : module pcb ot
+BMS_Alarm4_dcsw_count_fail                 : BOOL; 		// SystemBms Alarm4 : dcsw count fail
+                                           				//  
+                                           				//  
+                                           				//  
+                                           				//  
+                                           				//  
+BMS_Alarm4_fuse_or_dcsw_sensing_fail       : BOOL; 		// SystemBmsAlarm4 : fuse or dcsw sensing fail
+BMS_Alarm4_Rest_Cell_Balancing             : BOOL; 		// SystemBmsAlarm4 : Rest Cell Balancing
+                                           				// 
+                                           				// 
+                                           				// 
+                                           				// 
+                                           				// 
+                                           				// 
+														// : wAlarmCode
+
+
+
+// System Alarm1 bAlarm1
+                                           				// 
+                                           				// 
+                                           				// 
+                                           				// 
+                                           				// 
+                                           				// 
+                                           				// 
+                                           				// 
+BMS_Alarm3_dcsw1_sensing_fail              : BOOL; 		// SystemBms Alarm3 : dcsw1_sensing_fail
+BMS_Alarm3_dcsw2_sensing_fail              : BOOL; 		// SystemBms Alarm3 : dcsw2_sensing_fail
+BMS_Alarm3_dcsw1_fail                      : BOOL; 		// SystemBms Alarm3 : dcsw1_fail
+BMS_Alarm3_dcsw2_fail                      : BOOL; 		// SystemBms Alarm3 : dcsw2_fail
+BMS_Alarm3_fan_fail_Option                 : BOOL; 		// SystemBms Alarm3 : fan fail [Option]
+BMS_Alarm3_additional_protection_fail      : BOOL; 		// SystemBms Alarm3 : additional protection fail
+BMS_Alarm3_cell_chg_operation_limit        : BOOL; 		// SystemBms Alarm3 : cell chg operation limit
+BMS_Alarm3_cell_dchg_operation_limit       : BOOL; 		// SystemBms Alarm3 : cell dchg operation limit
+														// : wAlarmCode
+
+
+
+
+
+// System Alarm1 bAlarm1
+BMS_Alarm1_module_UT                       : BOOL; 		//SystemBms Alarm1 : module UT
+BMS_Alarm1_module_OT                       : BOOL; 		//SystemBms Alarm1 : module OT
+BMS_Alarm1_module_UV                       : BOOL; 		//SystemBms Alarm1 : module UV
+BMS_Alarm1_module_OV                       : BOOL; 		//SystemBms Alarm1 : module OV
+BMS_Alarm1_module_V_imb                    : BOOL; 		//SystemBms Alarm1 : module V-imb
+BMS_Alarm1_module_T_imb                    : BOOL; 		//SystemBms Alarm1 : module T-imb
+BMS_Alarm1_R_M_comm_fail                   : BOOL; 		//SystemBms Alarm1 : R-M comm fail
+BMS_Alarm1_R_S_comm_fail                   : BOOL; 		//SystemBms Alarm1 : R-S comm fail
+BMS_Alarm1_rack_ChgOC                      : BOOL; 		//SystemBms Alarm1 : rack ChgOC
+BMS_Alarm1_rack_DchgOC                     : BOOL; 		//SystemBms Alarm1 : rack DchgOC
+BMS_Alarm1_rack_UV                         : BOOL; 		//SystemBms Alarm1 : rack UV
+BMS_Alarm1_rack_OV                         : BOOL; 		//SystemBms Alarm1 : rack OV
+BMS_Alarm1_rack_V_sensing_diff             : BOOL; 		//SystemBms Alarm1 : rack V sensing diff
+BMS_Alarm1_rack_I_senser_fail              : BOOL; 		//SystemBms Alarm1 : rack I senser fail
+BMS_Alarm1_rack_fuse_fail_Option           : BOOL; 		//SystemBms Alarm1 : rack fuse fail [Option]
+BMS_Alarm1_permanent_uv                    : BOOL; 		//SystemBms Alarm1 : permanent  uv
+														// : wAlarmCode
+
+
+
+// System Alarm1 bAlarm1
+Rack_Protection4_module_pcb_ut             : BOOL; 		//Rack Protection4 : module pcb ut
+Rack_Protection4_module_pcb_ot             : BOOL; 		//Rack Protection4 : module pcb ot
+Rack_Protection4_dcsw_count_fail           : BOOL; 		//Rack Protection4 : dcsw count fail
+                                           				// 
+                                           				// 
+                                           				// 
+                                           				// 
+                                           				// 
+Rack_Protection4_fuse_or_dcsw_sensing_fail : BOOL; 		//Rack Protection 4 : fuse or dcsw sensing fail
+                                           				// 
+                                           				// 
+                                           				// 
+                                           				// 
+                                           				// 
+                                           				// 
+                                           				// 
+														// : wAlarmCode
+
+
+// System Alarm1 bAlarm1
+
+                                          				// 
+                                          				// 
+                                          				// 
+                                          				// 
+                                          				// 
+                                          				// 
+                                          				// 
+                                          				// 
+Rack_Protection3_dcsw1_sensing_fail        : BOOL; 		//Rack Protection3 : dcsw1_sensing_fail
+Rack_Protection3_dcsw2_sensing_fail        : BOOL; 		//Rack Protection3 : dcsw2_sensing_fail
+Rack_Protection3_dcsw1_fail                : BOOL; 		//Rack Protection3 : dcsw1_fail
+Rack_Protection3_dcsw2_fail                : BOOL; 		//Rack Protection3 : dcsw2_fail
+Rack_Protection3_fan_fail_Option           : BOOL; 		//Rack Protection3 : fan fail [Option]
+Rack_Protection3_additional_protection_fail: BOOL; 		//Rack Protection3 : additional protection fail
+Rack_Protection3_cell_chg_operation_limit  : BOOL; 		//Rack Protection3 : cell chg operation limit
+Rack_Protection3_cell_dchg_operation_limit : BOOL; 		//Rack Protection3 : cell dchg operation limit
+														// : wAlarmCode
+
+
+
+
+
+// System Alarm1 bAlarm1
+Rack_Protection1_module_UT                 : BOOL; 		//Rack Protection1 : module UT
+Rack_Protection1_module_OT                 : BOOL; 		//Rack Protection1 : module OT
+Rack_Protection1_module_UV                 : BOOL; 		//Rack Protection1 : module UV
+Rack_Protection1_module_OV                 : BOOL; 		//Rack Protection1 : module OV
+Rack_Protection1_module_Vimb               : BOOL; 		//Rack Protection1 : module V-imb
+Rack_Protection1_module_Timb               : BOOL; 		//Rack Protection1 : module T-imb
+Rack_Protection1_RM_comm_fail              : BOOL; 		//Rack Protection1 : R-M comm fail
+Rack_Protection1_RS_comm_fail              : BOOL; 		//Rack Protection1 : R-S comm fail
+Rack_Protection1_rack_ChgOC                : BOOL; 		//Rack Protection1 : rack ChgOC
+Rack_Protection1_rack_DchgOC               : BOOL; 		//Rack Protection1 : rack DchgOC
+Rack_Protection1_rack_UV                   : BOOL; 		//Rack Protection1 : rack UV
+Rack_Protection1_rack_OV                   : BOOL; 		//Rack Protection1 : rack OV
+Rack_Protection1_rack_V_sensing_diff       : BOOL; 		//Rack Protection1 : rack V sensing diff
+Rack_Protection1_rack_I_senser_fail        : BOOL; 		//Rack Protection1 : rack I senser fail
+Rack_Protection1_rack_fuse_fail_Option     : BOOL; 		//Rack Protection1 : rack fuse fail [Option]
+Rack_Protection1_permanent_uv              : BOOL; 		//Rack Protection1 : permanent  uv
+														// : wAlarmCode
+
+
+
+// System Alarm1 bAlarm1
+Rack_Alarm4_module_pcb_ut                  : BOOL; 		//Rack Alarm4 : module pcb ut
+Rack_Alarm4_module_pcb_ot                  : BOOL; 		//Rack Alarm4 : module pcb ot
+Rack_Alarm4_dcsw_count_fail                : BOOL; 		//Rack Alarm4 : dcsw count fail
+                                           				// 
+                                           				// 
+                                           				// 
+                                           				// 
+                                           				// 
+Rack_Alarm4_fuse_or_dcsw_sensing_fail      : BOOL; 		//Rack Alarm4 : fuse or dcsw sensing fail
+Rack_Alarm4_Rest_Cell_Balancing            : BOOL; 		//Rack Alarm4 : Rest Cell Balancing
+                                           				// 
+                                           				// 
+                                           				// 
+                                           				// 
+                                           				// 
+                                           				// 
+														// : wAlarmCode
+
+// System Alarm1 bAlarm1                                           				
+                                           				// 
+                                           				// 
+                                           				// 
+                                           				// 
+                                           				// 
+                                           				// 
+                                           				// 
+                                           				// 
+Rack_Alarm3_dcsw1_sensing_fail             : BOOL; 		//Rack Alarm3 : dcsw1_sensing_fail
+Rack_Alarm3_dcsw2_sensing_fail             : BOOL; 		//Rack Alarm3 : dcsw2_sensing_fail
+Rack_Alarm3_dcsw1_fail                     : BOOL; 		//Rack Alarm3 : dcsw1_fail
+Rack_Alarm3_dcsw2_fail                     : BOOL; 		//Rack Alarm3 : dcsw2_fail
+Rack_Alarm3_fan_fail_Option                : BOOL; 		//Rack Alarm3 : fan fail [Option]
+Rack_Alarm3_additional_protection_fail     : BOOL; 		//Rack Alarm3 : additional protection fail
+Rack_Alarm3_cell_chg_operation_limit       : BOOL; 		//Rack Alarm3 : cell chg operation limit
+Rack_Alarm3_cell_dchg_operation_limit      : BOOL; 		//Rack Alarm3 : cell dchg operation limit
+														// : wAlarmCode
+
+
+// System Alarm1 bAlarm1                                                   	
+                                           				// 
+                                           				// 
+                                           				// 
+                                           				// 
+                                           				// 
+                                           				// 
+                                           				// 
+                                           				// 
+                                           				// 
+                                           				// 
+                                           				// 
+                                           				// 
+                                           				// 
+                                           				// 
+                                           				// 
+                                           				// 
+														// : wAlarmCode
+
+// System Alarm1 bAlarm1                                                   	
+Rack_Alarm1_module_UT                      : BOOL; 		//Rack Alarm1 : module UT
+Rack_Alarm1_module_OT                      : BOOL; 		//Rack Alarm1 : module OT
+Rack_Alarm1_module_UV                      : BOOL; 		//Rack Alarm1 : module UV
+Rack_Alarm1_module_OV                      : BOOL; 		//Rack Alarm1 : module OV
+Rack_Alarm1_module_Vimb                    : BOOL; 		//Rack Alarm1 : module V-imb
+Rack_Alarm1_module_Timb                    : BOOL; 		//Rack Alarm1 : module T-imb
+Rack_Alarm1_RM_comm_fail                   : BOOL; 		//Rack Alarm1 : R-M comm fail
+Rack_Alarm1_RS_comm_fail                   : BOOL; 		//Rack Alarm1 : R-S comm fail
+Rack_Alarm1_rack_ChgOC                     : BOOL; 		//Rack Alarm1 : rack ChgOC
+Rack_Alarm1_rack_DchgOC                    : BOOL; 		//Rack Alarm1 : rack DchgOC
+Rack_Alarm1_rack_UV                        : BOOL; 		//Rack Alarm1 : rack UV
+Rack_Alarm1_rack_OV                        : BOOL; 		//Rack Alarm1 : rack OV
+Rack_Alarm1_rack_V_sensing_diff            : BOOL; 		//Rack Alarm1 : rack V sensing diff
+Rack_Alarm1_rack_I_senser_fail             : BOOL; 		//Rack Alarm1 : rack I senser fail
+Rack_Alarm1_rack_fuse_fail_Option          : BOOL; 		//Rack Alarm1 : rack fuse fail [Option]
+Rack_Alarm1_permanent_uv                   : BOOL; 		//Rack Alarm1 : permanent  uv
+														// : wAlarmCode
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

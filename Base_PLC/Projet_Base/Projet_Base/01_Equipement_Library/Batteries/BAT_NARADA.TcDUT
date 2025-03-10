@@ -1,0 +1,88 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="BAT_NARADA" Id="{32f68d1b-a78b-4b0c-85b9-3a9b8d97cbd2}">
+    <Declaration><![CDATA[{attribute 'pack_mode' := '1'}
+
+TYPE BAT_NARADA :
+STRUCT
+	
+	MesData							: BAT;	  	(* 	Base model													*)
+
+	MesIDState2             		: REAL  ;   (* ID state pour le alarmManagement des batteries *)
+	MesSoCConnected					: REAL  ; 	(* 	(%) SoC Connected (not including racks with protection).	*)
+	MesNbRackConnected				: UINT;		(* (NA) Nb of Racks in service ( strings ) 						*)
+	MesChargeStatus					: WORD;
+	
+	// Current                                                                                                       	
+	                                                                                                        	
+	MesIdcMax_Rack                  : REAL  ; (*	(A) Max String Current [StrAMax]                        	*)
+	MesIDRack_Imax_Rack             : WORD	; (*	(NA) Max String Current String [StrAMaxStr]             	*)
+	MesIdcMin_Rack                  : REAL  ; (*	(A) Min String Current [StrAMin]                        	*)
+	MesIDRack_Imin_Rack             : WORD	; (*	(NA) Min String Current String [StrAMinStr]             	*)
+                                                                                                            	
+	MesIdc_Rack                     : REAL  ; (*	(A) Average String Current [StrAAvg]                    	*)
+	
+	MesIdiff						: REAL  ; (* 	(A) 														*)
+	
+    //Temp      
+                                                                                                     	                                                                                            	
+	MesTempMax_Cell               	: REAL 	; (*	(℃) Max Cell Temperature [CellTmpMax]             		   	*)
+	MesIDRack_TempMax_Cell	        : WORD	; (*	(NA) Max Cell Temperature String [CellTmpMaxStr]       		*)
+	MesIDModule_TempMax_Cell	    : WORD	; (*	(NA) Max Cell Temperature Module [CellTmpMaxMod]     	  	*)
+    MesIDCell_TempMax			    : WORD	; (*	(NA) Max Cell Temperature [CellTmpMax]	     	  			*)
+                                            	                                                        	
+	MesTempMin_Cell              	: REAL	; (*	(℃) Min Cell Temperature [CellTmpMin]               	  	*)
+	MesIDRack_TempMin_Cell          : WORD	; (*	(NA) Min Cell Temperature String [CellTmpMinStr]       		*)
+	MesIDModule_TempMin_Cell        : WORD	; (*	(NA) Min Cell Temperature Module [CellTmpMinMod]       		*)
+	MesIDCell_TempMin			    : WORD	; (*	(NA) Max Cell Temperature [CellTmpMin]	     	  			*)
+	
+	MesTemp_Racks                   : REAL  ; (*	(℃) Average Rals Temperature [RckTmpAvg]             	 	*)
+    
+	//Voltage         
+	
+		MesUdiff						: REAL ; (* 	(V) 													*)
+	                                                                                                            
+		//Cell                                                                                                  
+                                                                              	                                
+		MesUdcMax_Cell          		: REAL ; (* 	(V) Max Cell Voltage [CellVMax]                 		*)
+		MesIDRack_UdcMax_Cell   		: WORD ; (* 	(NA) Max Cell Voltage String [CellVMaxStr]      		*)
+		MesIDModule_UdcMax_Cell 		: WORD ; (* 	(NA) Max Cell Voltage Module [CellVMaxMod]      		*)
+		MesIDCell_UdcMax		 		: WORD ; (* 	(NA) Max Cell Voltage [CellVMaxMod]      				*)
+		                                                                                                        
+		                                                                                                        
+		MesUdcMin_Cell          		: REAL ; (* 	(V) Min Cell Voltage [CellVMin]                 		*)
+		MesIDRack_UdcMin_Cell   		: WORD ; (* 	(NA) Min Cell Voltage String [CellVMinStr]      		*)
+		MesIDModule_UdcMin_Cell 		: WORD ; (* 	(NA) Min Cell Voltage Module [CellVMinMod]      		*)
+		MesIDCell_UdcMin		 		: WORD ; (* 	(NA) Max Cell Voltage [CellVMaxMod]      				*)	
+		
+		MesUdc_Cell						: WORD ; (*    (mV) Average cell voltage rack   						*)
+	                                                                                                            
+		// Rack			                                                                                        
+																								                
+		MesUdcMax_Rack          		: REAL ; (* 	(V) Max String Voltage [StrVMax]                		*)
+		MesIDRack_UdcMax_Rack   		: WORD ; (* 	(NA) Max Cell Voltage String [StrVMaxStr]       		*)
+		                                                                                                        
+		MesUdcMin_Rack          		: REAL ; (* 	(V) Min Cell Voltage [StrVMin]                  		*)
+		MesIDRack_UdcMin_Rack   		: WORD ; (* 	(NA) Min Cell Voltage String [StrVMinStr]       		*)
+		                                                                                                        
+		MesUdc_Rack						: REAL ; (* 	(V) Voltage of the cells, average [StrVAvg]				*)           	
+
+	MesSystemOperationState			: WORD ;
+	MesStatusConnectionProcess		: WORD ;
+	MesSystemChargeState            : WORD ; (* 	         			*)                                 	                                                        	
+	MesIDRack              	: WORD ; (* 	(NA) Battery Event 1 Bitfield [Evt1]             			*) 
+	MesIDRackWState				: WORD ; (* 	                     			*)
+	MesIDRackCriticalState          : WORD ; (* 	                   			*)  	
+	MesBAUState				: WORD ;
+                                                	                                                        	
+	MesInsulation					: REAL ; (* 	(KΩ) 														*)      	
+
+	AX_RACK							: ARRAY[1..CstNbRack_BAT_G] OF RackString_NARADA;
+	AX_HVAC							: ARRAY[1..4] OF HVAC_NARADA ;
+	
+END_STRUCT
+END_TYPE
+
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

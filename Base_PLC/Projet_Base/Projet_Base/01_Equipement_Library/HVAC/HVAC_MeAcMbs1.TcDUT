@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <DUT Name="HVAC_MeAcMbs1" Id="{898841de-3e76-40ba-af17-ff2e3176f5a6}">
+    <Declaration><![CDATA[TYPE HVAC_MeAcMbs1 :
+STRUCT
+	MesData : HVAC;						(* (NA) Main Structure*)
+	
+	IN_SetptTemp		: REAL ;		(* (°C) Temperature setpoint input *)
+	IN_CmdStatus		: BOOL ;		(* (NA) Status order: 1= On, 0= Off*)
+	
+	MesMode				: INT  ;		(* (NA) AC Unit Mode : 0:Auto, 1: Heat, 2: Dry, 3: Fan, 4: Cool*)
+	MesFanMode			: WORD ;		(* (NA) Fan Speed (0:Auto, 1:Low, 2:Mid1, 3:Mid2, 4:High) *)
+	MesTempRef			: REAL ;		(* (°C) Temperature reference: Used to update the measured temp for PID of the HVAC*)
+	MesbAlarm			: BOOL ;		(* (NA) Alarm condition*)
+	MesErrorCode		: WORD ; 		(* (NA) Error Code*)
+	MesTempRoom			: REAL ; 		(* (°C)	Temperature value *)
+ 	MesTempRealSetpt	: REAL ;		(* (°C) Real temperature setpoint if a temp ref is entered *)
+	
+	MesAlarm1 			: WORD;			(* (NA) Alarm *)
+	MesAlarm2 			: WORD;         (* (NA) Alarm *)
+	MesAlarm3 			: WORD;         (* (NA) Alarm *)
+	MesAlarm4 			: WORD;         (* (NA) Alarm *)
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <DUT Name="DustIQ" Id="{bc384c25-1a0c-4e68-a092-291f397867f4}">
+    <Declaration><![CDATA[TYPE DustIQ :
+STRUCT
+	MesSoilingRatio1				: REAL;  		(* (%) Soiling ratio measured by the DustIQ for sensor1 , in percentage (from 101% to 50%) after correction by transmission loss *)
+	MesSoilingRatio2				: REAL;  		(* (%) Soiling ratio measured by the DustIQ for sensor2 , in percentage (from 101% to 50%) after correction by transmission loss *)
+	                            	
+	MesSoilingRatio					: REAL;  		(* (%) Soiling ratio measured by the DustIQ average of 2 sensors, in percentage (from 101% to 50%) after correction by transmission loss *)
+	
+	MesTemp_Panel					: REAL;			(* (°C) Panel temperature*)
+	
+	MesNeedForCalibration			: BOOL;			(* (NA) Informs need for calibration *)
+	MesCalibrationDone				: BOOL;			(* (NA) Informs completion of calibration *)
+	
+	MesTiltDirection_X				: REAL;			(* (°) Tilt direction in long axis*)
+	MesTiltDirection_Y				: REAL;			(* (°) Tilt direction in short axis*)
+	
+	MesAlarmCode					: WORD;			(* (NA) Akuo internal Alarm Code *)
+	MesWarningCode					: WORD;         (* (NA) Akuo internal Warning Code *)
+	MesAlarmCom						: BOOL;         (* (NA) Communication alarm*)
+	MesCP_Read						: BOOL := TRUE;         (* (NA) Permanent condition for read *)
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

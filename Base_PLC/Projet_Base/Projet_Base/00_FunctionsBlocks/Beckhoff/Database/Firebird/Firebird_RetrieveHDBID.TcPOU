@@ -1,0 +1,96 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="Firebird_RetrieveHDBID" Id="{f6bc129d-e182-4bfb-ade1-515d8194de01}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM Firebird_RetrieveHDBID
+VAR_INPUT
+	IN_ConfigDbActuelle		: ARRAY[0..MAX_CONFIGURATIONS] OF ST_ConfigDB; 
+	IN_Dir					: T_MAXSTRING;
+	IN_Name					: ARRAY[1..CstNbBases] OF STRING;
+	IN_Start				: BOOL;
+	IN_IpAddressServer		: STRING := 'localhost';
+	IN_Port					: STRING := '3050';
+END_VAR
+
+VAR_OUTPUT
+	OUT_hDBID         		: ARRAY[1..CstNbBases] OF DINT;	
+	OUT_Error				: BOOL;
+	OUT_Busy				: BOOL;
+	OUT_Result				: INT;
+END_VAR
+VAR
+	TrigStart				: R_TRIG;
+	KK 						: UDINT;
+	sExtension				: STRING;
+	DbFullDirName			:  ARRAY[1..CstNbBases] OF STRING;
+	LL						: DINT := 1;
+	RS_Start				: RS;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+sExtension := '.FDB';
+FOR KK := 1 TO CstNbBases DO
+	DbFullDirName[KK] := CONCAT(str1:= IN_IpAddressServer, STR2:= CONCAT(str1:= '/',str2:= CONCAT(STR1:= IN_Port, str2:=concat(str1 := ':', str2:=Concat(STR1:=Concat(STR1:= IN_Dir, STR2 := IN_Name[KK]), STR2 := sExtension)))));
+END_FOR
+TrigStart(CLK := IN_Start );
+IF TrigStart.Q THEN
+	LL := 1;
+END_IF
+RS_Start(SET := TrigStart.Q);
+IF RS_Start.Q1 THEN
+
+	OUT_Busy := TRUE;
+	IF LL <= CstNbBases AND LL >0 THEN
+		FOR KK := 0 TO MAX_CONFIGURATIONS DO
+			IF IN_ConfigDbActuelle[KK].sDatabase = DbFullDirName[LL] THEN
+				OUT_hDBID[LL] := IN_ConfigDbActuelle[KK].hDBID;
+				LL := LL+1;
+				EXIT;
+			END_IF
+			IF KK = MAX_CONFIGURATIONS THEN
+				OUT_Result := -2;
+				LL := -2;
+				OUT_Error := TRUE;
+				OUT_Busy := FALSE;
+			END_IF
+		END_FOR
+	ELSIF LL > CstNbBases THEN
+		OUT_Result := 1;
+		OUT_Busy := FALSE;
+		OUT_Error := FALSE;
+		LL := 1;
+		RS_Start(RESET1 := TRUE);
+		RS_Start(RESET1 := FALSE);
+	END_IF
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="Firebird_RetrieveHDBID">
+      <LineId Id="47" Count="1" />
+      <LineId Id="77" Count="0" />
+      <LineId Id="49" Count="0" />
+      <LineId Id="45" Count="0" />
+      <LineId Id="6" Count="0" />
+      <LineId Id="119" Count="2" />
+      <LineId Id="88" Count="0" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="78" Count="0" />
+      <LineId Id="55" Count="0" />
+      <LineId Id="80" Count="0" />
+      <LineId Id="8" Count="1" />
+      <LineId Id="15" Count="0" />
+      <LineId Id="86" Count="0" />
+      <LineId Id="92" Count="0" />
+      <LineId Id="19" Count="1" />
+      <LineId Id="52" Count="0" />
+      <LineId Id="87" Count="0" />
+      <LineId Id="53" Count="1" />
+      <LineId Id="22" Count="1" />
+      <LineId Id="82" Count="1" />
+      <LineId Id="85" Count="0" />
+      <LineId Id="84" Count="0" />
+      <LineId Id="93" Count="0" />
+      <LineId Id="90" Count="1" />
+      <LineId Id="81" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

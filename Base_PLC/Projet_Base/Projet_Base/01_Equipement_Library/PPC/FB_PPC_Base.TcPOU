@@ -1,0 +1,306 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_PPC_Base" Id="{baa79ddc-dc46-4fca-8d56-75afad008796}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_PPC_Base 
+//////////////////
+// PV INverter. Base FB. 
+//////////////////
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance/model specific) 
+	ParamTempoComAlarm		: TIME 		:= T#30S ; 				// (s) Config : Tempo to detect LOC Alarm
+	ParamTimeOutCurtail     : TIME 		:= T#45S ;			  	// (s) Config : Tempo to curtail power at set value before Timeout warning
+	ParamClockReadTime 		: TIME 		:= TIME#2S;	  			// (Time) Read Modbus Frequency . 
+	ParamClockWriteTime 	: TIME 		:= TIME#2S; 	  			// (Time) Write Modbus Frequency .
+ 	ParamTimeout			: TIME  	:= T#1S500ms ;		  			// (Time) Timeout for modbus reading
+	
+	ParamPnom				: REAL := 2200;      			// (W)    Nominal Capacity of SMA SC2750
+	ParamQnom				: REAL := 220;      			// (W)    Nominal Capacity of SMA SC2750
+END_VAR
+
+VAR_INPUT
+		IN_CmdStart						: BOOL;								// (NA) [P,H] External Start Command
+		IN_CmdStop 						: BOOL; 							// (NA) [P,H] External Stop Command. 
+
+		IN_CmdStop_Local					: BOOL; 							// (NA) [P,H] External Stop Command, only for this inverter
+		IN_CmdStart_Local					: BOOL:=TRUE;						// (NA) [P,H] External Start Command, only for this inverter
+		IN_CmdReset							: BOOL ; 
+		
+		
+		IN_SetptPlimit						: REAL;								// (W) [P,H] Dynamic aCtive Power limit setpoint (curtailing)  
+		IN_SetptPlimit_Local				: REAL;								// (W) [P,H] Dynamic aCtive Power limit setpoint (curtailing)  
+		IN_SetptQlimit						: REAL ; 							// (VAr) Dynamic reactive power setpoint. 
+		IN_CmdToggleRead					: BOOL;
+		IN_CmdToggleWrite		 			: BOOL;
+	
+		
+		
+END_VAR
+
+VAR_OUTPUT
+
+END_VAR
+
+VAR
+	// M_ALARMMNGMT VARIABLES //
+		TON_ComAlarm					: TON ; 							// Tempo before deteting loss of communication. 
+	                                	                    				                          	          		    				
+		MesComWarning					: BOOL ; 							// (NA) [P,H]  True if bad communication
+		CalModbusWriteAlarm         	 : BOOL ; 							// (NA) Modbus Write Alarm synthesis
+                       	
+	// M_READ VARIABLES//           	
+
+
+	// M_CURTAIL VARIABLES //       	
+		FB_CheckCommand1		  		: FB_CheckCommand ; 				// (NA) Functionnal Block to check if Curtail limit Writing Successful
+		FB_CheckSetPt		  			: FB_CheckSetPt ; 					// (NA) Functionnal Block to check if Q setpoint Writing Successful
+                                    	
+		R_TRIG_Curtail					: R_TRIG ;
+		CalCompareWarningCurtail		: BOOL ; 							// (NA) Curtail failed alarm						
+		CalCompareWarningQSetpt			: BOOL ; 							// (NA) Curtail failed alarm						
+        //SetptQ 							: INT ; 						//(VAr) [P,H] Reactive Power Limit setpoint (curtailing)
+		WriteCmdP 			 			: BOOL;								// Modbus Write Rising Edge 
+		WriteCmdQ 			 			: BOOL;								// Modbus Write Rising Edge 
+		Setptcurtail 					: BOOL;
+	// M_STARTSTOP//                	
+			
+		Trig_Cmd_Read					: R_TRIG; 
+		Trig_Cmd_Write					: R_TRIG;  
+		RS_Cmd_Read						: RS ; 	
+		RS_Cmd_Write					: RS ; 	       	
+		Trig_Local_Start				: R_Trig;
+		Trig_Local_Stop					: R_Trig;
+		Trig_Start						: R_Trig;
+		Trig_Stop						: R_Trig;
+		RS_StartStop					: RS ; 								// (NA) Bistable Function for Start and Stop 
+		RS_StartStop_Local				: RS;								// (NA) Bistable Function for Start and Stop local                        	
+
+	// M_STATEMANAGER//             	
+		FB_OperationIndex				: FB_OperationIndex ; 
+		CalLastStart					: STRING ;			 				// Datetime of the last Start
+		                            	
+		CalRunningTime					: INT ; 							// Total Running Time
+		CalNbMove						: WORD ;							// Total Number of Start;
+		                            	
+		MesState						: BYTE ; 							// (NA) [P,H,B] Bit 0: OFF , Bit 1 : Feeding Slave 	, BIT 2 : Alarms state
+
+	// M_CP VARIABLES //	
+		MesCP_Read						: BOOL;								// (NA) Permanent conditions to activate method
+		MesCP_Write						: BOOL;                         	
+
+		CalCP_Curtail					: BOOL;								// (NA) Permanent conditions to activate method 
+		CalCP_SetPtQ					: BOOL ; 							// 	
+		CalCP_SetCurtailModeP			: BOOL;                         	
+		CalCP_SetCurtailModeQ			: BOOL;                         	
+	//M_EXECUTE VARIABLES //                                            	
+		TP1								: TP ; 								// (NA) Tempo to define Modbus Reading Frequency 
+		TP2 							: TP ; 								// (NA) Tempo to define Modbus Writing Frequency
+		                                                                	
+		ClockRead						: BOOL;								// (NA) Modbus reading Clock
+		ClockWrite 						: BOOL;								// (NA) Modbus writing Clock 		
+
+	//EMULATOR VARIABLES //
+	
+		
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+
+]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{c4ed743c-813b-4c3a-88e3-d77a67e2c634}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Manages IntelliGen Alarms
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_CP" Id="{50ca0d01-cd95-411f-8b70-35e25422cd73}">
+      <Declaration><![CDATA[METHOD M_CP
+//////////////////
+//  Emulator
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{ae2a02b7-0b17-4a85-a3b4-aec23c3fa65e}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// READING AND WRITING CLOCK //
+	TP1(IN:=NOT TP1.Q , PT:= ParamClockReadTime);
+	ClockRead 				:= TP1.Q;
+	
+	TP2(IN:=NOT TP2.Q , PT:= ParamClockWriteTime);
+	ClockWrite 				:= TP2.Q;
+	
+// PERMANENT CONDITIONS //	
+	M_CP() ; 
+	
+//Start Stop
+	M_StartStop();	
+	
+// M_READ//
+	M_Read();
+
+
+// EMULATOR COM READ  /////////////
+	M_Emulator_Read() ; 
+
+	/////////
+	M_StateManager() ; 
+	M_Write();
+	
+	// EMULATOR COM Write   /////////////
+	M_Emulator_Write() ; 
+ 	/////////
+
+	M_AlarmManagement();
+	
+	
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Read" Id="{24f368c5-0ff6-4da1-bcf2-d3df903619f4}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'M_Read'}
+METHOD M_Read
+//////////
+// Read Method for SMA : Modbus reading
+//////////
+VAR
+	// Method local variables (reinitialized at each cycle) 
+	
+END_VAR
+
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_StartStop" Id="{69c91bfd-18f3-47f9-9c2c-c4b518f488ae}">
+      <Declaration><![CDATA[METHOD M_StartStop
+//////////////////
+// Start and Stop AMG
+/////////////////
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//Order is important 1sf
+//CmdStart := CmdStart	AND NOT CmdStop_Local; // Local Protection, can't switch on if i am switch off in local
+//2nd
+Trig_Local_Start(CLK:=IN_CmdStart_Local);
+Trig_Local_Stop(CLK:=IN_CmdStop_Local);
+Trig_Start(CLK:=IN_CmdStart);
+Trig_Stop(CLK:=IN_CmdStop);
+
+RS_StartStop_Local(SET:=Trig_Local_Start.Q,Reset1:= Trig_Local_Stop.Q); // TRUE START, FALSE STOP
+RS_StartStop(SET:=Trig_Start.Q,Reset1 := Trig_Stop.Q OR NOT RS_StartStop_Local.Q1 ); // TRUE START, FALSE STOP
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_StateManager" Id="{0b84fc60-69d9-4b3a-bd74-86d973582685}">
+      <Declaration><![CDATA[METHOD M_StateManager
+//////////////////
+// Detect which is the state of the inverter. IF loss of communication MesState =0 , the last inverter state is kept .  
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+	
+END_VAR
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// OPERATIONNAL INDEX //
+	FB_OperationIndex(
+		MesON 				:= MesState>1, 
+		CmdReset 			:= CmdReInitMaintenanceIndicator_G,
+		CalRunningTimeHr 	=> CalRunningTime , 
+		CalNbMove 			=> CalNbMove,
+		CalTimeStart 		=> CalLastStart) ;  ]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Write" Id="{88da6d2f-f761-4dc8-9bf8-63c4de822a45}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'M_Write'}
+METHOD M_Write
+//////////////////
+// Write Curtail Command through modbus to PV inverters.  
+//////////////////
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_PPC_Base">
+      <LineId Id="3" Count="1" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PPC_Base.M_AlarmManagement">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PPC_Base.M_CP">
+      <LineId Id="49" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PPC_Base.M_Execute">
+      <LineId Id="400" Count="7" />
+      <LineId Id="409" Count="0" />
+      <LineId Id="490" Count="0" />
+      <LineId Id="410" Count="0" />
+      <LineId Id="489" Count="0" />
+      <LineId Id="491" Count="0" />
+      <LineId Id="411" Count="3" />
+      <LineId Id="479" Count="0" />
+      <LineId Id="415" Count="0" />
+      <LineId Id="455" Count="5" />
+      <LineId Id="464" Count="5" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PPC_Base.M_Read">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PPC_Base.M_StartStop">
+      <LineId Id="205" Count="10" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PPC_Base.M_StateManager">
+      <LineId Id="95" Count="5" />
+      <LineId Id="12" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PPC_Base.M_Write">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

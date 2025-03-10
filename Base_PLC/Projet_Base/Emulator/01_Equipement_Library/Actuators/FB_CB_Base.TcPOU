@@ -1,0 +1,115 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_CB_Base" Id="{27a8d1b8-57d2-42fe-9c75-0fdcbe3d6e18}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_CB_Base
+//////////////////
+// Electrical Switch - Base FB
+//////////////////
+VAR_INPUT
+	// Parameters of the Object (instance specific) 
+	IN_CmdExternalOpen_Emul			: BOOL ; 
+	IN_CmdExternalClose_Emul		: BOOL ;
+	
+END_VAR
+VAR
+	bInit							: BOOL := TRUE ;
+
+	TON_OutputWait_Open				: TON;
+	TON_OutputWait_Close			: TON;
+	
+	ParamTimeOpen_Wait				: TIME := T#1S;
+	ParamTimeClose_Wait				: TIME := T#1S;
+	RS_Emulate: RS;
+	R_TRIGOpen: R_TRIG;
+	R_TRIGClose: R_TRIG;
+	
+END_VAR
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance/model specific) 
+	ParamTimeOut_Open       		: TIME  := T#1S     ;       // (ms) Config : Tempo to open before Timeout warning  
+	ParamTimeOut_Close      		: TIME  := T#1S     ;		// (ms) Config : Tempo to close before Timeout warning
+	ParamTimeOut_Alarm   		    : TIME  := T#200MS  ;		// (ms) Config : Tempo when open and close before raising alarm // Check tag, original : ParamTempoStateAlarm
+	ParamNC							: BOOL  := FALSE    ;		// (NA) False: TRUE = Closed , True : TRUE = opened             // Check description
+	ParamNbFdbck			    	: BYTE              ;		// (NA) Number of Feedback Position (1: 1 wire , 2 : 2 wire)    // Check tag
+	ParamClosedInput_Connected		: BOOL  := TRUE     ; 		// (NA)True : closed input is connected                         // Check tag
+	                                                    	
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	
+END_VAR
+
+VAR_INPUT
+	// I/O Inputs 
+		IN_MesOpened_IO					: BOOL  ; 				// (NA) [P,H,B] Opened Position IO	         //Check: MesOpened is another var 
+		IN_MesClosed_IO 				: BOOL := TRUE ; 		// (NA) [P,H,B] Closed Position IO           //Check: MesClosed is another var
+	
+		IN_CmdOpen 						: BOOL ; 				// (NA) External Open Command 
+		IN_CmdClose						: BOOL ; 				// (NA) External Close Command 
+		IN_CmdReset_L					: BOOL ;				// (NA) External Reset Command              // Check: what does the L respresent ? 
+		
+END_VAR
+
+VAR
+	//M_OPENCLOSE VARIABLES//
+		MesOpened					     : BOOL ;                                                                     //Check: MesClosed is another var
+		MesClosed					     : BOOL ;                                                                     //Check: MesOpened is another var
+		
+	//M_ALARMMANAGEMENT VARIABLES//
+		FB_CheckCommand				     : FB_CheckCommand ; 	//(NA) Check if start command successful 
+		FB_CheckCommand2			     : FB_CheckCommand ;		//(NA) Check if stop command successful  
+		TON_ClosedAndOpened			     : TON ;              	
+		TON_NotClosedAndNotOpened	     : TON ;              	
+                                             	
+		
+		
+	//M_STATEMANAGER VARIABLES//
+		MesState					     : BYTE ; 				// (NA) Cal [P,H,B] Bit 0: Open , Bit 1: Closed        // Check : Cal ? BYTE or BOOL ?
+	///MesDataExd				     : CB ; 
+
+	// M_EXECUTE VARIABLES 	//                                   
+
+
+		
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_Execute" Id="{548efda6-ddfa-4fb7-b7ad-882d44e83a08}">
+      <Declaration><![CDATA[METHOD M_Execute
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[RS_Emulate(SET := MesClosed OR IN_CmdExternalClose_Emul , RESET1 := MesOpened OR IN_CmdExternalOpen_Emul ); 			// The Cell opens after receiving a open order or if receiving an external open ordre ( C13100 , .. ) 
+
+
+
+IF ParamNC THEN 
+	IN_MesOpened_IO 		:= RS_Emulate.Q1 ;  						// CB Opened if CmdOpenedIO
+	IN_MesClosed_IO 		:= NOT RS_Emulate.Q1 ; 								// Cb Closed if CmdClosedIO
+ELSE 
+	IN_MesOpened_IO 		:= NOT RS_Emulate.Q1 ;  						// CB Opened if CmdOpenedIO
+	IN_MesClosed_IO 		:= RS_Emulate.Q1 ; 								// Cb Closed if CmdClosedIO
+END_IF
+
+R_TRIGOpen(CLK:= IN_MesOpened_IO AND NOT bInit ) ; 
+R_TRIGClose(CLK:= IN_MesClosed_IO AND NOT bInit  ) ; // do not write on the first cycle time ( to allow emul variable to be set from outside)
+
+IF bInit THEN 
+	bInit := FALSE ; 
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_CB_Base">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_CB_Base.M_Execute">
+      <LineId Id="143" Count="1" />
+      <LineId Id="146" Count="14" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

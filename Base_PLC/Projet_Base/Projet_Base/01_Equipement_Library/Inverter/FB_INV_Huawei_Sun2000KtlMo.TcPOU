@@ -1,0 +1,537 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_INV_Huawei_Sun2000KtlMo" Id="{60dfbf83-f711-4e8e-9ba4-f1aeac3d200e}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_INV_Huawei_Sun2000KtlMo EXTENDS FB_INV_Base
+// Huawei Sun2000 50KTL-M0. 
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance specific)
+	{attribute 'OPC.UA.DA' := '1'}  
+	ParamIPAddress	   : STRING := '127.0.0.1'; 	(* (NA)Config: IP Adress of PV INverter*)
+	{attribute 'OPC.UA.DA' := '1'} 	
+	ParamTcpPort		: UINT := 502;				(* (NA)Modbus TCP port*)
+	{attribute 'OPC.UA.DA' := '1'} 
+	ParamUnitID 		: BYTE  := 1; 	  			(* (NA)   SMA Modbus Unit ID. *)
+	ParamID_INV			: BYTE ; 		        	(* (NA) Config :Numerous of the ESS in the PP*)
+	ParamID_PTR			: BYTE ; 		        	(* (NA) Config :Numerous of the ESS in the PP*)
+
+END_VAR
+
+
+VAR_INPUT 
+			MesDataExd				AT %Q*	: INV_Huawei ; 
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+
+END_VAR
+
+VAR
+	//M_Acknowledge
+		
+	// M_ALARMMNGMT VARIABLES //
+	MesAlarmCode1			: WORD ; 
+	MesAlarmCode2			: WORD ; 
+	
+	// M_READ VARIABLES//
+		Trig_Read					: R_TRIG;
+
+		FB_ModbusRead_I2          	: FB_ModbusRead ; 									// (NA) FB for Modbus Reading
+		FB_ModbusRead_I3          	: FB_ModbusRead ; 									// (NA) FB for Modbus Reading
+
+		MesBlock_Temp 				: ARRAY[1..2] OF ARRAY [1..125] OF WORD ; 			// (NA) Temporary Block with multiple modbus reading (Caution : Double Word variables)
+
+		AX_Busy						: ARRAY[1..2] OF BOOL;
+		AX_Error					: ARRAY[1..2] OF BOOL;
+		AX_ErrorID					: ARRAY[1..2] OF UDINT;
+
+
+
+	// M_CP
+
+		
+	// M_STATEMANAGER//
+	
+	//M_EXECUTE VARIABLES //
+		TP_READ						: LTP; 		//Tempo de cadencement FB Modbus
+		RTrig						: R_Trig; 	//Front montant sur TP_READ.Q
+		ReadBusy					: BOOL;		//FB Modbus en busy
+
+	//M_CURTAIL 
+	
+		// M_CURTAIL VARIABLES //
+	
+		FB_ModbusWrite1 		  	: FB_ModbusWrite; 					// (NA) Functionnal Block for Writing Curtail limit through modbus
+		FB_ModbusWrite2 		  	: FB_ModbusWrite; 					// (NA) Functionnal Block for Writing Curtail limit through modbus
+	
+		MesWriteBlock_Temp			: WORD;												// (NA) Temporary Block with multiple modbus writing	 
+	
+		MesModbusCurtailAlarm		: BOOL ;				   							// (NA) Modbus Write Curtail Alarm 
+		MesModbusWriteCode          : UDINT ; 											// (NA) Modbus Write Alarm Code 			 
+		
+		WriteBlock_Temp1 				: WORD; 	// Temporary Block with multiple modbus writing	
+		WriteBlock_Temp2 				: WORD; 	// Temporary Block with multiple modbus writing
+		AX_Idc						: ARRAY[1..CstNbSB_INV_G] OF REAL;
+		AX_TON_Idc_5percent			: ARRAY[1..CstNbSB_INV_G] OF TON;
+		AX_TON_Idc_10percent		: ARRAY[1..CstNbSB_INV_G] OF TON;
+		MesIdc_Median				: REAL;
+		ParamTime5percent			: TIME := T#10M;
+		ParamTime10percent			: TIME := T#10M;
+	
+	
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+
+]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{78a1c34e-8931-442e-b78c-65b5d97626de}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Manages IntelliGen Alarms
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager : FB_AlarmCodeManager ; 
+
+	KK					: BYTE;		// For Loop 
+	
+
+	ComAlarm: BOOL;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//COMMUNICATION//
+// CALC INVERT STAT ERREUR //
+
+ComAlarm :=AX_Error[1] OR AX_Error[2] ; 
+TON_ComAlarm(IN:= ComAlarm , PT:= ParamTempoComAlarm, Q=>MesDataExd.MesData.MesAlarmCom) ;	
+
+// ALARM CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= MesDataExd.MesAlm1.0,		// High String Voltage #Equipment
+		bAlarm2			:= MesDataExd.MesAlm1.1,		// DC Arc Fault #Equipment
+		bAlarm3			:= MesDataExd.MesAlm1.2,		// String Reversed #Equipment
+		bAlarm4			:= MesDataExd.MesAlm1.5, 	//    AFCI Self-test Fault    #Equipment 
+		bAlarm5			:= MesDataExd.MesAlm1.6,	// Short circuit between phase to PE #Equipment
+		bAlarm6			:= MesDataExd.MesAlm1.7,	 //Power Grid Failure #Equipment
+		bAlarm7			:= MesDataExd.MesAlm1.8,     //Grid Undervoltage #Equipment
+		bAlarm8			:= MesDataExd.MesAlm1.9,     //Grid Overvoltag #Equipment
+		bAlarm9			:= MesDataExd.MesAlm1.10,    //Unbalanced Grid Voltage #Equipment
+		bAlarm10		:= MesDataExd.MesAlm1.11,    //Grid Overfrequency #Equipment
+		bAlarm11		:= MesDataExd.MesAlm1.12,    //Grid Underfrequency #Equipment
+		bAlarm12		:= MesDataExd.MesAlm1.13,    //Grid Frequency Instability #Equipment
+		bAlarm13		:= MesDataExd.MesAlm1.14,    //Output Overcurrent #Equipment
+		bAlarm14		:= MesDataExd.MesAlm1.15, 	 //	Large DC of Output current	 #Equipment								
+		bAlarm15		:= FALSE,//
+		wAlarmCode		=> MesDataExd.MesData.MesAlarmCode);
+
+// WARNING CODE //
+	FB_AlarmCodeManager(
+ 		bAlarm1			:= MesDataExd.MesAlm2.0,//Abnormal Leakage Current #Equipment
+		bAlarm2			:= MesDataExd.MesAlm2.1,//Abnormal Ground. #Equipment
+		bAlarm3			:= MesDataExd.MesAlm2.2,//Low Insulation Res #Equipment
+		bAlarm4			:= MesDataExd.MesAlm2.3,//High Temperature #Equipment
+		bAlarm5			:= MesDataExd.MesAlm2.4,//Abnormal Equipment #Equipment
+		bAlarm6			:= MesDataExd.MesAlm3.2,//High String Voltage to Ground #Equipment
+		bAlarm7			:= MesDataExd.MesAlm2.5,//Upgrade Failed #Equipment
+		bAlarm8			:= MesDataExd.MesAlm2.7,//Abnormal Monitor Unit #Equipment
+		bAlarm9			:= MesDataExd.MesAlm3.1,//Built-in PID operation abnormal #Equipment
+		bAlarm10		:= FALSE,//
+		bAlarm11		:= FALSE,//
+		bAlarm12		:= FALSE,//
+		bAlarm13		:= FALSE,//
+		bAlarm14		:= FALSE,//
+		bAlarm15		:= MesDataExd.MesData.MesAlarmCom,//
+		wAlarmCode		=> MesDataExd.MesData.MesWarningCode);	
+
+// EVENT CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= MesDataExd.MesAlm1.3, 			// PV String Backfeed #Equipment
+		bAlarm2			:= MesDataExd.MesAlm1.4, 		// Abnormal String #Equipment
+		bAlarm3			:= MesDataExd.MesAlm2.6,	// License Expired #Equipment
+		bAlarm4			:= FALSE, 	
+		bAlarm5			:= FALSE, 
+		bAlarm6			:= FALSE, 
+		bAlarm7			:= FALSE, 
+		bAlarm8			:= FALSE, 
+		bAlarm9			:= FALSE, 
+		bAlarm10		:= FALSE, 
+		bAlarm11		:= FALSE, 
+		bAlarm12		:= FALSE, 
+		bAlarm13		:= FALSE, 
+		bAlarm14		:= FALSE, 
+		bAlarm15		:= FALSE, 
+		wAlarmCode		=> MesDataExd.MesData.MesEventCode);
+
+(*
+
+// ALARM CODE //
+	FB_AlarmCodeManager(
+		bAlarm0			:= , 	// standby
+		bAlarm1			:= , 	// grid-connected
+		bAlarm2			:= , 	// grid-connected normally
+		bAlarm3			:= ,    // grid connection with derating due to power rationing
+		bAlarm4			:= ,    // grid connection with derating due to internal causes of the solar inverter
+		bAlarm5			:= ,    // normal stop
+		bAlarm6			:= ,    // stop due to faults
+		bAlarm7			:= ,    // stop due to power rationing
+		bAlarm8			:= ,    // shutdown
+		bAlarm9			:= ,    // spot check
+		bAlarm10		:= ,    // 
+		bAlarm11		:= ,    //
+		bAlarm12		:= ,    //
+		bAlarm13		:= ,    //
+		bAlarm14		:= ,    //
+		bAlarm15		:= ,	//
+		wAlarmCode		=> MesDataExd.MesStateIndic);
+
+// ALARM CODE //
+	FB_AlarmCodeManager(
+		bAlarm0			:= , 	// locking status (0: locked; 1: unlocked)
+		bAlarm1			:= , 	// PV connection status (0: disconnected; 1: connected)
+		bAlarm2			:= , 	// DSP data collection (0: no; 1: yes)
+		bAlarm3			:= ,    // 
+		bAlarm4			:= ,    // 
+		bAlarm5			:= ,    // 
+		bAlarm6			:= ,    // 
+		bAlarm7			:= ,    // 
+		bAlarm8			:= ,    // 
+		bAlarm9			:= ,    // 
+		bAlarm10		:= ,    // 
+		bAlarm11		:= ,    //
+		bAlarm12		:= ,    //
+		bAlarm13		:= ,    //
+		bAlarm14		:= ,    //
+		bAlarm15		:= ,	//
+		wAlarmCode		=> MesDataExd.MesOpeStatus);
+
+
+*)]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_CP" Id="{2e228b3c-1e56-433e-b3f0-82b344a80a91}">
+      <Declaration><![CDATA[METHOD M_CP
+//////////////////
+//  Emulator
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+SUPER^.M_CP() ; 
+
+
+
+
+Trig_Cmd_Read(CLK:=IN_CmdToggleRead);
+Trig_Cmd_Write(CLK:=IN_CmdToggleWrite);
+	
+IF Trig_Cmd_Read.Q THEN
+	IN_CmdToggleRead := FALSE;
+	MesDataExd.MesData.MesCP_Read := NOT MesDataExd.MesData.MesCP_Read;
+END_IF
+
+
+IF Trig_Cmd_Write.Q THEN
+	IN_CmdToggleWrite := FALSE;
+	MesDataExd.MesData.MesCP_Write := NOT MesDataExd.MesData.MesCP_Write;
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Curtail" Id="{97b233d2-7758-47bc-b289-a74bb4fdf159}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'M_Curtail'}
+METHOD M_Curtail
+//////////////////
+// Write Curtail Command through modbus to PV inverters.  
+//////////////////
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	SetptPlimit_Temp: WORD;
+	SetptQlimit_Temp: WORD;	
+	
+	
+	ClockWriteP: BOOL;
+	ClockWriteQ: BOOL;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+IF	MesDataExd.MesData.MesCP_Write THEN
+
+// MODBUS VARIABLE FORMATING //
+	IN_SetptPlimit := ParamPn;
+	MesDataExd.MesData.OUT_SetptPLimit	:= MIN(100,MAX(0, (IN_SetptPlimit/ParamPn)*100)) ; //Between 0 and 100% Pmax
+	MesDataExd.MesData.OUT_SetptQ	:= MIN(1 , MAX(-1 , IN_SetptQ/ParamPn)) ; //Between -1 and 1
+	
+	SetptPlimit_Temp := INT_TO_WORD(REAL_TO_INT(MesDataExd.MesData.OUT_SetptPLimit*10));
+	SetptQlimit_Temp := INT_TO_WORD(REAL_TO_INT(MesDataExd.MesData.OUT_SetptQ*1000));
+	
+	IF SetptPlimit_Temp <> WriteBlock_Temp1 THEN
+		ClockWriteP := TRUE;
+		WriteBlock_Temp1 := SetptPlimit_Temp ; 
+	END_IF
+	IF SetptPlimit_Temp <> WriteBlock_Temp1 THEN
+		ClockWriteQ := TRUE;
+		WriteBlock_Temp2 := SetptQlimit_Temp ;  
+	END_IF
+	
+
+	// MODBUS REQUEST //	
+	// Modbus Blocks write
+	
+//	FB_ModbusWrite1(
+//		pSrcAddr 			:= ADR(WriteBlock_Temp1), 
+//		cbLength			:= SIZEOF(WriteBlock_Temp1),
+//		nQuantity 			:= 1,
+//		Reset				:=CmdClearFault_G, 
+//		sIPAddr				:=ParamIPAddress ,
+//		nTCPport			:=ParamTcpPort ,  
+//		nUnitID				:=ParamUnitID , 
+//		nMBAddr				:=40125 , 
+//		tTimeout			:=ParamTimeout ,
+//		WriteCmd			:=ClockWrite AND MesDataExd.MesData.MesCP_Write, 
+//		ModbusWriteAlarm	=>MesModbusCurtailAlarm , 
+//		ErrorId				=> MesModbusWriteCode); 
+	
+//	FB_ModbusWrite2(
+//		pSrcAddr 			:= ADR(WriteBlock_Temp2), 
+//		cbLength			:= SIZEOF(WriteBlock_Temp2),
+//		nQuantity 			:= 1,
+//		Reset				:=CmdClearFault_G, 
+//		sIPAddr				:=ParamIPAddress ,
+//		nTCPport			:=ParamTcpPort ,  
+//		nUnitID				:=ParamUnitID , 
+//		nMBAddr				:=40123 , 
+//		tTimeout			:=ParamTimeout ,
+//		WriteCmd			:=ClockWrite AND MesDataExd.MesData.MesCP_Write, 
+//		ModbusWriteAlarm	=>MesModbusCurtailAlarm , 
+//		ErrorId				=> MesModbusWriteCode);
+		
+		
+	 
+
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{5bfdf5d3-8297-4ccd-9132-cc18f3ab1e12}">
+      <Declaration><![CDATA[METHOD M_Init
+VAR_INPUT
+END_VAR
+
+VAR
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[ParamPn := 60 ;
+
+bInit := FALSE;
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Read" Id="{895d2947-03ef-443c-955a-76e91299c074}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'M_Read'}
+METHOD M_Read
+//////////
+// Read Method for SMA : Modbus reading
+//////////
+VAR
+	// Method local variables (reinitialized at each cycle) 
+	KK					: BYTE;						 // Index to loop over modbus blocks. 	
+	JJ					: BYTE;
+	
+	MW					: FB_MergeWordsToDint;
+	
+	
+END_VAR
+
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Version table de com : Issu 02
+
+IF MesDataExd.MesData.MesCP_Read THEN	
+
+	//INITIALIZING MODBUS REQUESTS //
+
+   //MODBUS REQUEST//
+	FB_ModbusRead_I2(		
+		nQuantity				:= 110, 
+		nMBAddr					:= 32000, 
+		cbLength				:= SIZEOF(MesBlock_Temp[1]) , 
+		pDestAddr				:= ADR(MesBlock_Temp[1]) , 
+		ClockRead				:= ClockRead AND MesDataExd.MesData.MesCP_Read,
+		Reset					:= CmdClearFault_G ,
+		sIPAddr					:= ParamIPAddress ,
+		nUnitID					:= ParamUnitID, 
+		tTimeout				:= ParamTimeout,
+		nTcpPort 				:= ParamTcpPort, 
+		ParamEnableRetryPause	:= FALSE,
+		ModbusReadAlarm			=> AX_Error[1] , 
+		ErrorId					=> AX_ErrorID[1]);
+
+	
+// MODBUS BLOCKS SEPARATION	
+	MesdataExd.MesData.MesState_Inv:= MesBlock_Temp[1][1];
+
+
+	//MesDataExd.MesData.MesState_Inv := MesBlock_Temp[1][1];
+	MesDataExd.MesOpeStatus := MesBlock_Temp[1][3];
+	MesDataExd.MesAlm1 := MesBlock_Temp[1][9];
+	MesDataExd.MesAlm2 := MesBlock_Temp[1][10];
+	MesDataExd.MesAlm3 := MesBlock_Temp[1][11];
+	MesDataExd.MesDeviceStatus := MesBlock_Temp[1][90];
+	
+	FOR KK:=1  TO CstNbSB_INV_G DO 
+		MW(WORD_STRONG := MesBlock_Temp[1][17+(KK-1)*2], FIX := 1, SIGNED := TRUE, VAR_OUT := MesdataExd.STR[KK].MesUdc	);
+		MW(WORD_STRONG := MesBlock_Temp[1][17+(KK-1)*2+1], FIX := 2, SIGNED := TRUE, VAR_OUT := MesdataExd.STR[KK].MesIdc	);
+	END_FOR
+	
+	MW(WORD_STRONG := MesBlock_Temp[1][65],WORD_WEAK := MesBlock_Temp[1][66], FIX := 3, Size := 2, SIGNED := TRUE, VAR_OUT := MesdataExd.Mesdata.MesPdc);
+	MW(WORD_STRONG := MesBlock_Temp[1][67], FIX := 1, Size := 1, SIGNED := FALSE, VAR_OUT := MesdataExd.MesU12);
+	MW(WORD_STRONG := MesBlock_Temp[1][68], FIX := 1, Size := 1, SIGNED := FALSE, VAR_OUT := MesdataExd.MesU23);
+	MW(WORD_STRONG := MesBlock_Temp[1][69], FIX := 1, Size := 1, SIGNED := FALSE, VAR_OUT := MesdataExd.MesU31);
+	MW(WORD_STRONG := MesBlock_Temp[1][70], FIX := 1, Size := 1, SIGNED := FALSE, VAR_OUT := MesdataExd.MesV1);
+	MW(WORD_STRONG := MesBlock_Temp[1][71], FIX := 1, Size := 1, SIGNED := FALSE, VAR_OUT := MesdataExd.MesV2);
+	MW(WORD_STRONG := MesBlock_Temp[1][72], FIX := 1, Size := 1, SIGNED := FALSE, VAR_OUT := MesdataExd.MesV3);
+	MW(WORD_STRONG := MesBlock_Temp[1][73], WORD_WEAK := MesBlock_Temp[1][74], FIX := 3, Size := 2, SIGNED := TRUE, VAR_OUT := MesdataExd.MesI1);
+	MW(WORD_STRONG := MesBlock_Temp[1][75], WORD_WEAK := MesBlock_Temp[1][76], FIX := 3, Size := 2, SIGNED := TRUE, VAR_OUT := MesdataExd.MesI2);
+	MW(WORD_STRONG := MesBlock_Temp[1][77], WORD_WEAK := MesBlock_Temp[1][78], FIX := 3, Size := 2, SIGNED := TRUE, VAR_OUT := MesdataExd.MesI3);
+	
+	MW(WORD_STRONG := MesBlock_Temp[1][81], WORD_WEAK := MesBlock_Temp[1][82], FIX := 3, Size := 2, SIGNED := TRUE, VAR_OUT := MesdataExd.Mesdata.MesP);
+	MW(WORD_STRONG := MesBlock_Temp[1][83], WORD_WEAK := MesBlock_Temp[1][84], FIX := 3, Size := 2, SIGNED := TRUE, VAR_OUT := MesdataExd.Mesdata.MesQ);
+	MW(WORD_STRONG := MesBlock_Temp[1][85], FIX := 3, Size := 1, SIGNED := 1, VAR_OUT := MesDataExd.Mesdata.MesCosPhi);
+	MW(WORD_STRONG := MesBlock_Temp[1][86], FIX := 2, Size := 1, SIGNED := 0, VAR_OUT := MesDataExd.Mesdata.MesFreq);
+	MW(WORD_STRONG := MesBlock_Temp[1][88], FIX := 1, Size := 1, SIGNED := 0, VAR_OUT := MesDataExd.Mesdata.MesTemp);
+	MW(WORD_STRONG := MesBlock_Temp[1][89], FIX := 0, Size := 1, SIGNED := 0, VAR_OUT := MesDataExd.Mesdata.MesInsuResistor);
+	
+	MW(WORD_STRONG := MesBlock_Temp[1][107], WORD_WEAK := MesBlock_Temp[1][108], FIX := 2, Size := 2, SIGNED := 0, VAR_OUT := MesdataExd.MesETot);
+	MW(WORD_STRONG := MesBlock_Temp[1][109], WORD_WEAK := MesBlock_Temp[1][110], FIX := 2, Size := 2, SIGNED := 0, VAR_OUT := MesdataExd.MesEDay);
+
+END_IF
+
+// Properties update.
+MesDataExd.MesData.MesI := (MesDataExd.MesI1 + MesDataExd.MesI2 + MesDataExd.MesI3)/3;
+MesDataExd.MesData.MesV := (MesDataExd.MesV1 + MesDataExd.MesV2 + MesDataExd.MesV3)/3;
+MesDataExd.MesData.MesU := (MesDataExd.MesU12 + MesDataExd.MesU23 + MesDataExd.MesU31)/3;
+MesDataExd.MesData.MesS := SQRT(MesDataExd.MesData.MesP*MesDataExd.MesData.MesP + MesDataExd.MesData.MesQ*MesDataExd.MesData.MesQ);
+
+MesDataExd.MesData.MesCurtl := MesDataExd.MesData.MesState=16#0201 OR MesDataExd.MesData.MesState =16#0202 ; 
+MesDataExd.MesData.ParamPn := ParamPn ;
+
+
+MesDataExd.MesData.MesIdc := 0;
+MesDataExd.MesData.MesUdc := 0;
+
+	FOR KK:=1  TO CstNbSB_INV_G DO 
+		MesDataExd.MesData.MesIdc := MesDataExd.MesData.MesIdc + MesdataExd.STR[KK].MesIdc;
+		MesDataExd.MesData.MesUdc := MesDataExd.MesData.MesUdc + MesdataExd.STR[KK].MesUdc/CstNbSB_INV_G;
+	END_FOR
+	
+	
+	
+
+
+
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_StateManager" Id="{7faa7a77-d0e7-48ac-b61e-188ec948c8d9}">
+      <Declaration><![CDATA[METHOD M_StateManager
+//////////////////
+// Detect which is the state of the inverter. IF loss of communication MesState =0 , the last inverter state is kept .  
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+	
+END_VAR
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+// 0 = Stopped, 1 = MPPT, 2 = Sleeping, 3 = Starting, 4 = Throttled, 5 = Shutting down, 6 = Fault, 7 = Standby
+
+MesDataExd.Mesdata.MesState 			:= 0  ; 
+
+IF     MesDataExd.MesData.MesState_Inv = 769 
+	OR MesDataExd.MesData.MesState_Inv = 770
+	OR MesDataExd.MesData.MesState_Inv = 771
+	OR MesDataExd.MesData.MesState_Inv = 772
+	OR MesDataExd.MesData.MesState_Inv = 773
+	OR MesDataExd.MesData.MesState_Inv = 774 THEN // IF INVERTER IS STOPPED 309 = Operation && 455 = warning
+	MesDataExd.Mesdata.MesState.0 := 1;		// Stop
+ELSIF MesDataExd.MesData.MesState_Inv = 512 OR MesDataExd.MesData.MesState_Inv = 513 OR MesDataExd.MesData.MesState_Inv = 514 THEN
+	MesDataExd.Mesdata.MesState.1 := 1;		// MPPT
+ELSIF MesDataExd.MesData.MesState_Inv = 256 THEN
+	MesDataExd.Mesdata.MesState.3 := 1;		// Starting
+ELSIF MesDataExd.MesData.MesState_Inv = 0 OR MesDataExd.MesData.MesState_Inv = 1 OR MesDataExd.MesData.MesState_Inv = 2 OR MesDataExd.MesData.MesState_Inv = 3 OR MesDataExd.MesData.MesState_Inv = 16#A000  THEN
+	MesDataExd.Mesdata.MesState.7 := 1;		// StandBy
+ELSIF MesDataExd.MesData.MesState_Inv = 768  THEN
+	MesDataExd.Mesdata.MesState.6 := 1;		// Fault
+ELSIF MesDataExd.MesData.MesState_Inv = 16#201 OR MesDataExd.MesData.MesState_Inv = 16#202 THEN
+	MesDataExd.Mesdata.MesState.4 := 1;		// Throlltled
+ELSE 
+	MesDataExd.Mesdata.MesState.1 := 1;
+END_IF
+
+
+SUPER^.M_StateManager() ; ]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_INV_Huawei_Sun2000KtlMo">
+      <LineId Id="3" Count="1" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_INV_Huawei_Sun2000KtlMo.M_AlarmManagement">
+      <LineId Id="590" Count="105" />
+      <LineId Id="462" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_INV_Huawei_Sun2000KtlMo.M_CP">
+      <LineId Id="86" Count="19" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_INV_Huawei_Sun2000KtlMo.M_Curtail">
+      <LineId Id="80" Count="0" />
+      <LineId Id="136" Count="0" />
+      <LineId Id="81" Count="54" />
+      <LineId Id="11" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_INV_Huawei_Sun2000KtlMo.M_Init">
+      <LineId Id="23" Count="0" />
+      <LineId Id="62" Count="1" />
+      <LineId Id="72" Count="0" />
+      <LineId Id="64" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_INV_Huawei_Sun2000KtlMo.M_Read">
+      <LineId Id="473" Count="78" />
+      <LineId Id="558" Count="0" />
+      <LineId Id="570" Count="5" />
+      <LineId Id="138" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_INV_Huawei_Sun2000KtlMo.M_StateManager">
+      <LineId Id="218" Count="0" />
+      <LineId Id="231" Count="18" />
+      <LineId Id="253" Count="0" />
+      <LineId Id="252" Count="0" />
+      <LineId Id="250" Count="1" />
+      <LineId Id="230" Count="0" />
+      <LineId Id="227" Count="0" />
+      <LineId Id="182" Count="0" />
+      <LineId Id="12" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

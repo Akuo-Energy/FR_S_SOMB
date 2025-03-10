@@ -1,0 +1,91 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="INV_PE_HEMK" Id="{c0a222ba-10e2-4753-a5da-e312deb83e1d}">
+    <Declaration><![CDATA[   ///////////
+// Structure for PE Inverter. Main Operating Data to be saved (ex: OPC).  
+//////////
+TYPE INV_PE_HEMK:
+STRUCT
+	
+	MesData					: INV ;				(* (NA) MesData*) 		            		
+	// INV Measures
+	AX_PowerCol				: ARRAY[1..CstNbPowerCol_INV_G ] OF PowerCol_INV_PE_HEMK; 			(* (NA) INV power columns *)
+	AX_DcModule				: ARRAY[1..CstNbDcModule_INV_G] OF INV_DcModule; 			(* (NA) DC Inputs to the Inverter*)	
+	
+		
+	//Electrical Measurements	
+	MesAcDay				: UINT;				(* (kWh) Daily energy*)
+	MesAcTot				: UINT;				(* (kWh) Total energy*)
+
+	
+	MesI1					: REAL; 			(* (A) Current phase 1 (R). INV: SV1.4 Grid current I1 (HEMK)															*)
+	MesI2					: REAL; 			(* (A) Current phase 2 (S). INV: SV1.5 Grid current I2 (HEMK)															*)
+	MesI3					: REAL; 			(* (A) Current phase 3 (T). INV: SV1.6 Grid current I3  (HEMK)															*)
+	MesU12					: REAL; 			(* (V) Phase AB RMS voltage (line to line)at grid side of AC circuit breaker CB501. INV: SV1.1 Grid voltage RS (HEMK)	*)
+	MesU23					: REAL; 			(* (V) Phase BC RMS voltage (line to line)at grid side of AC circuit breaker CB501. INV: SV1.2 Grid voltage ST(HEMK)	*)
+	MesU31					: REAL; 			(* (V) Phase CA RMS voltage (line to line)at grid side of AC circuit breaker CB501. INV: SV1.3 Grid voltage TR (HEMK)	*)
+	MesStatusCurtail_P		: WORD; 			(* (NA) P control : Cause of P control*)
+	MesStatusCurtail_Q		: WORD; 			(* (NA) Q control : Cause of Q control*)
+	MesDeratingGlobal		: REAL;				(* (%) Derating global taking into consideration IGBT Temp, Vdc et admission temp*)                               			
+	                                			
+	//Status Summary                			
+	MesEventID				: REAL;				(* (NA) Event ID of the currently active event. 0= No event, 1 = Emergency stop, 3 = Remote emergency stop. SV8.15      *)
+	MesIDFault				: UINT;				(* (NA) current fault ID check complete list in tab Failures*)	
+	MesIDLastFaultedPowerCol: UINT;				(* (NA) Power Column ID of last alarm communicated*)	
+	MesIDWarning			: UINT;				(* (NA) ID of current Warning : check complete list in tab Warnings*)	
+	MesStateStart_Freq		: BOOL;				(* (NA) Start conditions Freq : True = Start OK*)
+	MesStateStart_Vdc		: BOOL;				(* (NA) Start conditions Vdc : True = Start OK*)
+	MesStateStart_MVCells	: BOOL;				(* (NA) Start conditions MVCells : True = Start OK*)
+	MesStateStart_P			: BOOL;				(* (NA) Start conditions P : True = Start OK*)
+	MesStateStart_Bbox		: BOOL;				(* (NA) Start conditions Bbox : True = Start OK*)
+	
+                            			
+	MesSetptP				: REAL;				(* (%) Measurement of active power setpoint. INV: G8.1.3 P reference  	                                                *)                        	 
+	MesSetptQ				: REAL;				(* (%) Measurement of reactive power setpoint. INV: G8.1.4 Q reference	                                   	            *)
+	
+	// System Commands
+	ParamID_QMode			: UINT := 1; 		(* (NA) reactive power control mode : 0: Cos Phi, 1: Q,  2: I, 4: V/Q mode   G8.1.2 register: 40551  		*)
+	ParamID_PMode			: UINT := 1; 		(* (NA) active power control mode : 0: MPPt, 1: I, 2: P, 3: Vdc										 		*)
+		                                    	                                                                                                         		
+	MesCP_Start        		: BOOL;				(* (NA) Start conditions. INV: SV4.3.1-Start conditions all											 		*)                 		        		
+	                                                                                                         											
+	// Inverter's Control Cabinet  Status                                                                       											
+	MesTemp_Internal		: REAL; 		 	(* (C) Control cabinet temperature. INV: SV4.1.4 Internal temperature										*)
+	MesTemp_Control			: REAL; 		 	(* (C) Control cabinet temperature. INV: SV4.1.4 Internal temperature										*)
+	MesTemp_IGBTmax			: REAL; 		 	(* (C) Maximum IGBT temperature. INV: SV4.1.5 Max IGBTs temperature											*)
+	MesTemp_PowerColmax		: REAL; 		 	(* (C) Maximum power column temperature. INV: SV4.1.6 Max modules temperature								*)
+	MesAlarm_Control		: UINT;			 	(* (NA) Control cabinet alarm. INV: SV4.1.1 Current fault 													*) 
+	MesWarning_Control		: UINT;			 	(* (NA) Control cabinet warning. INV: SV4.1.2 Current warning					    						*)			
+	MesState_Control 		: UINT;			 	(* (NA) Control cabinet state. INV: SV4.1.3 Current status													*)
+	MesState_Module			: WORD;				(* (NA) Status of modules*)	 
+	MesNbRunningModules		: UINT;				(* (NA) Number of running modules*)
+                                        	                                                    	                                						
+	// Reset command                         	                                                    	                                						
+	OUT_CmdReset 			: BOOL; 		 	(* (NA) OUT reset command. INV: Reset command 43012															*)
+
+	MesP_LV					: REAL;				(* (kW) LV Active Power*)
+	MesQ_LV					: REAL;				(* (kVAr) LV Reactive Power*)
+	MesS_LV					: REAL;				(* (kVA) LV Apparent Power*)
+	MesCosPhi_LV			: REAL;				(* (NA) LV CosPhi*)
+    MesU12_LV				: REAL; 			(* (kV) LV Voltage 12*)                                                                              															
+    MesU23_LV				: REAL; 			(* (kV) LV Voltage 23*)                                                                              															
+    MesU31_LV				: REAL; 			(* (kV) LV Voltage 31*)                                                                              															
+	MesI1_LV				: REAL; 			(* (A) Current phase 1 (R). INV: SV1.4 Grid current I1 (HEMK)															*)
+	MesI2_LV				: REAL; 			(* (A) Current phase 2 (S). INV: SV1.5 Grid current I2 (HEMK)															*)
+	MesI3_LV				: REAL; 			(* (A) Current phase 3 (T). INV: SV1.6 Grid current I3  (HEMK)															*)
+	MesPAvailable			: REAL;
+	MesPn					: REAL;
+
+	
+	MesEventCode2			: WORD ; 
+
+
+END_STRUCT
+END_TYPE
+
+
+
+
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

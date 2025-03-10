@@ -1,0 +1,93 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_SMSDatasetFifo_Read" Id="{c9f5d42f-5c95-489b-bf10-c99ef0d9cda2}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_SMSDatasetFifo_Read
+VAR_INPUT
+    bOverwrite : BOOL;
+    In         : ST_SMSDataSetEntry_Read;
+END_VAR
+VAR_OUTPUT
+    bOk        : BOOL;
+    nCount     : UDINT;
+    nLoad      : UDINT;
+    Out        : ST_SMSDataSetEntry_Read;
+END_VAR
+VAR
+    arrBuffer  : ARRAY[0..Max_buffer_size_G] OF BYTE; (* Buffer memory used by FB_MemRingBuffer function block *)
+    fbBuffer   : FB_MemRingBuffer;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Action Name="A_Add" Id="{2ada47ac-93bd-42cf-9b4e-8341ff05edf3}">
+      <Implementation>
+        <ST><![CDATA[fbBuffer.A_AddTail(pWrite := ADR(in),
+						   cbWrite:=SIZEOF(in),
+						   pBuffer:=ADR(arrBuffer),
+						   cbBuffer:=SIZEOF(arrBuffer),
+						   bOK=>bOK,
+						   nCount =>nCount);
+IF NOT bOK THEN 
+	IF bOverwrite THEN
+		fbBuffer.A_RemoveHead();(*remove one oldest entry*)
+		fbBuffer.A_AddTail(bOK => bOk,nCount => nCount);
+	END_IF
+END_IF
+
+nload := (fbbuffer.cbSize * 100)/(Max_buffer_size_G);]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="A_Get" Id="{ebea1dd3-b683-4eaf-a153-48167c05d695}">
+      <Implementation>
+        <ST><![CDATA[fbBuffer.A_GetHead(pWrite := ADR(out),
+						   cbWrite:=SIZEOF(out),
+						   pBuffer:=ADR(arrBuffer),
+						   cbBuffer:=SIZEOF(arrBuffer),
+						   bOK=>bOK,
+						   nCount =>nCount);
+nload := (fbbuffer.cbSize * 100)/(Max_buffer_size_G);]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="A_Remove" Id="{b4c6173d-8414-4a1e-977f-a60052cf3ba4}">
+      <Implementation>
+        <ST><![CDATA[fbBuffer.A_RemoveHead(pRead:=ADR(out),
+						cbRead:=SIZEOF(out),
+						pBuffer:=ADR(arrBuffer),
+						cbBuffer:=SIZEOF(arrBuffer),
+						bOK=>bOK,
+						nCount =>nCount);
+nload := (fbbuffer.cbSize * 100)/(Max_buffer_size_G);]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="A_Reset" Id="{a139c9a1-8ec0-4a1c-b7ac-0812144ba624}">
+      <Implementation>
+        <ST><![CDATA[MEMSET(ADR(arrBuffer),0,SIZEOF(arrBuffer)); (*reset internal buffer*)
+fbBuffer.A_Reset(bOK=>bOK,nCount=>ncount);
+nload := (fbbuffer.cbSize * 100)/(Max_buffer_size_G);]]></ST>
+      </Implementation>
+    </Action>
+    <LineIds Name="FB_SMSDatasetFifo_Read">
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SMSDatasetFifo_Read.A_Add">
+      <LineId Id="1" Count="7" />
+      <LineId Id="10" Count="0" />
+      <LineId Id="12" Count="0" />
+      <LineId Id="11" Count="0" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="14" Count="0" />
+      <LineId Id="13" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SMSDatasetFifo_Read.A_Get">
+      <LineId Id="2" Count="4" />
+      <LineId Id="1" Count="0" />
+      <LineId Id="7" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SMSDatasetFifo_Read.A_Remove">
+      <LineId Id="1" Count="6" />
+    </LineIds>
+    <LineIds Name="FB_SMSDatasetFifo_Read.A_Reset">
+      <LineId Id="1" Count="2" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

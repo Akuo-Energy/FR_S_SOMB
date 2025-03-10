@@ -1,0 +1,125 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_ProtectRelay_Base" Id="{37d98a68-b6b9-4c4f-b641-c53813493b38}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_ProtectRelay_Base
+//////////////////
+// SEPAM system for High Voltage or Low Voltage Grid Protection. 
+//////////////////
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance/model specific) 
+		ParamTempoComAlarm				: TIME := T#10S; 					// (s) Config : Tempo to detect LOC Alarm
+		ParamTimeOut					: TIME := T#5S;						// (s) Modbus Timeout
+		ParamClockReadTime				: TIME := T#2S;						// (s) Modbus Read Frequency
+		ParamClockWriteTime				: TIME := T#1S;						// (s) Modbus Write Frequency
+
+
+
+		ParamPTRNum							: UINT; // PTR Related to the Protect Relay 
+
+END_VAR
+
+VAR_INPUT 
+
+	IN_CmdReset_L						: BOOL;			// (NA) External Reset Command	
+    IN_CmdToggleRead					: BOOL;
+    IN_CmdToggleWrite					: BOOL;
+	                                    
+	// I/O Inputs                       
+		// GTE Protection LV            
+		// WatchDog                     
+	IN_MesWatchDog_IO					: BOOL:=TRUE;		// Watchdog is at True := Sepam OK
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	
+END_VAR
+
+VAR
+	Trig_ClockRead						: R_TRIG;
+                                    	
+	//M_ALARMMANAGEMENT VARIABLES// 	
+                                    	                   
+		TON_ComAlarm					: TON ; 												// Tempo before detecting loss of communication. 
+	                                	
+	//M_READ //                     	
+		TP1								: TP;
+		TP2								: TP;
+		ClockRead		AT %Q*			: BOOL;
+		ClockWrite						: BOOL;
+		   		                    	
+    //M_CP VARIABLES//              	
+		Trig_Cmd_Read					: R_TRIG;                                                                                        
+		Trig_Cmd_Write					: R_TRIG;                                                                                        
+                                    	
+		   		                    			
+	//M_INIT VARIABLES // 	        			
+		bInit							: BOOL := TRUE ; 		// (NA) Initialize object parameters at first cycle 
+	
+	
+	// EMULATOR //
+	
+
+		
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_Execute" Id="{7c0c7f51-6872-4cf5-a011-c1eb878f83ed}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	KK: UINT;
+	MesStateCB : BOOL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[(*
+Trig_ClockRead(CLK := ClockRead);
+
+
+MesStateCB := A1_SUBMV.AX_FeederMVCB[ParamPTRNum].MesDataExd.MesData.MesClosed;
+		
+IF MesStateCB THEN
+	MesData.MesI1 		:= AX_PTR[ParamPTRNum].MesDataExd.MesData.MesI ; 
+	MesData.MesI2 		:= MesDataExd.MesData.MesI1 ; 
+	MesData.MesI3 		:= MesDataExd.MesData.MesI1 ; 
+	MesData.MesI0 		:= 0 ; 
+ELSE            	
+	MesData.MesI1 		:= 0 ;
+	MesData.MesI2 		:= 0 ;
+	MesData.MesI3 		:= 0 ;
+	MesData.MesI0 		:= 0 ;
+END_IF
+
+MesData.MesImax1	:= MAX( MesDataExd.MesData.MesImax1, MesDataExd.MesData.MesI1) ; 
+MesData.MesImax2	:= MAX( MesDataExd.MesData.MesImax2, MesDataExd.MesData.MesI2) ; 
+MesData.MesImax3	:= MAX( MesDataExd.MesData.MesImax3, MesDataExd.MesData.MesI3) ; 
+MesData.MesImax0	:= MAX( MesDataExd.MesData.MesImax0, MesDataExd.MesData.MesI0) ; 
+
+//MesDataExd.MesData.MesClosed	        :=  MesStateCB ; 
+//MesDataExd.MesData.MesOpened	        := NOT MesStateCB ; 
+*)]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_ProtectRelay_Base">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ProtectRelay_Base.M_Execute">
+      <LineId Id="237" Count="0" />
+      <LineId Id="192" Count="0" />
+      <LineId Id="225" Count="0" />
+      <LineId Id="220" Count="1" />
+      <LineId Id="223" Count="0" />
+      <LineId Id="198" Count="10" />
+      <LineId Id="236" Count="0" />
+      <LineId Id="209" Count="6" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

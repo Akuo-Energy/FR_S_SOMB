@@ -1,0 +1,71 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.9">
+  <DUT Name="ProtectRelay_SMNS7L86" Id="{1beb7aed-35a0-4fa2-9020-869432b3d00a}">
+    <Declaration><![CDATA[///////////
+// Structure Siemens 7UT85 protection relay.  
+//////////
+TYPE ProtectRelay_SMNS7L86 :
+STRUCT
+	
+		MesData					: ProtectRelay;		(* (NA) Protection relay								 			*)
+        MesLiveContact			: BOOL;				(* (NA)*)																		
+        MesAuxTrip				: BOOL;				(* (NA)*)                                                                       
+        MesTripVT12				: BOOL;				(* (NA)*)                                                                       
+        MesTripVT3				: BOOL;				(* (NA)*)                                                                       
+        MesAlarmTripCircuit1	: BOOL;				(* (NA)*)                                                                       
+        MesAlarmTripCircuit2	: BOOL;				(* (NA)*)                                                                       
+		MesLocalMode			: BOOL;				(* (NA) Cell in local mode. 0=Remote, 1=Local						*)          
+		MesRemoteMode			: BOOL;				(* (NA) Cell in local mode. 0=Local, 1=Remote						*)          
+		MesOpened_52 			: BOOL;				(* (NA) SWITCH 52-2 OPEN. 0=Close, 1=Open   						*)          
+		MesClosed_52			: BOOL;				(* (NA) SWITCH 52-2 CLOSED. 0=Open 1=Closed  						*)          
+		MesOpened_89     		: BOOL;				(* (NA) PAT 89T-2 SWITCH OPEN. 0=close, 1=Open   					*)          
+		MesClosed_89  			: BOOL;				(* (NA) PAT 89T-2 SWITCH CLOSED. 0=open, 1=Close		       		*)          
+		MesOpened_89T     		: BOOL;				(* (NA) PAT 89T-2 SWITCH OPEN. 0=close, 1=Open   					*)          
+		MesClosed_89T  			: BOOL;				(* (NA) PAT 89T-2 SWITCH CLOSED. 0=open, 1=Close		       		*)          
+		MesAlarmSF6Pressure     : BOOL;             (* (NA)SF6 Pressure                                                 *)          
+		MesGeneralTrip_TSA      : BOOL;             (* (NA)General Trip a TSA                                           *)          
+		MesTrip_ANSI_86         : BOOL;             (* (NA)ANSI 86 Trip                                                 *)          
+		MesTrip_ANSI_5051       : BOOL;             (* (NA)ANSI 50/51 Trip                                              *)          
+		MesTrip_ANSI_50n51n     : BOOL;             (* (NA)ANSI 50N/51N Trip                                            *)          
+		MesTrip_ANSI_50BF		: BOOL;				(* (NA) ANSI 50BF Trip : Breaker Failure							*)
+		MesTrip_ANSI_87L        : BOOL;             (* (NA)ANSI 87L Trip                                                *)          
+		MesTrip_ANSI_59         : BOOL;             (* (NA)ANSI 59 Trip                                                 *)          
+		MesTrip_ANSI_59n        : BOOL;             (* (NA)ANSI 59N Trip                                                *)          
+		MesTrip_ANSI_27         : BOOL;             (* (NA)ANSI 27 Trip                                                 *)          
+		MesTrip_ANSI_81U        : BOOL;             (* (NA)ANSI 81U                                                     *)  		
+		MesTrip_ANSI_81O        : BOOL;             (* (NA)ANSI 81O                                                     *)  		
+		
+		
+		MesVTrip52_2 			: BOOL;				(* CHANGE IT (NA) TRIGGER CIRCUIT VOLTAGE 1 52-2. 0=Alarm 1=Normal 	*)
+		MesTrip52_2 			: BOOL;				(* CHANGE IT(NA) TRIGGER CIRCUIT 1 52-2 OK WIRED 0=Alarm 1=Normal 	*)
+
+		MesAlarmInterlocking	: BOOL;				(* (NA) interlocking alarm*)
+		MesSpring_Loaded		: BOOL;				(* (NA) loaded spring*)
+
+		                    	
+		MesAlarmImaxN			: BOOL; 			(* (NA) Imax neutral alarm, ANSI Trip 50N, 51N synthesis			*)
+		MesAlarmGas				: BOOL;				(* (NA) Cell gas pressure is low. 0=Normal 1=Alarm  		        *)                                      	
+    	MesAlarmPower	  		: BOOL;				(* (NA) Power failure alarm 		    							*)
+		MesAlarmAbnormal  		: BOOL;				(* (NA) Alarm for abnormal functionning 							*)
+                            	  	                                               	                                    			                                                           
+		MesV1					: REAL;				(* (V) Voltage of phase 1											*)
+		MesV2					: REAL;				(* (V) Voltage of phase 2											*)
+		MesV3					: REAL;				(* (V) Voltage of phase 3											*)
+                            	
+		MesIn					: REAL; 			(* (A) Current phase n*)
+		MesUn					: REAL; 			(* (V) Voltage phase n												*)
+		MesP					: REAL; 			(* (kW) Active Power calculated (from current, power and cosphi because otherwise not precise)*)
+		MesQ					: REAL; 			(* (kVAr) Reactive Power *)
+		MesS					: REAL; 			(* (kVA) Apparent Power*)
+		MesCosPhi				: REAL; 			(* (NA) CosPhi*)
+
+		OUT_CmdOpen				: BOOL;				(* (NA) Cmd To open CB*)
+		OUT_CmdClose			: BOOL;				(* (NA) Cmd To close CB*)
+		
+END_STRUCT
+END_TYPE
+
+
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

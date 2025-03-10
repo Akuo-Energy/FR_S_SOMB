@@ -1,0 +1,54 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.9">
+  <DUT Name="ProtectRelay_NSXCB" Id="{4f93006e-9fed-4bee-bd1a-ca52e52d586b}">
+    <Declaration><![CDATA[TYPE ProtectRelay_NSXCB :
+STRUCT
+		MesData						: ProtectRelay;			(* (NA) Protection relay				*)
+               
+		MesStatCom					: BOOL; 				(* (NA) False:=.:NotOK.Device did notrespond successfullyto most recentread orwrite request, TRUE := Device is responding normally *)
+	                                        				
+		MesMaxFreq					: REAL; 				(* (Hz) Frequence max					*)
+		                                    				
+		MesP1						: REAL; 				(* (kW) Active poweron phase 1 (P1) 	*)
+		MesP2						: REAL; 				(* (kW) Active poweron phase 2 (P1) 	*)
+		MesP3						: REAL; 				(* (kW) Active poweron phase 3 (P1) 	*)
+        MesPtot						: REAL; 				(* (kW) Total active power(Ptot)    	*)
+		                                    				
+		MesQ1						: REAL; 				(* (kvar) Reactive poweron phase 1 (Q1) *)
+		MesQ2						: REAL; 				(* (kvar) Reactive poweron phase 1 (Q2) *)
+		MesQ3						: REAL; 				(* (kvar) Reactive poweron phase 1 (Q3) *)
+		MesQtot						: REAL; 				(* (kvar) Total reactive power(Qtot)    *)
+		                                    				
+		MesS1						: REAL; 				(* (kVA) Apparent power on phase 1 		*)
+		MesS2						: REAL; 				(* (kVA) Apparent power on phase 2 		*)
+		MesS3						: REAL; 				(* (kVA) Apparent power on phase 3 		*)
+		MesStot						: REAL;					(* (kVA) Total apparentpower(Stot) 		*)
+		                                    				
+		MesEAct						: REAL; 				(* (Wh)  Active energy       			*)
+		MesEReact					: REAL; 				(* (VArh)Reactive energy		   		*)
+		                                    				
+		MesCosPhi1					: REAL; 				(* (pu) Power factor on phase 1  		*)
+		MesCosPhi2					: REAL; 				(* (pu) Power factor on phase 2  		*) 	
+		MesCosPhi3					: REAL; 				(* (pu) Power factor on phase 3  		*)
+		MesCosPhi					: REAL; 				(* (pu) Power factor on phase Tot		*)
+		
+		MesToggleWrite				: BOOL;					(* (NA) Cal: True := read authorised 	*)
+		MesToggleRead				: BOOL;					(* (NA) Cal: True := Write authorised	*)
+		                                    	                                                	
+		
+		
+		
+		
+		
+		
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>
+
+
+
+
+
+

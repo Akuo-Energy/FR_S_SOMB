@@ -1,0 +1,82 @@
+﻿<div id="UserControl1_119" data-tchmi-type="TcHmi.Controls.System.TcHmiUserControl" 
+ 
+ data-tchmi-height="100" data-tchmi-width-unit="%" data-tchmi-height-unit="%"
+     data-tchmi-creator-viewport-width="500" data-tchmi-creator-viewport-height="500" data-tchmi-zindex="2" data-tchmi-width="100" data-tchmi-width-mode="Value" data-tchmi-height-mode="Value">%pp%WidthCase%/pp%%pp%WidthCase%/pp%%pp%WidthCase%/pp%%pp%WidthCase%/pp%%pp%WidthCase%/pp%
+
+<div id="Background_CaseStandard_3" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiRectangle" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-width-unit="px" data-tchmi-zindex="0" data-tchmi-width="%pp%Width_Case_TP%/pp%" data-tchmi-height="%pp%Height_Case_TP%/pp%">
+
+
+<script data-tchmi-target-attribute="data-tchmi-fill-color" type="application/json">
+{
+  "color": "rgba(251, 252, 250, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-stroke-color" type="application/json">
+{
+  "color": "rgba(0, 0, 0, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
+{
+  "color": "rgba(251, 252, 250, 1)"
+}
+</script>
+</div>
+
+<div id="Name_CaseStandard_3" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="30" data-tchmi-height-unit="px" data-tchmi-left-unit="px" data-tchmi-text="%pp%Name_Case_TP%/pp%" data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-horizontal-alignment="Center" data-tchmi-text-font-size="%f%%pp%Font_TP%/pp%+0.2*%pp%Font_TP%/pp%%/f%" data-tchmi-text-font-weight="Bold" data-tchmi-zindex="5" data-tchmi-width="%pp%Width_Case_TP%/pp%" data-tchmi-width-unit="px" data-tchmi-left="0" data-tchmi-text-vertical-alignment="Top" data-tchmi-text-font-size-unit="px">
+
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-text-color" type="application/json">
+{
+  "color": "rgba(0, 0, 0, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
+{
+  "color": "None"
+}
+</script>
+</div>
+
+<div id="Puissance_CaseStandard_3" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="20" data-tchmi-height-unit="px" data-tchmi-left-unit="px" data-tchmi-top="%f%%pp%Height_Case_TP%/pp%/2-12%/f%" data-tchmi-top-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-horizontal-alignment="Center" data-tchmi-text-font-size="%f%%pp%Font_TP%/pp%-0.2*%pp%Font_TP%/pp%%/f%" data-tchmi-text-font-weight="Normal" data-tchmi-zindex="5" data-tchmi-width="%pp%Width_Case_TP%/pp%" data-tchmi-width-unit="px" data-tchmi-left="0" data-tchmi-text="%pp%Puissance_TP%/pp%" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-font-size-unit="px">
+
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-text-color" type="application/json">
+{
+  "color": "rgba(0, 0, 0, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
+{
+  "color": "None"
+}
+</script>
+</div>
+
+<div id="Energie_CaseStandard_3" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="20" data-tchmi-height-unit="px" data-tchmi-left-unit="px" data-tchmi-text="%pp%Energie_TP%/pp%" data-tchmi-top="%f%%pp%Height_Case_TP%/pp%/2+2%/f%" data-tchmi-top-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-horizontal-alignment="Center" data-tchmi-text-font-size="%f%%pp%Font_TP%/pp%-0.2*%pp%Font_TP%/pp%%/f%" data-tchmi-text-font-weight="Normal" data-tchmi-zindex="5" data-tchmi-width="%pp%Width_Case_TP%/pp%" data-tchmi-width-unit="px" data-tchmi-left="0" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-font-size-unit="px">
+
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-text-color" type="application/json">
+{
+  "color": "rgba(0, 0, 0, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
+{
+  "color": "None"
+}
+</script>
+</div>
+
+</div>

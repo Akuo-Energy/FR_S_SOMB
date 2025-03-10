@@ -1,0 +1,355 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_ANA_DustIQ" Id="{e0c683f5-333b-40b9-8ad1-d1774bb8a95e}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_ANA_DustIQ 
+VAR_INPUT PERSISTENT
+	ParamTempoComAlarm		: TIME 		:= T#10S ; 										// (s) Config : Tempo to detect LOC Alarm
+	{attribute 'OPC.UA.DA' := '1'} 
+	ParamClockReadTime 		: TIME 		:= TIME#1S;	  									// (Time) Read Modbus Frequency . 
+ 	ParamTimeout			: TIME  	:= T#2S ;		  								// (Time) Timeout for modbus reading
+	ParamUnitID				: BYTE		:= 1;											// (NA) Unit ID for modbus reading
+	
+	ParamIpAddress			: STRING;													// (NA) IP Address of the Modbus server
+	ParamTcpPort			: UINT := 502;												// (NA) TCP Port of the Modbus server
+END_VAR
+
+VAR_INPUT
+		MesDataExd			      	: DustIQ_Standard ; 					// (NA) [P,H,B] INV  Data Structure 
+
+END_VAR
+
+VAR_OUTPUT
+END_VAR
+VAR
+	//M_AlarmManagement
+	TON_ComAlarm				: TON ; 						// Tempo before deteting loss of communication. 
+
+	MesAlarmCom					: BOOL;
+	
+	IN_CmdReset_L				: BOOL;                                                        	
+
+	// M_READ VARIABLES//
+
+	Soil1_interm				: REAL;
+	Soil2_interm				: REAL;
+	TransmLoss1_interm			: REAL;
+	TransmLoss2_interm			: REAL;
+	Readinesss					: REAL;
+	Completion					: REAL;
+	
+	IN_CmdToggleRead			: BOOL;
+	
+	bReadError					: BOOL;
+	bReadCompleted 				: BOOL;
+	bReadBusy					: BOOL;
+	InputStructRead 			: Struct_InputRTU;
+	ModbusRead					: FB_ModbusReadInputRegs;
+	
+	MesBlock1_Temp 				: ARRAY[1..125]  OF WORD; 		// (NA) Temporary Block with multiple modbus reading (Caution : Double Word variables)
+	MesModbusReadAlarm 		  	: BOOL ; 						// (NA) Modbus Read Alarm for all modbus frames		
+	MesModbusAlarmCode			: UDINT;						// (NA) Modbus Read Alarm Code	
+
+	//M_EXECUTE VARIABLES //                                	
+	TP1							: TP ; 							// (NA) Tempo to define Modbus Reading Frequency 
+	                                                        	
+	ClockRead					: BOOL;							// (NA) Modbus reading Clock
+	
+	Addr						: UINT := 20;
+	Size 						: UINT := 20;
+	
+	//M_INIT //
+	bInit 						: BOOL;			
+	
+	TrigRead 					: R_TRIG;							// (NA) Modbus writing Clock 	
+
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{dae3eede-629b-48ce-b387-5cfcb25472d4}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Manages IntelliGen Alarms
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager : FB_AlarmCodeManager ; 
+	ComWarning			: BOOL;		// Aggregated Wcommunication warning
+	ComAlarm			: BOOL;		// Aggregated communication Alarm
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[ 
+		
+		ComAlarm	:=  bReadError;
+
+	//Warning
+	
+	//Alarm
+	TON_ComAlarm(IN:= ComAlarm , PT:= ParamTempoComAlarm, Q=>MesDataExd.MesData.MesAlarmCom) ;	// Alarms if ALL MODBUS FRAMES did not work and timeout
+
+
+// ALARM CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= MesDataExd.MesData.MesAlarmCom,  						// Com alarm
+		bAlarm2			:= FALSE, 								
+		bAlarm3			:= FALSE, 										 
+		bAlarm4			:= FALSE,      							
+		bAlarm5			:= FALSE,								
+		bAlarm6			:= FALSE,								
+		bAlarm7			:= FALSE,                               
+		bAlarm8			:= FALSE,                               
+		bAlarm9			:= FALSE,								
+		bAlarm10		:= FALSE,					            
+		bAlarm11		:= FALSE,                               
+		bAlarm12		:= FALSE,                               
+		bAlarm13		:= FALSE, 
+		bAlarm14		:= FALSE, 													// 
+		bAlarm15		:= FALSE , 									// 
+		wAlarmCode		=>MesDataExd.MesData.MesAlarmCode);
+
+// WARNING CODE //
+	FB_AlarmCodeManager(
+ 		bAlarm1			:= FALSE ,				
+		bAlarm2			:= FALSE,				
+		bAlarm3			:= FALSE,				
+		bAlarm4			:= FALSE, 				
+		bAlarm5			:= FALSE,				
+		bAlarm6			:= FALSE,				
+		bAlarm7			:=FALSE, 
+		bAlarm8			:=FALSE, 
+		bAlarm9			:=FALSE, 
+		bAlarm10		:=FALSE, 
+		bAlarm11		:=FALSE, 
+		bAlarm12		:=FALSE, 
+		bAlarm13		:=FALSE, 
+		bAlarm14		:=FALSE, 
+		bAlarm15		:=FALSE, 
+		wAlarmCode		=>MesDataExd.MesData.MesWarningCode);	
+
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_CP" Id="{4f46d047-f302-4092-ae6d-048298c6e48c}">
+      <Declaration><![CDATA[METHOD M_CP : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+
+
+
+
+
+TrigRead(CLK:=IN_CmdToggleRead);
+	
+IF TrigRead.Q THEN
+	IN_CmdToggleRead := FALSE;
+	MesDataExd.MesData.MesCP_Read := NOT MesDataExd.MesData.MesCP_Read;
+END_IF
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{6e29f1cb-cc23-4abc-83a2-0efe25a9689f}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF NOT bInit THEN
+	M_Init();
+ELSIF CmdInit_G OR IN_CmdReset_L THEN
+	bInit := TRUE;
+END_IF
+
+// READING AND WRITING CLOCK //
+	TP1(IN:=NOT TP1.Q , PT:= ParamClockReadTime);
+	ClockRead 				:= TP1.Q;
+	
+	
+
+// METHODS CALLS//
+	M_CP();
+	M_Read();
+
+
+	/////////
+	M_StateManager() ; 
+	
+
+	M_AlarmManagement();
+	
+	
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{b41d9ac7-e76a-4d5f-965e-009aef0cf727}">
+      <Declaration><![CDATA[METHOD M_Init : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+bInit := FALSE;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Read" Id="{f27bf25c-90b7-46bf-8c5d-90681eae27e8}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'M_Read'}
+METHOD M_Read
+//////////
+// Read Method for SMA : Modbus reading
+//////////
+VAR
+	// Method local variables (reinitialized at each cycle) 
+	MW 					: FB_MergeWordsToDint; 
+	
+
+
+END_VAR
+
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF MesDataExd.MesData.MesCP_Read THEN
+	ModbusRead(
+		pDestAddr := ADR(MesBlock1_Temp),
+		sIPAddr 	:= ParamIpAddress,
+		tTimeout 	:= ParamTimeout,
+		nTcpPort 	:= ParamTcpPort,
+		nQuantity	:= Size,
+		nMBAddr		:= Addr,
+		cbLength	:= SIZEOF(MesBlock1_Temp),
+		nUnitID		:= ParamUnitID,
+		ClockRead	:= ClockRead
+	);
+	
+//	InputStructRead.InBuffer := ADR(MesBlock1_Temp);
+//	InputStructRead.InFunction := 4;
+//	InputStructRead.InQuantity := 20;
+//	InputStructRead.InStartAddr := 20;
+//	InputStructRead.InUnitID := ParamUnitID;
+//	InputStructRead.OutBusy := ADR(bReadBusy);
+//	InputStructRead.OutError := ADR(bReadError);
+//	InputStructRead.OutCompleted := ADR(bReadCompleted);
+	
+
+
+	MW(WORD_STRONG := MesBlock1_Temp[1], SIZE:= 1, Fix := 1, SIGNED := FALSE, VAR_OUT := Soil1_interm);
+	MW(WORD_STRONG := MesBlock1_Temp[2], SIZE:= 1, Fix := 1, SIGNED := TRUE, VAR_OUT := TransmLoss1_interm);
+	MW(WORD_STRONG := MesBlock1_Temp[5], SIZE:= 1, Fix := 1, SIGNED := FALSE, VAR_OUT := Soil2_interm);
+	MW(WORD_STRONG := MesBlock1_Temp[6], SIZE:= 1, Fix := 1, SIGNED := TRUE, VAR_OUT := TransmLoss2_interm);
+	MesDataExd.MesData.MesSoilingRatio1 := Soil1_interm;
+	MesDataExd.MesData.MesSoilingRatio2 := Soil2_interm;
+	MW(WORD_STRONG := MesBlock1_Temp[7], SIZE:= 1, Fix := 0, SIGNED := FALSE, VAR_OUT := Readinesss);
+	MW(WORD_STRONG := MesBlock1_Temp[8], SIZE:= 1, Fix := 0, SIGNED := FALSE, VAR_OUT := Completion);
+	MesDataExd.MesData.MesNeedForCalibration := WORD_TO_BOOL(MesBlock1_Temp[7]);
+	MesDataExd.MesData.MesCalibrationDone := WORD_TO_BOOL(MesBlock1_Temp[8]);
+
+	
+	MW(WORD_STRONG := MesBlock1_Temp[9], SIZE:= 1, Fix := 1, SIGNED := TRUE, VAR_OUT := MesDataExd.MesData.MesTiltDirection_X);
+	MW(WORD_STRONG := MesBlock1_Temp[10], SIZE:= 1, Fix := 1, SIGNED := TRUE, VAR_OUT := MesDataExd.MesData.MesTiltDirection_Y);
+	
+	MW(WORD_STRONG := MesBlock1_Temp[11], SIZE:= 1, Fix := 1, SIGNED := FALSE, VAR_OUT := MesDataExd.MesData.MesTemp_Panel);
+	
+END_IF
+
+MesDataExd.MesData.MesSoilingRatio := (MesDataExd.MesData.MesSoilingRatio1 + MesDataExd.MesData.MesSoilingRatio2 )/2;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_StateManager" Id="{641ffb72-6722-41e6-b30e-7ff65716b92a}">
+      <Declaration><![CDATA[METHOD M_StateManager
+//////////////////
+// Detect which is the state of the inverter. IF loss of communication MesState =0 , the last inverter state is kept .  
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+	
+END_VAR
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// OPERATIONNAL INDEX //
+//	FB_OperationIndex(
+//		MesON 				:= MesState>1, 
+//		CmdReset 			:= CmdReInitMaintenanceIndicator_G,
+//		CalRunningTimeHr 	=> CalRunningTime , 
+//		CalNbMove 			=> CalNbMove,
+//		CalTimeStart 		=> CalLastStart) ;  ]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_ANA_DustIQ">
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ANA_DustIQ.M_AlarmManagement">
+      <LineId Id="11" Count="48" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ANA_DustIQ.M_CP">
+      <LineId Id="12" Count="13" />
+      <LineId Id="7" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ANA_DustIQ.M_Execute">
+      <LineId Id="479" Count="0" />
+      <LineId Id="481" Count="0" />
+      <LineId Id="492" Count="1" />
+      <LineId Id="482" Count="0" />
+      <LineId Id="480" Count="0" />
+      <LineId Id="400" Count="3" />
+      <LineId Id="406" Count="0" />
+      <LineId Id="410" Count="1" />
+      <LineId Id="503" Count="0" />
+      <LineId Id="412" Count="1" />
+      <LineId Id="455" Count="3" />
+      <LineId Id="466" Count="3" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ANA_DustIQ.M_Init">
+      <LineId Id="7" Count="1" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ANA_DustIQ.M_Read">
+      <LineId Id="135" Count="0" />
+      <LineId Id="210" Count="11" />
+      <LineId Id="201" Count="8" />
+      <LineId Id="54" Count="0" />
+      <LineId Id="26" Count="0" />
+      <LineId Id="168" Count="1" />
+      <LineId Id="171" Count="0" />
+      <LineId Id="108" Count="0" />
+      <LineId Id="172" Count="1" />
+      <LineId Id="175" Count="0" />
+      <LineId Id="177" Count="0" />
+      <LineId Id="181" Count="0" />
+      <LineId Id="184" Count="0" />
+      <LineId Id="183" Count="0" />
+      <LineId Id="182" Count="0" />
+      <LineId Id="178" Count="0" />
+      <LineId Id="176" Count="0" />
+      <LineId Id="180" Count="0" />
+      <LineId Id="179" Count="0" />
+      <LineId Id="174" Count="0" />
+      <LineId Id="111" Count="0" />
+      <LineId Id="186" Count="0" />
+      <LineId Id="185" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ANA_DustIQ.M_StateManager">
+      <LineId Id="95" Count="5" />
+      <LineId Id="12" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

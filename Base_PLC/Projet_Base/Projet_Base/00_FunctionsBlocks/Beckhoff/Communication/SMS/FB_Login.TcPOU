@@ -1,0 +1,251 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_Login" Id="{9674bd35-ba27-47d5-b54c-6b8a99c4bd3b}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Login
+
+VAR_INPUT
+	bStart					: BOOL;
+	
+END_VAR
+VAR_OUTPUT
+	bBusy					: BOOL;
+	bError					: BOOL;
+	nErrorID				: UINT;
+END_VAR
+
+VAR_IN_OUT
+	stTxBuffer				: ComBuffer;
+	stRxBuffer				: ComBuffer;
+END_VAR
+
+VAR
+	rtrigStart				: R_TRIG;
+
+	fbSendData				: SendData;
+	fbReceiveData			: ReceiveData;
+	fbClearComBuffer		: ClearComBuffer;
+
+	i						: UINT;
+	nStep					: UINT; (* sequence state *)
+	tonWaitTime				: TON;
+	tonTimeOut				: TON;
+	tTimeout				: TIME:=t#30s;
+
+	arAnswerOK				: ARRAY[1..2] OF BYTE:=[16#4F,16#4B];
+	arAnswerErr				: ARRAY[1..5] OF BYTE:=[16#45,16#52,16#52,16#4F,16#52];
+
+	sEchoOff				: STRING(5);			(*Command-String*)
+	arEchoOff				: ARRAY[1..5] OF BYTE;	(*Command-ARRAY*)
+	arEchoOffAnswerRcv		: ARRAY[1..5] OF BYTE;	(*Received answer of the command*)
+	arEchoOffAnswerClr		: ARRAY[1..5] OF BYTE;	(*Empty-ARRAY to clear the answer for debugging*)
+
+	sLogin					: STRING(21);			(*Command-String*)
+	arLogin					: ARRAY[1..21] OF BYTE;	(*Command-ARRAY*)
+	arLoginAnswerRcv		: ARRAY[1..5] OF BYTE;	(*Received answer of the command*)
+	arLoginAnswerClr		: ARRAY[1..5] OF BYTE;	(*Empty-ARRAY to clear the answer for debugging*)
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[	rtrigStart(CLK:=bStart);  //Rising Edge detect
+
+	tonTimeout();
+	IF (tonTimeout.Q) THEN
+		tonTimeout(IN := FALSE);
+		nStep := 900;
+	END_IF
+
+
+	CASE nStep OF
+
+	0: 	(*Idle Step*);
+		tonTimeout(IN:=FALSE);
+		tonWaitTime(IN:=FALSE);
+		IF (rtrigStart.Q AND NOT bBusy) THEN
+			nStep := 5;
+			bBusy := TRUE;
+		ELSE
+			bBusy := FALSE;
+		END_IF
+
+
+	5:
+		bError				:= FALSE;
+		nErrorId			:= 0;
+		tonTimeout			(IN := TRUE, PT := tTimeout);
+		fbClearComBuffer	(buffer:=stRxBuffer);
+		fbClearComBuffer	(buffer:=stTxBuffer);
+		arEchoOffAnswerRcv	:= arEchoOffAnswerClr;
+		arLoginAnswerRcv	:= arLoginAnswerClr;
+	//	MEMSET(ADR(sMessageText),0,SIZEOF(sMessageText));
+		nStep := 50;
+
+
+	(*10:(*Length PIN-number within range?*)
+		IF 		LEN(sPinNumber) < 1
+			OR	LEN(sPinNumber) > 10 THEN
+			bError		:= TRUE;
+			nErrorID	:= 16#8002;
+			nStep		:= 1000;
+		ELSE
+			nStep		:= 20;
+		END_IF
+
+
+	20:(*Phone-number contains correct characters? 0..9*)
+		FOR i:=1 TO LEN(sPinNumber) DO
+			IF 		ASC(MID(sPinNumber,1,i)) < 16#30
+				OR	ASC(MID(sPinNumber,1,i)) > 16#39	(*a non-numeric character in PIN*)	THEN
+				bError		:= TRUE;
+				nErrorID	:= 16#8003;
+			END_IF
+		END_FOR
+
+		IF bError	THEN
+			nStep	:= 1000;
+		ELSE
+			nStep	:= 50;
+		END_IF*)
+
+
+	50:(*Create command-Arrays*)
+
+		(*Echo OFF*)
+		sEchoOff:='ATE0';
+		sEchoOff:=CONCAT(sEchoOff,'X');	(*The "X" is a placeholder in the send-string
+										for the "CR" (Hex 0D) in the send-Array*)
+		MEMCPY(ADR(arEchoOff),ADR(sEchoOff),LEN(sEchoOff)); (*Copy String to ARRAY*)
+		arEchoOff[LEN(sEchoOff)]:=16#0D;(*Place the "CR" in the array*)
+
+		(*Mode Text*)
+		sLogin:='AT+CMGF=';
+		sLogin:=CONCAT(sLogin,'1');
+		sLogin:=CONCAT(sLogin,'X');	(*The "X" is a placeholder in the send-string
+										for the "CR" (Hex 0D) in the send-Array*)
+		MEMCPY(ADR(arLogin),ADR(sLogin),LEN(sLogin)); (*Copy String to ARRAY*)
+		arLogin[LEN(sLogin)]:=16#0D;	(*Place the "CR" in the array*)
+
+		nStep	:= 100;
+
+
+	100:(*Turn Off the Echo*)
+		fbSendData(
+		pSendData:=ADR(arEchoOff),
+		Length:= LEN(sEchoOff),
+		TXbuffer:= stTxBuffer);
+
+		IF NOT fbSendData.Busy THEN
+			nStep:=110;
+		END_IF
+
+		IF  fbSendData.Error<>0 THEN
+			bError:= TRUE;
+			nErrorID:= fbSendData.Error;
+			nStep:=1000;
+		END_IF
+
+
+	110:(*Wait explicitly (by Prefix) for an "OK"-Answer,
+		because the echo may still be on or is already switched off, so the answer may differ in length.
+		Only ok is possible, any other answer caused by Comm-Error will end in global timeout*)
+
+		fbReceiveData(
+		pPrefix:= ADR(arAnswerOK),
+		LenPrefix:= 2,
+		pReceiveData:= ADR(arEchoOffAnswerRcv),
+		SizeReceiveData:= SIZEOF(arEchoOffAnswerRcv),
+		Timeout:= t#500ms,
+		RXbuffer:= stRxBuffer);
+
+		(*Telegram is received*)
+		IF 			fbReceiveData.DataReceived
+			AND NOT fbReceiveData.busy
+			AND		(arEchoOffAnswerRcv[1]=arAnswerOK[1])
+			AND 	(arEchoOffAnswerRcv[2]=arAnswerOK[2])	THEN
+						nStep:=200;
+		END_IF
+
+
+	200:(*Send AT+CMGF Command*)
+		fbSendData(
+		pSendData:=ADR(arLogin),
+		Length:= LEN(sLogin),
+		TXbuffer:= stTxBuffer);
+
+		IF NOT fbSendData.Busy THEN
+			nStep:=210;
+		END_IF
+
+		IF  fbSendData.Error<>0 THEN
+			bError:= TRUE;
+			nErrorID:= fbSendData.Error;
+			nStep:=1000;
+		END_IF
+
+
+	210:(*Wait for OK or Err-Answer. Any other answer caused by Comm-Error will end in global timeout*)
+		(*Do NOT remove the "0" prefix, because the FB is used previously*)
+		fbReceiveData(
+		pPrefix:= 0,
+		LenPrefix:= 0,
+		pReceiveData:= ADR(arLoginAnswerRcv),
+		SizeReceiveData:= SIZEOF(arLoginAnswerRcv),
+		Timeout:= t#500ms,
+		RXbuffer:= stRxBuffer);
+
+		(*Telegram is received*)
+		IF 	(fbReceiveData.DataReceived	AND NOT 	fbReceiveData.busy)	THEN
+				nStep:=220;
+		END_IF
+
+
+	220:(*Analyze answer*)
+		IF		(arLoginAnswerRcv[3]=arAnswerOK[1]) AND (arLoginAnswerRcv[4]=arAnswerOK[2])	THEN
+					nStep:=1000;		(*Login successful*)
+		ELSIF	(arLoginAnswerRcv[3]=arAnswerErr[1]) AND (arLoginAnswerRcv[4]=arAnswerErr[2])	THEN
+					bError:= TRUE;
+					nErrorID:= 16#8004;	(*Login failed due to wrong PIN or no Card or already logged in*)
+					nStep:=1000;
+		ELSE
+					bError:= TRUE;
+					nErrorID:= 16#8005;	(*Undefined answer*)
+					nStep:=1000;
+		END_IF
+
+
+	900:(*Timeout*)
+		bError:= TRUE;
+		nErrorID:= 16#8001;
+		nStep:=1000;
+
+
+	1000:(*Reset Receive-FB*)
+		fbReceiveData(	Reset:=TRUE,RXbuffer:= stRxBuffer);
+		tonWaitTime(IN:=TRUE, PT:=t#1000ms);
+		IF	tonWaitTime.Q	THEN
+			tonWaitTime(IN:=FALSE);
+			fbReceiveData(	Reset:=FALSE,RXbuffer:= stRxBuffer);
+			nStep:=1010;
+		END_IF
+
+
+	1010:(*Send/Receive successful -> Reset FBs*)
+		fbClearComBuffer(buffer:=stRxBuffer);
+		fbClearComBuffer(buffer:=stTxBuffer);
+		tonWaitTime(IN:=TRUE, PT:=t#1000ms);
+		IF	tonWaitTime.Q	THEN
+			tonWaitTime(IN:=FALSE);
+			nStep:=0;
+			bBusy:=FALSE;
+		END_IF
+
+	END_CASE;]]></ST>
+    </Implementation>
+    <LineIds Name="FB_Login">
+      <LineId Id="93" Count="69" />
+      <LineId Id="328" Count="7" />
+      <LineId Id="170" Count="0" />
+      <LineId Id="172" Count="112" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

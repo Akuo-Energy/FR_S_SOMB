@@ -1,0 +1,48 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.13">
+  <DUT Name="INV" Id="{4736ac7a-9072-4be3-ace3-c4ff447f2759}">
+    <Declaration><![CDATA[///////////
+// Structure For Inverter. Main Operating Data to be saved (ex: OPC).  
+//////////
+TYPE INV :
+STRUCT
+	
+		// INV Measures from Datalogger
+		MesP 				: REAL ; 		(* (kW) 	Active Power output (AC) of inverter PCS01*)
+		MesQ 				: REAL ;  		(* (kVAr)   Reactive AC Power Produced				  *)
+		MesPdc 				: REAL ;  		(* (kW) 	Power measure (DC) of inverter			  *)
+		MesIdc 				: REAL ;	 	(* (A) 	    Total Current measure (DC)				  *)
+		MesUdc 				: REAL ;  		(* (V)  	Mean Voltage measure (DC)				  *)
+		MesU 				: REAL ;		(* (V) 	    Mean Voltage measure (AC)				  *)
+		MesV				: REAL ; 		(* (V)      Mean Phase to Neutral voltage			  *)
+		MesI				: REAL ;		(* (A)      Mean Phase Current						  *)
+		MesI0               : REAL ;        (* (A) 		Residual current						  *) 
+		MesFreq				: REAL ; 		(* (Hz)     Frequency                                 *)
+		MesS				: REAL ; 		(* (kVA)     Apparent Power						      *)
+		MesInsuResistor		: REAL ; 		(* (kOhms) Insulation Resistance					  *)
+		MesCosPhi			: REAL ; 		(* (p.u) Power Factor								  *)
+		MesTemp				: REAL ; 		(* (C) Inverter Temperature							  *)
+		MesState_Inv		: UINT ;		(* (NA) Inverter Status								  *)
+		ParamPn				: REAL ; 		(* (kW) Nominal Capacity of SMA 25000 TL Inverter	  *)
+		ParamQn				: REAL ;		(* (kVAr) Nominal reactive power 					  *)
+		MesCurtl		    : BOOL ; 		(* (NA)Cal True if the inverter is curtailing Power	  *)
+		MesAlarmCom			: BOOL ; 		(* (NA) Communication Alarm							  *)
+		MesCP_Read			: BOOL := TRUE;	(* (NA) Cal : Permanent Condition for Read			  *)
+		MesCP_Write			: BOOL := FALSE;	(* (NA) Cal : Permanenent Condition for Write		  *)
+		                                                                                        
+		MesOpened_Ac        : BOOL ;   		(* (NA) Ac switch is opened							  *)
+		MesOpened_Dc        : BOOL ;   		(* (NA) Dc switch is opened							  *)
+		                                                                                        
+		OUT_CmdStart        : BOOL ;        (* (NA) OUT start command 							  *)
+		OUT_CmdStop         : BOOL ;        (* (NA) OUT stop command   							  *)
+		OUT_SetptPLimit    	: REAL ;        (* (kW) OUT P setpoint  							  *)
+		OUT_SetptQ          : REAL ;        (* (kVAr)  OUT Q setpoint   						  *)
+		MesState			: WORD ; 		(* (NA) Cal: Akuo Internal State . O=Stopped, 1 = RUN, 2 = Curtailment *)
+		MesAlarmCode		: WORD ; 		(* (NA) Internal Akuo AlarmCode                       *)
+		MesWarningCode		: WORD ; 		(* (NA) Internal Akuo WarningCode                     *)
+		MesEventCode		: WORD ; 		(* (NA) Internal Akuo EventCode                       *)
+
+END_STRUCT
+END_TYPE]]></Declaration>
+  </DUT>
+</TcPlcObject>

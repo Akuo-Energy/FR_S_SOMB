@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <DUT Name="IPC_Standard" Id="{b665ce76-6dcf-4a31-809b-590683547280}">
+    <Declaration><![CDATA[TYPE IPC_Standard:
+STRUCT
+	MesData	: IPC;  (* (NA) Object	*)
+END_STRUCT
+END_TYPE]]></Declaration>
+  </DUT>
+</TcPlcObject>
+

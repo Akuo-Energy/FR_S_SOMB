@@ -1,0 +1,28 @@
+﻿{
+  "function": {
+    "name": "DownloadFile",
+    "displayName": "DownloadFile",
+    "visible": true,
+    "category": "",
+    "waitMode": "Synchronous",
+    "injectContextObject": false,
+    "description": "Va te faire foutre",
+    "returnValue": {
+      "type": "tchmi:general#/definitions/String"
+    },
+    "arguments": [
+      {
+        "name": "CheminFichier",
+        "displayName": "CheminFichier",
+        "type": "tchmi:general#/definitions/String",
+        "description": "This is an important Parameter which does... This text is used in a tooltip.",
+        "defaultValue": "../Imports/Documents/10/ALARMS_2019-10-2.csv",
+        "required": true,
+        "bindable": true,
+        "restParameter": false,
+        "asReference": false
+      }
+    ]
+  },
+  "$schema": "../../../../Packages/Beckhoff.TwinCAT.HMI.Framework.12.742.5/runtimes/native1.12-tchmi/Schema/FunctionDescription.Schema.json"
+}

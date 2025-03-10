@@ -1,0 +1,78 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_AllInOne" Id="{d7816b15-688e-41fe-8eb8-b41138733c77}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_AllInOne
+VAR_INPUT
+	ParamNameAllInOne		: STRING 	:= 'Wind spd + dir + hygro + temp';				// (NA) Name of the pyranometer : to easily identify it
+	ParamTempoComAlarm		: TIME 		:= T#10S ; 										// (s) Config : Tempo to detect LOC Alarm
+	ParamClockReadTime 		: TIME 		:= T#2S;	  									// (Time) Read Modbus Frequency . 
+ 	ParamTimeout			: TIME  	:= T#5S ;		  								// (Time) Timeout for modbus reading
+	ParamUnitID				: BYTE		:= 1;											// (NA) Unit ID for modbus reading
+	ParamTCPPort			: UINT		:= 502;											// (NA) TCP port for modbus
+	ParamIpAddress			: STRING	:= '127.0.0.1';									// (NA) IP address for modbus
+END_VAR
+
+VAR
+	//M_AlarmManagement
+	TON_ComAlarm				: TON ; 						// Tempo before deteting loss of communication. 
+
+	
+	IN_CmdReset_L					: BOOL;                                                        	
+		
+	// M_READ VARIABLES//
+MesData		AT %Q*  : AllInOne ; 							// (NA) [P,H,B] INV  Data Structure 
+	FB_ModbusReadInputRegs		: ARRAY[1..2] OF FB_MBReadInputRegs;		// FB for Modbus Read
+	MesBlock1_Temp 				: ARRAY[1..96]  OF WORD; 		// (NA) Temporary Block with multiple modbus reading (Caution : Double Word variables)
+	MesBlock2_Temp 				: ARRAY[1..3]  OF WORD; 		// (NA) Temporary Block with multiple modbus reading (Caution : Double Word variables)
+	MesModbusReadAlarm1 		: BOOL ; 						// (NA) Modbus Read Alarm for all modbus frames		
+	MesModbusReadAlarm2 		: BOOL ; 						// (NA) Modbus Read Alarm for all modbus frames		
+	MesAlarmCom					: BOOL;
+	MesModbusAlarmCode			: UDINT;						// (NA) Modbus Read Alarm Code	
+	
+	// M_STATEMANAGER//
+	FB_OperationIndex			: FB_OperationIndex ; 
+	CalLastStart				: STRING ;			 			// Datetime of the last Start
+	MesState					: BYTE ; 						// (NA) Cal                                                                                                            	
+	CalRunningTime				: INT ; 						// Total Running Time
+	                                                        	
+	//M_EXECUTE VARIABLES //                                	
+	TP1							: TP ; 							// (NA) Tempo to define Modbus Reading Frequency 
+	                                                        	
+	ClockRead					: BOOL;							// (NA) Modbus reading Clock
+	
+	
+	//M_INIT //
+	bInit 						: BOOL;							 
+END_VAR
+
+VAR_OUTPUT
+END_VAR
+VAR
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_Execute" Id="{ff5d0c4b-f297-44aa-b17c-e463dfe9d6d1}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_AllInOne">
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_AllInOne.M_Execute">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

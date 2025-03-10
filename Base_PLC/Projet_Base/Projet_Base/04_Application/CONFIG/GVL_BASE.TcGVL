@@ -1,0 +1,107 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1">
+  <GVL Name="GVL_BASE" Id="{b8501929-435a-45a2-850b-025a6fd04542}">
+    <Declaration><![CDATA[///////////////////////
+// DO NOT MODIFY :  
+// Maximal number of objects  - Maximal array size 
+////////////////////
+VAR_GLOBAL CONSTANT 
+	// PRODUCT 
+	CstNbPTR_G					: BYTE := 4 ;  				// (NA) Number of PTR
+	CstNbESS_G   				: BYTE := 3 ;  				// (NA) Number of ESS
+
+
+// EQUIPMENT
+	
+	//SUB_MV
+	
+		CstNbFeederMVCB_G			: BYTE	:= 3 ; 
+		CstNbGridMVCB_G				: BYTE	:= 2 ; 
+	
+	// PTR 
+	
+		CstNbInv_PTR_G				: BYTE := 5 ;	// Maximal Number of PV Inverters for PTR
+		CstNbTempTansfo_PTR_G		: BYTE := 2 ; 	// Maximal Number of Transformer temperature
+		CstNbSB_INV_G				: BYTE := 32 ;	// Maximal Number of String box in inverter
+		CstNb_DU_G					: BYTE := 2  ;	// Maximal number of DU ? DC inputs ? 
+		CstNbPowerCol_INV_G			: BYTE := 3 ; 	// Maximal number of Power Columns per inverter 
+		CstNbSB_DcModule_G			: BYTE := 15 ; 	// Maximal number of String box in DC Module 
+		CstNbDcModule_INV_G			: BYTE := 15 ;	 // Maximal number of DC Module by inverter
+		CstNbSTR_SB_G				: BYTE := 32 ;	// Maximal Number of String by String box 
+		
+	// EM 
+		
+		CstNbEM_G					: BYTE := 2;				// Number of Energy Meters
+		
+	//ESS		
+	
+		CstNbPcs_ESS_G					: BYTE := 2  ;
+		CstNbPowerCol_PCS_G				: BYTE := 6  ;				// Maximal Number of Power colonne by PCS
+		CstNbHvac_ESS_G					: BYTE := 2  ;
+		CstNbBAT_ESS_G					: BYTE := 2  ;
+		CstNbRack_BAT_G					: BYTE := 2  ;
+		CstNbModule_Rack_G				: BYTE := 25  ;
+		CstNbBms_BAT_G					: BYTE := 1  ;
+		CstNbDU_PCS_G					: BYTE := 2  ;
+		CstNbTempSensor_ESS_G			: BYTE := 4  ;
+		CstNbHygroSensor_ESS_G			: BYTE := 4  ;
+		CstNbDS_Ess_G					: BYTE := 2  ;
+		CstNbSS_Ess_G					: BYTE := 2  ;
+		CstNbEs_ESS_G					: BYTE := 2  ;
+		CstNbChainDcSwitchBank_Ess_G	: BYTE := 2  ;	
+		
+		
+	//WS	
+	
+		CstNbPyrano_GTI				: UINT := 5;
+		CstNbPyrano_GHI				: UINT := 5;
+		CstNbAnemo					: UINT := 1;
+		CstNbPanTmp					: UINT := 4;
+		CstNbAmbTmp					: UINT := 3;	
+		
+	// PP 
+	
+		CstNbCouplermax_G			: BYTE 	:= 100 ;			// Maximal number of ethercat devices 
+		CstNbAlarmIO_G				: BYTE := 10 ; // Number of Event in PRG_IO.
+		
+	//TRK 
+	
+		CstNbTrk_NCU_G				: BYTE := 200 ; 
+	
+	(*               SMS               							*)
+	CstNbUser					: SINT:=10; //Nbr d'utilisateur utilisé par AX_Numtel
+	CstNbCMD					: SINT:=20; //Nbr commande utilisé par AX_CMD_SMS
+	CstNbAlarmCode				: INT:=400;  //Number of alarmcode use in AlarmManager
+	
+	// TIMEZONE
+	    (* Indonesia East Standard Time Zone settings *)
+        FRANCE_TZI : ST_TimeZoneInformation := (bias:=-60,
+                                       		 				standardName:='Heure Française',
+                                        					standardDate:=(wYear:=0,wMonth:=10,wDayOfWeek:=0,wDay:=27,wHour:=3),
+                                        					standardBias:=0,
+                                        					daylightName:='None',
+                                        					daylightDate:=(wYear:=0,wMonth:=3,wDayOfWeek:=0,wDay:=31,wHour:=2),
+                                        					daylightBias:=0);
+			
+		CstPhoneIndicator_G		: STRING := '+33';
+			
+			CstCycleTime_G		: INT := 10 ; 			// (ms) Cycle Time of the CPU FB Main 
+			CstCycleTime_Annex	: INT := 100 ; 			// (ms) Cycle Time of the CPU FB Annex_Function
+
+		CstNbRedundantVariableMax_G	: UINT := 553 ;
+		CstNbParamOPCUA				: UINT := 100 ; 
+	
+END_VAR
+VAR_GLOBAL
+	sTimeGMT_G          	: STRING;				// Full Date Time for historization (GMT) 
+	sTimeLocal_G		 	: STRING ;				// Local Time 
+	CalGMTTimeStruct		: TIMESTRUCT ; 			// GMT Time Structure
+
+	ParamOpenVpnFile		: STRING := '';			// Path to openvpn file. 
+	ParamIpPublic 			: STRING(255);			// Public IP 
+	MesSizeCdrive_PLC		: REAL := 100000 ; 		// (Mo) Remaining Disk space
+	MesSizeCdrive_IndusPC	: REAL := 100000 ; 		// (Mo) Remaining Disk space
+END_VAR
+]]></Declaration>
+  </GVL>
+</TcPlcObject>

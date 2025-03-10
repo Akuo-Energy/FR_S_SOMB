@@ -1,0 +1,73 @@
+﻿{
+  "parameters": [
+    {
+      "name": "data-tchmi-state",
+      "displayName": "State",
+      "visible": true,
+      "type": "tchmi:general#/definitions/BOOL",
+      "category": "",
+      "description": "",
+      "requiredOnCompile": false,
+      "readOnly": false,
+      "bindable": true,
+      "heritable": true,
+      "propertyName": "State",
+      "propertySetterName": "setState",
+      "propertyGetterName": "getState"
+    },
+    {
+      "name": "data-tchmi-w",
+      "displayName": "W",
+      "visible": true,
+      "type": "tchmi:general#/definitions/UINT",
+      "category": "",
+      "description": "",
+      "defaultValue": 12,
+      "defaultValueInternal": 12,
+      "requiredOnCompile": false,
+      "readOnly": false,
+      "bindable": true,
+      "heritable": true,
+      "propertyName": "W",
+      "propertySetterName": "setW",
+      "propertyGetterName": "getW"
+    },
+    {
+      "name": "data-tchmi-h",
+      "displayName": "H",
+      "visible": true,
+      "type": "tchmi:general#/definitions/UINT",
+      "category": "",
+      "description": "",
+      "defaultValue": 56,
+      "defaultValueInternal": 56,
+      "requiredOnCompile": false,
+      "readOnly": false,
+      "bindable": true,
+      "heritable": true,
+      "propertyName": "H",
+      "propertySetterName": "setH",
+      "propertyGetterName": "getH"
+    },
+    {
+      "name": "data-tchmi-strokewidth",
+      "displayName": "StrokeWidth",
+      "visible": true,
+      "type": "tchmi:general#/definitions/UINT",
+      "category": "",
+      "description": "",
+      "defaultValue": 1,
+      "defaultValueInternal": 1,
+      "requiredOnCompile": false,
+      "readOnly": false,
+      "bindable": true,
+      "heritable": true,
+      "propertyName": "StrokeWidth",
+      "propertySetterName": "setStrokeWidth",
+      "propertyGetterName": "getStrokeWidth"
+    }
+  ],
+  "virtualRights": [],
+  "$schema": "../../../Packages/Beckhoff.TwinCAT.HMI.Framework.12.742.5/runtimes/native1.12-tchmi/Schema/UserControlConfig.Schema.json",
+  "description": ""
+}

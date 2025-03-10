@@ -1,0 +1,45 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="AllAlarms" Id="{92a1c9a7-5e85-4606-9ed6-cd9bf1e32d5b}">
+    <Declaration><![CDATA[TYPE AllAlarms :
+STRUCT
+PP_MesAlarmCode_1:BOOL ; 
+PP_MesAlarmCode_2:BOOL ; 
+PP_MesAlarmCode_3:BOOL ; 
+PP_MesAlarmCode_4:BOOL ; 
+PP_MesAlarmCode_5:BOOL ; 
+PP_MesWarningCode_1:BOOL ; 
+PP_MesWarningCode_2:BOOL ; 
+PP_MesWarningCode_3:BOOL ; 
+PP_MesWarningCode_5:BOOL ; 
+PP_MesWarningCode_6:BOOL ; 
+PP_MesWarningCode_7:BOOL ; 
+PP_MesWarningCode_8:BOOL ; 
+PP_MesWarningCode_9:BOOL ; 
+PP_MesWarningCode_10:BOOL ; 
+PP_MesWarningCode_12:BOOL ; 
+PP_MesWarningCode_13:BOOL ; 
+PP_MesWarningCode_14:BOOL ; 
+PP_MesWarningCode_15:BOOL ; 
+PP_MesWarningCode2_1:BOOL ; 
+PP_MesWarningCode2_2:BOOL ; 
+PP_MesWarningCode2_3:BOOL ; 
+PP_MesWarningCode2_4:BOOL ; 
+PP_MesWarningCode2_6:BOOL ; 
+PP_MesWarningCode2_7:BOOL ; 
+PP_MesWarningCode2_8:BOOL ; 
+PP_MesWarningCode2_9:BOOL ; 
+PP_MesWarningCode2_10:BOOL ; 
+PP_MesWarningCode2_11:BOOL ; 
+PP_MesWarningCode2_12:BOOL ; 
+PP_MesWarningCode2_14:BOOL ; 
+PP_MesEventCode_14:BOOL ; 
+PP_MesEventCode_15:BOOL ; 
+
+
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,300 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="Firebird_WriteAlarms" Id="{c1375312-faed-45c1-ac6e-ce11e1d4d310}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM Firebird_WriteAlarms
+VAR_INPUT
+	ParamTimeBetweenReconnect	: TIME := T#1M;
+	IN_Reset					: BOOL;
+	
+	FIFO						: FB_DBDatasetFifo;
+END_VAR
+VAR_OUTPUT
+END_VAR
+	
+VAR
+
+	CmdStart					: BOOL;
+	CmdReset					: BOOL;
+	// Data processing 
+	MesDataExd			: LoggerFirebird ; 
+	// RESET
+		Trig_Reset				: R_TRIG;
+		
+	// Connexion
+		TP_Reconnect			: TP;
+		Trig_Connect			: R_TRIG;
+		RS_Connect				: RS;
+		RS_HasBeenConnected		: RS;
+	// DISCONNECT
+		TrigStartDisconnect				: R_TRIG;
+		RsStartDisconnect				: RS;		
+		
+		
+	// Write File       
+		ETAPE					: UINT;
+		Trig_Start				: R_TRIG;   
+		Requete					: STRING(1000);
+		sTimeStamp 				: STRING(255);
+		sTimeStamp_Ms			: STRING(255);
+		sValue					: STRING(255);
+		sAck					: STRING(255);
+		Format					: FB_FormatString;
+		SQLDatabase				: FB_SQLDatabaseEvt('',T#10S);
+		SQLCommand1				: FB_SQLCommandEvt('',T#10S);
+		SQLCommandNull			: FB_SQLCommandEvt('',T#10S);
+		
+	
+	// General variables
+		bInit 					: BOOL;
+
+		NomTable				: STRING(255) := 'TABLE_ALARMS';
+		
+
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// DataProcessing
+IF NOT bInit THEN
+	M_Init();
+END_IF
+RS_HasBeenConnected(SET := SQLDatabase.bConnected);
+TP_Reconnect(In :=RS_HasBeenConnected.Q1 AND NOT SQLDatabase.bConnected OR NOT bInit OR TP_Reconnect.Q, PT := ParamTimeBetweenReconnect);
+	
+M_AlarmManager();
+
+
+Trig_Reset(CLK := IN_Reset OR CmdClearFault_G);
+IF Trig_Reset.Q THEN
+	FIFO.A_Reset();
+	SQLCommand1 := SQLCommandNull;
+	CmdReset := False;
+END_IF
+
+
+// La première ligne est non nulle
+CmdStart := FIFO.nCount >0 AND SQLDatabase.bConnected;
+Trig_Start(CLK := CmdStart);
+IF Trig_Start.Q THEN
+	ETAPE := 1;
+END_IF
+		
+CASE ETAPE OF
+	1: // CONNECTED
+		IF SQLDatabase.CreateCmd(pSQLCommand := ADR(SQLCommand1)) THEN 
+			IF NOT SQLCommand1.bError THEN
+				ETAPE := 2;
+			ELSIF SQLCommand1.bError THEN
+				ETAPE := 255;
+			END_IF
+		END_IF
+		
+	2:
+		//sTimeStamp := left(STR := (AX_Buffer_Alarms[1].TimeStamp_Act), SIZE := LEN((AX_Buffer_Alarms[1].TimeStamp_Act))-4);
+		FIFO.A_Get();	
+		sTimeStamp := FIFO.OUT.TimeStamp_Act;
+		sTimeStamp_MS := right(STR := (sTimeStamp), SIZE := 3);	
+		sValue	:= INT_TO_STRING(BOOL_TO_INT(FIFO.Out.Value));
+		sAck	:= INT_TO_STRING(BOOL_TO_INT(FIFO.Out.Ack));
+		Format(sFormat := 'Insert into %s values ( $'%s$',%d, %s, %s);', 
+			sOut => Requete,
+			arg1 := F_STRING(in := NomTable),
+			arg2 := F_STRING(in := sTimeStamp),
+			arg3 := F_UINT(in := FIFO.Out.ID),
+			arg4 := F_STRING(in := sValue),
+			arg5 := F_STRING(in := sAck)
+		);
+		IF SQLCommand1.Execute(pSQLCmd := ADR(Requete), cbSQLCmd := SIZEOF(Requete))THEN
+			IF  NOT SQLCommand1.bError THEN
+				ETAPE := 4;
+			ELSIF SQLCommand1.bError THEN
+				ETAPE := 255;
+			END_IF
+		END_IF
+
+	4:
+		IF NOT SQLDatabase.bError THEN
+			FIFO.A_Remove();
+			Requete  := '';
+			Trig_Start(CLK := FALSE);
+			Etape := 0;
+		ELSE 
+			ETAPE := 255;
+		END_IF
+		
+	255: 
+		CmdReset := TRUE;
+		Requete := '';
+		Etape := 0;
+		CmdStart := FALSE;
+END_CASE
+
+]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManager" Id="{96c91cee-0f39-4874-9aa4-8dffe02d48e5}">
+      <Declaration><![CDATA[METHOD M_AlarmManager
+VAR
+	FB_AlarmCodeManager : FB_AlarmCodeManager;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Gestion des alarmes internes au code
+
+FB_AlarmCodeManager
+(
+	bAlarm1 := SQLCommand1.bError,				// Insert new alarm failed
+	bAlarm2 := SQLDatabase.bError,				// Connexion to database failed
+	bAlarm3 := FALSE,							// 
+	bAlarm4 := FIFO.bOverwrite,					// Fifo Overflow
+	bAlarm5 :=FALSE,							//
+	bAlarm6 :=FALSE,    						//
+	bAlarm7 :=FALSE,    						//
+	bAlarm8 :=FALSE,    						//
+	bAlarm9 :=FALSE,    						//
+	bAlarm10 :=FALSE,   						//
+	bAlarm11 :=FALSE,   						//
+	bAlarm12 :=FALSE,   						//
+	bAlarm13 :=FALSE,   						//
+	bAlarm14 :=FALSE,   						//
+	bAlarm15 :=FALSE,							//	
+	
+	wAlarmCode =>MesDataExd.MesData.MesAlarmCode
+);]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Connect" Id="{1be97cc7-2d16-4daa-b25d-a48a2a1b23a4}">
+      <Declaration><![CDATA[METHOD M_Connect : BOOL
+
+VAR_OUTPUT
+END_VAR
+VAR_INPUT
+	IN_hDBID				: DINT;
+	IN_Start				: BOOL;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[Trig_Connect(CLK := IN_Start);
+RS_Connect(SET := Trig_Connect.Q);
+IF RS_Connect.Q1 THEN
+	IF SQLDatabase.Connect(hDBID := IN_hDBID) THEN;
+		RS_Connect(RESET1 := TRUE);
+		RS_Connect(RESET1 := FALSE);
+	END_IF
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Disconnect" Id="{6ffa573a-84d5-40f4-8b94-f4c2f0cf75de}">
+      <Declaration><![CDATA[METHOD M_Disconnect : BOOL
+VAR_INPUT
+END_VAR
+VAR_INPUT
+	IN_Start				: BOOL;
+END_VAR
+VAR
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[TrigStartDisconnect(CLK := IN_Start);
+RsStartDisconnect(SET := TrigStartDisconnect.Q);
+IF RsStartDisconnect.Q1 THEN
+	IF SQLDatabase.Disconnect() THEN;
+		RsStartDisconnect(RESET1 := TRUE);
+		RsStartDisconnect(RESET1 := FALSE);
+	END_IF
+END_IF
+
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{3509a0a7-66bb-490a-b437-ad952f9b56f6}">
+      <Declaration><![CDATA[METHOD M_Init
+
+VAR
+	LL	: SINT;
+	KK 	: SINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//Initialisation BUFFER
+	//Buffer pour la lecture des sms
+	FIFO.A_Reset();
+	FIFO.A_Add();
+	FIFO.A_Get();
+	FIFO.A_Remove();
+	
+	FIFO.In.Message :=  'Activation du code';
+	FIFO.In.TimeStamp_Act := SYSTEMTIME_TO_STRING(CalLocalTimeStruct); 
+	FIFO.A_Add();
+	bInit := TRUE;
+
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="Firebird_WriteAlarms">
+      <LineId Id="741" Count="1" />
+      <LineId Id="956" Count="1" />
+      <LineId Id="1475" Count="0" />
+      <LineId Id="743" Count="0" />
+      <LineId Id="1293" Count="0" />
+      <LineId Id="744" Count="0" />
+      <LineId Id="1184" Count="0" />
+      <LineId Id="1462" Count="0" />
+      <LineId Id="1466" Count="1" />
+      <LineId Id="1469" Count="0" />
+      <LineId Id="1471" Count="0" />
+      <LineId Id="1474" Count="0" />
+      <LineId Id="1472" Count="0" />
+      <LineId Id="1465" Count="0" />
+      <LineId Id="1311" Count="0" />
+      <LineId Id="1308" Count="0" />
+      <LineId Id="1630" Count="0" />
+      <LineId Id="1331" Count="1" />
+      <LineId Id="1336" Count="1" />
+      <LineId Id="1345" Count="0" />
+      <LineId Id="1456" Count="0" />
+      <LineId Id="1348" Count="9" />
+      <LineId Id="1443" Count="0" />
+      <LineId Id="1631" Count="0" />
+      <LineId Id="1552" Count="0" />
+      <LineId Id="1433" Count="0" />
+      <LineId Id="1457" Count="1" />
+      <LineId Id="1434" Count="0" />
+      <LineId Id="1451" Count="0" />
+      <LineId Id="1444" Count="4" />
+      <LineId Id="1450" Count="0" />
+      <LineId Id="1369" Count="0" />
+      <LineId Id="1371" Count="8" />
+      <LineId Id="1473" Count="0" />
+      <LineId Id="1381" Count="0" />
+      <LineId Id="1392" Count="0" />
+      <LineId Id="1397" Count="0" />
+      <LineId Id="1399" Count="2" />
+      <LineId Id="1683" Count="0" />
+      <LineId Id="1402" Count="0" />
+      <LineId Id="1404" Count="0" />
+      <LineId Id="1461" Count="0" />
+      <LineId Id="1406" Count="0" />
+      <LineId Id="1454" Count="0" />
+      <LineId Id="1288" Count="0" />
+      <LineId Id="1314" Count="0" />
+      <LineId Id="10" Count="0" />
+    </LineIds>
+    <LineIds Name="Firebird_WriteAlarms.M_AlarmManager">
+      <LineId Id="225" Count="20" />
+      <LineId Id="29" Count="0" />
+    </LineIds>
+    <LineIds Name="Firebird_WriteAlarms.M_Connect">
+      <LineId Id="17" Count="7" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="Firebird_WriteAlarms.M_Disconnect">
+      <LineId Id="6" Count="5" />
+      <LineId Id="13" Count="3" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="Firebird_WriteAlarms.M_Init">
+      <LineId Id="3475" Count="12" />
+      <LineId Id="49" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

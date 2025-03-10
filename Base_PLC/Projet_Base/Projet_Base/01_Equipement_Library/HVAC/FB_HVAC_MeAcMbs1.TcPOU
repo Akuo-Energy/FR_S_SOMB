@@ -1,0 +1,532 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_HVAC_MeAcMbs1" Id="{898b0540-cbce-4ad9-8ac6-4f78e71c22e4}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_HVAC_MeAcMbs1 EXTENDS FB_HVAC_Base
+VAR_INPUT PERSISTENT
+	ParamTempoComAlarm						: TIME 		:= T#10S ; 	(* (s) Config : Tempo to detect LOC Alarm	*)
+	{attribute 'OPC.UA.DA' := '1'}                                  
+	ParamUnitID								: BYTE  	:= 1 ; 		(* (NA) Modbus Unit ID                           *)
+	ParamPriority							: UINT;					(* (NA) Level of priority in the HVAC pool       *)
+	
+	ParamTimeOut							: TIME 		:= T#3S;	(* (NA) Modbus Timeout                           *)
+	
+	ParamTempMin							: REAL := 16; 		(* (°C) Minimal temperature setpoint allowed by device *)
+	ParamTempMax							: REAL := 32; 		(* (°C) Maximal temperature setpoint allowed by device *)
+	ParamNumEss								: UINT;				(* (NA) Number of the corresponding ESS *)
+	
+END_VAR
+
+VAR_INPUT	
+	IN_SetptTemp							: REAL:=22;
+	IN_SetptHygro							: REAL;
+	IN_CmdStart								: BOOL;
+	IN_CmdStop								: BOOL;
+	IN_CmdReset								: BOOL;
+
+	IN_CmdReleaseStop_OPC					: BOOL ; // Manual Cmd. Non prioritaire sur le mode auto. 
+	IN_CmdStop_OPC							: BOOL ; // Manual Cmd .Prioriatire sur le mode auto . Dévérouillage seulement sur ordre de start manual.  
+	
+			MesDataExd						: HVAC_MeAcMbs1;
+END_VAR
+
+VAR
+	
+	//M_ALARMMANAGEMENT VARIABLES 
+		TON_ComAlarm				: TON ; 												// Tempo before detecting loss of communication. 
+	
+
+
+		
+	//M_READ VARIABLES//
+		bReadError						: BOOL;
+		bReadCompleted 					: BOOL;
+		bReadBusy						: BOOL;
+		InputStructRead 				: Struct_InputRTU;
+		TRIG_Read						: R_TRIG;
+		TRIG_Write						: R_TRIG;
+		
+		
+		bWriteError						: ARRAY[1..2] OF BOOL;
+		bWriteCompleted 				: ARRAY[1..2] OF BOOL;
+		bWriteBusy						: ARRAY[1..2] OF BOOL;
+		InputStructWrite 				: ARRAY[1..2] OF Struct_InputRTU;
+		                            	
+		MesBlock1_Temp 					: ARRAY[1..125]  OF WORD; 		// (NA) Temporary Block with multiple modbus reading (Caution : Double Word variables)
+		
+
+		WordToWrite1					: WORD;
+		WordToWrite2					: WORD;
+		WordToWrite1_Old				: WORD;
+		WordToWrite2_Old				: WORD;
+	                                 
+	
+		RS_StartStop					: RS ; 
+	
+		R_TrigState						: R_TRIG;
+		F_TrigState						: F_TRIG;
+		TimeStart						: TIME;
+		TimeNotStart					: TIME;
+		
+END_VAR
+VAR_OUTPUT PERSISTENT
+	          			
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{8ef2e7bd-bf21-494f-8a5c-a633902fb71d}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement : BOOL
+VAR_INPUT
+END_VAR
+
+VAR
+	FB_AlarmCodeManager			: FB_AlarmCodeManager ;
+	CMWarning: BOOL;
+	CMAlarm: BOOL;
+	MesWarningCom: BOOL;
+	WriteAlarm: BOOL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[		CMWarning 		:= bWriteError[1] OR bWriteError[2] OR bReadError;
+		CMAlarm			:= bWriteError[1] AND bWriteError[2] AND bReadError;
+		
+	// Warning
+	MesWarningCom 		:= CMWarning ; 											//
+	//Alarm
+	TON_ComAlarm(IN:= CMAlarm, PT:= ParamTempoComAlarm, Q=>MesDataExd.MesData.MesAlarmCom) ;	 	
+
+
+	FB_AlarmCodeManager(
+		bAlarm1			:= MesDataExd.MesbAlarm, 					// HVAC Alarm Synthesis 
+		bAlarm2			:= MesDataExd.MesData.MesAlarmCom,			// Communication Alarm #COM
+		bAlarm3			:= WriteAlarm,					// Write Alarm 
+		bAlarm4			:= FALSE,						//
+		bAlarm5			:= False,                       //
+		bAlarm6			:= False,                       //
+		bAlarm7			:= False,                       //
+		bAlarm8			:= False,                       //
+		bAlarm9			:= FALSE,						//
+		bAlarm10		:= False,                       //
+		bAlarm11		:= False,                       //
+		bAlarm12		:= False,                       //
+		bAlarm13		:= False,                       //
+		bAlarm14		:= FALSE,						//
+		bAlarm15		:= False,                       //
+		wAlarmCode		=>MesDataExd.MesData.MesAlarmCode);       
+		                                                
+                                                        
+// WARNING CODE //
+	FB_AlarmCodeManager
+(
+ 		bAlarm1			:= MesWarningCom,						// Communication warning  #COM
+		bAlarm2			:= False,                               //
+		bAlarm3			:= False,                               //
+		bAlarm4			:= False,                               //
+		bAlarm5			:= False,                               //
+		bAlarm6			:= False,                               //
+		bAlarm7			:= False,                               //
+		bAlarm8			:= False,                               //
+		bAlarm9			:= False,                               //
+		bAlarm10		:= False,                               //
+		bAlarm11		:= False,                               //
+		bAlarm12		:= FALSE,								//
+		bAlarm13		:= False,                               //
+		bAlarm14		:= False,                               //
+		bAlarm15		:= False,                               //
+		wAlarmCode		=>MesDataExd.MesData.MesWarningCode				
+);   
+
+
+// ALARM WORD EQUIPEMNT 
+(*
+	FB_AlarmCodeManager
+(
+		bAlarm0			:= ,// No active error                                           
+ 		bAlarm1			:= ,// Discharge Temperature high                                					   
+		bAlarm2			:= ,// Internal thermostat detector working (49C)                                           
+		bAlarm3			:= ,// Outdoor unit fail                                                                    
+		bAlarm4			:= ,// Pressure low                                                                         
+		bAlarm5			:= ,// Pressure high (High pressure probe working 63H)                                      
+		bAlarm6			:= ,// Protection against freeze or battery high temperature                                
+		bAlarm7			:= ,// Unknown Alarm 1                               
+		bAlarm8			:= ,// Overheating protection                                                               
+		bAlarm9			:= ,// High pressure error (ball valve closed)                                              
+		bAlarm10		:= ,// Super heating anomaly due to low temp. of discharge. (TH4)                           
+		bAlarm11		:= ,// Erroneous operation of drain pump                                                    
+		bAlarm12		:= ,//  Unknown Alarm 2                   						
+		bAlarm13		:= ,// Drain sensor anomaly (DS)                                                            
+		bAlarm14		:= ,// Serial transmission error                                                            
+		bAlarm15		:= ,// Compressor pause due to excess of current (initial block)                          
+		wAlarmCode		=> MesDataExd.MesAlarm1			
+);   
+
+	FB_AlarmCodeManager
+(
+		bAlarm0			:= ,// Compressor pause due to excess of current (overload)
+ 		bAlarm1			:= ,// Phase detection opened                              				   
+		bAlarm2			:= ,// Anti-phase detection                                                        
+		bAlarm3			:= ,// Phase opened in phase L2 or connector 51CM opened                           
+		bAlarm4			:= ,// Error in the anti-phase detector (electronic board)                         
+		bAlarm5			:= ,// Connector 49L opened                                                        
+		bAlarm6			:= ,// Cut due to over-current of compressor                                       
+		bAlarm7			:= ,// Voltage anomaly                                                             
+		bAlarm8			:= ,// Radiator panel temperature anomaly (TH8)                                    
+		bAlarm9			:= ,// Ambient temperature probe anomaly (TH1), indoor unit                        
+		bAlarm10		:= ,// Liquid probe anomaly (TH2)                                                  
+		bAlarm11		:= ,// Cond/Evap probe anomaly (TH5)                                               
+		bAlarm12		:= ,// Error detection in discharge temperature            					
+		bAlarm13		:= ,// Outdoor probe error TH3                                                     
+		bAlarm14		:= ,// Outdoor probe errorTH7                                                      
+		bAlarm15		:= ,// Outdoor probe errorTH6                                                    
+		wAlarmCode		=> MesDataExd.MesAlarm2			
+);   
+
+	FB_AlarmCodeManager
+(
+		bAlarm0			:= ,// Outdoor probe errorTH8                                                                                    
+ 		bAlarm1			:= ,// Connector 63L opened                                                                                      			   
+		bAlarm2			:= ,// Current probe error                                                                                                             
+		bAlarm3			:= ,// MNET duplicated address definition                                                                                              
+		bAlarm4			:= ,// MNET Line transmission hardware error                                                                                           
+		bAlarm5			:= ,// MNET BUS busy                                                                                                                   
+		bAlarm6			:= ,// MNET Line transmission error                                                                                                    
+		bAlarm7			:= ,// MNET transmission error                                                                                                         
+		bAlarm8			:= ,// MNET without ack                                                                                                                
+		bAlarm9			:= ,// MNET transmission error                                                                                                         
+		bAlarm10		:= ,// MNET without response                                                                                                           
+		bAlarm11		:= ,// AC’s remote command transmission error (reception error)                                                                        
+		bAlarm12		:= ,// AC’s remote command transmission error (transmission error)                                               				
+		bAlarm13		:= ,// Transmission error with the indoor/outdoor unit (reception error)                                                               
+		bAlarm14		:= ,// Transmission error with the indoor/outdoor unit (transmission error)                                                            
+		bAlarm15		:= ,// Error in inter-connection cable in the indoor/outdoor unit, indoor unit number deactivated (5 min or more)                   
+		wAlarmCode		=> MesDataExd.MesAlarm3		
+);   
+
+
+	FB_AlarmCodeManager
+(
+		bAlarm0			:= ,// Error in inter-connection cable in the indoor/outdoor unit (cabling error, disconnection)
+ 		bAlarm1			:= ,// Initial timer deactivated                                                                	   
+		bAlarm2			:= ,// Initializing                                                                        
+		bAlarm3			:= ,//                                                                                                          
+		bAlarm4			:= ,//                 
+		bAlarm5			:= ,//                 
+		bAlarm6			:= ,//                 
+		bAlarm7			:= ,//                 
+		bAlarm8			:= ,//                 
+		bAlarm9			:= ,//                 
+		bAlarm10		:= ,//                 
+		bAlarm11		:= ,//                 
+		bAlarm12		:= ,// 		
+		bAlarm13		:= ,//                 
+		bAlarm14		:= ,//                 
+		bAlarm15		:= ,//              
+		wAlarmCode		=> MesDataExd.MesAlarm4	
+);  
+
+
+
+
+
+
+
+*)]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_CP" Id="{e9d549ad-186b-4f11-a035-58fcd63d0d93}">
+      <Declaration><![CDATA[METHOD M_CP : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+SUPER^.M_CP() ; 
+
+
+
+
+Trig_Cmd_Read(CLK:=IN_CmdToggleRead);
+Trig_Cmd_Write(CLK:=IN_CmdToggleWrite);
+	
+IF Trig_Cmd_Read.Q THEN
+	IN_CmdToggleRead := FALSE;
+	MesDataExd.MesData.MesCP_Read := NOT MesDataExd.MesData.MesCP_Read;
+END_IF
+
+
+IF Trig_Cmd_Write.Q THEN
+	IN_CmdToggleWrite := FALSE;
+	MesDataExd.MesData.MesCP_Write := NOT MesDataExd.MesData.MesCP_Write;
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Evaluate" Id="{3f8ad673-3d82-4b59-a4df-1811d4e201ec}">
+      <Declaration><![CDATA[METHOD M_Evaluate : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+MesDataExd.MesAlarm1.0 := MesDataExd.MesErrorCode = 0;
+MesDataExd.MesAlarm1.1 := MesDataExd.MesErrorCode = 1102;
+MesDataExd.MesAlarm1.2 := MesDataExd.MesErrorCode = 1108;
+MesDataExd.MesAlarm1.3 := MesDataExd.MesErrorCode = 1110;
+MesDataExd.MesAlarm1.4 := MesDataExd.MesErrorCode = 1300;
+MesDataExd.MesAlarm1.5 := MesDataExd.MesErrorCode = 1302;
+MesDataExd.MesAlarm1.6 := MesDataExd.MesErrorCode = 1503;
+MesDataExd.MesAlarm1.7 := MesDataExd.MesErrorCode = 1504;
+MesDataExd.MesAlarm1.8 := MesDataExd.MesErrorCode = 1504;
+MesDataExd.MesAlarm1.9 := MesDataExd.MesErrorCode = 1509;
+MesDataExd.MesAlarm1.10:= MesDataExd.MesErrorCode = 1520;
+MesDataExd.MesAlarm1.11:= MesDataExd.MesErrorCode = 2500;
+MesDataExd.MesAlarm1.12:= MesDataExd.MesErrorCode = 2502;
+MesDataExd.MesAlarm1.13:= MesDataExd.MesErrorCode = 2503;
+MesDataExd.MesAlarm1.14:= MesDataExd.MesErrorCode = 4030;
+MesDataExd.MesAlarm1.15:= MesDataExd.MesErrorCode = 4100;
+MesDataExd.MesAlarm2.0 := MesDataExd.MesErrorCode = 4101;
+MesDataExd.MesAlarm2.1 := MesDataExd.MesErrorCode = 4102;
+MesDataExd.MesAlarm2.2 := MesDataExd.MesErrorCode = 4103;
+MesDataExd.MesAlarm2.3 := MesDataExd.MesErrorCode = 4108;
+MesDataExd.MesAlarm2.4 := MesDataExd.MesErrorCode = 4118;
+MesDataExd.MesAlarm2.5 := MesDataExd.MesErrorCode = 4124;
+MesDataExd.MesAlarm2.6 := MesDataExd.MesErrorCode = 4210;
+MesDataExd.MesAlarm2.7 := MesDataExd.MesErrorCode = 4220;
+MesDataExd.MesAlarm2.8 := MesDataExd.MesErrorCode = 4230;
+MesDataExd.MesAlarm2.9 := MesDataExd.MesErrorCode = 5101;
+MesDataExd.MesAlarm2.10:= MesDataExd.MesErrorCode = 5102;
+MesDataExd.MesAlarm2.11:= MesDataExd.MesErrorCode = 5102;
+MesDataExd.MesAlarm2.12:= MesDataExd.MesErrorCode = 5104;
+MesDataExd.MesAlarm2.13:= MesDataExd.MesErrorCode = 5105;
+MesDataExd.MesAlarm2.14:= MesDataExd.MesErrorCode = 5106;
+MesDataExd.MesAlarm2.15:= MesDataExd.MesErrorCode = 5107;
+MesDataExd.MesAlarm3.0 := MesDataExd.MesErrorCode = 5110;
+MesDataExd.MesAlarm3.1 := MesDataExd.MesErrorCode = 5202;
+MesDataExd.MesAlarm3.2 := MesDataExd.MesErrorCode = 5300;
+MesDataExd.MesAlarm3.3 := MesDataExd.MesErrorCode = 6600;
+MesDataExd.MesAlarm3.4 := MesDataExd.MesErrorCode = 6602;
+MesDataExd.MesAlarm3.5 := MesDataExd.MesErrorCode = 6603;
+MesDataExd.MesAlarm3.6 := MesDataExd.MesErrorCode = 6606;
+MesDataExd.MesAlarm3.7 := MesDataExd.MesErrorCode = 6607;
+MesDataExd.MesAlarm3.8 := MesDataExd.MesErrorCode = 6607;
+MesDataExd.MesAlarm3.9 := MesDataExd.MesErrorCode = 6608;
+MesDataExd.MesAlarm3.10:= MesDataExd.MesErrorCode = 6608;
+MesDataExd.MesAlarm3.11:= MesDataExd.MesErrorCode = 6831;
+MesDataExd.MesAlarm3.12:= MesDataExd.MesErrorCode = 6832;
+MesDataExd.MesAlarm3.13:= MesDataExd.MesErrorCode = 6840;
+MesDataExd.MesAlarm3.14:= MesDataExd.MesErrorCode = 6841;
+MesDataExd.MesAlarm3.15:= MesDataExd.MesErrorCode = 6844;
+MesDataExd.MesAlarm4.0 := MesDataExd.MesErrorCode = 6845;
+MesDataExd.MesAlarm4.1 := MesDataExd.MesErrorCode = 6846;
+MesDataExd.MesAlarm4.2 := MesDataExd.MesErrorCode = 65535;
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Read" Id="{97394ace-4c57-4351-bf1b-bb390dd91f84}">
+      <Declaration><![CDATA[METHOD M_Read : BOOL
+VAR
+		MW 					: FB_MergeWordsToDint; 
+	MesAlarm1: WORD;
+	MesAlarm3: WORD;
+	MesAlarm2: WORD;
+	
+	MesOn : REAL;
+	MesData: INT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+IF MesDataExd.MesData.MesCP_Read  THEN	
+
+	InputStructRead.InBuffer := ADR(MesBlock1_Temp);
+	InputStructRead.InFunction := 4;
+	InputStructRead.InQuantity := 97;
+	InputStructRead.InStartAddr := 0;
+	InputStructRead.InUnitID := ParamUnitID;
+	InputStructRead.OutBusy := ADR(bReadBusy);
+	InputStructRead.OutError := ADR(bReadError);
+	InputStructRead.OutCompleted := ADR(bReadCompleted);
+	
+	
+	MesDataExd.MesData.MesOn := MesBlock1_Temp[1] = 1;
+	MesDataExd.MesMode := MesBlock1_Temp[2];
+	MesDataExd.MesFanMode := MesBlock1_Temp[3];
+	
+	TRIG_Read(CLK := ClockRead);
+	IF TRIG_Read.Q THEN	
+		AX_ESS[ParamNumEss].ModbusRTU.M_AddAction_FIFO(InPriority := 2, InStruct := InputStructRead);
+	END_IF
+	
+	MW(WORD_STRONG := MesBlock1_Temp[5], SIZE:= 1, Fix := 0, SIGNED := TRUE, VAR_OUT := MesDataExd.MesData.MesSetptTemp);
+	MW(WORD_STRONG := MesBlock1_Temp[6], SIZE:= 1, Fix := 0, SIGNED := TRUE, VAR_OUT := MesDataExd.MesTempRoom);
+	MW(WORD_STRONG := MesBlock1_Temp[10], SIZE:= 1, Fix := 0, SIGNED := TRUE, VAR_OUT := MesDataExd.MesData.MesWorkingHr);
+	
+
+	MesDataExd.MesbAlarm := MesBlock1_Temp[11] = 1;
+	MesDataExd.MesErrorCode := MesBlock1_Temp[12] ;
+	MW(WORD_STRONG := MesBlock1_Temp[24], SIZE:= 1, Fix := 0, SIGNED := TRUE, VAR_OUT := MesDataExd.MesTempRealSetpt);
+END_IF
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Write" Id="{0fa7f5b9-5fab-4fb4-a6a6-3f4980805702}">
+      <Declaration><![CDATA[METHOD M_Write : BOOL
+VAR_INPUT
+END_VAR
+VAR
+	
+	WriteCmd1: BOOL;
+	WriteCmd2: BOOL;
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[MesDataExd.IN_SetptTemp := MAX( ParamTempMin, MIN(ParamTempMax, IN_SetptTemp));
+
+Trig_CmdStart(CLK := IN_CmdStart);
+Trig_CmdStop(CLk := IN_CmdStop);
+
+RS_StartStop(SET := Trig_CmdStop.Q, RESET1 := Trig_CmdStart.Q);
+
+IF Trig_CmdStart.Q THEN
+	IN_CmdStart := FALSE;
+END_IF
+
+IF Trig_CmdStop.Q THEN
+	IN_CmdStop := FALSE;
+END_IF
+
+IF MesDataExd.MesData.MesCP_Write THEN
+	// Setpoint 
+	TRIG_Write(CLK := ClockWrite);
+	
+
+	InputStructWrite[1].InBuffer := ADR(WordToWrite1);
+	InputStructWrite[1].InFunction := 6;
+	InputStructWrite[1].InQuantity := 1;
+	InputStructWrite[1].InStartAddr := 4;
+	InputStructWrite[1].InUnitID := ParamUnitID;
+	InputStructWrite[1].OutBusy := ADR(bWriteBusy[1]);
+	InputStructWrite[1].OutError := ADR(bWriteError[1]);
+	InputStructWrite[1].OutCompleted := ADR(bWriteCompleted[1]);
+	
+	WordToWrite1 := REAL_TO_WORD(MesDataExd.IN_SetptTemp);
+	IF WordToWrite1 <> WordToWrite1_Old THEN
+		WordToWrite1_Old := WordToWrite1;
+		AX_ESS[ParamNumEss].ModbusRTU.M_AddAction_FIFO(InPriority := 2, InStruct := InputStructWrite[1]);
+		
+	END_IF
+
+	// CmdStart/Stop
+	InputStructWrite[2].InBuffer := ADR(WordToWrite2);          
+	InputStructWrite[2].InFunction := 6;                        
+	InputStructWrite[2].InQuantity := 1;                        
+	InputStructWrite[2].InStartAddr := 0;                       
+	InputStructWrite[2].InUnitID := ParamUnitID;                
+	InputStructWrite[2].OutBusy := ADR(bWriteBusy[2]);          
+	InputStructWrite[2].OutError := ADR(bWriteError[2]);        
+	InputStructWrite[2].OutCompleted := ADR(bWriteCompleted[2]);
+	
+	WordToWrite2 := BOOL_TO_WORD(NOT RS_StartStop.Q1);
+	IF WordToWrite2 <> WordToWrite2_Old THEN
+		WordToWrite2_Old := WordToWrite2;
+		AX_ESS[ParamNumEss].ModbusRTU.M_AddAction_FIFO(InPriority := 2, InStruct := InputStructWrite[2]);
+		
+	END_IF
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_HVAC_MeAcMbs1">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_HVAC_MeAcMbs1.M_AlarmManagement">
+      <LineId Id="55" Count="1" />
+      <LineId Id="64" Count="0" />
+      <LineId Id="58" Count="2" />
+      <LineId Id="52" Count="2" />
+      <LineId Id="6" Count="38" />
+      <LineId Id="78" Count="1" />
+      <LineId Id="77" Count="0" />
+      <LineId Id="80" Count="2" />
+      <LineId Id="99" Count="0" />
+      <LineId Id="83" Count="15" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="111" Count="19" />
+      <LineId Id="110" Count="0" />
+      <LineId Id="132" Count="19" />
+      <LineId Id="131" Count="0" />
+      <LineId Id="101" Count="0" />
+      <LineId Id="163" Count="19" />
+      <LineId Id="102" Count="7" />
+      <LineId Id="100" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_HVAC_MeAcMbs1.M_CP">
+      <LineId Id="33" Count="19" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_HVAC_MeAcMbs1.M_Evaluate">
+      <LineId Id="27" Count="0" />
+      <LineId Id="35" Count="0" />
+      <LineId Id="39" Count="50" />
+      <LineId Id="8" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_HVAC_MeAcMbs1.M_Read">
+      <LineId Id="456" Count="0" />
+      <LineId Id="455" Count="0" />
+      <LineId Id="402" Count="15" />
+      <LineId Id="438" Count="0" />
+      <LineId Id="440" Count="2" />
+      <LineId Id="439" Count="0" />
+      <LineId Id="418" Count="2" />
+      <LineId Id="457" Count="0" />
+      <LineId Id="424" Count="0" />
+      <LineId Id="421" Count="0" />
+      <LineId Id="425" Count="0" />
+      <LineId Id="427" Count="0" />
+      <LineId Id="422" Count="1" />
+      <LineId Id="351" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_HVAC_MeAcMbs1.M_Write">
+      <LineId Id="211" Count="0" />
+      <LineId Id="216" Count="0" />
+      <LineId Id="215" Count="0" />
+      <LineId Id="217" Count="0" />
+      <LineId Id="219" Count="0" />
+      <LineId Id="218" Count="0" />
+      <LineId Id="288" Count="0" />
+      <LineId Id="259" Count="0" />
+      <LineId Id="291" Count="0" />
+      <LineId Id="290" Count="0" />
+      <LineId Id="261" Count="0" />
+      <LineId Id="292" Count="1" />
+      <LineId Id="264" Count="0" />
+      <LineId Id="212" Count="0" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="209" Count="0" />
+      <LineId Id="245" Count="1" />
+      <LineId Id="213" Count="0" />
+      <LineId Id="200" Count="7" />
+      <LineId Id="269" Count="0" />
+      <LineId Id="279" Count="0" />
+      <LineId Id="265" Count="0" />
+      <LineId Id="268" Count="0" />
+      <LineId Id="270" Count="0" />
+      <LineId Id="266" Count="0" />
+      <LineId Id="199" Count="0" />
+      <LineId Id="222" Count="0" />
+      <LineId Id="198" Count="0" />
+      <LineId Id="226" Count="7" />
+      <LineId Id="277" Count="1" />
+      <LineId Id="275" Count="0" />
+      <LineId Id="272" Count="0" />
+      <LineId Id="276" Count="0" />
+      <LineId Id="274" Count="0" />
+      <LineId Id="224" Count="0" />
+      <LineId Id="197" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

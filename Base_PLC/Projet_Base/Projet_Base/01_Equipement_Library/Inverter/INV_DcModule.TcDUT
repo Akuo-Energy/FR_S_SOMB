@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <DUT Name="INV_DcModule" Id="{9f5e0ebb-9cdb-4aaf-9b64-75b30379c483}">
+    <Declaration><![CDATA[TYPE INV_DcModule :
+STRUCT
+	MesIdc				: REAL ; (* (A) Current of the Dc Module *)
+	MesUdc				: REAL ; (* (V) Voltage of the Dc Module *)
+	MesPdc				: REAL ; (* (kW) Power of the Dc Module *)
+	MesClosed_DcSwitch	: BOOL ; (* (NA) Status of DC switch*)
+	MesChargedSpring	: BOOL ; (* (NA) Status of string of DC switch*)
+         		
+	AX_STR				: ARRAY[1..CstNbSB_DcModule_G] OF STR;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

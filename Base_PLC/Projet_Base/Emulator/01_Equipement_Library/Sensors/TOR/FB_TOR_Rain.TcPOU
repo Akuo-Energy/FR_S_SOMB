@@ -1,0 +1,124 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_TOR_Rain" Id="{de9e8f2f-1b88-4626-862c-97adaf2842bc}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_TOR_Rain EXTENDS FB_TOR_Base
+//////////////////
+//  Door sensor system . State = True >> Door Closed .
+//////////////////
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance/model specific) 
+	
+		
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	
+END_VAR
+
+VAR_INPUT
+	// I/O Inputs 		                                     				
+	
+    ParamVarHrWarning   : REAL:=8;  // Max of raining before warning mm of rain for last hour --> Mean it is raining a lot  Defaut value 8       
+    ParamVarDayWarning  : REAL:=48; // max of raining before warning mm of rain for last day  --> Mean it rained a lot during 1 day defaut value 48
+	ParamVarMinAlarm	: REAL 	:=-5		; // (%)  Config : Minimal allowed Site Hygrometry 
+	
+END_VAR
+
+VAR
+	MesDataExd			: TOR_Rain;
+
+	//M_ALARMMANAGEMENT VARIABLES//
+		WarningDay					: BOOL;
+		WarningHr					: BOOL;
+		WarningValue				: BOOL;
+	
+	//GET/SET PROPERTY MANAGEMENT//
+	//M_Execute
+		FB_AverageHr				: FB_Average; 	
+	    FB_AverageDay               : FB_Average;
+	    FB_AverageMonth             : FB_Average;
+		CTUHr						: CTU;
+		CTUDay						: CTU;
+		CTUMonth					: CTU;
+		Hour 						: INT;
+		PluvioHr_Avg		        : REAL ; 
+		PluvioDay_Avg		        : REAL ; 
+		PluvioMonth_Avg		        : REAL ;     
+		PluvioHr_Max		        : REAL;
+		PluvioDay_Max		        : REAL ; 
+		PluvioMonth_Max		        : REAL ; 
+        PluvioHr					: REAL ; 
+		PluvioDay					: REAL ; 
+		PluvioMonth					: REAL ; 
+
+	
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_Execute" Id="{998403b8-16d4-4a99-876c-ac500793f926}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// EMULATOR I/O //
+
+//MAIN CODE HERE
+Hour 							:=CstCycleTime_G/1000/3600  ;                        
+
+CTUHr   (CU:= MesDataExd.MesData.MesAlarmState , RESET :=  Hour MOD 1 = 0) ; 
+CTUDay  (CU:= MesDataExd.MesData.MesAlarmState , RESET := Hour MOD 24 = 0 ) ; 
+CTUMonth(CU:= MesDataExd.MesData.MesAlarmState , RESET := Hour MOD 24*30 = 0 ) ; 
+
+PluvioHr_Max := SEL( Hour MOD 1 = 0  ,   PluvioHr_Max , PluvioHr_Max:= PluvioHr)  ; 
+PluvioHr := CTUHr.CV  ; 
+
+PluvioDay_Max := SEL( Hour MOD 24 = 0  ,   PluvioDay_Max , PluvioDay_Max:= PluvioDay)  ; 
+PluvioDay := CTUDay.CV  ; 
+
+PluvioMonth_Max := SEL( Hour MOD 24*30 = 0  ,   PluvioMonth_Max , PluvioMonth_Max:= PluvioMonth)  ; 
+PluvioMonth := CTUMonth.CV  ; 
+
+
+FB_AverageHr(ValueIn:=PluvioHr_Max  , WindowDuration := 24*3600*1000 , ValueOut => PluvioHr_Avg) ; 
+FB_AverageDay(ValueIn:=PluvioDay_Max  , WindowDuration := 24*30*3600*1000 , ValueOut => PluvioDay_Avg) ; 
+FB_AverageMonth(ValueIn:=PluvioMonth_Max  , WindowDuration := 24*365*3600*1000 , ValueOut => PluvioMonth_Avg) ;
+//EVALUATE
+
+MesDataExd.MesRainFall_LastHour 	:= PluvioHr;
+MesDataExd.MesRainFall_LastDay		:= PluvioDay;
+MesDataExd.MesRainFall_LastMonth	:= PluvioMonth;
+MesDataExd.AvgmmHour		:= PluvioHr_Avg;
+MesDataExd.AvgmmDay		:= PluvioDay_Avg;
+MesDataExd.AvgmmMonth		:= PluvioMonth_Avg;
+
+
+SUPER^.M_Execute(); ]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_TOR_Rain">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_TOR_Rain.M_Execute">
+      <LineId Id="168" Count="17" />
+      <LineId Id="199" Count="2" />
+      <LineId Id="189" Count="5" />
+      <LineId Id="202" Count="1" />
+      <LineId Id="197" Count="0" />
+      <LineId Id="213" Count="0" />
+      <LineId Id="198" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="LoggerCSV" Id="{4fd72bb8-f16d-4aa6-83d0-96920983a9d5}">
+    <Declaration><![CDATA[
+TYPE LoggerCSV :
+STRUCT
+	FileSize			: ULINT;			(* (o) File size *)
+	TimeCreation		: TIMESTRUCT;		(* TimeCreation of file*)
+	TimeModif			: TIMESTRUCT;		(* Time Modif of file*)
+	MesAlarmCode		: WORD;				(* Alarm Code*)
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_SplitWordToByte" Id="{79ace58f-06e0-41ca-9381-54a2c8175366}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_SplitWordToByte
+////////////////// 
+// Convert one REAL into  2 separate WORDS in Big Endian Encoding. 
+//////////////////	
+VAR_INPUT
+	IN		: WORD ;				// Real input
+	
+END_VAR
+
+VAR_OUTPUT
+	STRONG_BYTE		: BYTE;	// Word output array
+	WEAK_BYTE		: BYTE;	// Word output array
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[STRONG_BYTE := WORD_TO_BYTE(IN) ; 				
+WEAK_BYTE 	:= WORD_TO_BYTE(SHR(IN,8)); 			]]></ST>
+    </Implementation>
+    <LineIds Name="FB_SplitWordToByte">
+      <LineId Id="3" Count="0" />
+      <LineId Id="20" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

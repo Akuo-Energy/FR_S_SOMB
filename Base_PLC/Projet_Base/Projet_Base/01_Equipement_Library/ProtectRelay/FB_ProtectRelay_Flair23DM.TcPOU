@@ -1,0 +1,356 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_ProtectRelay_Flair23DM" Id="{58ac7c66-dab3-45e1-8367-5fbd83432879}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_ProtectRelay_Flair23DM EXTENDS FB_ProtectRelay_Base
+//////////////////
+// SEPAM system for High Voltage or Low Voltage Grid Protection. 
+//////////////////
+VAR_INPUT PERSISTENT
+	ParamTcpPort				: UINT:=502;                       (* (NA) Tcp port *)
+	ParamIPAddress				: STRING; 						   (* (NA) IP address*)
+	ParamUnitID					: BYTE; 						   (* (NA) Unit ID*)
+END_VAR
+
+VAR_INPUT 
+	MesDataExd	AT %Q*	: ProtectRelay_Flair23DM;     		//  MesDataExd.MesData.xd
+	
+END_VAR
+
+VAR_OUTPUT
+	
+END_VAR
+
+VAR_INPUT
+
+END_VAR
+
+VAR
+
+	FB_ModbusRead	          	: ARRAY[1..3] OF FB_ModbusRead; 	// Modbus Read
+									
+	CalCP_Read					: BOOL;								
+	CalCP_Write					: BOOL;
+	
+	MesBlock1_Temp 				: ARRAY [1..1] OF WORD ; 
+	MesBlock2_Temp 				: ARRAY [1..15] OF WORD; 
+	MesBlock3_Temp 				: ARRAY [1..2] OF WORD ; 
+	
+	AX_ModbusReadAlarm			: ARRAY[1..3] OF BOOL  ;
+	AX_ModbusReadAlarmId		: ARRAY[1..3] OF UDINT ;	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{c13c01dd-8e6d-41a0-b8c9-26eaafe8fcbf}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Manages Sepam Alarms. Alarms opens HT CB until Sepam manual Reset. Warning Opens CB-L but does not maintain warning.
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager 	: FB_AlarmCodeManager ; 
+ 	ComWarning				: BOOL;
+	ComAlarms				: BOOL;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// ALARM CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= NOT MesDataExd.MesData.MesAlarmCom,	// Com error: the device did not respond successfully to most recent read/write request
+		bAlarm2			:= FALSE,						//				
+		bAlarm3			:= FALSE,   					//
+		bAlarm4			:= FALSE,   					//
+		bAlarm5			:= FALSE,   					//
+		bAlarm6			:= FALSE, 						//
+		bAlarm7			:= FALSE,   					//
+		bAlarm8			:= FALSE,   					//
+		bAlarm9			:= FALSE,   					//
+		bAlarm10		:= FALSE,   					//
+		bAlarm11		:= FALSE,   					//
+		bAlarm12		:= FALSE,   					//
+		bAlarm13		:= FALSE,   					//
+		bAlarm14		:= FALSE,   					//
+		bAlarm15		:= FALSE, 						//
+		wAlarmCode		=>MesDataExd.MesData.MesAlarmCode);   	//
+
+// WARNING CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= FALSE,						//
+		bAlarm2			:= FALSE,   					//
+		bAlarm4			:= FALSE,   					//
+		bAlarm5			:= FALSE,   					//
+		bAlarm6			:= FALSE, 						//
+		bAlarm7			:= FALSE,   					// 
+		bAlarm8			:= FALSE,   					// 
+		bAlarm9			:= FALSE,   					// 
+		bAlarm10		:= FALSE,   					// 
+		bAlarm11		:= FALSE,   					// 
+		bAlarm12		:= FALSE,   					// 
+		bAlarm13		:= FALSE,   					// 
+		bAlarm14		:= FALSE,   					// 
+		bAlarm15		:= FALSE, 						// 
+		wAlarmCode		=>MesDataExd.MesData.MesWarningCode);	    //
+
+// EVENT CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:=FALSE,						// 		
+		bAlarm2			:=FALSE,   						// 		
+		bAlarm3			:=FALSE,   						// 		
+		bAlarm4			:=FALSE,   						// 		
+		bAlarm5			:=FALSE, 						// 
+		bAlarm6			:=FALSE,   						// 
+		bAlarm7			:=FALSE,   						// 
+		bAlarm8			:=FALSE,   						// 
+		bAlarm9			:=FALSE,   						// 
+		bAlarm10		:=FALSE,   						// 
+		bAlarm11		:=FALSE,   						// 
+		bAlarm12		:=FALSE,   						// 
+		bAlarm13		:=FALSE,   						// 
+		bAlarm14		:=FALSE, 						// 
+		bAlarm15		:=FALSE, 						//		
+		wAlarmCode		=>MesDataExd.MesData.MesEventCode); 		//
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_CP" Id="{256e6d31-42a5-4fb3-bb0f-65837b27bdc5}">
+      <Declaration><![CDATA[METHOD M_CP
+//////////////////
+//  Emulator
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+SUPER^.M_CP() ; 
+
+
+
+
+Trig_Cmd_Read(CLK:=IN_CmdToggleRead);
+Trig_Cmd_Write(CLK:=IN_CmdToggleWrite);
+	
+IF Trig_Cmd_Read.Q THEN
+	IN_CmdToggleRead := FALSE;
+	MesDataExd.MesData.MesCP_Read := NOT MesDataExd.MesData.MesCP_Read;
+END_IF
+
+
+IF Trig_Cmd_Write.Q THEN
+	IN_CmdToggleWrite := FALSE;
+	MesDataExd.MesData.MesCP_Write := NOT MesDataExd.MesData.MesCP_Write;
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Evaluate" Id="{53e4c3cf-23e1-4a21-b5b7-2b264d42352f}">
+      <Declaration><![CDATA[METHOD M_Evaluate
+VAR_INPUT
+END_VAR
+
+VAR
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+SUPER^.M_Evaluate() ; 
+
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{fd6e90d0-9958-4529-a21e-23c704d95c65}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF NOT bInit THEN
+	M_Init();
+END_IF
+
+
+SUPER^.M_Execute() ; ]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{c99afc80-c9ad-43a1-a4e0-d213dedc9a8b}">
+      <Declaration><![CDATA[METHOD M_Init
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[binit := true;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Read" Id="{330293eb-c000-45d3-a410-cc2952e34f28}">
+      <Declaration><![CDATA[METHOD M_Read
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR_INPUT
+	
+END_VAR
+VAR 
+	MW					: FB_MergeWordsToFloat;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+// CP-Read / Write 
+
+
+
+// System BMS 
+IF MesDataExd.MesData.MesCP_Read  THEN	
+
+	
+	FB_ModbusRead[1]
+		(
+			nTCPPort		:= ParamTcpPort,
+			ClockRead		:= MesDataExd.MesData.MesCP_Read AND ClockRead, 
+			Reset			:= CmdClearFault_G OR IN_CmdReset_L,
+			sIPAddr			:= ParamIPAddress,
+			nUnitID			:= ParamUnitID, 
+			tTimeout		:= T#5S,
+			nQuantity		:= 1, 
+			nMBAddr			:= 41000 , 
+			cbLength		:= SIZEOF(MesBlock1_Temp), 
+			pDestAddr		:= ADR(MesBlock1_Temp) , 
+			ModbusReadAlarm	=> AX_ModbusReadAlarm[1] , 
+			ErrorId			=> AX_ModbusReadAlarmId[1]
+		);
+		
+	FB_ModbusRead[2]
+		(
+			nTCPPort		:= ParamTcpPort,
+			ClockRead		:= MesDataExd.MesData.MesCP_Read AND ClockRead, 
+			Reset			:= CmdClearFault_G OR IN_CmdReset_L,
+			sIPAddr			:= ParamIPAddress,
+			nUnitID			:= ParamUnitID, 
+			tTimeout		:= T#5S,
+			nQuantity		:= 14, 
+			nMBAddr			:= 41200, 
+			cbLength		:= SIZEOF(MesBlock2_Temp), 
+			pDestAddr		:= ADR(MesBlock2_Temp) , 
+			ModbusReadAlarm	=> AX_ModbusReadAlarm[2], 
+			ErrorId			=> AX_ModbusReadAlarmId[2]
+		);
+	
+	FB_ModbusRead[3]
+		(
+			nTCPPort		:= ParamTcpPort,
+			ClockRead		:= MesDataExd.MesData.MesCP_Read AND ClockRead, 
+			Reset			:= CmdClearFault_G OR IN_CmdReset_L,
+			sIPAddr			:= ParamIPAddress ,
+			nUnitID			:= ParamUnitID, 
+			tTimeout		:= T#5S,
+			nQuantity		:= 2, 
+			nMBAddr			:= 41350 , 
+			cbLength		:= SIZEOF(MesBlock3_Temp), 
+			pDestAddr		:= ADR(MesBlock3_Temp) , 
+			ModbusReadAlarm	=> AX_ModbusReadAlarm[3], 
+			ErrorId			=> AX_ModbusReadAlarmId[3]
+		);
+			
+	//COM
+	MesDataExd.MesStateCom 			:= WORD_TO_BOOL(MesBlock1_Temp[1]);
+	//I
+	MesDataExd.MesData.MesI1 		:= WORD_TO_INT(Mesblock2_Temp[1]) ;
+	MesDataExd.MesData.MesI2 	    := WORD_TO_INT(Mesblock2_Temp[2]) ;
+	MesDataExd.MesData.MesI3       := WORD_TO_INT(Mesblock2_Temp[3]) ;
+	MesDataExd.MesData.MesI0 	    := WORD_TO_INT(Mesblock2_Temp[4]) ;
+	//Imax
+	MesDataExd.MesData.MesImax1 	:= WORD_TO_INT(Mesblock2_Temp[5]) ;	
+	MesDataExd.MesData.MesImax2 	:= WORD_TO_INT(Mesblock2_Temp[6]) ;	
+	MesDataExd.MesData.MesImax3 	:= WORD_TO_INT(Mesblock2_Temp[7]) ;	
+	//V
+	MesDataExd.MesV1				:= WORD_TO_REAL(Mesblock2_Temp[8]) * 0.01 ;	
+	MesDataExd.MesV2				:= WORD_TO_REAL(Mesblock2_Temp[9]) * 0.01 ;
+	MesDataExd.MesV3				:= WORD_TO_REAL(Mesblock2_Temp[10])* 0.01 ;
+	MesDataExd.MesV0				:= WORD_TO_REAL(Mesblock2_Temp[11])* 0.01 ;
+		
+	MesDataExd.MesData.MesU12		:= WORD_TO_REAL(Mesblock2_Temp[12])* 0.01 ;					// U21 
+	MesDataExd.MesData.MesU23		:= WORD_TO_REAL(Mesblock2_Temp[13])* 0.01 ; 				// U32 
+	MesDataExd.MesData.MesU31		:= WORD_TO_REAL(Mesblock2_Temp[14])* 0.01 ; 				// U31  
+		
+	MesDataExd.ControlWord 			:= MesBlock3_Temp[1];
+	MesDataExd.StatusWord 			:= MesBlock3_Temp[2];
+		
+END_IF 
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_ProtectRelay_Flair23DM">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ProtectRelay_Flair23DM.M_AlarmManagement">
+      <LineId Id="143" Count="54" />
+      <LineId Id="132" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ProtectRelay_Flair23DM.M_CP">
+      <LineId Id="69" Count="19" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ProtectRelay_Flair23DM.M_Evaluate">
+      <LineId Id="84" Count="0" />
+      <LineId Id="78" Count="0" />
+      <LineId Id="91" Count="0" />
+      <LineId Id="64" Count="0" />
+      <LineId Id="55" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ProtectRelay_Flair23DM.M_Execute">
+      <LineId Id="24" Count="0" />
+      <LineId Id="34" Count="1" />
+      <LineId Id="13" Count="1" />
+      <LineId Id="12" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ProtectRelay_Flair23DM.M_Init">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ProtectRelay_Flair23DM.M_Read">
+      <LineId Id="443" Count="0" />
+      <LineId Id="450" Count="0" />
+      <LineId Id="452" Count="0" />
+      <LineId Id="454" Count="2" />
+      <LineId Id="444" Count="2" />
+      <LineId Id="318" Count="13" />
+      <LineId Id="301" Count="0" />
+      <LineId Id="337" Count="0" />
+      <LineId Id="339" Count="13" />
+      <LineId Id="338" Count="0" />
+      <LineId Id="356" Count="14" />
+      <LineId Id="355" Count="0" />
+      <LineId Id="395" Count="0" />
+      <LineId Id="373" Count="0" />
+      <LineId Id="371" Count="0" />
+      <LineId Id="390" Count="0" />
+      <LineId Id="372" Count="0" />
+      <LineId Id="374" Count="2" />
+      <LineId Id="386" Count="0" />
+      <LineId Id="388" Count="1" />
+      <LineId Id="387" Count="0" />
+      <LineId Id="383" Count="0" />
+      <LineId Id="392" Count="2" />
+      <LineId Id="391" Count="0" />
+      <LineId Id="413" Count="0" />
+      <LineId Id="415" Count="2" />
+      <LineId Id="430" Count="0" />
+      <LineId Id="378" Count="0" />
+      <LineId Id="377" Count="0" />
+      <LineId Id="412" Count="0" />
+      <LineId Id="354" Count="0" />
+      <LineId Id="457" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

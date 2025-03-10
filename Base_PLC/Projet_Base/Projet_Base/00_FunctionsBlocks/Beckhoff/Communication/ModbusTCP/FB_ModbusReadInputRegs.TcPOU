@@ -1,0 +1,144 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_ModbusReadInputRegs" Id="{e26236e2-5678-410d-b010-75b530eaf4f6}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_ModbusReadInputRegs
+////////////////// 
+// Read Modbus TCP/IP on Rising Edge of Trigger ClockRead. Returns alarm and stop modbus Read after three consecutive Modbus attempts that failed. 
+//////////////////
+
+VAR_INPUT
+	
+	// Modbus ReadRegs FB inputs
+	pDestAddr 	: POINTER TO BYTE ; // Pointer to variable in which the read data have to be stored
+	sIPAddr 	: STRING(15);		// Modbus server device IP adress
+	tTimeout 	: TIME;				// Timeout
+	
+	nTCPport	: UINT:= 502;		// TCP Port
+	
+	nQuantity 	: WORD;				// Quantity of words to be read
+	nMBAddr 	: WORD ;			// Starting Register adress
+	
+	cbLength 	: UDINT;			// Length of variable to host the read data
+	nUnitID 	: BYTE;				// Unit ID in case of serial connexion after modbus server. Usually equals to 1
+	
+	ClockRead	: BOOL; 			// Rising Edge Modbus Trigger
+	Reset		: BOOL; 			// Reset Trigger to clean alarm and counter.
+	
+	ParamTimeRetry 			: TIME:=T#30S;				//Time to wait before a retry
+	ParamNbAlms				: INT := 3;				// Parameter for the number of retries before the alarme
+	ParamEnableRetryPause	: BOOL ; 
+	
+END_VAR
+
+VAR_OUTPUT
+	ErrorId			: UDINT;	// Error Id returned by FB ( see ADS error Code ) . 
+	OUT_Completed	: BOOL ; // Reading completed successfully . 
+	Busy			: BOOL ;	// FB busy to proceed command
+	ModbusReadAlarm	: BOOL; 	// Alarm if three modbus attempt failed.
+	
+END_VAR
+
+VAR
+	R_TRIG 				: R_TRIG; 			// Rising edge detection for the trigger.
+	FB_MBReadInputRegs 	: FB_MBReadInputRegs; 	// Multiple registers reading
+	
+	Step				: INT; 				// Grafcet step
+	AlarmCounter		: INT; 				// Alarm Counter. Incremennted if modbus errOR  Alarm if counter =3 , resetable.  
+	TempoRetry      		: TP;
+
+	bRetry          		: BOOL:= FALSE; 			// Boolean to denote the retries	
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ALARM MANAGEMENT //
+TempoRetry(PT := ParamTimeRetry);
+	IF AlarmCounter=3 THEN 
+		ModbusReadAlarm 	:=TRUE;
+		bRetry := SEL(ParamEnableRetryPause , FALSE ,  TRUE);		// False = disable retry 		
+	ELSE
+		ModbusReadAlarm := FALSE;
+		ErrorId			:= 0;
+		bRetry := FALSE;		// False = disable retry 
+	END_IF
+
+OUT_Completed := FALSE ; 
+
+// MODBUS SEQUENCE //
+CASE Step OF 
+	0:
+		R_TRIG(CLK :=ClockRead);
+		IF R_TRIG.Q THEN 
+			Step :=1;
+			Busy := TRUE;
+		END_IF
+	1:
+	   FB_MBReadInputRegs(
+	  			sIPAddr:= sIPAddr , 
+				nTCPPort:= nTCPport ,
+				nUnitID:= nUnitID,
+				nQuantity:= nQuantity,
+				nMBAddr:= nMBAddr, 
+				cbLength:= cbLength, 
+				pDestAddr:= pDestAddr, 
+				bExecute:= TRUE,
+				tTimeout:= tTimeout
+				);
+				
+		IF NOT FB_MBReadInputRegs.bBusy AND NOT FB_MBReadInputRegs.bError THEN
+			OUT_Completed := TRUE ;
+			FB_MBReadInputRegs(bExecute:= FALSE);
+			AlarmCounter	:=0; // Reset counter after successful modbus read. 
+			Step 			:=0;
+			Busy := FALSE;
+		ELSIF NOT FB_MBReadInputRegs.bBusy AND FB_MBReadInputRegs.bError AND NOT(bRetry) THEN
+			FB_MBReadInputRegs(bExecute:= FALSE);
+			AlarmCounter 	:= MIN(AlarmCounter+1,3) ; 
+			ErrorId			 :=FB_MBReadInputRegs.nErrId;
+			Step 			:=0;
+			Busy := FALSE;
+		ELSIF NOT FB_MBReadInputRegs.bBusy AND FB_MBReadInputRegs.bError AND bRetry THEN
+			step := 2;
+			Busy := FALSE;		
+			
+		END_IF
+	2: 
+		TempoRetry(In:= TRUE);		// LEAVE SOME TIME BEFORE NEW ATTEMPT . 
+		IF NOT(TempoRetry.Q) THEN
+			TempoRetry(In:= FALSE);
+			//AlarmCounter := 0;
+			step := 0;
+			
+		END_IF	
+END_CASE
+
+// RESET //
+	IF Reset THEN 
+		AlarmCounter 		:= 0 ; 
+		ErrorId 			:= 0 ; 
+		ModbusReadAlarm 	:=FALSE;
+		Reset 				:= FALSE;
+	END_IF
+
+// BUSY //
+	//Busy 						:= FB_MBReadInputRegs.bBusy ; 
+		]]></ST>
+    </Implementation>
+    <Action Name="Init" Id="{457b6c88-d236-4c29-8360-efc34222aded}">
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Action>
+    <LineIds Name="FB_ModbusReadInputRegs">
+      <LineId Id="527" Count="9" />
+      <LineId Id="644" Count="0" />
+      <LineId Id="537" Count="23" />
+      <LineId Id="645" Count="0" />
+      <LineId Id="561" Count="34" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ModbusReadInputRegs.Init">
+      <LineId Id="1" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

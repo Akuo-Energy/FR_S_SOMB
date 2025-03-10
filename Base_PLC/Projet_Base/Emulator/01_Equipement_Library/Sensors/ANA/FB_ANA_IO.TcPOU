@@ -1,0 +1,52 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_ANA_IO" Id="{beb2f102-6558-46cc-8e91-d6f8beb60325}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_ANA_IO EXTENDS FB_ANA_Base
+//////////////////
+// Analogic sensor . Base FB . 
+//////////////////
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance/mùodel specific) 
+		ParamName				: STRING:='TempPcs' ;			// (NA) Name of the pyranometer : to easily identify it
+		ParamScaleMin			: REAL:=4 ; 		// (NA) minimal input value . 
+		ParamScaleMax			: REAL:=20 ; 		// (NA) maximal input value .
+		ParamRangeMin			: REAL:=0 ; 		// (NA) minimal output value . Unit depends on output 
+		ParamRangeMax			: REAL:=100 ; 		// (NA) maximal output value . Unit depends on output 
+
+		
+		ParamForced_4_20		: BOOL:=FALSE;		// Is the input between 4-20mA ? 
+		ParamPT100				: BOOL:=FALSE;	// IF PT 100
+		ParamFix				: INT:=1 ; // Value to wich divide the initial value 
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	
+END_VAR
+
+VAR_INPUT
+	// I/O Inputs 
+		//MesIO1							: INT ; 	// 	IO Value
+		IN_MesIOReal1						: REAL;
+		IN_MesIOReal2						: REAL;
+		
+END_VAR
+
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//
+              MesData			: ANA ;     	
+	//M_READ VARIABLES//
+
+
+		
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <LineIds Name="FB_ANA_IO">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

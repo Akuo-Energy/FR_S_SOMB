@@ -1,0 +1,78 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_AlarmCodeManager" Id="{97b77dd0-f6ee-42df-83ac-4ac5503896b6}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_AlarmCodeManager
+////////////////// 
+// Create Alarm Code from Alarms and Warnings conditions and summarize alarms
+//////////////////	
+VAR_INPUT
+	bAlarm0				: BOOL:=FALSE; 			// Zero Alarm Condition (Optionnal only for subequipment)
+	bAlarm1				: BOOL:=FALSE ; 		// First Alarm Condition  
+	bAlarm2				: BOOL:=FALSE ; 		// Second Alarm Condition
+	bAlarm3				: BOOL:=FALSE ; 		// Third Alarm Condition
+	bAlarm4				: BOOL:=FALSE ; 		// Fourth Alarm Condition
+	bAlarm5				: BOOL:=FALSE ; 		// Fifth Alarm Condition
+	bAlarm6				: BOOL:=FALSE ; 		// First AlarmPermanent Condition
+	bAlarm7				: BOOL:=FALSE ; 		// Second AlarmPermanent Condition
+	bAlarm8				: BOOL:=FALSE ; 		// Third AlarmPermanent Condition
+	bAlarm9				: BOOL:=FALSE ; 		// Fourth AlarmPermanent Condition 
+	bAlarm10			: BOOL:=FALSE ; 		// Fourth AlarmPermanent Condition 
+	bAlarm11			: BOOL:=FALSE ; 		// First AlarmPermanent Condition
+	bAlarm12  			: BOOL:=FALSE ; 		// Second AlarmPermanent Condition
+	bAlarm13			: BOOL:=FALSE ; 		// Third AlarmPermanent Condition
+	bAlarm14			: BOOL:=FALSE ; 		// Fourth AlarmPermanent Condition 
+	bAlarm15			: BOOL:=FALSE ; 		// Fourth AlarmPermanent Condition 
+
+END_VAR
+
+VAR_OUTPUT
+	wAlarmCode		: WORD ; 		// 16 bit Alarm Code. 
+END_VAR
+
+VAR CONSTANT
+	AlarmMask		: WORD := 2#1111111111111110 ;  // Alarm Mask 
+
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// Reinitialize Alarm summary
+wAlarmCode.0 := FALSE  ;
+
+// Evaluate wAlarmCode
+wAlarmCode.1 	:= bAlarm1 ;  
+wAlarmCode.2 	:= bAlarm2 ;  
+wAlarmCode.3 	:= bAlarm3 ;  
+wAlarmCode.4 	:= bAlarm4 ;  
+wAlarmCode.5 	:= bAlarm5 ;  
+wAlarmCode.6 	:= bAlarm6 ; 
+wAlarmCode.7 	:= bAlarm7 ; 
+wAlarmCode.8 	:= bAlarm8 ;
+wAlarmCode.9 	:= bAlarm9 ;
+wAlarmCode.10 	:= bAlarm10 ; 
+wAlarmCode.11 	:= bAlarm11 ; 
+wAlarmCode.12 	:= bAlarm12 ; 
+wAlarmCode.13 	:= bAlarm13 ; 
+wAlarmCode.14 	:= bAlarm14 ; 
+wAlarmCode.15 	:= bAlarm15 ; 
+ 
+// Alarm Summarized
+IF (AlarmMask AND wAlarmCode) >0 THEN
+	wAlarmCode.0 := TRUE  ; 
+END_IF
+
+
+
+
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_AlarmCodeManager">
+      <LineId Id="98" Count="0" />
+      <LineId Id="133" Count="0" />
+      <LineId Id="99" Count="0" />
+      <LineId Id="6" Count="25" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

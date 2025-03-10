@@ -1,0 +1,50 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.13">
+  <DUT Name="INV_Huawei" Id="{eb155854-4a7c-4395-a08a-7a9c57d88162}">
+    <Declaration><![CDATA[///////////
+// Structure For Inverter. Main Operating Data to be saved ( ex: OPC ) .  
+//////////
+TYPE INV_Huawei :
+STRUCT
+	
+	// INV Measures
+		MesData				: INV ; (* INV *) 
+                        	
+		STR					: ARRAY[1..CstNbSB_INV_G ] OF STR ;  	(* STR *) 
+		                	
+		MesEDay				: REAL ;	    			(* (kWh)Daily Energy	*)
+	    MesETot				: REAL ;					(* (kWh)Total Energy	*)
+		MesI1				: REAL ;					(*	(A) MesI1			*)
+		MesI2				: REAL ;					(*	(A) MesI2			*)
+	    MesI3				: REAL ;					(*	(A) MesI3			*)
+		MesU12				: REAL ;					(*	(V) MesU12			*)
+        MesU23				: REAL ;					(*	(V) MesU23			*)
+        MesU31				: REAL ;					(*	(V) MesU31			*)
+		MesV1				: REAL ;					(*	(V) MesV1			*)
+		MesV2				: REAL ;					(*	(V) MesV2			*)
+		MesV3				: REAL ;					(*	(V) MesV3			*)
+                        	                			
+		MesStateIndic		: WORD ;					(*	(NA) Device status 		*)
+		MesDeviceStatus		: WORD ;
+// 0: standby , 1:grid connected , 2: grid connected normally , 3 : grid connection with derating due to power rationing , 4 grid connection with derating due to internal causes of the solar inverter
+// 5 : normal stop , 6 : stop due to fault , 7 : stop due to power rationning , 8 : shutdown , 9 : spot check 
+
+
+		MesOpeStatus 		: WORD ;					(*	(NA) MesOpeStatus 		*)
+// 0 : locking status (0: locked; 1: unlocked) - 1 : PV Connection sttaus , 2 : DSP Data collection , 
+
+		MesAlm1				: WORD ;					(*	(NA) MesAlm1				*)
+		MesAlm2				: WORD ;					(*	(NA) MesAlm2				*)
+		MesAlm3				: WORD ;					(*	(NA) MesAlm3				*)
+	                                                        	
+		MesID_DevStatus1	: WORD;						(* (NA) Akuo Created satus to compute device status alarms*)
+		MesID_DevStatus2	: WORD;						(* (NA) Akuo Created satus to compute device status alarms*)
+		
+
+
+END_STRUCT
+END_TYPE
+
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

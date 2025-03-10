@@ -1,0 +1,104 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_ProtectRelay_Flair23DM" Id="{67bb73b2-1024-43e9-97f8-4a278ad0be95}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_ProtectRelay_Flair23DM EXTENDS FB_ProtectRelay_Base
+//////////////////
+// SEPAM system for High Voltage or Low Voltage Grid Protection. 
+//////////////////
+VAR_INPUT PERSISTENT
+	ParamTcpPort				: UINT:=502;                       // (NA) Tcp port 
+	ParamIPAddress				: STRING; 						   // (NA) IP address
+	ParamUnitID					: BYTE; 						   // (NA) Unit ID
+END_VAR
+
+VAR_INPUT 
+	
+END_VAR
+
+VAR_OUTPUT
+	
+END_VAR
+
+VAR_INPUT
+
+END_VAR
+
+VAR
+MesDataExd	AT %Q*	: ProtectRelay_Flair23DM;     		//  MesDataExd.MesData.xd
+	
+	FB_ModbusRead	          	: ARRAY[1..3] OF FB_ModbusRead; 	// Modbus Read
+									
+	CalCP_Read					: BOOL;								
+	CalCP_Write					: BOOL;
+	
+	MesBlock1_Temp 				: ARRAY [1..1] OF WORD ; 
+	MesBlock2_Temp 				: ARRAY [1..15] OF WORD; 
+	MesBlock3_Temp 				: ARRAY [1..2] OF WORD ; 
+	
+	AX_ModbusReadAlarm			: ARRAY[1..3] OF BOOL  ;
+	AX_ModbusReadAlarmId		: ARRAY[1..3] OF UDINT ;	
+	
+	
+	// EMIULATOR 
+	Emul_AlarmCom			: BOOL ; // Flair CoM alarm 
+	
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_Execute" Id="{6c36fd8f-31f8-457d-abb0-b0613b69afdb}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	MesU : REAL;
+	MesV : REAL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SUPER^.M_Execute() ; 
+
+//COM
+MesdataExd.MesStateCom 			:= Emul_AlarmCom;
+
+// U
+MesU := SEL(ABS(AX_PTR[ParamPTRNum].MesDataExd.MesData.MesI) < 0.001     , AX_PTR[ParamPTRNum].MesDataExd.MesData.MesP/AX_PTR[ParamPTRNum].MesDataExd.MesData.MesI , 0);
+
+MesDataExd.MesData.MesU12	:= MesU;
+MesDataExd.MesData.MesU23	:= MesU;
+MesDataExd.MesData.MesU31	:= MesU;
+                            
+// V                        
+MesDataExd.MesV1			:= MesU/SQRT(3); 
+MesDataExd.MesV2			:= MesU/SQRT(3); 
+MesDataExd.MesV3			:= MesU/SQRT(3); 
+MesDataExd.MesV0			:= 0;
+
+	
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_ProtectRelay_Flair23DM">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ProtectRelay_Flair23DM.M_Execute">
+      <LineId Id="12" Count="0" />
+      <LineId Id="47" Count="2" />
+      <LineId Id="55" Count="1" />
+      <LineId Id="61" Count="0" />
+      <LineId Id="71" Count="0" />
+      <LineId Id="62" Count="2" />
+      <LineId Id="72" Count="0" />
+      <LineId Id="65" Count="0" />
+      <LineId Id="74" Count="2" />
+      <LineId Id="73" Count="0" />
+      <LineId Id="67" Count="1" />
+      <LineId Id="45" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

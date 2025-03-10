@@ -1,0 +1,389 @@
+﻿<div id="BESS_2Units" data-tchmi-type="TcHmi.Controls.System.TcHmiUserControl" data-tchmi-top="0" data-tchmi-left="0" data-tchmi-width="215" data-tchmi-height="539" data-tchmi-width-unit="px" data-tchmi-height-unit="px" data-tchmi-creator-viewport-width="500" data-tchmi-creator-viewport-height="500" data-tchmi-left-unit="px" data-tchmi-top-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px">
+
+<div id="BESS_Unit_1" data-tchmi-type="TcHmi.Controls.System.TcHmiUserControlHost" data-tchmi-circuitbreakerbottom="%pp%CircuitBreakerBottom_1%/pp%" data-tchmi-circuitbreakertop="%pp%CircuitBreakerTop_1%/pp%" data-tchmi-height="654" data-tchmi-height-unit="px" data-tchmi-left="-18" data-tchmi-left-unit="px" data-tchmi-target-user-control="HMI/UserControls/BESS_Unit.usercontrol" data-tchmi-top="-124" data-tchmi-top-unit="px" data-tchmi-width="142" data-tchmi-width-unit="px" data-tchmi-messoc="%pp%MesSoC_1%/pp%" data-tchmi-setptpmax="%pp%SetptPMax_1%/pp%" data-tchmi-setptpmin="%pp%SetptPMin_1%/pp%" data-tchmi-setptp="%pp%SetptP_1%/pp%" data-tchmi-mesp="%pp%MesP_1%/pp%" data-tchmi-invertererrors="%pp%InverterErrors_1%/pp%" data-tchmi-inverterwarning="%pp%InverterWarning_1%/pp%" data-tchmi-stopcommand="%pp%StopCommand_1%/pp%" data-tchmi-releasecommand="%pp%ReleaseCommand_1%/pp%" data-tchmi-stateledvariable="%pp%StateLEDVariable_1%/pp%" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-invmaxvalue="%pp%INVMaxValue1%/pp%" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px" data-tchmi-batteryerror="%pp%BatteryError_1%/pp%" data-tchmi-batterywarning="%pp%BatteryWarning_1%/pp%">
+
+</div>
+
+<div id="BESS_Unit_2" data-tchmi-type="TcHmi.Controls.System.TcHmiUserControlHost" data-tchmi-circuitbreakerbottom="%pp%CircuitBreakerBottom_2%/pp%" data-tchmi-circuitbreakertop="%pp%CircuitBreakerTop_2%/pp%" data-tchmi-height="654" data-tchmi-height-unit="px" data-tchmi-left="78" data-tchmi-left-unit="px" data-tchmi-target-user-control="HMI/UserControls/BESS_Unit.usercontrol" data-tchmi-top="-124" data-tchmi-top-unit="px" data-tchmi-width="133" data-tchmi-width-unit="px" data-tchmi-messoc="%pp%MesSoC_2%/pp%" data-tchmi-setptpmax="%pp%SetptPMax_2%/pp%" data-tchmi-setptpmin="%pp%SetptPMin_2%/pp%" data-tchmi-setptp="%pp%SetptP_2%/pp%" data-tchmi-mesp="%pp%MesP_2%/pp%" data-tchmi-invertererrors="%pp%InverterErrors_2%/pp%" data-tchmi-inverterwarning="%pp%InverterWarning_2%/pp%" data-tchmi-stopcommand="%pp%StopCommand_2%/pp%" data-tchmi-releasecommand="%pp%ReleaseCommand_2%/pp%" data-tchmi-stateledvariable="%pp%StateLEDVariable_2%/pp%" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-invmaxvalue="%pp%INVMaxValue2%/pp%" data-tchmi-batteryerror="%pp%BatteryError_2%/pp%" data-tchmi-batterywarning="%pp%BatteryWarning_2%/pp%">
+
+</div>
+
+
+<script data-tchmi-target-attribute="data-tchmi-border-width" type="application/json">
+{
+  "left": 4,
+  "right": 5,
+  "top": 5,
+  "bottom": 5,
+  "leftUnit": "px",
+  "rightUnit": "px",
+  "topUnit": "px",
+  "bottomUnit": "px"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-style" type="application/json">
+{
+  "left": "Dashed",
+  "right": "Dashed",
+  "top": "Dashed",
+  "bottom": "Dashed"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
+[
+  {
+    "event": "%pp%BESSError%/pp%",
+    "actions": [
+      {
+        "objectType": "Condition",
+        "active": true,
+        "parts": [
+          {
+            "if": [
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "symbolExpression": "%pp%BESSError%/pp%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": true
+                },
+                "compareOperator": "==",
+                "logic": null
+              }
+            ],
+            "then": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%BESS_2Units::BorderColor%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:framework#/definitions/Color",
+                  "value": {
+                    "color": "rgba(241, 9, 9, 1)"
+                  }
+                },
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "else": [
+              {
+                "objectType": "Condition",
+                "active": true,
+                "parts": [
+                  {
+                    "if": [
+                      {
+                        "compare1": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%BESSWarning%/pp%"
+                        },
+                        "compare2": {
+                          "objectType": "StaticValue",
+                          "valueType": "tchmi:general#/definitions/BOOL",
+                          "value": true
+                        },
+                        "compareOperator": "==",
+                        "logic": null
+                      }
+                    ],
+                    "then": [
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%BESS_2Units::BorderColor%/ctrl%",
+                        "value": {
+                          "objectType": "StaticValue",
+                          "valueType": "tchmi:framework#/definitions/Color",
+                          "value": {
+                            "color": "rgba(247, 158, 0, 1)"
+                          }
+                        },
+                        "asyncWait": true
+                      }
+                    ]
+                  },
+                  {
+                    "else": [
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%BESS_2Units::BorderColor%/ctrl%",
+                        "value": {
+                          "objectType": "StaticValue",
+                          "valueType": "tchmi:framework#/definitions/Color",
+                          "value": {
+                            "color": "rgba(153, 204, 51, 1)"
+                          }
+                        },
+                        "asyncWait": true
+                      }
+                    ]
+                  }
+                ],
+                "asyncWait": true
+              }
+            ]
+          }
+        ],
+        "asyncWait": true
+      }
+    ]
+  },
+  {
+    "event": "%pp%BESSWarning%/pp%",
+    "actions": [
+      {
+        "objectType": "Condition",
+        "active": true,
+        "parts": [
+          {
+            "if": [
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "symbolExpression": "%pp%BESSError%/pp%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": true
+                },
+                "compareOperator": "==",
+                "logic": null
+              }
+            ],
+            "then": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%BESS_2Units::BorderColor%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:framework#/definitions/Color",
+                  "value": {
+                    "color": "rgba(241, 9, 9, 1)"
+                  }
+                },
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "else": [
+              {
+                "objectType": "Condition",
+                "active": true,
+                "parts": [
+                  {
+                    "if": [
+                      {
+                        "compare1": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%BESSWarning%/pp%"
+                        },
+                        "compare2": {
+                          "objectType": "StaticValue",
+                          "valueType": "tchmi:general#/definitions/BOOL",
+                          "value": true
+                        },
+                        "compareOperator": "==",
+                        "logic": null
+                      }
+                    ],
+                    "then": [
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%BESS_2Units::BorderColor%/ctrl%",
+                        "value": {
+                          "objectType": "StaticValue",
+                          "valueType": "tchmi:framework#/definitions/Color",
+                          "value": {
+                            "color": "rgba(247, 158, 0, 1)"
+                          }
+                        },
+                        "asyncWait": true
+                      }
+                    ]
+                  },
+                  {
+                    "else": [
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%BESS_2Units::BorderColor%/ctrl%",
+                        "value": {
+                          "objectType": "StaticValue",
+                          "valueType": "tchmi:framework#/definitions/Color",
+                          "value": {
+                            "color": "rgba(153, 204, 51, 1)"
+                          }
+                        },
+                        "asyncWait": true
+                      }
+                    ]
+                  }
+                ],
+                "asyncWait": true
+              }
+            ]
+          }
+        ],
+        "asyncWait": true
+      }
+    ]
+  },
+  {
+    "event": "BESS_2Units.onInitialized",
+    "actions": [
+      {
+        "objectType": "Condition",
+        "active": true,
+        "parts": [
+          {
+            "if": [
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "symbolExpression": "%pp%BESSError%/pp%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": true
+                },
+                "compareOperator": "==",
+                "logic": null
+              }
+            ],
+            "then": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%BESS_2Units::BorderColor%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:framework#/definitions/Color",
+                  "value": {
+                    "color": "rgba(241, 9, 9, 1)"
+                  }
+                },
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "else": [
+              {
+                "objectType": "Condition",
+                "active": true,
+                "parts": [
+                  {
+                    "if": [
+                      {
+                        "compare1": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%pp%BESSWarning%/pp%"
+                        },
+                        "compare2": {
+                          "objectType": "StaticValue",
+                          "valueType": "tchmi:general#/definitions/BOOL",
+                          "value": true
+                        },
+                        "compareOperator": "==",
+                        "logic": null
+                      }
+                    ],
+                    "then": [
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%BESS_2Units::BorderColor%/ctrl%",
+                        "value": {
+                          "objectType": "StaticValue",
+                          "valueType": "tchmi:framework#/definitions/Color",
+                          "value": {
+                            "color": "rgba(247, 158, 0, 1)"
+                          }
+                        },
+                        "asyncWait": true
+                      }
+                    ]
+                  },
+                  {
+                    "else": [
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%BESS_2Units::BorderColor%/ctrl%",
+                        "value": {
+                          "objectType": "StaticValue",
+                          "valueType": "tchmi:framework#/definitions/Color",
+                          "value": {
+                            "color": "rgba(153, 204, 51, 1)"
+                          }
+                        },
+                        "asyncWait": true
+                      }
+                    ]
+                  }
+                ],
+                "asyncWait": true
+              }
+            ]
+          }
+        ],
+        "asyncWait": true
+      },
+      {
+        "objectType": "WriteToSymbol",
+        "active": false,
+        "symbolExpression": "%pp%InverterErrors_1%/pp%",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:general#/definitions/BOOL",
+          "value": false
+        },
+        "asyncWait": true
+      }
+    ]
+  },
+  {
+    "event": "%pp%InverterErrors_1%/pp%",
+    "actions": []
+  },
+  {
+    "event": "%pp%InverterWarning_1%/pp%",
+    "actions": []
+  }
+]
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
+{
+  "color": "rgba(255, 255, 255, 1)"
+}
+</script>
+<div id="BESS_text" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="-4" data-tchmi-left-unit="px" data-tchmi-text="%pp%Title_BESS%/pp%" data-tchmi-top="39" data-tchmi-top-unit="px" data-tchmi-width="62" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-text-font-size-unit="px" data-tchmi-text-horizontal-alignment="Center" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-font-size="16" data-tchmi-text-font-weight="Bold">
+
+</div>
+
+<div id="Table_Values_2" data-tchmi-type="TcHmi.Controls.System.TcHmiUserControlHost" data-tchmi-add_title="True" data-tchmi-height="535" data-tchmi-height-unit="px" data-tchmi-left="-4" data-tchmi-left-unit="px" data-tchmi-start_with_color="White" data-tchmi-table_height="539" data-tchmi-table_width="215" data-tchmi-target-user-control="HMI/UserControls/Table_Values.usercontrol" data-tchmi-title="Alarms" data-tchmi-top="-5" data-tchmi-top-unit="px" data-tchmi-width="215" data-tchmi-width-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-number_rows="4" data-tchmi-label_1="Alarm1" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px" data-tchmi-visibility="Collapsed">
+
+</div>
+
+</div>

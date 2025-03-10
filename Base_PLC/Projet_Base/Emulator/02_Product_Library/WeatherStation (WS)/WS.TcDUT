@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="WS" Id="{a04e710d-a9bf-424f-af82-effc72788c9e}">
+    <Declaration><![CDATA[TYPE WS :
+STRUCT
+
+	MesGTI						: REAL ;  	(* (W/m2) Cal Averaged GTI value over available (non error) GTI *)
+	                                      	
+	MesGTI_Cumul				: REAL ;  	(* (kWh/m2) Cal Cumulated value of GTI over a 10s period  *)
+	MesGHI_Cumul				: REAL ;  	(* (kWh/m2) Cal Cumulated value of GHI over a 10s period *) 
+	
+	MesAlarmCode				: WORD ; 	(* Alarm Code 					*)
+	MesWarningCode				: WORD ; 	(* Warning Code    				*)
+	MesEventCode				: WORD ; 	(* Event Code      				*)
+	
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

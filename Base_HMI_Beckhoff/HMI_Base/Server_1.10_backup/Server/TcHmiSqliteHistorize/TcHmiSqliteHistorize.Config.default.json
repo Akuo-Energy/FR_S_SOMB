@@ -1,0 +1,42 @@
+{
+    "historizedSymbolList": {
+        "PLC1.OpcUa.AllDataR.HPP.MesEconnected": {
+            "interval": "PT1M",
+            "maxEntries": 10000,
+            "recordingEnabled": true,
+            "rowLimit": 10000
+        },
+        "PLC1.OpcUa.AllDataR.HPP.MesFreq": {
+            "interval": "PT1M",
+            "maxEntries": 10000,
+            "recordingEnabled": true,
+            "rowLimit": 10000
+        },
+        "PLC1.OpcUa.AllDataR.HPP.MesPbat": {
+            "interval": "PT1M",
+            "maxEntries": 10000,
+            "recordingEnabled": true,
+            "rowLimit": 10000
+        },
+        "PLC1.OpcUa.AllDataR.HPP.MesQbat": {
+            "interval": "PT1M",
+            "maxEntries": 10000,
+            "recordingEnabled": true,
+            "rowLimit": 10000
+        },
+        "PLC1.OpcUa.AllDataR.HPP.MesSoC": {
+            "interval": "PT1M",
+            "maxEntries": 10000,
+            "recordingEnabled": true,
+            "rowLimit": 10000
+        },
+        "PLC1.OpcUa.AllDataR.HPP.MesU": {
+            "interval": "PT1M",
+            "maxEntries": 10000,
+            "recordingEnabled": true,
+            "rowLimit": 10000
+        }
+    },
+    "inMemory": false,
+    "mode": 3
+}

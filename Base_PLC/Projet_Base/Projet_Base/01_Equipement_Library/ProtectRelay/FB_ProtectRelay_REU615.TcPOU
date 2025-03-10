@@ -1,0 +1,267 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.9">
+  <POU Name="FB_ProtectRelay_REU615" Id="{c2760a9c-8e26-4278-8e77-ab72fb966447}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_ProtectRelay_REU615 EXTENDS FB_ProtectRelay_Base
+VAR_INPUT PERSISTENT
+		ParamIPAddress				: STRING 	:= '192.168.20.66'; 	// (NA)Config: IP Adress of PV INverter
+		ParamUnitID 				: BYTE  	:= 1; 			  		// (NA)   Modbus Unit ID. 
+		ParamTCPPort				: UINT		:= 502;					// (NA) TCP port for modbus
+		
+
+//		ParamTempoComAlarm			: TIME 		:= T#2S;
+//		ParamTempoComWarning		: TIME		:= T#2S;
+		ParamNominalCurrent			: REAL 		:= 100 ; 				// (A) Nominal current set in the protection relay.
+		
+END_VAR
+VAR_INPUT
+	MesDataExd		AT %Q* 	: ProtectRelay_REFIO ; 
+
+END_VAR
+VAR
+	// M_ALARMMANAGEMENT		
+//		TON_ComAlarm				: TON;
+//		TON_ComWarning				: TON;	
+//		MesComWarning				: BOOL;
+//		MesComAlarm					: BOOL;
+	// M_READ VARIABLES//
+		AX_ModbusRead		   		: ARRAY [1..3] OF FB_ModbusRead ; 					// (NA) FB for Modbus Reading
+		                                        
+		MesBlock_Temp 				: ARRAY [1..3] OF ARRAY[1..120]  OF WORD; 			// (NA) Temporary Block with multiple modbus reading (Caution : Double Word variables)
+
+	
+
+	// M_STATEMANAGER//
+	
+	//EVALUATE//
+		TON_GteIsLong	: TON ;
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{efb5e9f9-bb47-4232-8ea7-8147102a922d}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Manages IntelliGen Alarms
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager : FB_AlarmCodeManager ; 
+
+	KK					: BYTE;		// For Loop 
+	
+	ComWarning			: BOOL;		// Aggregated Wcommunication warning
+	ComAlarm			: BOOL;		// Aggregated communication Alarm
+
+	MesComWarning: BOOL;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+	//Alarm
+	
+	TON_ComAlarm	(IN:= (AX_ModbusRead[1].ModbusReadAlarm) AND (AX_ModbusRead[2].ModbusReadAlarm) AND (AX_ModbusRead[3].ModbusReadAlarm) , PT:= ParamTempoComAlarm, 	Q= MesDataExd.MesData.MesComAlarm) ;	
+//	TON_ComWarning	(IN:= (AX_ModbusRead[1].ModbusReadAlarm) OR  (AX_ModbusRead[2].ModbusReadAlarm) OR  (AX_ModbusRead[3].ModbusReadAlarm) , PT:= ParamTempoComWarning, 	Q=>MesComWarning) ;	
+
+	MesComWarning :=(AX_ModbusRead[1].ModbusReadAlarm) OR  (AX_ModbusRead[2].ModbusReadAlarm) OR  (AX_ModbusRead[3].ModbusReadAlarm) ; 
+
+
+	
+// ALARM CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= MesDataExd.MesData.MesC13100,  				//  Max I>>0  fault  
+		bAlarm2			:= Not IN_MesWatchDog_IO , 						// Perte du watchdog
+		bAlarm3			:= MesDataExd.MesData.MesComAlarm , 			// Communication alarm
+		bAlarm4			:= MesDataExd.MesData.MesAlarmTCS, 		        // Trip circuit Supervision alarm .     
+		bAlarm5			:= FALSE, 										// 
+		bAlarm6			:= FALSE, 										// 
+		bAlarm7			:= False, 										// 
+		bAlarm8			:= False, 										// 
+		bAlarm9			:= FALSE, 										//
+		bAlarm10		:= FALSE, 										//
+		bAlarm11		:= FALSE,                       				//
+		bAlarm12		:= FALSE,                       				//
+		bAlarm13		:= FALSE, 										//
+		bAlarm14		:= FALSE, 										// 
+		bAlarm15		:= FALSE , 										// 
+		wAlarmCode		=>MesDataExd.MesData.MesAlarmCode);
+
+// WARNING CODE //
+	FB_AlarmCodeManager(
+ 		bAlarm1			:= MesComWarning,								// Bad communication				
+		bAlarm2			:= FALSE ,										// 
+		bAlarm3			:= MesDataExd.MesData.MesGTELong, 							// GTE long 
+		bAlarm4			:= FALSE, 						                //
+		bAlarm5			:= FALSE, 						                //
+		bAlarm6			:= FALSE, 						                //
+		bAlarm7			:= FALSE,                                       //
+		bAlarm8			:= FALSE,                                       //
+		bAlarm9			:= FALSE,                                       //
+		bAlarm10		:= FALSE,                                       //
+		bAlarm11		:= FALSE,                                       //
+		bAlarm12		:= FALSE,                                       //
+		bAlarm13		:= FALSE,                                       //
+		bAlarm14		:= FALSE,                                       //
+		bAlarm15		:= FALSE,                                       //
+		wAlarmCode		=>MesDataExd.MesData.MesWarningCode);	
+
+// EVENT CODE //
+	FB_AlarmCodeManager(
+ 		bAlarm1			:= FALSE,		//				
+		bAlarm2			:= FALSE,	    //
+		bAlarm3			:= FALSE,		//	
+		bAlarm4			:= FALSE, 		//				
+		bAlarm5			:= FALSE, 		//				
+		bAlarm6			:= FALSE, 		//				
+		bAlarm7			:= FALSE,       //
+		bAlarm8			:= FALSE,       //
+		bAlarm9			:= FALSE,       //
+		bAlarm10		:= FALSE,       //
+		bAlarm11		:= FALSE,       //
+		bAlarm12		:= FALSE,       //
+		bAlarm13		:= FALSE,       //
+		bAlarm14		:= FALSE,       //
+		bAlarm15		:= FALSE,       //
+		wAlarmCode		=>MesDataExd.MesData.MesEventCode);	]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Evaluate" Id="{e080dd58-dc29-4c64-9440-539fd817f38a}">
+      <Declaration><![CDATA[METHOD M_Evaluate
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//Need to check the GTE FAULT
+
+
+// GTE IS LONG AFTER 50S
+TON_GteIsLong(IN:=IN_Gte_IO ,PT:=T#50S); 
+MesData.MesGTELong := TON_GteIsLong.Q ; 
+
+
+//Update MesData
+
+MesData.MesGTE 			:= IN_Gte_IO;
+MesData.MesComAlarm		:= IN_MesWatchDog_IO  ; 
+MesData.MesC13100		:= IN_C13100_IO;
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Read" Id="{e0d74ee8-c51e-4406-96bb-eb9099989a88}">
+      <Declaration><![CDATA[METHOD M_Read
+//////////////////
+//  Read Modbus Variable for PCS . 
+/////////////////
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+		
+		AX_Addr				: ARRAY[1..2] OF UINT := [154, 		145];
+		AX_Qty				: ARRAY[1..2] OF UINT := [1, 		6];
+		
+	
+END_VAR
+
+
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[AX_ModbusRead[1]
+(
+	pDestAddr 		:= ADR(MesBlock_Temp[1]),
+	sIPAddr 		:= ParamIPAddress,
+	tTimeout 		:= ParamTimeout,
+	nQuantity 		:= AX_Qty[1],
+	ntcpport 		:= ParamTCPPort,
+	nMBAddr 		:= AX_Addr[1],
+	nUnitID 		:= ParamUnitID,
+	cbLength 		:= SIZEOF(MesBlock_Temp[1]),
+	ClockRead 		:= ClockRead AND MesDataExd.MesData.CalCP_Read,
+	Reset 			:= CmdClearFault_G OR IN_CmdReset_L,
+);
+
+AX_ModbusRead[2]
+(
+	pDestAddr 		:= ADR(MesBlock_Temp[2]),
+	sIPAddr 		:= ParamIPAddress,
+	tTimeout 		:= ParamTimeout,
+	nQuantity 		:= AX_Qty[2],
+	ntcpport 		:= ParamTCPPort,
+	nMBAddr 		:= AX_Addr[2]-1,
+	nUnitID 		:= ParamUnitID,
+	cbLength 		:= SIZEOF(MesBlock_Temp[2]),
+	ClockRead 		:= ClockRead AND MesDataExd.MesData.CalCP_Read,
+	Reset 			:= CmdClearFault_G OR IN_CmdReset_L
+);
+
+
+IF MesDataExd.MesData.CalCP_Read THEN	
+	
+MesDataExd.MesData.:= MesDataExd.MesData.; // Allow to initialize.MesDataExd.MesData.with code from RPN_Base ; 
+	
+MesDataExd.MesData.MesFreq 	:= WORD_TO_REAL(MesBlock_Temp[1][1])/100;
+	
+MesDataExd.MesData.MesV1	:= WORD_TO_REAL(MesBlock_Temp[2][1])/10.0;
+MesDataExd.MesData.MesV2	:= WORD_TO_REAL(MesBlock_Temp[2][2])/10.0;
+MesDataExd.MesData.MesV3	:= WORD_TO_REAL(MesBlock_Temp[2][3])/10.0;
+                                                                       
+MesDataExd.MesData.MesU12	:= WORD_TO_REAL(MesBlock_Temp[2][4])/10.0;
+MesDataExd.MesData.MesU23	:= WORD_TO_REAL(MesBlock_Temp[2][5])/10.0;
+MesDataExd.MesData.MesU31	:= WORD_TO_REAL(MesBlock_Temp[2][6])/10.0;
+	
+MesDataExd.MesData.mesU := MesDataExd.MesData.MesU12 + MesDataExd.MesData.MesU23 + MesDataExd.MesData.MesU31)/3;
+MesDataExd.MesData.mesV := MesDataExd.MesData.MesV1 + MesDataExd.MesData.MesV2 + MesDataExd.MesData.MesV3)/3;
+END_IF
+
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_ProtectRelay_REU615">
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ProtectRelay_REU615.M_AlarmManagement">
+      <LineId Id="256" Count="1" />
+      <LineId Id="370" Count="0" />
+      <LineId Id="346" Count="0" />
+      <LineId Id="355" Count="0" />
+      <LineId Id="371" Count="0" />
+      <LineId Id="348" Count="0" />
+      <LineId Id="331" Count="0" />
+      <LineId Id="259" Count="0" />
+      <LineId Id="330" Count="0" />
+      <LineId Id="260" Count="22" />
+      <LineId Id="372" Count="0" />
+      <LineId Id="284" Count="14" />
+      <LineId Id="373" Count="15" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ProtectRelay_REU615.M_Evaluate">
+      <LineId Id="14" Count="2" />
+      <LineId Id="70" Count="3" />
+      <LineId Id="65" Count="0" />
+      <LineId Id="52" Count="4" />
+      <LineId Id="59" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ProtectRelay_REU615.M_Read">
+      <LineId Id="461" Count="26" />
+      <LineId Id="552" Count="1" />
+      <LineId Id="502" Count="0" />
+      <LineId Id="569" Count="0" />
+      <LineId Id="571" Count="0" />
+      <LineId Id="570" Count="0" />
+      <LineId Id="503" Count="0" />
+      <LineId Id="508" Count="3" />
+      <LineId Id="606" Count="1" />
+      <LineId Id="604" Count="1" />
+      <LineId Id="535" Count="0" />
+      <LineId Id="608" Count="1" />
+      <LineId Id="536" Count="0" />
+      <LineId Id="528" Count="0" />
+      <LineId Id="587" Count="0" />
+      <LineId Id="326" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

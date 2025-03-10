@@ -1,0 +1,18 @@
+﻿<div id="Content1_17" data-tchmi-type="TcHmi.Controls.System.TcHmiContent" data-tchmi-top="0" data-tchmi-left="0" data-tchmi-width="2087" data-tchmi-height="100" data-tchmi-zindex="2" data-tchmi-creator-viewport-width="1920" data-tchmi-creator-viewport-height="1024" data-tchmi-width-mode="Value" data-tchmi-height-mode="Value" data-tchmi-width-unit="px" data-tchmi-height-unit="%" data-tchmi-left-unit="px" data-tchmi-top-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px">
+
+
+  <script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
+    {
+    "color": "None"
+    }
+  </script>
+
+  <div id="RegSld_1" data-tchmi-type="TcHmi.Controls.System.TcHmiRegion" data-tchmi-height="100" data-tchmi-height-unit="%" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-width="82" data-tchmi-width-unit="%" data-tchmi-target-content="HMI/MainContent/TechnoPays/I_TO/I_TO_SLD.content" data-tchmi-right-unit="px" data-tchmi-min-width="0" data-tchmi-bottom-unit="px" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px">
+
+  </div>
+
+  <div id="RegCommand_1" data-tchmi-type="TcHmi.Controls.System.TcHmiRegion" data-tchmi-height="100" data-tchmi-height-unit="%" data-tchmi-left-unit="px" data-tchmi-top="10" data-tchmi-top-unit="px" data-tchmi-width="25.1" data-tchmi-width-unit="%" data-tchmi-target-content="HMI/MainContent/TechnoPays/I_TO/I_TO_Command.content" data-tchmi-min-width="0" data-tchmi-bottom-unit="px" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px" data-tchmi-left="1700" data-tchmi-right-unit="px">
+
+  </div>
+
+</div>

@@ -1,0 +1,956 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1">
+  <POU Name="FB_PP" Id="{edb308ec-b43e-4669-929e-f0920877c356}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_PP
+//////////////////
+//  Hybrid Power Plant 
+//////////////////
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance specific)           
+		// Contractual Limits and values 
+	{attribute 'OPC.UA.DA' := '1'}		 
+			ParamPmax								: REAL :=  15000; 	(* (kW)		Maximal contractual injection power to the grid. PUISSANCE CLIENT VS PUISSANCE RACCORDEMENT  ? *)
+	{attribute 'OPC.UA.DA' := '1'}
+			ParamPmin								: REAL := -9000 ; 	(* (kW)		Minimal contractual injection power to the grid *)
+	{attribute 'OPC.UA.DA' := '1'}
+			ParamQmax								: REAL :=  5000 ; 	(* (kVAr)	MAximal contractual injection power to the grid *)
+	{attribute 'OPC.UA.DA' := '1'}
+			ParamQmin								: REAL := -5000 ; 	(* (kVAr)	Minimal contractual injection power to the grid	*)
+	{attribute 'OPC.UA.DA' := '1'}
+			ParamNominalVoltage						: REAL := 11000 ;	(* (V)		Nominal voltage of the grid for voltage regulation*)
+			ParamNominalFrequency 					: REAL := 50 	;	(* (Hz) 	Nominal Frequency of the grid *)
+			
+		// Operationnal Limits
+	{attribute 'OPC.UA.DA' := '1'}
+			ParamQmaxPbelow20						: REAL	:= 2000;	(* (kVAr) Qmax limit if P is below 20 % of Pmax *)
+	{attribute 'OPC.UA.DA' := '1'}
+			ParamTanPhiMax							: REAL:=0.4;		(* (p.u)TanPhi Max limit for Q regulation*)
+	{attribute 'OPC.UA.DA' := '1'}
+			ParamTanPhiMin							: REAL:=0.2 ;		(* (p.u)TanPhiMin limit for Q regulation *)
+	{attribute 'OPC.UA.DA' := '1'}
+			ParamCosPhiLagging						: BOOL:=TRUE ;		(* (NA) Lagging/inductive [soutirer] : Q absorption Q- .  Leading/Capacitive : Q injection Q+ *)
+		
+			
+			
+		// Modes 
+		{attribute 'OPC.UA.DA' := '1'} 
+			ParamLocalMode							: BOOL := TRUE ; 	(* In Local mode, the DEIE is inhibated . *)
+		{attribute 'OPC.UA.DA' := '1'} 
+			ParamQcontrol							: BOOL:=FALSE;		(* Q regulation is activated*)
+		{attribute 'OPC.UA.DA' := '1'} 
+			ParamTanPhiCtrl							: BOOL:= TRUE ;		(* TanPhi Regulation is activated*)
+		
+			Param_SetptTanPhi						: REAL := 0.1;		(*(p.u) Setpoint Tan Phi*)
+			
+		// Regulation 
+			ParamPoffset_OL							: REAL	:=0 ;		(* (kW)Offset for P PID in Open loop  *)
+			ParamQoffset_OL							: REAL	:=0 ;		(* (kVAr)Offset for Q PID in Open loop  		*)
+			ParamPIDP_K								: REAL 	:=0.5;	(* (NA)Gain proportionnel pour régulation P *)
+		    ParamPidP_I								: REAL 	:=1;	(* (NA)Gain intégral pour régulation P *)
+		    ParamPidP_D								: REAL	:=0;		(* (NA)Gain dérivé pour régulation P *)
+			        
+			ParamPIDQ_K								: REAL 	:=0.5;	(* (NA)Gain proportionnel pour régulation Q *)
+		    ParamPidQ_I								: REAL 	:=1; 	(* (NA)Gain intégral pour régulation Q *)
+		    ParamPidQ_D								: REAL	:=0;        (* (NA)Gain dérivé pour régulation Q *)
+	
+		{attribute 'OPC.UA.DA' := '1'} 
+			ParamPIDQMin							: REAL :=-1500; (* (kVAr)High Limit For PID OF active Power*)
+		{attribute 'OPC.UA.DA' := '1'}      		
+			ParamPIDQMax							: REAL :=1500;  (*(kVAr) Low Limit For PID OF Reactive Power*)
+			                                		
+		{attribute 'OPC.UA.DA' := '1'}      		
+			ParamQfUQmin							: REAL:= -5000;	(* (kVAr) Voltage Regulation Minimal Reactive Power @ maximal voltage*)
+		{attribute 'OPC.UA.DA' := '1'}      		
+			ParamQfUQmax							: REAL:= 5000;  (* (kVAr) Voltage Regulation Maximal Reactive Power @ minimal voltage*)
+		{attribute 'OPC.UA.DA' := '1'}      		
+			ParamQfUUHigh							: REAL:= 25000; (* (V)    Voltage Regulation Maximal voltage*)
+		{attribute 'OPC.UA.DA' := '1'}      		
+			ParamQfUDdBandHigh						: REAL:= 22000; (* (V)    Voltage Regulation Deadband High voltage*)
+		{attribute 'OPC.UA.DA' := '1'}      		
+			ParamQfUDdBandLow						: REAL:= 18000; (* (V)    Voltage Regulation Deadband Low voltage*)
+		{attribute 'OPC.UA.DA' := '1'}      	
+			ParamQfUULow							: REAL:= 15000; (* (V)    Voltage Regulation Minimal Voltage*)
+		
+		// Coupling Management
+			ParamNofeedingTime						: TIME := T#3M;		(* (min)Temps max avant decouplage (contractual)			*)
+			ParamNofeedingWarningTime           	: TIME  :=T#30S;    (*(s) Temps avant decouplage HT, permet d'eteindre les onduleurs (*contractuel*)*)
+  			ParamNofeedingAlarmTime           		: TIME := T#2M45S;  (* (min)Temps avant decouplage HT, permet d'eteindre les onduleurs (contractual)*)
+            ParamDiscoAlarmTime						: TIME := T#28S;    (* (s) 	Temps max pour effacement d'urgence      									// + Warning ?            	*)
+			ParamForcedStayConnect					: BOOL := FALSE;   	(* (NA) If True, let the ESS connected even if the Programm restarts				// ParamDisconnectTime (30s) to add ? / TON_Secu_NoFeed *)
+ 	                   		
+		// Computer specifications. 
+			ParamMinimalDiskSpace					: UDINT  := 300000;	 	(* (Mo) Minimal Remaining Disk space before alarm*)
+			ParamCodeVersion						: STRING := '20180225'; (* (NA) Program Version*)
+			ParamNbCoupler							: BYTE   := 39; 		(* (NA) Number of Ethercat coupler	*)
+				
+		// Non parameters persistent data  	
+	    	PIDP									: FB_PIDRegulation;
+			PIDQ									: FB_PIDRegulation;
+			bInit									: BOOL := TRUE ; 		// (NA) Initialize object parameters at first start ( refactoring)
+			
+			MesData									: PP ; 					// (NA) [H,B] Agglomerated PP Data 
+			
+					                                    		
+		// PID                                  		
+			IN_CmdPIDP_LocalMode 						: BOOL;
+			IN_PIDP_SetptP_local						: REAL;					// Local reference instead of DEIE reference. 
+			IN_PIDP_CmdOpenLoop							: BOOL;
+			IN_PIDP_SetptPOpenloop						: REAL;		
+    	                                        		
+			IN_PIDP_CmdReset							: BOOL ;
+			IN_PIDQ_CmdReset							: BOOL ;
+			                                    		
+    	                  		                		
+		// PID Q                                		
+			IN_CmdPIDQ_LocalMode						: BOOL;
+			IN_PIDQ_SetptQ_Local						: REAL;
+			IN_PIDQ_CmdOpenLoop							: BOOL;			
+			IN_PIDQ_SetptQOpenLoop						: REAL;	                        
+			IN_PIDQ_CmdQfU								: BOOL;
+			
+		//M_StateMachine
+			ParamDisconnectInv							: BOOL := FALSE;  		// Active PP disconnect state if all INV and PCS disconnecton Grid
+			ParamSolarPP								: BOOL := FALSE;	 	// PP condition if Solar PP
+			ParamHybridPP								: BOOL := FALSE;	 	// PP condition if Hybrid PP	
+END_VAR
+
+VAR_INPUT
+		                                    		
+	// Commands                             		
+		IN_CmdReset_L								: BOOL;					// (NA) Cmd Reset Local
+ 		                                    		
+		IN_TestMailSms								: BOOL;	       	
+END_VAR                                     		
+                                            		
+VAR                                         	
+	//M_STATEMACHINE VARIABLES//            	
+		MesState									: WORD ; 					// (NA) Cal State of the PP : Bit0 : Off, Bit1: Offgrid, Bit2:OnGrid
+		TON_INV_Disconnected						: TON ;					// (NA) Timer for delay-on operation
+                                            	
+	//M_ALARMMANAGEMENT VARIABLES//         	
+	    R_TRIG_Event								: ARRAY[1..15] OF R_TRIG ;    
+                                            	
+                                            	
+		AX_AlarmWords								: ARRAY[1..60] OF ST_ValuesAlarms;
+		AX_AlarmWords_Null							: ARRAY[1..60] OF ST_ValuesAlarms;
+		NumAlarmsActive								: UINT;
+         	
+	//M_RESETMANAGER VARIABLES //           	
+                                            		                            	
+	// M_EVALUATE VARIABLES //              	
+	
+		MesMissingDongle	AT %I*					: UINT ; 			// (NA) Dongle has been removed  IO
+                                            		
+		TestMailSms									: BOOL ;
+		TON_TestMailSms								: TON;   
+		TON_MissingDongle							: TON;   
+		                                    		
+	// M_EMS VARIABLE//				        		                              	
+		OUT_PIDPMode								: INT ; 			// PID mode ( 1: bypassed , 2: 3: Proportionnal , 4 : PI , 5: PID , 6 : PD  )
+		OUT_PIDQMode								: INT ; 			// PID mode ( 1: bypassed , 2: 3: Proportionnal , 4 : PI , 5: PID , 6 : PD  )
+                                           		
+	//M_INIT VARIABLES // 	                		                                           
+		KK 											: UINT ; 
+                                            			
+	// M_SETPOINTCALCULATOR                 		
+		                                    		
+	//M_MODEMANAGER //                      		
+		R_TRIG_ManualMode							: R_TRIG;
+		CalElapsedTime								: REAL;				// Durée de la régulation de fréquence en minutes. 
+	// PMS                                  		
+		TON_UPS										: TON ; 
+		R_TRIGStartDEIE								: R_TRIG ; 
+		F_TRIGStartDEIE								: F_TRIG ; 
+        TON_Centrale_Cpl							: TON ;      
+	//FEEDING                               		
+		CP_Feed_PP_State							: BOOL;
+		CP_Feed_SEPAM								: BOOL;				// Pas de demande d'effacement ET de demande de decouplage
+		CP_Feed_DEIE								: BOOL;				// Pas de demande d'effacement ET de demande de decouplage
+		CP_Feed_SUB_MV								: BOOL;				// Pas de demande d'effacement ET de demande de decouplage
+		CP_Feed_Start								: BOOL; 			// 
+		                    						        			
+	//NOFEEDING             						        			
+		CP_NoFeed_DEIE								: BOOL; 			// Demande de decouplage OU demande d'effacement
+		CP_NoFeed_SEPAM								: BOOL; 			// Demande de decouplage OU demande d'effacement
+		CP_NoFeed_SUB_MV							: BOOL; 			
+		CP_NoFeed_PP_State							: BOOL;                                            		
+        		                            		
+	//NOFEEDING                     				
+		TON_Secu_NoFeed								: TOn;
+		TON_Secu_Alarms								: TON;		
+		TON_Alarm_Disconnect						: TON;
+		TON_Warning_EmergencyDisconnect				: TON;
+		TON_Alarms_EmergencyDisconnect				: TON;                              	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// INITIALIZE // 
+	IF bInit THEN
+		M_Init() ; 
+		bInit:= FALSE ; 
+		
+	ELSIF CmdInit_G THEN 
+		bInit:= TRUE ;  
+		
+	END_IF
+
+// OBJECT CALLS //
+A1_SUBMV.M_Execute() ;
+A1_WS.M_Execute();
+
+
+FOR KK:=1 TO CstNbPTR_G DO 
+	AX_PTR[KK].M_Execute() ;
+END_FOR
+
+FOR KK:=1 TO CstNbESS_G DO 
+	AX_ESS[KK].M_Execute() ;
+END_FOR
+
+M_Evaluate() ; 
+
+
+M_StateMachine(); 
+		
+
+M_EMS(); 
+M_PMS() ; 
+
+//M_GlobalStop();
+M_AlarmManagement();
+
+//M_Emulator
+M_Emulator();
+
+
+]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{85f34102-1761-405f-be79-2a5ad00661f8}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Generates object alarms and manages resets. 
+//////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager		: FB_AlarmCodeManager ;  
+
+		
+	KK						: BYTE ;	// For Loop 
+	
+	
+	ChildWarningSynthesis		: BOOL ; 
+	
+	GG: INT;
+	LL: INT;
+	ID_Journal: INT;
+	WordTest: WORD;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[		
+// ALARM CODE //
+
+// Attention une alarm doit être mise en commentaire de la manière suivante (* *), l'utilisation du // pose pb sur Bazefield 
+
+	FB_AlarmCodeManager(
+		bAlarm1				:= TON_Secu_Alarms.Q , 									// Impossible to disconnect the power plant 
+		bAlarm2				:= MAIN.ParamDisablePLCMaster ,							// Redundancy is forced on the other PLC 							#SCADA
+		bAlarm3				:= MAIN.ParamForceRun , 								// This PLC is forced in RUN ( redundancy inhibited ) 				#SCADA
+		bAlarm4				:= MAIN.ParamInhibateGridLOC,    						// IEC 104 LOC is inhibited. It does not trigger change of PLC	 	#SCADA
+		bAlarm5				:= MAIN.ParamTest, 										// Code is in Test Mode ( Writing order by COM and IO inhibited )   #SCADA	 	 
+		bAlarm6				:= FALSE, 												//			 
+		bAlarm7				:= FALSE,       										//
+		bAlarm8				:= FALSE,       										//
+		bAlarm9				:= FALSE,       										//
+		bAlarm10			:= FALSE,       										//
+		bAlarm11			:= FALSE, 												//			
+		bAlarm12			:= FALSE,       										//
+		bAlarm13			:= FALSE,       										//
+		bAlarm14			:= FALSE, 												//	
+		bAlarm15			:= FALSE ,   											// 
+		wAlarmCode			=>MesData.MesAlarmCode);
+			
+// WARNING CODE //
+	FB_AlarmCodeManager(
+		bAlarm1				:= FUN_PingHost.OUT_Error,								// Ping Host Error 								#SCADA
+		bAlarm2				:= FUN_Alarms.ParamDisableSMS, 							// SMS server is disabled		 								
+		bAlarm3				:= NOT FUN_Alarms.ParamDisableSMS,               		// SMS server is enabled	
+		bAlarm4				:= FALSE,                      							//
+		bAlarm5				:= MesData.MesSizeCdrive_PLC < ParamMinimalDiskSpace,   // C drive almost full 						#SCADA
+		bAlarm6				:= TON_Secu_NoFeed.Q,                       			// Max time reached for decoupling request 
+		bAlarm7				:= ParamForcedStayConnect ,                 			// Force Stay connect active 					#SCADA
+		bAlarm8				:= TON_MissingDongle.Q, 								// License dongle is missing 					#SCADA				
+		bAlarm9				:= PRG_AnnexesFunctions.CPUUsage_PLC>50 , 			// PLC CPU usage is above 50% 					#SCADA
+		bAlarm10			:= NOT ParamForcedStayConnect,              			// Force Stay connect is deactivated 				#SCADA
+		bAlarm11			:= FALSE,                       						// 
+		bAlarm12			:= NOT PRG_IO.IN_CmdInhibOutput_OPC,        			// Test mode is disabled (outputs reactivated) 	#SCADA
+		bAlarm13			:= FALSE,                   			
+		bAlarm14			:= PRG_IO.IN_CmdInhibOutput_OPC, 	        			// Test mode enable (outputs inhibited) 		#SCADA
+		bAlarm15			:= TestMailSms , 										// Test SMS 
+		wAlarmCode			=>MesData.MesWarningCode);
+
+// WARNING CODE // ( Communication PP et Services ) 
+	FB_AlarmCodeManager(
+		bAlarm1				:= NOT OpcUa.AllDataR.COM.MesWatchdog_Internet , 		// No internet access #SCADA #COM
+		bAlarm2				:= NOT OpcUa.AllDataR.COM.MesWatchdog_Router , 			// Router not reachable #SCADA #COM
+		bAlarm3				:= NOT OpcUa.AllDataR.COM.MesWatchdog_Router_SMS , 		// SMS Router not reachable #SCADA #COM
+		bAlarm4				:= NOT OpcUa.AllDataR.COM.MesWatchdog_IndusPC , 		// Industrial PC not reachable #SCADA #COM
+		bAlarm5				:= FALSE,												//
+		bAlarm6				:= NOT OpcUa.AllDataR.COM.MesRunning_HMIServer      , 	// HMI server not running #SCADA
+		bAlarm7				:= NOT OpcUa.AllDataR.COM.MesRunning_OpenVPN        , 	// Open VPN not running  #SCADA
+		bAlarm8				:= NOT OpcUa.AllDataR.COM.MesRunning_TV             , 	// Teamviewer not running #SCADA
+		bAlarm9				:= NOT OpcUa.AllDataR.COM.MesRunning_OPCUa          , 	// OPC UA not running #SCADA
+		bAlarm10			:= NOT OpcUa.AllDataR.COM.MesRunning_Chronograf     , 	// Chronograf not running #SCADA
+		bAlarm11			:= NOT OpcUa.AllDataR.COM.MesRunning_Telegraf       , 	// Telegraf not running #SCADA
+		bAlarm12			:= NOT OpcUa.AllDataR.COM.MesRunning_Influx         , 	// InfluxDB not running	 #SCADA
+		bAlarm13			:= FALSE											,	//	
+		bAlarm14			:= NOT OpcUa.AllDataR.COM.MesRunning_ModBus         , 	//	Modbus Server not running  #SCADA
+		bAlarm15			:= FALSE  											,	//
+		wAlarmCode			=>MesData.MesWarningCode2);
+		
+// EVENT CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= FALSE,													// 
+		bAlarm2			:= FALSE,													// 
+		bAlarm3			:= FALSE,													// 
+		bAlarm4			:= FALSE,													// 
+		bAlarm5			:= FALSE,													//  
+		bAlarm6			:= FALSE,													// 
+		bAlarm7			:= FALSE,													//  
+		bAlarm8			:= FALSE,													//  
+		bAlarm9			:= FALSE,													// 
+		bAlarm10		:= FALSE,													//  
+		bAlarm11		:= FALSE,													// 
+		bAlarm12		:= FALSE,													// 
+		bAlarm13		:= FALSE,													// 
+		bAlarm14		:= R_TRIG_Event[14].Q,										// Global Init Command 
+		bAlarm15		:= R_TRIG_Event[15].Q,										// Global Fault Clear command
+		wAlarmCode		=>MesData.MesEventCode);
+
+  R_TRIG_Event[1](CLK:=FALSE) ;							                                                                                   
+  R_TRIG_Event[3](CLK:=FALSE) ;    
+  R_TRIG_Event[4](CLK:=FALSE) ;    
+  R_TRIG_Event[9](CLK:=FALSE) ;    
+  R_TRIG_Event[12](CLK:=FALSE) ;    
+  R_TRIG_Event[13](CLK:=FALSE) ;	
+  R_TRIG_Event[14](CLK:=CmdInit_G) ;	
+  R_TRIG_Event[15](CLK:=CmdClearFault_G);		
+  
+// CALCUL DES ALARMCODES //
+NumAlarmsActive := 0;
+AX_AlarmWords := AX_AlarmWords_Null;
+FOR GG := 1 TO 4 DO	// Loop over alarm , warning and event 
+	
+	FOR LL := 1 TO 15 DO
+		ID_Journal := 1  + (GG- 1);
+		
+		WordTest := ROR(FUN_Alarms.AX_RecupWord[ID_Journal],LL);
+		IF WordTest.0 THEN
+			NumAlarmsActive := NumAlarmsActive + 1;
+			AX_AlarmWords[NumAlarmsActive].Message := FUN_Alarms.AX_Journal[ID_Journal][LL].Message;
+		ELSE
+			AX_AlarmWords[NumAlarmsActive+1].Message := '';
+		END_IF
+	END_FOR
+END_FOR]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_CP" Id="{02e928be-c17c-42c2-afa6-46ae616b9758}">
+      <Declaration><![CDATA[METHOD M_CP : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_EMS" Id="{1dd19b0a-f16d-48d5-9470-fc31eb9c7e0f}">
+      <Declaration><![CDATA[METHOD M_EMS
+//////////////////
+// Defines setpoints and commands for all generators. 
+// Start and Stop for all generators
+// Connexion and Deconnexion of Load and Renewables energies. 
+// P,Q setpoints for current generators
+// Master generator selection. 
+// Automatic alarms reset. 
+//////////////////
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[M_SetpointCalculator();]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Emulator" Id="{136aeee8-3da3-4cc5-b833-4cadf2ef7f5d}">
+      <Declaration><![CDATA[METHOD M_Emulator
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+	A1_SUBMV.M_Emulator();]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Evaluate" Id="{25d65d00-a14b-4e9d-b0c3-5381e89c15fa}">
+      <Declaration><![CDATA[METHOD M_Evaluate
+//////////////////
+// Evaluate PP characteristics
+//////////////////
+
+VAR
+	// Method local variables (reinitialized at each cycle) 
+	SUB_MVData						: SUBMV;
+	PTR_Data					: PTR ; 
+	
+	CalBlckStrtEnd_Trigger		: BOOL;
+	AX_Acknow_Inv				: ARRAY[1..4] OF BOOL;
+	KK							: INT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+TestMailSms 			:= IN_TestMailSms;
+
+  MesData.MesPsol		:= 	 A1_SUBMV.MesDataExd.MesData.MesPsol ; 	// OR SUM P of all inverters if power meter has a com alarm. 			
+   MesData.MesQsol		:= 	 A1_SUBMV.MesDataExd.MesData.MesQsol ; 			
+   MesData.MesU		:= 	 A1_SUBMV.MesDataExd.MesData.MesU ; 
+   MesData.MesFreq		:= 	 A1_SUBMV.MesDataExd.MesData.MesFreq ; 			
+ //  MesDataExd.MesData.MesPbat		:= 				
+ //  MesDataExd.MesData.MesQbat		:= 				
+
+	MesData.MesPgen		:= word_to_real(CalLocalTimeStruct.wMinute); 				
+ //  MesDataExd.MesData.MesQgen		:= 				
+ //  MesDataExd.MesData.MesPload	:= 				
+ //  MesDataExd.MesData.MesQload	:= 				
+		
+   
+	
+MesData.MesSetptTanPhi	:= Param_SetptTanPhi  ; 
+
+//   MesData.MesPsol_Available			:=	;	
+//  MesData.MesPbatCharge_Available		:=  ;
+//  MesData.MesPbatDischarge_Available	:=  ;
+//  MesData.MesPgen_Available			:=  ;
+//  MesData.MesPload_Available			:=  ;  
+MesData.MesSetptTanPhi	:=  Param_SetptTanPhi ; 
+
+MesData.MesUsageCpu_PLC		:= PRG_AnnexesFunctions.CPUUsage_PLC ; 
+MesData.ParamIpPublic		:= ParamIpPublic ; 
+MesData.MesSizeCdrive_PLC	:= MesSizeCdrive_PLC ; 
+
+
+MesData.MesNbInv_Connected := 0 ; 
+MesData.MesPsol_Connected  := 0 ;
+MesData.MesToS := A1_SUBMV.A1_MainMVCB.MesDataExd.MesComutLocal  OR A1_SUBMV.A1_DS_LV.MesDataExd.MesData.MesAlarmState OR A1_SUBMV.A1_DS_MV.MesDataExd.MesData.MesAlarmState ; 
+
+FOR KK:= 1 TO CstNbFeederMVCB_G DO 
+MesData.MesToS := MesData.MesToS OR A1_SUBMV.AX_FeederMVCB[KK].MesDataExd.MesComutLocal ; 
+END_FOR
+
+FOR KK:= 1 TO CstNbPTR_G DO 
+ MesData.MesPsol_Connected			:= MesData.MesPsol_Connected + AX_PTR[KK].MesDataExd.MesData.MesPConnected;
+MesData.MesNbInv_Connected 			:= MesData.MesNbInv_Connected + Ax_PTR[KK].MesDataExd.MesData.MesNbInv_Connected;
+END_FOR 
+//  MesData.MesPbatCharge_Connected		:=  ;
+//  MesData.MesPbatDischarge_Connected	:=  ;
+//  MesData.MesPgen_Connected			:=  ;
+//   MesData.MesPload_Connected			:=  ;
+   MesData.MesPP_Unavailable			:=  A1_SUBMV.A1_ES_Ext.MesDataExd.MesData.MesAlarmState (*OR  A1_SUBMV.A1_ES_LV.MesDataExd.MesData.MesAlarmState*) OR A1_SUBMV.A1_MainMVCB.MesDataExd.MesComutLocal ;
+   
+// Temporisation de l'alarm perte de dongle
+	TON_MissingDongle(IN:=MesMissingDongle>0,PT:=T#10M);  ]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{164cac6d-04f6-4cc6-8bd4-971e3c9303c1}">
+      <Declaration><![CDATA[METHOD M_Init
+VAR 
+
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Set all equipment parameters here . 
+
+
+
+//PTR
+	FOR KK:=1 TO CstNbPTR_G DO
+		AX_PTR[KK].ParamPTRVersion			:= 	'PTR' ;
+		AX_PTR[KK].ParamTimeOutStart        := T#30S;
+		AX_PTR[KK].ParamTimeOutStop         := T#30S;
+		AX_PTR[KK].ParamTimeOutDisconnect   := T#30S;
+		AX_PTR[KK].ParamTempoComAlarm		:= T#10S;		
+		AX_PTR[KK].ParamTempoStartInv		:= T#1S ;		
+		AX_PTR[KK].ParamTempoStopInv		:= T#1S ;			
+		AX_PTR[KK].ParamPTRNum				:= UINT_TO_BYTE(KK); 		
+		AX_PTR[KK].ParamNbINV				:= CstNbInv_PTR_G ; 
+		AX_PTR[KK].ParamOrder_INV			:= 0;	
+	
+				
+	END_FOR
+	
+	// Need to initialize Pdc for PTRs and INVs according to SLD
+	(*
+	AX_PTR[1].ParamPdc := 2979.72;
+	AX_PTR[2].ParamPdc := 4277.34;
+	AX_PTR[3].ParamPdc := 4241.295;
+
+	AX_PTR[1].AX_INV[1].ParamPdc 	:= 204.255	;		AX_PTR[2].AX_INV[1].ParamPdc 	:= 204.255	;		AX_PTR[3].AX_INV[1].ParamPdc 	:= 216.27  ;
+	AX_PTR[1].AX_INV[2].ParamPdc 	:= 216.27   ;       AX_PTR[2].AX_INV[2].ParamPdc 	:= 216.27   ;       AX_PTR[3].AX_INV[2].ParamPdc 	:= 216.27  ;
+	AX_PTR[1].AX_INV[3].ParamPdc 	:= 204.255  ;       AX_PTR[2].AX_INV[3].ParamPdc 	:= 216.27   ;       AX_PTR[3].AX_INV[3].ParamPdc 	:= 216.27  ;
+	AX_PTR[1].AX_INV[4].ParamPdc 	:= 216.27   ;       AX_PTR[2].AX_INV[4].ParamPdc 	:= 216.27   ;       AX_PTR[3].AX_INV[4].ParamPdc 	:= 216.27  ;
+	AX_PTR[1].AX_INV[5].ParamPdc 	:= 216.27   ;       AX_PTR[2].AX_INV[5].ParamPdc 	:= 216.27   ;       AX_PTR[3].AX_INV[5].ParamPdc 	:= 216.27  ;
+	AX_PTR[1].AX_INV[6].ParamPdc 	:= 216.27   ;       AX_PTR[2].AX_INV[6].ParamPdc 	:= 204.255  ;       AX_PTR[3].AX_INV[6].ParamPdc 	:= 216.27  ;
+	AX_PTR[1].AX_INV[7].ParamPdc 	:= 216.27   ;       AX_PTR[2].AX_INV[7].ParamPdc 	:= 216.27   ;       AX_PTR[3].AX_INV[7].ParamPdc 	:= 216.27  ;
+	AX_PTR[1].AX_INV[8].ParamPdc 	:= 216.27   ;       AX_PTR[2].AX_INV[8].ParamPdc 	:= 216.27   ;       AX_PTR[3].AX_INV[8].ParamPdc 	:= 204.255 ;
+	AX_PTR[1].AX_INV[9].ParamPdc 	:= 216.27   ;       AX_PTR[2].AX_INV[9].ParamPdc 	:= 216.27   ;       AX_PTR[3].AX_INV[9].ParamPdc 	:= 216.27  ;
+	AX_PTR[1].AX_INV[10].ParamPdc 	:= 216.27   ;       AX_PTR[2].AX_INV[10].ParamPdc 	:= 216.27   ;       AX_PTR[3].AX_INV[10].ParamPdc 	:= 216.27  ;
+	AX_PTR[1].AX_INV[11].ParamPdc 	:= 216.27   ;       AX_PTR[2].AX_INV[11].ParamPdc 	:= 216.27   ;       AX_PTR[3].AX_INV[11].ParamPdc 	:= 216.27  ;
+	AX_PTR[1].AX_INV[12].ParamPdc 	:= 216.27   ;       AX_PTR[2].AX_INV[12].ParamPdc 	:= 216.27   ;       AX_PTR[3].AX_INV[12].ParamPdc 	:= 216.27  ;
+	AX_PTR[1].AX_INV[13].ParamPdc 	:= 204.255  ;       AX_PTR[2].AX_INV[13].ParamPdc 	:= 216.27   ;       AX_PTR[3].AX_INV[13].ParamPdc 	:= 216.27  ;
+	AX_PTR[1].AX_INV[14].ParamPdc 	:= 204.255  ;       AX_PTR[2].AX_INV[14].ParamPdc 	:= 216.27   ;       AX_PTR[3].AX_INV[14].ParamPdc 	:= 216.27  ;
+														AX_PTR[2].AX_INV[15].ParamPdc 	:= 204.255  ;	    AX_PTR[3].AX_INV[15].ParamPdc 	:= 204.255 ;
+                                                        AX_PTR[2].AX_INV[16].ParamPdc 	:= 204.255  ;       AX_PTR[3].AX_INV[16].ParamPdc 	:= 204.255 ;
+                                                        AX_PTR[2].AX_INV[17].ParamPdc 	:= 216.27   ;       AX_PTR[3].AX_INV[17].ParamPdc 	:= 204.255 ;
+                                                        AX_PTR[2].AX_INV[18].ParamPdc 	:= 216.27   ;       AX_PTR[3].AX_INV[18].ParamPdc 	:= 204.255 ;
+                                                        AX_PTR[2].AX_INV[19].ParamPdc 	:= 216.27   ;       AX_PTR[3].AX_INV[19].ParamPdc 	:= 204.255 ;
+                                                        AX_PTR[2].AX_INV[20].ParamPdc 	:= 216.27   ;       AX_PTR[3].AX_INV[20].ParamPdc 	:= 204.255 ;                  	
+	*)
+
+// SUB_MV                                  	
+
+	A1_SUBMV.ParamTempoPoste				:= T#2S; 	
+	A1_SUBMV.ParamTempoUnknowFault			:= T#15S;	
+	A1_SUBMV.ParamTempoSepamCloseAfterGte 	:= T#15S; 
+	A1_SUBMV.ParamSUB_MVVersion				:= 'SUB_MV'; 				
+	A1_SUBMV.ParamTimeOutConnect			:= T#20S ; 
+	A1_SUBMV.ParamTimeOutDisconnect			:= T#20S ; 
+	A1_SUBMV.ParamTempoComAlarm				:= T#5S ; 	
+	A1_SUBMV.ParamPmax						:= 15000 ;				
+	A1_SUBMV.ParamAutoCloseMainMVCBEnabled	:= FALSE ; 
+	
+	
+
+// PP initialization. 
+	IN_PIDP_SetptP_local		:= 15000 ; // Initialize Local setpoint to maximal power . 
+
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_ModeManager" Id="{31e5cd09-b46a-450a-942e-177f70743bec}">
+      <Declaration><![CDATA[METHOD M_ModeManager
+//////////////////
+// HMI Mode Manager (AUTO or MANUAL) 
+// IN AUTO Mode, EMS setpoints and commands are the results of automatic strategies. In MANUAL, it is from the HMI buttons, managed by local operatOR  
+//////////////////
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_PMS" Id="{a87f184e-d27a-439e-8920-e88149bc068e}">
+      <Declaration><![CDATA[METHOD M_PMS
+//////////////////
+// PMS Strategies to protect PP
+//////////////////
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+		
+		
+		CalDEIENoFeedingOrder: BOOL;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// COUPLING / DECOUPLING MANAGEMENT //
+    
+// GESTION DE L'ETAT DES PP
+     A1_SUBMV.IN_CmdFeeding  := FALSE; 
+     A1_SUBMV.IN_MesStopMVCC := FALSE;    
+	 A1_SUBMV.IN_CmdDisconnect := FALSE ; 
+    
+// LOGICAL EQUATION
+	CalDEIENoFeedingOrder	:= A1_SUBMV.A1_GRID.MesDataExd.MesData.OUT_CmdDisconnect  OR A1_SUBMV.A1_GRID.MesDataExd.MesData.OUT_CmdEmergencyDisconnect ; // Effacement ou decouplage 
+
+    //Feeding
+        //Si decouplé OU efface ET comutateur ET autorisation de couplage ET pas de cellules en mvt ET pas de demande d'eff ET pas de demande de decouplage ET pas de Protection sur 3GTE ET GTE LONG pas de GTE en cours) 
+		
+        CP_Feed_DEIE        := NOT CalDEIENoFeedingOrder  AND (A1_SUBMV.ParamAutoCloseMainMVCBEnabled OR  A1_SUBMV.A1_GRID.MesDataExd.MesData.OUT_CmdAutCpl );
+        CP_Feed_SEPAM       := NOT A1_SUBMV.A1_ProtectRelay.OUT_UminLong AND NOT (A1_SUBMV.A1_ProtectRelay.MesDataExd.MesData.MesAlarmCode>0);
+        CP_Feed_SUB_MV      := NOT A1_SUBMV.A1_MainMVCB.MesDataExd.MesComutLocal AND NOT A1_SUBMV.HVcellsMoving AND NOT A1_SUBMV.SR_CloseMainMVCBManual.Q1;
+        CP_Feed_PP_State    := MesData.MesState.0 AND PRG_AnnexesFunctions.TON_ALarm.Q AND NOT IN_CmdReset_L;	// delay the feeding of few seconds after code restarts
+
+		TON_Centrale_Cpl(IN:=A1_SUBMV.A1_GRID.MesDataExd.MesData.OUT_CmdAutCpl , PT:=A1_SUBMV.ParamTimeOutConnect);
+        CP_Feed_Start		:= TON_Centrale_Cpl.Q OR A1_SUBMV.MesDataExd.MesData.MesClosed_AllFeederMVCB; // All HV cell are closed , or contractual max tempo is over
+		
+    //NoFeeding
+        CP_NoFeed_DEIE      := CalDEIENoFeedingOrder;
+        CP_NoFeed_SEPAM     :=  FALSE ;
+        CP_NoFeed_SUB_MV    := NOT A1_SUBMV.HVcellsMoving;
+        CP_NoFeed_PP_State  := MesData.MesState>1 AND NOT ParamForcedStayConnect; //  IF PP is ongrid and not forcestay connect. 
+
+// ACTION
+
+   	//Feeding ( = Connect les cellules , autorization de couplage ) 
+		
+		IF CP_Feed_PP_State AND  CP_Feed_SUB_MV AND CP_Feed_SEPAM AND CP_Feed_DEIE THEN
+			IF A1_SUBMV.MesDataExd.MesData.MesState.0 OR A1_SUBMV.MesDataExd.MesData.MesState.2  THEN // Si la centrale est découplée ou éffacée
+				A1_SUBMV.IN_CmdFeeding := TRUE  ;
+			ELSIF CP_Feed_Start THEN 
+				FOR KK:=1 TO CstNbPTR_G DO 
+					AX_PTR[KK].IN_CmdStart := NOT CmdClearFault_G  ; // RAJOUTER DE DEMARRER QUE SI LA CELLULE CORRESPONDANTTE EST FERMEE .
+					AX_PTR[KK].IN_CmdStop := FALSE ; 
+				END_FOR
+			END_IF 
+		END_IF
+    
+	//NoFEEDING ( stop des onduleurs ouverture AC des onduleurs ) . Si marche pas , alors ouverture des cullules BESS , si marche pas , ouverture de la MainMVCB . 
+		
+		IF CP_NoFeed_PP_State AND CP_NoFeed_SUB_MV  AND (CP_NoFeed_DEIE OR CP_NoFeed_SEPAM)   THEN 
+			IF TON_Alarm_Disconnect.Q OR TON_Warning_EmergencyDisconnect.Q THEN	// Si les onduleurs ne se sont pas arretés à temps .
+				A1_SUBMV.IN_CmdNoFeeding := MesData.MesState>1  ;	// Stop
+			ELSE
+				FOR KK:= 1 TO CstNbPTR_G DO   
+					AX_PTR[KK].IN_CmdStop  := NOT CmdClearFault_G;               
+					AX_PTR[KK].IN_CmdStart := FALSE ; 
+				END_FOR 
+			END_IF
+       	 END_IF
+
+	TON_Alarm_Disconnect(IN:= MesData.MesState>1 	AND CalDEIENoFeedingOrder,PT:=ParamNofeedingAlarmTime); 
+	TON_Secu_NoFeed(IN:= MesData.MesState>1		AND CalDEIENoFeedingOrder,PT:=ParamNofeedingTime); //SI TEMPS MAX ATTEINT , on ouvre la MainMVCB. 
+	TON_Warning_EmergencyDisconnect(IN:= MesData.MesState>1 	AND A1_SUBMV.A1_GRID.MesDataExd.MesData.OUT_CmdEmergencyDisconnect ,PT:= ParamDiscoAlarmTime - T#11S);
+	TON_Alarms_EmergencyDisconnect(IN:= MesData.MesState>1 	AND A1_SUBMV.A1_GRID.MesDataExd.MesData.OUT_CmdEmergencyDisconnect,PT:= ParamDiscoAlarmTime);
+    TON_Secu_Alarms(IN:=A1_SUBMV.IN_MesStopMVCC AND MesData.MesState>1,PT:=T#2S); // Alarme si effacement urgence MainMVCB demandé et pas centrale pas arrêtée? Non traité 
+    
+	
+    IF (TON_Secu_Alarms.Q OR TON_Secu_NoFeed.Q OR TON_Alarms_EmergencyDisconnect.Q) AND MesData.MesState >1  THEN
+        A1_SUBMV.IN_MesStopMVCC  := TRUE;
+        A1_SUBMV.IN_CmdDisconnect := TRUE;  
+    END_IF
+
+//SECURITY
+
+    IF ParamForcedStayConnect THEN
+		FOR KK:= 1 TO CstNbPTR_G DO  
+			AX_PTR[KK].IN_CmdStop  		:= FALSE; 
+			AX_PTR[KK].IN_CmdStart 		:= NOT CmdClearFault_G;   
+        END_FOR 		
+    END_IF
+	
+	]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_SetPointCalculator" Id="{9b97cd13-2995-4e0a-8192-6c1bf854db29}">
+      <Declaration><![CDATA[METHOD M_SetPointCalculator
+//////////////////
+// Calculate setpoints for (P,Q) Generators 
+//////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	i:BYTE;
+	//Global variable for Regulation
+	
+
+	//P0
+	alpha					: REAL;
+	beta					: REAL;
+	CalSetptQ				: REAL;
+	CalSetptQOffset			: REAL;
+	MesQlimitmax			: REAL ; 
+	MesQlimitmin			: REAL ;	
+	CalParamQmaxPbelow20	: REAL;
+	CalParamTanPhiMin		: REAL;
+	CalParamTanPhiMax		: REAL;
+	CalParamQminPbelow20	: REAL;
+	CalParam_SetptTanPhi: REAL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// P setpoint // PRENDRE EN COMPTE CAS DE DEFAUT DEIE (detection watchdog ou valuer 0 sur du 4-20mA ?)  
+
+MesData.IN_SetptP_PID := SEL(A1_SUBMV.A1_GRID.MesDataExd.OUT_CmdPReg  , IN_PIDP_SetptP_local ,  MIN(A1_SUBMV.A1_GRID.MesDataExd.MesData.OUT_SetptP, IN_PIDP_SetptP_local));
+
+PIDP(
+	ParamK:= ParamPIDP_K , 
+	ParamTi:= ParamPIDP_I, 
+	ParamTd:= ParamPIDP_D, 
+	ParamXmax:=ParamPmax , 
+	ParamXmin:= 0, 
+	ParamOutmax:= MesData.MesPsol_Connected , // Shall be equal to the total available power + something 
+	ParamOutmin:= 0, // Usually zero . 
+	IN_SetptX:= MesData.IN_SetptP_PID ,	// minimum between local setpoint and DEIE setpoint.   
+	IN_MesX:= A1_SUBMV.A1_PM.MesDataExd.MesData.MesP, // Solar power ( copy of the power meter value) 
+	IN_MesComXError:= A1_SUBMV.A1_PM.MesDataExd.MesData.MesAlarmCom, 
+	IN_SetptOpenLoop:= SEL(A1_SUBMV.A1_GRID.MesDataExd.OUT_CmdPReg , SEL(IN_CmdPIDP_LocalMode , ParamPmax ,IN_PIDP_SetptP_local) ,  MIN(A1_SUBMV.A1_GRID.MesDataExd.MesData.OUT_SetptP, IN_PIDP_SetptP_local))+ ParamPoffset_OL +A1_SUBMV.MesDataExd.MesData.MesPaux, 
+	IN_CmdReset:= IN_PIDP_CmdReset OR IN_PIDP_CmdOpenLoop, 
+	IN_CmdPIDOn:= A1_SUBMV.A1_GRID.MesDataExd.OUT_CmdPReg OR IN_CmdPIDP_LocalMode , 
+	OUT_X=> MesData.OUT_SetptP_PID , 
+	OUT_PIDMode=> OUT_PIDPMode);
+	
+	
+
+(*	
+IF NOT(A1_SUB_MV.A1_GRID.OUT_ActPowerLimActiv OR IN_CmdPIDP_LocalMode ) THEN 
+	// Set output to maximal nominal value if regulation is not activated. To avoid curtailing.  
+	SetPoint_P := ParamPmax ; 
+
+END_IF
+*)
+
+// Q setpoint 	
+
+	// Update the Q limits and parameters
+IF ParamCosPhiLagging THEN 
+	// Q will be negative for Akuo . 
+	CalParamQmaxPbelow20 := 0; 
+	CalParamQminPbelow20 := - ABS(ParamQmaxPbelow20)  ; 
+	CalParamTanPhiMax :=  - MIN(ABS(ParamTanPhiMax) , ABS(ParamTanPhiMin)) ; 
+	CalParamTanPhiMin := - MAX(ABS(ParamTanPhiMax) , ABS(ParamTanPhiMin)) ;
+	CalParam_SetptTanPhi :=  - ABS(Param_SetptTanPhi) ;
+	
+
+ELSE
+	// Q will be positive for Akuo . 
+	CalParamQmaxPbelow20 :=  ABS(ParamQmaxPbelow20) ;
+	CalParamQminPbelow20 := 0 ; 
+	CalParamTanPhiMax :=  MAX(ABS(ParamTanPhiMax) , ABS(ParamTanPhiMin)) ;
+	CalParamTanPhiMin := MIN(ABS(ParamTanPhiMax) , ABS(ParamTanPhiMin)) ;
+	CalParam_SetptTanPhi := ABS(Param_SetptTanPhi) ;
+END_IF
+
+
+CalSetptQOffset := 0 ; 
+CalSetptQ := 0 ; 
+IF A1_SUBMV.A1_GRID.MesDataExd.OUT_CmdQReg THEN // Priority on controlQ 
+	CalSetptQ := A1_SUBMV.A1_GRID.MesDataExd.MesData.OUT_SetptQ; 		
+ELSIF ParamTanPhiCtrl  THEN 
+	CalSetptQ := CalParam_SetptTanPhi  * ABS(A1_SUBMV.A1_PM.MesDataExd.MesData.MesP) ; // Take the average value of the active power? 
+END_IF
+
+// Mode QFu enabled. Add some reactive power to the current setpoint. 
+IF IN_PIDQ_CmdQfU THEN 
+	IF A1_SUBMV.A1_PM.MesDataExd.MesData.MesU > ParamQfUDdBandHigh THEN 
+		alpha := SEL(ABS(ParamQfUUHigh -ParamQfUDdBandHigh)>0.001 , 0 , ParamQfUQmin / ( ParamQfUUHigh -  ParamQfUDdBandHigh) ); 
+		beta := - alpha * ParamQfUDdBandHigh ; 
+		CalSetptQOffset := alpha * A1_SUBMV.A1_PM.MesDataExd.MesData.MesU + beta ; 
+	ELSIF A1_SUBMV.A1_PM.MesDataExd.MesData.MesU < ParamQfUDdBandLow THEN 
+		alpha := SEL(ABS(ParamQfUULow - ParamQfUDdBandLow)>0.001 , 0 , ParamQfUQmax / ( ParamQfUULow -  ParamQfUDdBandLow) ); 
+		beta := - alpha * ParamQfUDdBandLow ; 
+		CalSetptQOffset := alpha * A1_SUBMV.A1_PM.MesDataExd.MesData.MesU + beta ; 	
+		
+	END_IF
+ 	CalSetptQOffset := MIN(MAX(CalSetptQOffset , ParamQfUQmin),ParamQfUQmax); // Saturate output . 
+END_IF
+
+// Qlimits 
+// Reactive power is limited at low P by a constante value, then follow a tanPhimax curve, and finally reache a maximal value 
+
+
+
+
+IF  A1_SUBMV.A1_PM.MesDataExd.MesData.MesP < 0.2 * ParamPmax THEN
+	MesQlimitmax :=  CalParamQmaxPbelow20 ; //Param_PIDQ_SetptQbelow20 ; 
+	MesQlimitmin :=  CalParamQminPbelow20  ; 
+ELSE 
+	MesQlimitmax :=   CalParamTanPhiMax *  ABS(A1_SUBMV.A1_PM.MesDataExd.MesData.MesP)  ; 
+	MesQlimitmin :=   CalParamTanPhiMin *  ABS(A1_SUBMV.A1_PM.MesDataExd.MesData.MesP)  ; 
+END_IF
+
+
+// regulation 
+
+MesData.IN_SetptQ_PID := SEL(IN_CmdPIDQ_LocalMode ,CalSetptQ+ CalSetptQOffset,  IN_PIDQ_SetptQ_Local);
+
+PIDQ(
+	ParamK := ParamPIDQ_K , 
+	ParamTi:= ParamPIDQ_I, 
+	ParamTd:= ParamPIDQ_D, 
+	ParamXmax:=MesQlimitmax , 
+	ParamXmin:= MesQlimitmin, 
+	ParamOutmax:=ParamPIDQMax , // Shall be equal to the total available power
+	ParamOutmin:= ParamPIDQMin, // Usually zero . 
+	IN_SetptX:= MesData.IN_SetptQ_PID,	//    
+	IN_MesX:= A1_SUBMV.A1_PM.MesDataExd.MesData.MesQ, // Solar power ( copy of the power meter value) 
+	IN_MesComXError:= A1_SUBMV.A1_PM.MesDataExd.MesData.MesAlarmCom, 
+	IN_SetptOpenLoop:= SEL(IN_CmdPIDQ_LocalMode , CalSetptQ+ CalSetptQOffset,  IN_PIDQ_SetptQ_Local) + ParamQoffset_OL , 
+	IN_CmdReset:= IN_PIDQ_CmdReset OR IN_PIDQ_CmdOpenLoop, 
+	IN_CmdPIDOn:= A1_SUBMV.A1_GRID.MesDataExd.OUT_CmdQReg OR IN_CmdPIDQ_LocalMode OR ParamTanPhiCtrl  , 
+	OUT_X => MesData.OUT_SetptQ_PID , 
+	OUT_PIDMode=> OUT_PIDQMode);
+
+
+	//Send Setpoint at all PTR. 
+	FOR i:= 1 TO CstNbPTR_G DO
+		AX_PTR[i].IN_SetptPlimit := SEL(ABS(MesData.MesPsol_Connected)<0.0001 , MesData.OUT_SetptP_PID * AX_PTR[i].MesDataExd.MesData.MesPConnected  / MesData.MesPsol_Connected ,0) ;
+		AX_PTR[i].IN_SetptQlimit := SEL(ABS(MesData.MesPsol_Connected)<0.0001 , MesData.OUT_SetptQ_PID * AX_PTR[i].MesDataExd.MesData.MesPConnected  / MesData.MesPsol_Connected,0 ); // 
+
+	END_FOR
+
+
+
+
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_StateMachine" Id="{dd1fcd82-7326-4e41-bac6-e1897de0476d}">
+      <Declaration><![CDATA[METHOD M_StateMachine
+//////////////////
+
+
+VAR 
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[MesState := 0;
+// Configure the timer with a duration of 10 minutes
+
+// 
+IF ParamDisconnectInv THEN
+	IF ParamSolarPP THEN
+		TON_INV_Disconnected(IN := MesData.MesNbInv_Connected = 0, PT := T#10M);
+	ELSIF ParamHybridPP THEN
+		TON_INV_Disconnected(IN := (MesData.MesNbPcs_Connected = 0 AND MesData.MesNbInv_Connected = 0), PT := T#10M);
+	END_IF;
+END_IF
+
+IF TON_INV_Disconnected.Q OR A1_SUBMV.MesDataExd.MesData.MesState.0 OR A1_SUBMV.MesDataExd.MesData.MesState.2  THEN		// equivalent a pas d'alarmes tension AC sur les onduleurs. ou onduleurs connectée en AC. On rajoute les deux autres conditions pour gérer le cas ou on aurait une perte de communication avec certains BESS qui apparaitraient connectés
+	MesState.0 := 1; // OFF
+ELSE
+	MesState.2 := 1; // Ongrid 
+END_IF
+
+MesData.MesState := MesState;
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_PP">
+      <LineId Id="5125" Count="8" />
+      <LineId Id="5136" Count="0" />
+      <LineId Id="5138" Count="7" />
+      <LineId Id="5341" Count="2" />
+      <LineId Id="5146" Count="14" />
+      <LineId Id="5345" Count="0" />
+      <LineId Id="5344" Count="0" />
+      <LineId Id="5346" Count="0" />
+      <LineId Id="5161" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PP.M_AlarmManagement">
+      <LineId Id="3615" Count="0" />
+      <LineId Id="3623" Count="0" />
+      <LineId Id="3765" Count="0" />
+      <LineId Id="3764" Count="0" />
+      <LineId Id="3766" Count="0" />
+      <LineId Id="3624" Count="99" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PP.M_CP">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PP.M_EMS">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PP.M_Emulator">
+      <LineId Id="1" Count="1" />
+    </LineIds>
+    <LineIds Name="FB_PP.M_Evaluate">
+      <LineId Id="1341" Count="8" />
+      <LineId Id="1418" Count="0" />
+      <LineId Id="1350" Count="36" />
+      <LineId Id="751" Count="0" />
+      <LineId Id="1401" Count="0" />
+      <LineId Id="1403" Count="0" />
+      <LineId Id="1402" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PP.M_Init">
+      <LineId Id="292" Count="18" />
+      <LineId Id="335" Count="0" />
+      <LineId Id="340" Count="0" />
+      <LineId Id="339" Count="0" />
+      <LineId Id="337" Count="1" />
+      <LineId Id="336" Count="0" />
+      <LineId Id="342" Count="19" />
+      <LineId Id="341" Count="0" />
+      <LineId Id="362" Count="1" />
+      <LineId Id="313" Count="17" />
+      <LineId Id="140" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PP.M_ModeManager">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PP.M_PMS">
+      <LineId Id="2024" Count="8" />
+      <LineId Id="2034" Count="2" />
+      <LineId Id="2135" Count="0" />
+      <LineId Id="2039" Count="12" />
+      <LineId Id="2121" Count="0" />
+      <LineId Id="2052" Count="0" />
+      <LineId Id="2122" Count="0" />
+      <LineId Id="2053" Count="1" />
+      <LineId Id="2124" Count="0" />
+      <LineId Id="2056" Count="6" />
+      <LineId Id="2064" Count="4" />
+      <LineId Id="2123" Count="0" />
+      <LineId Id="2069" Count="1" />
+      <LineId Id="2080" Count="6" />
+      <LineId Id="2088" Count="0" />
+      <LineId Id="2090" Count="12" />
+      <LineId Id="2136" Count="0" />
+      <LineId Id="2103" Count="0" />
+      <LineId Id="2105" Count="5" />
+      <LineId Id="919" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PP.M_SetPointCalculator">
+      <LineId Id="2223" Count="31" />
+      <LineId Id="2383" Count="0" />
+      <LineId Id="2371" Count="0" />
+      <LineId Id="2377" Count="2" />
+      <LineId Id="2395" Count="0" />
+      <LineId Id="2380" Count="0" />
+      <LineId Id="2386" Count="0" />
+      <LineId Id="2398" Count="1" />
+      <LineId Id="2391" Count="0" />
+      <LineId Id="2381" Count="0" />
+      <LineId Id="2385" Count="0" />
+      <LineId Id="2384" Count="0" />
+      <LineId Id="2397" Count="0" />
+      <LineId Id="2389" Count="0" />
+      <LineId Id="2388" Count="0" />
+      <LineId Id="2382" Count="0" />
+      <LineId Id="2372" Count="1" />
+      <LineId Id="2370" Count="0" />
+      <LineId Id="2255" Count="24" />
+      <LineId Id="2364" Count="0" />
+      <LineId Id="2369" Count="0" />
+      <LineId Id="2366" Count="1" />
+      <LineId Id="2280" Count="6" />
+      <LineId Id="2288" Count="22" />
+      <LineId Id="2312" Count="11" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PP.M_StateMachine">
+      <LineId Id="359" Count="0" />
+      <LineId Id="379" Count="0" />
+      <LineId Id="382" Count="0" />
+      <LineId Id="381" Count="0" />
+      <LineId Id="386" Count="0" />
+      <LineId Id="385" Count="0" />
+      <LineId Id="380" Count="0" />
+      <LineId Id="384" Count="0" />
+      <LineId Id="383" Count="0" />
+      <LineId Id="387" Count="1" />
+      <LineId Id="360" Count="1" />
+      <LineId Id="364" Count="1" />
+      <LineId Id="367" Count="0" />
+      <LineId Id="369" Count="2" />
+      <LineId Id="219" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

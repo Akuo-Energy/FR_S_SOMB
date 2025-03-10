@@ -1,0 +1,56 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_IPC" Id="{5c9227e0-d1eb-4092-89d2-b9f608bd045d}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_IPC
+
+VAR_INPUT PERSISTENT 
+	ParamTempoRestart		: TIME 	:= T#30S ;	(*  (s)Tempo to wait before resupplying the IPC*)
+	
+END_VAR
+      	
+VAR_INPUT           	
+	Heure_Local     		: TIMESTRUCT;
+	IN_CmdRestart 			: BOOL;	
+	IN_CmdReset_L			: BOOL;			// (NA) External Reset Command
+	
+END_VAR     
+
+VAR_OUTPUT
+	//Child objects
+	OUT_CmdOpen_IO			: BOOL;	
+END_VAR        	
+      	
+VAR                 	
+	bInit					: BOOL := TRUE;	// Booleen d'initialisation
+		
+	TP_Restart				: TP;
+	// State Mananger //
+	MesState				: BYTE; 		// Cal  : state
+	
+	// M_Evaluate //	
+	MesData			: IPC;
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_Execute" Id="{4d89c0b4-ecc3-477b-b9f4-576942af290f}">
+      <Declaration><![CDATA[METHOD M_Execute : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_IPC">
+      <LineId Id="151" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_IPC.M_Execute">
+      <LineId Id="37" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

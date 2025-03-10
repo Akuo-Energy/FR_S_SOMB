@@ -1,0 +1,185 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1">
+  <POU Name="FB_CB_Base" Id="{1e533a97-2ab9-45f0-a5a4-67f69d972e33}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_CB_Base
+//////////////////
+// Electrical Switch - Base FB
+//////////////////
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance/model specific) 
+	ParamTimeOut_Open       		: TIME  := T#1S     ;       (* (ms) Config : Tempo to open before Timeout warning  *)
+	ParamTimeOut_Close      		: TIME  := T#1S     ;		(* (ms) Config : Tempo to close before Timeout warning*)
+	ParamTimeOut_Alarm   		    : TIME  := T#200MS  ;		(* (ms) Config : Tempo when open and close before raising alarm*)
+	ParamNC							: BOOL  := FALSE    ;		(* (NA) False: TRUE = Closed, True : TRUE = opened*)
+	ParamNbFdbck			    	: BYTE  := 1        ;		(* (NA) Number of feedback position (1: 1 wire, 2 : 2 wire)*)
+	ParamClosedInput_Connected		: BOOL  := TRUE     ; 		(* (NA) True : closed input is connected*)
+	                                                    	
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	
+END_VAR
+
+VAR_INPUT
+	// I/O Inputs 
+		IN_MesOpened_IO					: BOOL  ; 				// (NA) [P,H,B] Opened Position IO	         
+		IN_MesClosed_IO 				: BOOL := TRUE ; 		// (NA) [P,H,B] Closed Position IO           
+	
+		IN_CmdOpen 						: BOOL ; 				// (NA) External Open Command 
+		IN_CmdClose						: BOOL ; 				// (NA) External Close Command 
+		
+	{attribute 'OPC.UA.DA' := '1'}   
+		IN_CmdReset					: BOOL ;				// (NA) External Reset Command              // Check: what does the L respresent ? 
+END_VAR
+
+VAR
+	//M_OPENCLOSE VARIABLES//
+		MesOpened					     : BOOL ;                                                                     
+		MesClosed					     : BOOL ;                                                                     
+		
+	//M_ALARMMANAGEMENT VARIABLES//
+		FB_CheckCommand				     : FB_CheckCommand ; 	//(NA) Check if start command successful 
+		FB_CheckCommand2			     : FB_CheckCommand ;	//(NA) Check if stop command successful  
+		TON_ClosedAndOpened			     : TON ;              	
+		TON_NotClosedAndNotOpened	     : TON ;              	
+                                             	
+		
+		
+	//M_STATEMANAGER VARIABLES//
+		MesState					     : BYTE ; 				// (NA) Cal [P,H,B] Bit 0: Open , Bit 1: Closed        
+	///MesDataExd				     : CB ; 
+
+	// M_EXECUTE VARIABLES 	//                                   
+		MesCP_Open		: BOOL ;   	(* Cal(NA) Permanent Conditions*)
+		MesCP_Close		: BOOL ; 	(* Cal(NA) Permanent Conditions*) 
+
+	//M_EMULATOR
+	
+		CmdExternalClose_Emul		: BOOL;
+		CmdExternalOpen_Emul		: BOOL;
+		
+		RS_Emulate					: RS;
+		
+		TON_OutputWait_Open			: TON;
+		TON_OutputWait_Close		: TON;
+		
+		R_TRIGOpen					: R_TRIG;
+		R_TRIGClose					: R_TRIG;
+			
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{837ff52d-e696-4fba-b153-32fa3de2e715}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Manages Contactor alarms and warnings
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Emulator" Id="{1a4c3596-db10-4446-a32a-8410116393bb}">
+      <Declaration><![CDATA[METHOD M_Emulator
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{dc5bf62f-808d-4d3e-aba6-9cb82e0070ca}">
+      <Declaration><![CDATA[METHOD M_Execute
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// If One wire feedback , Open Position is the inverse of Close Position. 
+	IF  ParamNbFdbck=1 AND ParamClosedInput_Connected THEN
+		IN_MesOpened_IO := NOT IN_MesClosed_IO ;
+	ELSIF ParamNbFdbck = 1 AND NOT ParamClosedInput_Connected THEN
+		IN_MesClosed_IO := NOT IN_MesOpened_IO;
+	END_IF
+	
+	IF ParamNC THEN 
+		MesOpened := NOT IN_MesOpened_IO ; 
+		MesClosed := NOT IN_MesClosed_IO ; 
+	ELSE
+		MesOpened := IN_MesOpened_IO ; 
+		MesClosed := IN_MesClosed_IO ; 		
+	END_IF
+	
+	
+//Methods call	
+	M_OpenClose(); 
+	M_StateManager() ;
+	M_AlarmManagement(); 
+	M_Emulator();]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_OpenClose" Id="{970237d5-78d1-4f25-9f2a-96ed925d5186}">
+      <Declaration><![CDATA[METHOD M_OpenClose
+//////////////////
+// Manages Opening of the contactor
+//////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_StateManager" Id="{d154ecd2-1230-4cd7-9628-479c7ccf710d}">
+      <Declaration><![CDATA[METHOD M_StateManager
+//////////////////
+// Manages Contactor State
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_CB_Base">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_CB_Base.M_AlarmManagement">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_CB_Base.M_Emulator">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_CB_Base.M_Execute">
+      <LineId Id="83" Count="5" />
+      <LineId Id="99" Count="0" />
+      <LineId Id="109" Count="5" />
+      <LineId Id="104" Count="0" />
+      <LineId Id="101" Count="0" />
+      <LineId Id="92" Count="3" />
+      <LineId Id="2" Count="0" />
+      <LineId Id="115" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_CB_Base.M_OpenClose">
+      <LineId Id="14" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_CB_Base.M_StateManager">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

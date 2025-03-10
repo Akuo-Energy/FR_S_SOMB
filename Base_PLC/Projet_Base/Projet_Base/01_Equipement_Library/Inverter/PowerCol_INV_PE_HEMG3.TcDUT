@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="PowerCol_INV_PE_HEMG3" Id="{7b3cd01e-1b39-482d-bb0d-864bcd222732}">
+    <Declaration><![CDATA[///////////
+// Structure For Module. Main Operating Data to be saved (ex: OPC).  
+//////////
+TYPE PowerCol_INV_PE_HEMG3 :
+STRUCT
+		MesData				: PowerCol_INV ; 	
+
+													
+		
+		ParamUn				: REAL ;		(* (V) 		Nominal AC voltage (SV4.4.4.1.2)																		*)
+		ParamImax			: REAL ; 		(* (A) 		Nominal AC current (SV4.4.4.1.7)																		*) 
+		ParamVdcn			: REAL ;        (* (V) 		Nominal DC voltage (SV4.4.4.1.6)																		*)
+		ParamIdcmax			: REAL ;        (* (A) 		Nominal DC current (SV4.4.4.1.8)																		*)
+		ParamSn				: REAL ;        (* (kVA) 	Nominal apparent power (SV4.4.4.1.3)																	*)
+		
+		MesTemp				: REAL ;		(* (C) 		Ambient temperature of the selected module																*)
+		MesTempmax			: REAL ;		(* (C) 		Maximum IGBT temperature of the selected module															*)
+		MesHygro			: REAL ; 		(* (%) 		Percentage of humidity																					*)
+		
+		MesStateIO			: WORD ;		(* (NA) 	0: Open, 1: Closed. Bit 1 =  fan contactor, Bit 2 = main AC contactor, Bit 3 = AC soft charge contactor, Bit 4 = LCL filter contactor, Bit 5 = DC contactor , Bit 6 = reserved, Bit 7 = if open : overheating in the coil, Bit 8 = fan contactor feedback, Bit 9 = AC main contactor feedback, Bit 10 = AC soft charge contactor feedback, Bit 11 = LCL filter contactor feedback , Bit 12 = DC contactor feedback *) 		
+		MesState_Inv		: UINT ;		(* (NA) 	Module status (SV9.3 PE documentation p.97)																*)
+		MesState_Inv_ID		: WORD;			(* (NA)		Calculated tag to create alarms for the State_Inv*)
+		MesState_Inv_ID2	: WORD;			(* (NA)		Calculated tag to create alarms for the State_Inv*)
+		MesEActProd			: REAL ;		(* (kWh) 	Total amount of  generated energy since commissioning 													*)
+		MesEReactProd		: REAL ;		(* (kVarh)  The amount of reactive energy generated since commissioning 											*) 	   
+	                 															
+
+END_STRUCT
+END_TYPE]]></Declaration>
+  </DUT>
+</TcPlcObject>

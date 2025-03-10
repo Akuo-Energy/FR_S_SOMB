@@ -1,0 +1,255 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.13">
+  <POU Name="PRG_EMS" Id="{0f629bec-a34f-4f16-9a91-c3dbb3dbfd3d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM PRG_EMS
+VAR_INPUT
+	IN_CmdRebootEMS							: BOOL;
+	IN_CmdKillEMS							: BOOL;
+	MesData									: EMS;
+END_VAR
+VAR_INPUT PERSISTENT
+	
+	ParamTimeKeepReboot						: TIME := T#1M;
+	ParamTimeKeepSetptFromGrid				: TIME := T#15M;
+	ParamTimeout_Warning					: TIME := T#10M;
+	ParamTimeout_Alarm						: TIME := T#1H;
+	
+END_VAR
+
+
+VAR PERSISTENT
+	
+	DT_Time_EMS_ApplyNextSetpoint			: DT;
+	SetptP_Grid 							: REAL;
+	SetptP_Grid_Min							: REAL;
+	SetptP_Grid_Max  						: REAL;
+	IN_EMS 									: IN_EMS;		// Structure sent by EMS
+	
+END_VAR
+
+VAR
+	
+	OUT_EMS 								: OUT_EMS;		// Structure sent to the EMS
+	                    					
+	AX_SystemBms_1_1 						: BAT;
+	AX_SystemBms_1_2 						: BAT;
+	                    					
+	KK										: INT;
+	Watchdog_Old							: REAL;
+	RS_Penalties							: RS;
+	                    					
+	IN_EMS_OLD								: IN_EMS;
+	                    	
+	Average_PGrid							: FB_Average;
+	Average_Pbat							: FB_Average;
+	Average_Psol							: FB_Average;
+	InitialCalc								: BOOL;
+	
+	TRIG_NewSetptFromGrid					: R_TRIG;
+	TON_MaintainSetptGrid					: TON;
+	F_TRIG_TON_MaintainSetptGrid			: F_TRIG;
+	RS_MaintainRequest						: RS;
+	                                    	
+	TP_Reboot								: TP;
+	TP_KillEms								: TP;
+	TON_TimeoutAlarm						: TON;
+	TON_TimeoutWarning						: TON;
+	
+	TRIG_ApplySetpoint						: R_TRIG;
+	
+	DT_Time_Now								: DT;
+	
+	
+	TIME_ApplySetpoint						: TIMESTRUCT;
+	
+
+	
+	xTestTime								: DATE_AND_TIME;
+	xTestTime1								: DATE_AND_TIME;
+	xTestTime2								: DATE_AND_TIME;
+	xTestReal								: REAL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+
+M_Evaluate();
+M_AlarmManagement();]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{b0edcd37-4446-4d6c-b43d-35899c9399fa}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement : BOOL
+VAR
+	FB_AlarmCodeManager : FB_AlarmCodeManager;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[	
+// ALARM CODE //
+	FB_AlarmCodeManager(
+		bAlarm1				:= TP_Reboot.Q, 			// Reboot order
+		bAlarm2				:= TP_KillEms.Q,			// Kill EMS order
+		bAlarm3				:= TON_TimeoutWarning.Q , 	// No EMS update Warning : Timeout for EMS
+		bAlarm4				:= TON_TimeoutAlarm.Q , 	// No EMS update Alarm : Critical timeout for EMS
+		bAlarm5				:= FALSE, 					//			 
+		bAlarm6				:= FALSE, 					//			 
+		bAlarm7				:= FALSE,       			//
+		bAlarm8				:= FALSE,       			//
+		bAlarm9				:= FALSE,       			//
+		bAlarm10			:= FALSE,       			//
+		bAlarm11			:= FALSE, 					//			
+		bAlarm12			:= FALSE,       			//
+		bAlarm13			:= FALSE,       			//
+		bAlarm14			:= FALSE, 					//	
+		bAlarm15			:= FALSE ,   				// 
+		wAlarmCode			=> MesData.MesAlarmCode);]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Evaluate" Id="{07f0865c-ddf8-41a7-92b9-13bf34f3b424}">
+      <Declaration><![CDATA[METHOD M_Evaluate : BOOL
+VAR_INPUT
+END_VAR
+
+VAR
+	LL: INT;
+	KK : INT;
+	EE : INT;
+	PP : INT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Gestion des Inputs venant de l'EMS
+	MesData.IN_EMS := IN_EMS;
+
+	TP_Reboot(IN := IN_CmdRebootEMS, pt := ParamTimeKeepReboot);
+	TP_KillEms(IN := IN_CmdKillEMS, PT := ParamTimeKeepReboot);
+	
+	IF IN_CmdRebootEMS THEN
+		IN_CmdRebootEMS := FALSE;
+	END_IF
+	IF IN_CmdKillEMS THEN
+		IN_CmdKillEMS := FALSE;
+	END_IF
+	
+
+	
+	RS_Penalties(SET := A1_SUBMV.A1_ProtectRelay.MesDataExd.MesData.MesAlarmUmin, RESET1 := CalLocalTimeStruct.wHour = 0);
+	
+//	IF CalLocalTimeStruct.wMilliseconds < 30 AND CalLocalTimeStruct.wSecond = 0 AND CalLocalTimeStruct.wMinute MOD 10 = 0 THEN
+		InitialCalc := TRUE;
+		OUT_EMS.OUT_MesP_GRID := Average_PGrid.ValueOut;
+		OUT_EMS.OUT_MesP_ESS := Average_Pbat.ValueOut;
+		OUT_EMS.OUT_MesP_SPP := Average_Psol.ValueOut;
+//	END_IF
+
+	
+	IF InitialCalc THEN
+		Average_PGrid(ValueIn := A1_PP.MesData.MesPgrid, WindowDuration := 600000);
+		Average_Pbat(ValueIn := A1_PP.MesData.MesPbat, WindowDuration := 600000);
+		Average_Psol(ValueIn := A1_PP.MesData.MesPsol, WindowDuration := 600000);
+	END_IF
+
+	
+// Gestion des Outputs à envoyer à l'EMS
+
+	IF Watchdog_Old <> IN_EMS.IN_Watchdog THEN
+		Watchdog_Old := IN_EMS.IN_Watchdog;
+		OUT_EMS.OUT_Watchdog := IN_EMS.IN_Watchdog+1;
+	END_IF
+	OUT_EMS.OUT_MesAvailability_SPP	 := A1_PP.MesData.MesPsol_Connected/A1_PP.ParamPsolmax;
+
+	
+	OUT_EMS.OUT_CmdRebootEMS						:= TP_Reboot.Q;
+	
+	
+	OUT_EMS.OUT_SetptP_GRID							:= A1_SUBMV.A1_GRID.MesDataExd.MesData.OUT_SetptP;
+	OUT_EMS.OUT_NoPenalties							:= RS_Penalties.Q1;
+	
+	MesData.OUT_EMS := OUT_EMS;
+
+// Alarm & Warning de perte de communication entre IPC SCADA et IPC EMS  
+
+	TON_TimeoutAlarm(in := MEMCMP(pBuf1 := ADR(IN_EMS), pBuf2 := ADR(IN_EMS_OLD), n:=SIZEOF(IN_EMS)) = 0, PT := ParamTimeout_Alarm);
+	TON_TimeoutWarning(in := MEMCMP(pBuf1 := ADR(IN_EMS), pBuf2 := ADR(IN_EMS_OLD), n:=SIZEOF(IN_EMS)) = 0, PT := ParamTimeout_Warning);
+	
+	IF MEMCMP(pBuf1 := ADR(IN_EMS), pBuf2 := ADR(IN_EMS_OLD), n:=SIZEOF(IN_EMS))<>0 THEN
+		MEMCPY(srcAddr := ADR(IN_EMS), destAddr := ADR(IN_EMS_OLD), n:= SIZEOF(in_ems));
+	END_IF
+	
+		A1_PP.IN_SetptP_GRID_min	:= SetptP_Grid_Min;
+		A1_PP.IN_SetptP_GRID_max	:= SetptP_Grid_Max;
+		//A1_PP.IN_SetptP_GRID_max:=xTestReal;
+		//IN_EMS.IN_SetptP_GRID_max:=xTestReal;
+		
+	A1_PP.IN_SetptP_SPP_Remote := MAX(A1_PP.IN_SetptP_GRID_max + ABS(A1_PP.MesData.MesPbatCharge_Connected), 0);
+	IF SetptP_Grid <= A1_PP.MesData.MesPsol THEN //if the EMS septpt is less that solar availability thenthe PP setpoint will be the  one EMS sends, this way we can charge the batteries with the leftover solar energy
+		A1_PP.IN_SetptP_PP_Remote := SetptP_Grid;
+	ELSIF SetptP_Grid_Min <= A1_PP.MesData.MesPsol THEN //if the EMS setpt min is less than solar availability then we continue producing solar energy in order not to get too many penalities
+		A1_PP.IN_SetptP_PP_Remote := A1_PP.MesData.MesPsol;
+	ELSE
+		A1_PP.IN_SetptP_PP_Remote := SetptP_Grid_Min;
+	END_IF
+	
+
+//SOC Calibration
+
+// Ajout de la Sécurité de l'EMS:
+	IF A1_SUBMV.A1_GRID.MesDataExd.MesData.OUT_SetptP < 0.95 * A1_PP.ParamPmax THEN
+		A1_PP.IN_SetptP_PP_Remote := MIN(A1_SUBMV.A1_GRID.MesDataExd.MesData.OUT_SetptP,SetptP_Grid);
+	END_IF
+	
+	DT_Time_EMS_ApplyNextSetpoint := DINT_TO_DT(LINT_TO_DINT(IN_EMS.IN_TimeApplySetpoint_LINT));
+	DT_Time_Now	:= systemtime_to_dt(TIMESTR := CalGMTTimeStruct);
+	TRIG_ApplySetpoint(CLK := DT_Time_EMS_ApplyNextSetpoint <= DINT_TO_DT(DT_TO_DINT(DT_Time_Now) - A1_SUBMV.A1_GRID.MesDataExd.MesEcart_HeureGrid));
+	
+	IF TRIG_ApplySetpoint.Q THEN
+		TIME_ApplySetpoint := CalLocalTimeStruct;
+		SetptP_Grid := IN_EMS.IN_SetptP_GRID;
+		SetptP_Grid_Min := IN_EMS.IN_SetptP_GRID_min;
+		SetptP_Grid_Max := IN_EMS.IN_SetptP_GRID_max;
+	END_IF
+	
+// Detection Ecretage
+
+	OUT_EMS.OUT_Ecretage:=0;	
+	
+	IF A1_PP.MesData.OUT_SetptP_SPP_PID > A1_PP.MesData.MesPsol - ParamDeadBandEcretage AND A1_PP.MesData.OUT_SetptP_SPP_PID < A1_PP.MesData.MesPsol + ParamDeadBandEcretage THEN
+		IF A1_PP.MesData.OUT_SetptP_SPP_PID < A1_PP.MesData.MesPsol_Connected - ParamDeadBandEcretage THEN 
+			IF 0 <> A1_PP.MesData.MesPsol_Connected THEN
+				OUT_EMS.OUT_Ecretage:=1;
+			END_IF
+		END_IF		
+	END_IF	
+
+	
+	
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="PRG_EMS">
+      <LineId Id="112" Count="0" />
+      <LineId Id="136" Count="0" />
+      <LineId Id="135" Count="0" />
+      <LineId Id="205" Count="0" />
+    </LineIds>
+    <LineIds Name="PRG_EMS.M_AlarmManagement">
+      <LineId Id="10" Count="17" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="PRG_EMS.M_Evaluate">
+      <LineId Id="515" Count="49" />
+      <LineId Id="625" Count="0" />
+      <LineId Id="565" Count="1" />
+      <LineId Id="621" Count="0" />
+      <LineId Id="623" Count="1" />
+      <LineId Id="622" Count="0" />
+      <LineId Id="567" Count="16" />
+      <LineId Id="585" Count="4" />
+      <LineId Id="635" Count="0" />
+      <LineId Id="598" Count="2" />
+      <LineId Id="636" Count="0" />
+      <LineId Id="601" Count="5" />
+      <LineId Id="646" Count="10" />
+      <LineId Id="608" Count="3" />
+      <LineId Id="127" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

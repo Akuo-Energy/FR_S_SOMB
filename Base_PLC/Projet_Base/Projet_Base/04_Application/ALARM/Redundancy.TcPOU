@@ -1,0 +1,145 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="Redundancy" Id="{1b8b43d0-6202-4d8c-b6ba-7c4db4e2f3ff}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM Redundancy
+///////////////////
+// Exchange redundant data : parameters , bistable functions, setpoints , PID values ( integer ) 
+///////////////////
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance specific) 
+		ParamTimeout					: TIME  := T#1S ;				// (Time) Timeout for modbus reading
+		ParamTempoImpulsion2			: TIME := T#500MS ; 			// ADS Clock Read Time < Timeout
+		ParamNbSignalRedundancy			: UINT := 233 ;					// Number of signals defined for the redundancy
+END_VAR
+
+VAR
+	Address							: ARRAY[1..CstNbRedundantVariableMax_G] OF PVOID ;		
+	SignalName						: ARRAY[1..CstNbRedundantVariableMax_G] OF STRING ;		
+	PLC_ReadSymInfoByName	        : ARRAY[1..CstNbRedundantVariableMax_G] OF  PLC_ReadSymInfoByName	;
+	ReadAds		                  	: ARRAY[1..CstNbRedundantVariableMax_G] OF ADSREADEX;
+
+	
+	// ClockRead
+	TP1 						: TP ; 
+	R_TRIG_Read					: R_TRIG ; 	
+	ClockRead					: BOOL ; 		
+	
+	nPort				  		: UINT := 851;					    // (NA) ADS device Port
+	bInit						: BOOL := TRUE ;	
+	
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_GetRedundancyData" Id="{be1d92a7-68bc-4d30-9356-c8122391306d}">
+      <Declaration><![CDATA[METHOD M_GetRedundancyData
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{cc814290-c796-4068-8eac-dc4c1da3b7b1}">
+      <Declaration><![CDATA[METHOD M_Init : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_ReadRedundancyData" Id="{890742da-40ed-405c-bc2b-bc47da62ac79}">
+      <Declaration><![CDATA[METHOD M_ReadRedundancyData 
+VAR
+	CP_Read  		: ARRAY[1..CstNbRedundantVariableMax_G] OF BOOL ; 
+	
+	KK				: UINT;
+	JJ				: UINT;
+	bCopyCP			: BOOL;	// force CP to false . 
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+// ClockRead 
+TP1(IN:= NOT TP1.Q,PT:=ParamTempoImpulsion2);
+R_TRIG_Read(CLK:=TP1.Q,Q=>ClockRead);
+
+FOR KK:= 1 TO ParamNbSignalRedundancy DO 
+	// Get INfos 
+	PLC_ReadSymInfoByName[KK](NETid := CstNetAmsId_Slave, Port:=nPort,Symname:=SignalName[KK], Start:= CalLocalTimeStruct.wSecond=KK OR bInit,TMOUT:= T#5S) ;
+	CP_Read[KK] := ClockRead  AND NOT (PLC_ReadSymInfoByName[KK].SYMINFO.idxOffset=0) AND NOT PLC_ReadSymInfoByName[KK].ERR AND NOT ReadAds[KK].BUSY  ; 
+
+
+	// Read signal 
+	ReadAds[KK](NETID:=CstNetAmsId_Slave,
+				   PORT:=nPort,
+				   IDXGRP:=	PLC_ReadSymInfoByName[KK].SYMINFO.idxGroup,
+				   IDXOFFS:=PLC_ReadSymInfoByName[KK].SYMINFO.idxOffset,
+				   LEN:=PLC_ReadSymInfoByName[KK].SYMINFO.byteSize,
+				   READ:=CP_Read[KK],
+				   DESTADDR:=Address[KK], 
+				   TMOUT:=ParamTimeout);
+
+
+END_FOR
+
+
+
+bInit:= FALSE ;
+
+// For all.MesDataExd.MesData.CalCPRead and Write to False when redundancy is activated 
+
+bCopyCP := FALSE  ; 
+
+(*
+	FOR KK:= 1 TO CstNbESs DO 
+		FOR JJ:= 1 TO CstNbBank_Ess DO 
+			 	MEMCPY(ADR(AX_ESS[KK].AX_Bat[JJ].MesCP_Write  ),ADR(bCopyCP),SIZEOF(bCopyCP));
+			 	MEMCPY(ADR(AX_ESS[KK].AX_Bat[JJ].MesCP_Read  ),ADR(bCopyCP),SIZEOF(bCopyCP));
+		END_FOR
+		FOR JJ:= 1 TO CstNbPcs_Ess DO 
+			 	MEMCPY(ADR(AX_ESS[KK].AX_PCS[JJ].MesCP_Write  ),ADR(bCopyCP),SIZEOF(bCopyCP));
+			 	MEMCPY(ADR(AX_ESS[KK].AX_PCS[JJ].MesCP_Read  ),ADR(bCopyCP),SIZEOF(bCopyCP));
+		END_FOR
+		FOR JJ:= 1 TO CstNbHvac_ESS DO 
+			 MEMCPY(ADR(AX_ESS[KK].AX_HVAC[JJ].MesCP_Write  ),ADR(bCopyCP),SIZEOF(bCopyCP));
+			 MEMCPY(ADR(AX_ESS[KK].AX_HVAC[JJ].MesCP_Read  ),ADR(bCopyCP),SIZEOF(bCopyCP));
+		END_FOR
+	END_FOR 
+	
+	 MEMCPY(ADR(A1_SUB_MV.A1_GRID.MesCP_Read  			),ADR(bCopyCP),SIZEOF(A1_SUB_MV.A1_GRID.MesCP_Read  			));
+	 MEMCPY(ADR(A1_SUB_MV.A1_PM_Aux.MesCP_Read          ),ADR(bCopyCP),SIZEOF(A1_SUB_MV.A1_PM_Aux.MesCP_Read          ) );
+	 MEMCPY(ADR(A1_SUB_MV.A1_ProtectionRelay_ImBess1 .MesCP_Read   ),ADR(bCopyCP),SIZEOF(A1_SUB_MV.A1_ProtectionRelay_ImBess1 .MesCP_Read   ) );
+	 MEMCPY(ADR(A1_SUB_MV.A1_ProtectionRelay_ImBess2 .MesCP_Read   ),ADR(bCopyCP),SIZEOF(A1_SUB_MV.A1_ProtectionRelay_ImBess2 .MesCP_Read   ) );
+	 MEMCPY(ADR(A1_SUB_MV.A1_ProtectionRelay_ImBess3 .MesCP_Read   ),ADR(bCopyCP),SIZEOF(A1_SUB_MV.A1_ProtectionRelay_ImBess3 .MesCP_Read   ) );
+	 MEMCPY(ADR(A1_SUB_MV.A1_ProtectionRelay_ImBess4 .MesCP_Read   ),ADR(bCopyCP),SIZEOF(A1_SUB_MV.A1_ProtectionRelay_ImBess4 .MesCP_Read   ) );
+	 MEMCPY(ADR(A1_SUB_MV.A1_ProtectionRelay_ImBess5 .MesCP_Read   ),ADR(bCopyCP),SIZEOF(A1_SUB_MV.A1_ProtectionRelay_ImBess5 .MesCP_Read   ) );
+	 MEMCPY(ADR(A1_SUB_MV.A1_ProtectionRelay_ImBess6 .MesCP_Read   ),ADR(bCopyCP),SIZEOF(A1_SUB_MV.A1_ProtectionRelay_ImBess6 .MesCP_Read   ) );
+	 MEMCPY(ADR(A1_SUB_MV.A1_UPS_SUB_MV.MesCP_Read        ),ADR(bCopyCP),SIZEOF(A1_SUB_MV.A1_UPS_SUB_MV.MesCP_Read        ) );
+	
+	FOR KK:=1 TO 2 DO 
+		MEMCPY(ADR(A1_SUB_MV.AX_PM[KK].MesCP_Read  ),ADR(bCopyCP),SIZEOF(A1_SUB_MV.AX_PM[KK].MesCP_Read ));
+		
+	END_FOR
+// 	
+	*)]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="Redundancy">
+      <LineId Id="48" Count="0" />
+    </LineIds>
+    <LineIds Name="Redundancy.M_GetRedundancyData">
+      <LineId Id="18" Count="0" />
+    </LineIds>
+    <LineIds Name="Redundancy.M_Init">
+      <LineId Id="9967" Count="0" />
+    </LineIds>
+    <LineIds Name="Redundancy.M_ReadRedundancyData">
+      <LineId Id="1188" Count="62" />
+      <LineId Id="1179" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

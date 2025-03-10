@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="ServerSms" Id="{5074ad29-0554-4e4d-b538-869fb0f020d2}">
+    <Declaration><![CDATA[
+TYPE ServerSms :
+STRUCT
+	NbrUtiliActive			: INT;									(* Number of users*)
+	MesAlarmCode			: WORD;									(* Alarm Code*)
+	AX_Numtel				: ARRAY[1..CstNbUser] OF STRING(26);	(*Tel Number list*)
+	AX_Subscribed			: ARRAY[1..CstNbUser] OF BOOL;			(*Subscription list*)
+	AX_NomUtili				: ARRAY[1..CstNbUser] OF STRING(50); 	(* User name list	*)
+	AX_UserLVL				: ARRAY[1..CstNbUser] OF WORD; 		(*User Level*)
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

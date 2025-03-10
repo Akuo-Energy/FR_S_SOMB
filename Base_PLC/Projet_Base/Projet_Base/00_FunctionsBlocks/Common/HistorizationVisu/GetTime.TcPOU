@@ -1,0 +1,45 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="GetTime" Id="{97e9ceca-5727-446f-9275-78b8ceccd55f}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM GetTime
+VAR
+	
+	// DATETIME //
+		FB_GetSystemTime        : GETSYSTEMTIME;
+		FB_ToLocal 				: FB_FileTimeToTzSpecificLocalTime;
+		fileTime        		: T_FILETIME;
+		FileTimeLocal			: T_FILETIME;
+	
+	//TEST//
+		VarTest AT %I* 			: UINT ; 		// Test variable to be linked to ethercat devices before activation to run tests without complete powerplant.
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[	// DateTime 
+	FB_GetSystemTime(
+		timeLoDW	=> fileTime.dwLowDateTime, 
+		timeHiDW	=> fileTime.dwHighDateTime);
+		
+	FB_ToLocal(
+		in			:=fileTime,
+		tzInfo 		:= CstTimeZone_G,
+		out		 	=> FileTimeLocal);
+		
+	sTimeGMT_G 		:= SYSTEMTIME_TO_STRING(FILETIME_TO_SYSTEMTIME(fileTime));	// Full Date Time with ms granularity GMT
+	sTimeLocal_G	:= SYSTEMTIME_TO_STRING (FILETIME_TO_SYSTEMTIME(FileTimeLocal));
+]]></ST>
+    </Implementation>
+    <LineIds Name="GetTime">
+      <LineId Id="69" Count="0" />
+      <LineId Id="79" Count="1" />
+      <LineId Id="98" Count="2" />
+      <LineId Id="103" Count="1" />
+      <LineId Id="101" Count="0" />
+      <LineId Id="82" Count="0" />
+      <LineId Id="58" Count="0" />
+      <LineId Id="52" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

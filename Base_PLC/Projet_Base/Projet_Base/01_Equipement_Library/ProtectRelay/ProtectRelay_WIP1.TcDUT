@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.2">
+  <DUT Name="ProtectRelay_WIP1" Id="{30b9583e-dfac-4e7e-98bb-6d6e17a76c33}">
+    <Declaration><![CDATA[///////////
+// Structure For I35. Main Operating Data to be saved ( ex: OPC ) .  
+//////////
+TYPE ProtectRelay_WIP1 :
+STRUCT
+	// I35 Data measures
+	MesData					: ProtectRelay ; (**)
+
+
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

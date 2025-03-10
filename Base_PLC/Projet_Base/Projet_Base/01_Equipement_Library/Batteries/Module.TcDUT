@@ -1,0 +1,105 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="Module" Id="{8655bc43-78ea-4a7c-ab83-b1dafb4787f9}">
+    <Declaration><![CDATA[///////////
+// Structure For Battery Racks. Main Operating Data to be saved ( ex: OPC ) .  
+//////////
+TYPE Module :
+STRUCT
+	
+	
+	// Cell	: CELL ; 
+
+// Model Module
+MesID_String         :WORD;//(NA) STRING Index [StrIdx]                     
+MesID_Module         :WORD;//(NA) Module Index [ModIdx]                     
+MesNbCellTot         :WORD;//(NA) Module Cell Count [NCell]                 
+                            
+MesUdc               :REAL;//(NA) Module SoH [SoH]                          
+MesUdcMax_Cell       :REAL;//(NA) Cycle Count [NCyc]                        
+                                    
+MesUdcMin_Cell       :REAL;//(V) Max Cell Voltage [CellVMax]                
+MesIDCell_UdcMin_Cell:WORD;//(NA) Max Cell Voltage Cell [CellVMaxCell]      
+MesUdc_Cell          :REAL;//(V) Min Cell Voltage [CellVMin]                
+MesTempMax_Cell      :REAL;//(NA) Min Cell Voltage Cell [CellVMinCell]      
+                         
+MesTempMin_Cell      :REAL;//(C) Max Cell Temperature [CellTmpMax]          
+                          
+MesTemp_Cell         :REAL;//(C) Min Cell Temperature [CellTmpMin]          
+MesNbCellBalancing   :WORD;//(NA) Min Cell Temperature Cell [CellTmpMinCell]
+MesID_SerialNb		 :WORD;//(C) Average Cell Temperature [CellTmpAvg]      
+
+
+
+
+
+// Model String			
+MesNbCell				: WORD;//(NA) Module Cell Count [ModNCell]                 
+MesSoC                  : REAL;//(NA) Module SoC [ModSoC]                          
+MesSoH                  : REAL;//(NA) Module SoH [ModSoH]                          
+//MesUdcMax_Cell        : REAL;//(V) Max Cell Voltage [ModCellVMax]                
+MesIDCell_UdcMax_Cell   : REAL;//(NA) Max Cell Voltage Cell [ModCellVMaxCell]      
+//MesUdcMin_Cell          : REAL;//(V) Min Cell Voltage [ModCellVMin]                
+//MesIDCell_UdcMin_Cell   : WORD;//(NA) Min Cell Voltage Cell [ModCellVMinCell]      
+//MesUdc_Cell             : REAL;//(V) Average Cell Voltage [ModCellVAvg]            
+//MesTempMax_Cell         : REAL;//(C) Max Cell Temperature [ModCellTmpMax]          
+MesIDCell_TempMax_Cell  : REAL;//(NA) Max Cell Temperature Cell [ModCellTmpMaxCell]
+//MesTempMin_Cell         : REAL;//(C) Min Cell Temperature [ModCellTmpMin]          
+MesIDCell_TempMin_Cell  : REAL;//(NA) Min Cell Temperature Cell [ModCellTmpMinCell]
+//MesTemp_Cell			: REAL;//(C) Average Cell Temperature [ModCellTmpAvg]      
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

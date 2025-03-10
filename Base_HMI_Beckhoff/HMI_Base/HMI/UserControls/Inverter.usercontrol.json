@@ -1,0 +1,23 @@
+﻿{
+  "parameters": [
+    {
+      "name": "data-tchmi-color",
+      "displayName": "Color",
+      "visible": true,
+      "type": "tchmi:project#/definitions/ColorsGreenOrangeRed",
+      "category": "",
+      "description": "",
+      "requiredOnCompile": false,
+      "readOnly": false,
+      "bindable": true,
+      "heritable": true,
+      "propertyName": "Color",
+      "propertySetterName": "setColor",
+      "propertyGetterName": "getColor",
+      "refTo": ""
+    }
+  ],
+  "virtualRights": [],
+  "$schema": "../../../Packages/Beckhoff.TwinCAT.HMI.Framework.12.742.5/runtimes/native1.12-tchmi/Schema/UserControlConfig.Schema.json",
+  "description": ""
+}

@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.9">
+  <DUT Name="Transfo_HV" Id="{54ae915e-dfeb-4386-bde6-8f551149622f}">
+    <Declaration><![CDATA[TYPE Transfo_HV :
+STRUCT
+
+	MesData						: Transfo ; (* Transfo*)
+
+	MesWarningGas					: BOOL  ; (* Buchholz warning*)
+
+	MesWarning_TempLevel1			: BOOL  ; (*ImgTherm1erStade*)
+	MesWarning_TempLevel2			: BOOL  ; (*ImgTherm2ndStade*)
+	MesTrigger_Deletion				: BOOL  ; (*TransfoDcltSurpression*)
+
+	MesTransfoRefrigLocal			: BOOL  ; (*TransfoRefrigLocal*)
+	
+	MesTrigger_NonReturnValve		: BOOL  ; (*declenchement clapet anti retour*)
+	MesTrigger_ProtectRelay			: BOOL  ; (*DcltRelaisProtectRegl*)
+	MesAlarm_TapChanger				: BOOL  ; (*Fault TapChanger*)
+	
+	
+
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

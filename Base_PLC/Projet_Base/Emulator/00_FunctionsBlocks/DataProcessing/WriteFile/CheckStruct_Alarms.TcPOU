@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="CheckStruct_Alarms" Id="{08574306-5a5a-40c0-945a-6ca8cb04c014}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION CheckStruct_Alarms : BOOL
+//Allows to compare 2 Struct_InputRTU, TRUE if struct are the same
+VAR_INPUT
+	InStruct1 : ST_ValuesAlarms;
+	InStruct2 : ST_ValuesAlarms;
+END_VAR
+VAR
+	bCompareBuffer 	: BOOL := TRUE;
+	KK 				: UINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[CheckStruct_Alarms := InStruct1.Message = Instruct1.Message and InStruct1.ID = Instruct2.ID and InStruct1.Value = InStruct2.Value and InStruct1.Written = Instruct2.Written;]]></ST>
+    </Implementation>
+    <LineIds Name="CheckStruct_Alarms">
+      <LineId Id="14" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,65 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_TOR_DS" Id="{28330371-a88d-4485-bf82-df292aed84e1}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_TOR_DS EXTENDS FB_TOR_Base
+//////////////////
+//  Door sensor system . State = True >> Door Closed .
+//////////////////
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance/model specific) 
+		ParamTempoDoorAlarm			: TIME := T#10S ;	// (s) Tempo for Door sensor alarm 
+		
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	
+END_VAR
+
+VAR_INPUT
+	// I/O Inputs 		                                     				
+		
+END_VAR
+
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//
+		TON_Ouverture				: TON;				//(NA) Tempo to detect door opened for too long time . 
+	MesDataExd			: TOR_Standard ;  
+
+
+
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_Execute" Id="{d3c99200-804f-4dd4-8a9e-26080adb3202}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+SUPER^.M_Execute() ; 
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_TOR_DS">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_TOR_DS.M_Execute">
+      <LineId Id="45" Count="0" />
+      <LineId Id="55" Count="0" />
+      <LineId Id="2" Count="0" />
+      <LineId Id="65" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

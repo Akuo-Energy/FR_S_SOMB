@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.9">
+  <DUT Name="UPS_CXC" Id="{b3b6e476-c3a9-4ed9-b03f-75ffe33a567c}">
+    <Declaration><![CDATA[///////////
+// Structure For I35. Main Operating Data to be saved ( ex: OPC ) .  
+//////////
+TYPE UPS_CXC :
+STRUCT
+	
+	MesData				: UPS ; 	(* Object 									*)
+	            		            (*                                          *)
+	MesU				: REAL ; 	(*(V) AC voltage                            *)
+	MesIload			: REAL ; 	(*(A) DC Load current                       *)
+	MesUBatt			: REAL ; 	(*(V) Battery voltage                       *)
+	MesIBatt			: REAL ; 	(*(A) Battery Current                       *)
+	MesSoC  			: REAL ; 	(*(%) Battery SoC                           *)
+	MesIdc  			: REAL ; 	(*(A) battery + load Current                *)
+
+	
+	MesOverTempBatt 	: BOOL ; 	(* OverTemperature of the battery alarm		*)
+	MesCBUpsOpened		: BOOL ; 	(* UPS CB opened alarm                      *)
+	
+		
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

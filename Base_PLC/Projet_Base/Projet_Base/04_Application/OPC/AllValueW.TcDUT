@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="AllValueW" Id="{b706fcf0-a032-4f18-8fec-1ab7706643a2}">
+    <Declaration><![CDATA[TYPE AllValueW :
+STRUCT
+ // PP 
+	SetptTanPhi_PP				: REAL; 										(* (p.u) TanPhi setpoint to regulate if the corresponding mode is activated *)
+
+// SMS 	
+	AX_NbPhone_OPC				: ARRAY[1..CstNbUser] OF STRING(26);			(* List of the phone number to be registered for SMS functions *)
+	AX_SubscribedSms_OPC		: ARRAY[1..CstNbUser] OF BOOL;					(* List of subscription for SMS function *)
+	AX_NamesUsers_OPC					: ARRAY[1..CstNbUser] OF STRING(50);	(* List of SMS user names *)
+	AX_MailAddr_OPC				: ARRAY[1..CstNbUser] OF STRING(255);			(* Contient tous les numéros des utilisateurs *)
+	AX_SubscribedMail_OPC		: ARRAY[1..CstNbUser] OF BOOL;					(* List of subscription for MAIL function *)
+	AX_UserLVL					: ARRAY[1..CstNbUser] OF WORD;					(* Bit-wise encoding of Alarm subscription (Check Config alarm document for bit signification) *)
+	
+// SUB	
+	SetpP_SUB					: REAL;											(* (kW) Active Power setpoint to be regulated at Subatstion ( if local setpoint enabled) *)
+    SetpQ_SUB					: REAL;											(* (kVAr) Reactive Power setpoint to be regulated at Subatstion ( if local setpoint enabled) *)
+// PTR 
+	SetpP_INV					: ARRAY[1..CstNbPTR_G] OF ARRAY[1..CstNbInv_PTR_G] OF  REAL;	(*(kW) Active Power setpoint to be regulated at the inverter ( if local setpoint enabled) *) 	
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,96 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_MovingAverage" Id="{6dfbfd79-8117-461a-8a68-bf6136152993}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK  FB_MovingAverage
+//////////////////
+// Calculate the Moving Average of a data. Maximal number of point.
+//////////////////
+
+VAR CONSTANT 
+	CstNbPointMax			: INT := 1000 ; // Average on one hour, with seconds granularity points
+
+END_VAR
+
+
+VAR_INPUT
+	WindowDuration		: DINT ; // (ms) Window of Time during which the average will be done . 
+	ValueIn 			: REAL ; // Value to average
+	UpdatePeriod		: DINT ; // (ms) Period at which the value is updated. 
+	
+END_VAR
+	
+
+VAR_OUTPUT
+	ValueOut			: REAL ; // Averaged Value. 
+	bError 				: BOOL ; // Switch to true if error i inputs				
+END_VAR
+
+VAR
+	Values 				: ARRAY[1..CstNbPointMax] OF REAL; 	// Value to remove from the average calculation
+	
+	NbPoints			: DINT ; 	// Number of points used for calculating the average. 
+	PointPickUpNb		: DINT ; 	// Number of points to skip in average calculation
+	
+	JJ					: DINT;		// Pick Up index . 
+	KK					: DINT;		// For Loop 
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// EVALUATE VARIABLES //
+PointPickUpNb 	:= UpdatePeriod		/	CstCycleTime_G ;
+NbPoints 		:= WindowDuration 	/ 	UpdatePeriod  ;  
+
+// CHECK INPUTS //
+IF NbPoints > CstNbPointMax THEN 
+	bError 		:= TRUE ; 
+	ValueOut 	:= -1 ;
+	
+ELSE
+	// UPDATE VALUE ARRAY WITH NEW VALUE AND REMOVE OLD ONE //
+	JJ			:=JJ+1 ;
+	
+	IF JJ = PointPickUpNb THEN 
+		JJ		:= 0 ; // Reinitialize JJ
+		
+		// Move all values in the array on the right
+		FOR KK :=1 TO NbPoints-1 DO 
+			Values[NbPoints-KK+1]	:= Values[NbPoints-KK] ;
+			
+		END_FOR
+		
+		Values[1] 					:= ValueIn ; 	// Assign first index to new value. 
+		
+		// CALCULATE AVERAGE // 
+			ValueOut 						:= 0 ; 
+			
+			FOR KK:=1 TO NbPoints DO 
+				ValueOut 					:= ValueOut + Values[KK] / DINT_TO_REAL(NbPoints) ; 
+			
+			END_FOR
+		
+	END_IF
+END_IF
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_MovingAverage">
+      <LineId Id="373" Count="1" />
+      <LineId Id="386" Count="0" />
+      <LineId Id="399" Count="0" />
+      <LineId Id="401" Count="0" />
+      <LineId Id="405" Count="1" />
+      <LineId Id="440" Count="0" />
+      <LineId Id="407" Count="0" />
+      <LineId Id="414" Count="13" />
+      <LineId Id="442" Count="0" />
+      <LineId Id="444" Count="0" />
+      <LineId Id="449" Count="0" />
+      <LineId Id="445" Count="3" />
+      <LineId Id="443" Count="0" />
+      <LineId Id="428" Count="0" />
+      <LineId Id="404" Count="0" />
+      <LineId Id="402" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

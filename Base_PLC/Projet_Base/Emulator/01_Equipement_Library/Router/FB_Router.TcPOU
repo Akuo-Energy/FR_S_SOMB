@@ -1,0 +1,60 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_Router" Id="{f4ef0d41-01a8-4557-8024-6f4e31329bb1}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Router
+
+VAR_INPUT PERSISTENT 
+	ParamTempoRestart	: TIME 		:= T#30S ;	//  (s)Tempo to wait before resupplying the ADSL routeur
+
+	
+END_VAR
+
+        	
+VAR_INPUT           	
+	Heure_Local     	: TIMESTRUCT;
+	IN_CmdRestart 			: BOOL;
+
+	
+	IN_CmdReset_L			: BOOL ;	// (NA) External Reset Command
+	
+END_VAR     
+
+
+VAR_OUTPUT
+	//Child objects
+		OUT_CmdOpen_IO			: BOOL;	
+END_VAR        	
+      	
+VAR                 	
+	bInit				: BOOL;	// Booleen d'initialisation
+		
+	TP_Restart			: TP;
+	// State Mananger //
+	
+	MesState			: BYTE; // Cal
+MesDataExd			: Router_Standard;
+	// M_Evaluate //
+	
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_Execute" Id="{b641d281-0dde-494c-a182-36c13d4a1bae}">
+      <Declaration><![CDATA[METHOD M_Execute : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_Router">
+      <LineId Id="151" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Router.M_Execute">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

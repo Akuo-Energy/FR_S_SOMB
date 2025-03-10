@@ -1,0 +1,28 @@
+﻿{
+  "function": {
+    "name": "Format",
+    "displayName": "Format",
+    "visible": true,
+    "category": "",
+    "waitMode": "Synchronous",
+    "injectContextObject": false,
+    "description": "",
+    "returnValue": {
+      "type": "tchmi:general#/definitions/String"
+    },
+    "arguments": [
+      {
+        "name": "InputReal",
+        "displayName": "InputReal",
+        "type": "tchmi:general#/definitions/REAL",
+        "description": "This is an important Parameter which does... This text is used in a tooltip.",
+        "defaultValue": "",
+        "required": true,
+        "bindable": true,
+        "restParameter": false,
+        "asReference": false
+      }
+    ]
+  },
+  "$schema": "../../../../Packages/Beckhoff.TwinCAT.HMI.Framework.12.742.5/runtimes/native1.12-tchmi/Schema/FunctionDescription.Schema.json"
+}

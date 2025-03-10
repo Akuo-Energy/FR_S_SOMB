@@ -1,0 +1,256 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.13">
+  <POU Name="FB_FSS" Id="{2e5955a4-188e-4a92-ade4-984d82b0d088}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_FSS
+//////////////////
+//  Fire System
+//////////////////
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance/model specific) 
+	ParamCableCutSecurity		at %q*	: BOOL :=FALSE ;		(* FALSE = ALARM 						*)
+	ParamTempoFire					: TIME := T#5S ;	    (* Tempo before raising a fire alarm    *)
+	ParamWatchdogEnable				: BOOL :=FALSE ; 	    (* Is Watchdog Enabled ?                *)
+	
+	ParamAlarm_NC					: BOOL;					(* Is the alarm an NC IO*)
+	ParamWarning_NC					: BOOL;					(* Warning is an NC IO*)
+	ParamFault_NC					: BOOL;					(* Fault is an NC IO*)
+	ParamExtinguisher_NC			: BOOL;					(* Extinguisher is an NC IO*)
+	ParamWatchdog_NC				: BOOL;					(* Watchdog is an NC IO*)
+	ParamCBFSS_NC					: BOOL;					(* CB FSS is an NC IO*)
+	ParamFaultPsu_NC				: BOOL;					(* FaultPsu is an NC IO*)
+	
+END_VAR	
+
+VAR_OUTPUT
+	//Child objects
+	
+END_VAR
+
+VAR_INPUT
+	// I/O Inputs 
+		IN_MesLocalRemote_IO			: BOOL ; 		                                     				
+		IN_MesAlarm_IO 				    : BOOL ;				(* (NA)Fire Alarm					*)
+		IN_MesWarning_IO				: BOOL ; 				(* (NA) Fire system warning         *)
+		IN_MesFault_IO					: BOOL ;                (**)
+		IN_MesExtinguisher_IO			: BOOL ;		 		(* Extinguisher system triggereed   *)
+		IN_MesWatchdog_IO				: BOOL ; 				(* (NA) Fire System Watchdog        *)
+		IN_MesCBFSS_IO					: BOOL ; 				(* Cb FSS opened                    *)
+		IN_MesFaultPsu_IO				: BOOL ;				(* PSU Fault *)
+		                                                 
+		IN_CmdReset					: BOOL ;	  			(* LOCAL Reset Value For Alarms     *)
+		
+		MesDataExd					: FSS_Standard ; 	
+	
+		
+		
+END_VAR
+
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//
+		FB_PermAlarm					: SR ;					// (NA) FB to maintain Fire Alarm even if sensor stop detection (burn) .
+		TON_Fire						: TON ; 
+                                    	
+	//STATE MANAGEMENT //           	
+
+	// EMULATOR 
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{e1d60920-3144-4e26-8c35-ae3cf50121d9}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Manages Door sensor alarms and warnings
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager			: FB_AlarmCodeManager ; 
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[		
+// Detection Variables
+TON_Fire(IN:= MesDataExd.MesData.MesAlarmFire , PT:= ParamTempoFire ) ; 
+FB_PermAlarm(SET1 := TON_Fire.Q  , Reset := GVL_CFG.CmdClearFault_G OR IN_CmdReset); // SR FB for keep fire if burn .
+
+// ALARM CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= FB_PermAlarm.Q1 ,  													// Fire detection		
+		bAlarm2			:= SEL(ParamWatchdogEnable , FALSE ,  NOT MesDataExd.MesData.MesWatchdogAlarm), 		// Watchdog fault 
+		bAlarm3			:= MesDataExd.MesData.MesOpened_CBFSS, 												// Circuit Breaker is opened 
+		bAlarm4			:= MesDataExd.MesData.MesExtinguisher , 												// Extinguisher is triggered
+		bAlarm5			:=MesDataExd.MesData.MesPsuFault, 																// PSU Fault
+		bAlarm6			:=FALSE, 																//
+		bAlarm7			:=FALSE, 																//
+		bAlarm8			:=FALSE, 																//
+		bAlarm9			:=FALSE, 																//
+		bAlarm10		:=FALSE, 																//
+		bAlarm11		:=FALSE, 																//
+		bAlarm12		:=FALSE, 																//
+		bAlarm13		:=FALSE, 																//
+		bAlarm14		:=FALSE, 																//
+		bAlarm15		:=FALSE, 																//
+		wAlarmCode		=>MesDataExd.MesData.MesAlarmCode );
+		
+// WARNING CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= MesDataExd.MesData.MesWarningFSS,	  				// FSS in warning  . 
+		bAlarm2			:= MesDataExd.MesData.MesFault, 						// FF in fault 
+		bAlarm3			:=FALSE, 									// 
+		bAlarm4			:=FALSE, 									// 
+		bAlarm5			:=FALSE, 									//
+		bAlarm6			:=FALSE,                                    //
+		bAlarm7			:=FALSE,                                    //
+		bAlarm8			:=FALSE,                                    //
+		bAlarm9			:=FALSE,                                    //
+		bAlarm10		:=FALSE,                                    //
+		bAlarm11		:=FALSE,                                    //
+		bAlarm12		:=FALSE,                                    //
+		bAlarm13		:=FALSE,                                    //
+		bAlarm14		:=FALSE,                                    //
+		bAlarm15		:=FALSE,                                    //
+		wAlarmCode			=>MesDataExd.MesData.MesWarningCode);
+		
+// EVENT CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= FALSE, 									// 
+		bAlarm2			:= FALSE, 									// 
+		bAlarm3			:= FALSE, 									// 
+		bAlarm4			:= FALSE, 									// 
+		bAlarm5			:= FALSE, 									//
+		bAlarm6			:= FALSE,       							//
+		bAlarm7			:= FALSE,       							//
+		bAlarm8			:= FALSE,       							//
+		bAlarm9			:= FALSE,       							//
+		bAlarm10		:= FALSE,       							//
+		bAlarm11		:= FALSE,       							//
+		bAlarm12		:= FALSE,       							//
+		bAlarm13		:= FALSE,       							//
+		bAlarm14		:= FALSE,       							//
+		bAlarm15		:= FALSE,       							//
+		wAlarmCode		=>MesDataExd.MesData.MesEventCode);]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{9b2d4d0e-a8a5-406c-8308-85bd544249f9}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// METHODS CALLS // 
+	M_StateManager() ; // order is important 
+	M_AlarmManagement() ; 
+
+	]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_StateManager" Id="{20f42cab-0e73-4f5b-9a91-afe12ab14dd3}">
+      <Declaration><![CDATA[METHOD M_StateManager
+//////////////////
+// Detect when fire occurs
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle)
+ 
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF ParamAlarm_NC THEN
+	MesDataExd.MesData.MesAlarmFire := NOT IN_MesAlarm_IO ; 
+ELSE
+	MesDataExd.MesData.MesAlarmFire := IN_MesAlarm_IO ; 
+END_IF
+
+IF ParamWarning_NC THEN
+	MesDataExd.MesData.MesWarningFSS:= NOT IN_MesWarning_IO ; 
+ELSE
+	MesDataExd.MesData.MesWarningFSS	:= IN_MesWarning_IO ; 
+END_IF
+
+IF ParamCBFSS_NC THEN
+	MesDataExd.MesData.MesOpened_CBFSS :=  NOT IN_MesCBFSS_IO ; 
+ELSE
+	MesDataExd.MesData.MesOpened_CBFSS := IN_MesCBFSS_IO ; 
+END_IF
+
+IF ParamFault_NC THEN
+	MesDataExd.MesData.MesFault		:= NOT IN_MesFault_IO ; 
+ELSE
+	MesDataExd.MesData.MesFault		:=  IN_MesFault_IO ; 	
+END_IF
+
+IF ParamExtinguisher_NC THEN
+	MesDataExd.MesData.MesExtinguisher	:= NOT IN_MesExtinguisher_IO ; 
+ELSE
+	MesDataExd.MesData.MesExtinguisher	:= IN_MesExtinguisher_IO ; 	
+END_IF
+
+IF ParamFaultPsu_NC THEN
+	MesDataExd.MesData.MesPsuFault := NOT IN_MesFaultPsu_IO;
+ELSE 
+	MesDataExd.MesData.MesPsuFault :=   IN_MesFaultPsu_IO;
+END_IF
+
+IF ParamWatchdog_NC THEN
+	MesDataExd.MesData.MesWatchdogAlarm	:= NOT IN_MesWatchdog_IO ; 
+ELSE
+	MesDataExd.MesData.MesWatchdogAlarm	:= IN_MesWatchdog_IO ; 
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_FSS">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_FSS.M_AlarmManagement">
+      <LineId Id="260" Count="59" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_FSS.M_Execute">
+      <LineId Id="76" Count="3" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_FSS.M_StateManager">
+      <LineId Id="152" Count="1" />
+      <LineId Id="182" Count="2" />
+      <LineId Id="204" Count="0" />
+      <LineId Id="185" Count="0" />
+      <LineId Id="154" Count="0" />
+      <LineId Id="187" Count="2" />
+      <LineId Id="205" Count="0" />
+      <LineId Id="190" Count="0" />
+      <LineId Id="155" Count="0" />
+      <LineId Id="191" Count="2" />
+      <LineId Id="206" Count="0" />
+      <LineId Id="195" Count="0" />
+      <LineId Id="156" Count="0" />
+      <LineId Id="196" Count="2" />
+      <LineId Id="207" Count="0" />
+      <LineId Id="199" Count="0" />
+      <LineId Id="157" Count="0" />
+      <LineId Id="202" Count="0" />
+      <LineId Id="200" Count="1" />
+      <LineId Id="208" Count="0" />
+      <LineId Id="203" Count="0" />
+      <LineId Id="158" Count="0" />
+      <LineId Id="160" Count="0" />
+      <LineId Id="166" Count="0" />
+      <LineId Id="168" Count="0" />
+      <LineId Id="209" Count="0" />
+      <LineId Id="169" Count="1" />
+      <LineId Id="110" Count="0" />
+      <LineId Id="212" Count="0" />
+      <LineId Id="211" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

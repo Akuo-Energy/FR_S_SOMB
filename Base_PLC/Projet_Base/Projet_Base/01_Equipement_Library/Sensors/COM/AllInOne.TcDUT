@@ -1,0 +1,46 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <DUT Name="AllInOne" Id="{e50af849-485b-43ee-96f4-499fc4732694}">
+    <Declaration><![CDATA[TYPE AllInOne :
+STRUCT
+	
+	MesWindSp 			: REAL ;		(* (m/s)	 Wind speed measurement of the weather station												        *)
+	MesWindDir 			: REAL ;		(* (°) 		 Wind direction measurement of the weather station                                                  *)
+	MesHygro			: REAL ;		(* (%) 		 Humidity measurement of the weather station                                                        *)
+	MesTemp_Amb 		: REAL ;		(* (°C)		 Ambiant temperature measurement of the weather station                                             *)
+	MesDewPoint			: REAL ;		(* (%) 		 Dew point measure of weather station                                                               *)
+	MesRain1			: REAL ;		(* (count/h) Rain rate                                                                                          *)
+	MesRain2			: REAL ;		(* (count/h) Rain rate                                                                                          *)
+	MesRain3			: REAL ;		(* (count/h) Rain rate                                                                                          *)
+                                       
+	MesAlarmWindSp		: REAL ;		(* (NA) Alarm for the Wind speed : 0=OFF, 1 = Lower threshold, 2 = Higher threshold                                  *)
+	MesAlarmWindDir		: REAL ;		(* (NA) Alarm for the Wind direction : 0=OFF, 1 = Lower threshold, 2 = Higher threshold                              *)
+	MesAlarmTemp		: REAL ;		(* (NA) Alarm for the temp sensor : 0=OFF, 1 = Lower threshold, 2 = Higher threshold                                 *)
+	MesAlarmHygro		: REAL ;		(* (NA) Alarm for the humidity sensor : 0=OFF, 1 = Lower threshold, 2 = Higher threshold                             *)
+	MesAlarmDewPt		: REAL ;		(* (NA) Alarm for the dew point sensor : 0=OFF, 1 = Lower threshold, 2 = Higher threshold                            *)
+	MesAlarmRain1		: REAL ;		(* (NA) Alarm for the rain sensor : 0=OFF, 1 = Lower threshold, 2 = Higher threshold                                 *)
+	MesAlarmRain2		: REAL ;		(* (NA) Alarm for the rain sensor : 0=OFF, 1 = Lower threshold, 2 = Higher threshold                                 *)
+	MesAlarmRain3		: REAL ;		(* (NA) Alarm for the rain sensor : 0=OFF, 1 = Lower threshold, 2 = Higher threshold                                 *)
+	                                   
+	MesAlarmCode		: WORD ;  	    (*  (NA) Alarm code Akuo    *)
+	MesWarningCode		: WORD ;  	    (*  (NA) Warning code Akuo    *)
+	MesEventCode		: WORD ; 	    (*  (NA) Event code Akuo    *)
+	MesCP_Read			: BOOL := TRUE; (* (NA) Permanent condition for read *)
+	
+END_STRUCT
+END_TYPE
+
+
+	
+
+	
+
+	
+
+
+
+	
+	
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

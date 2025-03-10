@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="LoggerFirebird" Id="{501fc3ec-aef4-4557-a66a-125185401e9e}">
+    <Declaration><![CDATA[
+TYPE LoggerFirebird :
+STRUCT
+	MesAlarmCode		: WORD;				// Alarm Code
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

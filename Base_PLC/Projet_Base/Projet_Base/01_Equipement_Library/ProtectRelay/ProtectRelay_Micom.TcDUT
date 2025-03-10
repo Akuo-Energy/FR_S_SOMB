@@ -1,0 +1,54 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="ProtectRelay_Micom" Id="{97c45174-9615-4ca6-8944-122f12c8a0ab}">
+    <Declaration><![CDATA[///////////
+// Structure For I35. Main Operating Data to be saved ( ex: OPC ) .  
+//////////
+TYPE ProtectRelay_Micom :
+STRUCT
+	
+		MesData						: ProtectRelay;			(*	(NA) Protection relay									    *)
+                                                        	                                               
+		                                    				                                                             
+		MesU						: REAL;					(* (V) Average Phase to Phase Voltage                           *)
+	                                                    	
+		MesV1						: REAL ;        		(* (V) Average Phase to Phase Voltage                           *)
+		MesV2						: REAL ;				(* (V) Average Phase to Phase Voltage                           *)
+		MesV3						: REAL ;				(* (V) Average Phase to Phase Voltage                           *)
+		MesV0						: REAL ;				(*(V) Measured  maximal residual Voltage           			    *)
+       			                                        	                   
+		MesP						: REAL; 				(* (Kw)Power on Grid                                            *)
+		MesQ						: REAL;					(* (kvar) Power on grid                                         *)
+		MesS						: REAL;					(* (KVA) Power apparent                                         *)
+		MesCosPhi					: REAL;					(* (NA) power factor                                            *)
+		MesTanPhi					: REAL; 				(* (NA) Cal : tan Phi                                           *)
+		   
+
+                                 			                                                        
+		MesStopPP_UminLong			: BOOL; 				(* (NA) PP is stopping during 2min, because of Long GTE fault	*)
+		MesHomopol_Def				: BOOL;                 (* (NA)  Homopolar power default*)                   			                                                          
+
+		EActProd					: REAL; 				(* (MWh) Active Energy Produced                                 *)
+		EActCons					: REAL; 				(* (MWh) Active Energy Consummed                                *)
+		EReactProd					: REAL; 				(* (MVArh) Reactive Energy Produced                             *)
+		EReactCons					: REAL; 				(* (MVArh) Reactive Energy Consummed                            *)
+		                                    			                                                           
+	// Relais Input                         			
+		Input11						: BOOL;					(* (NA) Input 11 du relais de protection                        *)
+		Input12                     : BOOL;					(* (NA) Input 12 du relais de protection                        *)
+		Input13                     : BOOL;					(* (NA) Input 13 du relais de protection                        *)
+		Input14                     : BOOL;					(* (NA) Input 14 du relais de protection                        *)
+		Input21						: BOOL;					(* (NA) Input 21 du relais de protection                        *)
+		Input22						: BOOL;					(* (NA) Input 22 du relais de protection                        *)
+		Input23						: BOOL;					(* (NA) Input 23 du relais de protection                        *)
+		Input24						: BOOL;					(* (NA) Input 24 du relais de protection                        *)
+		Input25						: BOOL;					(* (NA) Input 25 du relais de protection                        *)
+		Input26						: BOOL;					(* (NA) Input 26 du relais de protection                        *)
+		
+				
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>
+

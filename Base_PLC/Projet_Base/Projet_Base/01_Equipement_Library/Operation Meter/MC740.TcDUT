@@ -1,0 +1,63 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.4">
+  <DUT Name="MC740" Id="{7191ae63-ab0f-4f72-8e85-d1f107271ed3}">
+    <Declaration><![CDATA[///////////
+// Operation meter structure  
+//////////
+TYPE MC740 :
+STRUCT
+	// I35 Data measures
+		MesI1						: REAL ; //(A) AC current Phase 1 
+		MesI2						: REAL ; //(A) AC current Phase 2 
+		MesI3						: REAL ; //(A) AC current Phase 3
+		MesI4						: REAL ; //(A) AC current Phase 4 (???) 
+		MesI5						: REAL ; //(A) AC current Phase 5 (???)
+		MesI						: REAL ; //(A) Mean AC current  
+		MesFreq						: REAL ; //(Hz) Frequency
+  		MesV1						: REAL ; //(V) Phase1 AC Voltage 
+		MesV2						: REAL ; //(V) Phase2 AC Voltage
+		MesV3						: REAL ; //(V) Phase3 AC Voltage
+		MesV						: REAL ; //(V) Mean Simple Phase AC Voltage
+		MesU12						: REAL ; //(V) Phase1 - Phase 2 AC Voltage 
+		MesU23						: REAL ; //(V) Phase2 - Phase 3 AC Voltage
+		MesU31						: REAL ; //(V) Phase3 - Phase 1 AC Voltage
+		MesU						: REAL ; //(V) Mean Phase - Phase  AC Voltage
+		MesUgn						: REAL ; //(V) Mean neutral - ground
+		MesP1						: REAL ; //(kW) Active Power Phase 1
+		MesP2						: REAL ; //(kW) Active Power Phase 2
+		MesP3						: REAL ; //(kW) Active Power phase 3
+		MesP						: REAL ; //(kW) Total Active power 
+		MesQ1						: REAL ; //(kVAr) Reactive Power Phase 1
+		MesQ2						: REAL ; //(kVAr) Reactive Power Phase 2
+		MesQ3						: REAL ; //(kVAr) Reactive Power Phase 3
+		MesQ						: REAL ; //(kVAr) Total Reactive Power Phase 1
+		MesS						: REAL ; //(kVA) Total Apparent power
+		MesE_AcDel					: REAL ; //(kWh) Delivered active energy
+		MesE_AcRec					: REAL ; //(kWh) Recieved active energy
+		MesE_ReacDel				: REAL ; //(kVArh) Delivered reactive energy
+		MesE_ReacRec				: REAL ; //(kVArh) Recieved reactive energy
+		
+		CalCosPhi					: REAL ; //(NA) CosPhi
+ 
+
+		MesThdI1					: REAL ; 
+		MesThdI2					: REAL ; 
+		MesThdI3					: REAL ; 	
+		MesThdV1					: REAL ; 	
+		MesThdV2					: REAL ; 	
+		MesThdV3					: REAL ; 	
+		MesThdU12					: REAL ; 	
+		MesThdU23					: REAL ; 	
+		MesThdU31					: REAL ; 	
+	
+		MesAlarmCode				: WORD;
+		MesWarningCode				: WORD;
+		
+		MesCP_Read					: BOOL := TRUE;
+		MesCP_Write					: BOOL := TRUE;
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <DUT Name="Fan_Standard" Id="{880aa47c-d7eb-4db7-92b0-1f7b340cdf67}">
+    <Declaration><![CDATA[TYPE Fan_Standard :
+STRUCT
+	MesData : Fan;	(* (NA) Object fan	*)		
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

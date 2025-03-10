@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.2">
+  <POU Name="CheckDivDInt" Id="{d6bc86ed-2140-44c0-9794-b7078c147bb0}" SpecialFunc="CheckDivInt32">
+    <Declaration><![CDATA[// Implicitly generated code : DO NOT EDIT
+FUNCTION CheckDivDInt : DINT
+VAR_INPUT
+	divisor:DINT;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// Implicitly generated code : Only an Implementation suggestion
+{noflow}
+Fault_Count_G(CU:=FALSE) ; 
+IF divisor = 0 THEN
+	CheckDivDInt:=1;
+		Fault_Count_G(CU:=TRUE) ; 
+ELSE
+	CheckDivDInt:=divisor;
+END_IF;
+{flow}]]></ST>
+    </Implementation>
+    <LineIds Name="CheckDivDInt">
+      <LineId Id="7" Count="0" />
+      <LineId Id="14" Count="0" />
+      <LineId Id="8" Count="1" />
+      <LineId Id="15" Count="0" />
+      <LineId Id="10" Count="3" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

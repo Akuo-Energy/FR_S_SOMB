@@ -1,0 +1,59 @@
+﻿<div id="UserControl1_118" data-tchmi-type="TcHmi.Controls.System.TcHmiUserControl" 
+     data-tchmi-top="0" data-tchmi-left="0" 
+     data-tchmi-width="139" data-tchmi-height="132" data-tchmi-width-unit="px" data-tchmi-height-unit="px"
+     data-tchmi-creator-viewport-width="500" data-tchmi-creator-viewport-height="500" data-tchmi-width-mode="Content" data-tchmi-height-mode="Content" data-tchmi-zindex="2">
+
+<div id="TcHmiContainer_141" data-tchmi-type="TcHmi.Controls.System.TcHmiContainer" data-tchmi-height="132" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-width="86" data-tchmi-width-unit="px" data-tchmi-zindex="1">
+
+<div id="TcHmiLine_252" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiLine" data-tchmi-height="25" data-tchmi-height-unit="px" data-tchmi-left="12" data-tchmi-left-unit="px" data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-width="1" data-tchmi-width-unit="px" data-tchmi-x1="0" data-tchmi-x2="0" data-tchmi-y1="0" data-tchmi-y2="25" data-tchmi-zindex="5" data-tchmi-stroke-thickness="3">
+
+</div>
+
+<div id="TcHmiContainer_142" data-tchmi-type="TcHmi.Controls.System.TcHmiContainer" data-tchmi-height="20" data-tchmi-height-unit="px" data-tchmi-left="3" data-tchmi-left-unit="px" data-tchmi-top="%f%%ctrl%TcHmiLine_252::Height%/ctrl%-%ctrl%TcHmiContainer_142::Height%/ctrl%/2%/f%" data-tchmi-top-unit="px" data-tchmi-width="20" data-tchmi-width-unit="px" data-tchmi-zindex="5">
+
+<div id="TcHmiLine_253" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiLine" data-tchmi-height="18" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-width="18" data-tchmi-width-unit="px" data-tchmi-x1="18" data-tchmi-x2="0" data-tchmi-y1="0" data-tchmi-y2="18" data-tchmi-x1-unit="px" data-tchmi-x2-unit="px" data-tchmi-zindex="3" data-tchmi-stroke-thickness="3">
+
+</div>
+
+<div id="TcHmiLine_254" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiLine" data-tchmi-height="18" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-width="18" data-tchmi-width-unit="px" data-tchmi-x1="0" data-tchmi-x2="18" data-tchmi-y1="0" data-tchmi-y2="18" data-tchmi-x1-unit="px" data-tchmi-x2-unit="px" data-tchmi-zindex="2" data-tchmi-stroke-thickness="3">
+
+</div>
+
+</div>
+
+<div id="TcHmiLine_255" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiLine" data-tchmi-height="%ctrl%TcHmiLine_252::Height%/ctrl%" data-tchmi-height-unit="px" data-tchmi-left="12" data-tchmi-left-unit="px" data-tchmi-top="%f%%ctrl%TcHmiContainer_143::Top%/ctrl%+%ctrl%TcHmiContainer_143::Height%/ctrl%%/f%" data-tchmi-top-unit="px" data-tchmi-width="1" data-tchmi-width-unit="px" data-tchmi-x1="0" data-tchmi-x2="0" data-tchmi-y1="0" data-tchmi-y2="%ctrl%TcHmiLine_252::Height%/ctrl%" data-tchmi-zindex="5" data-tchmi-stroke-thickness="%ctrl%TcHmiLine_252::StrokeThickness%/ctrl%">
+
+</div>
+
+<div id="TcHmiContainer_143" data-tchmi-type="TcHmi.Controls.System.TcHmiContainer" data-tchmi-height="%ctrl%TcHmiLine_256::Height%/ctrl%" data-tchmi-height-unit="px" data-tchmi-left="%ctrl%TcHmiLine_252::Left%/ctrl%" data-tchmi-left-unit="px" data-tchmi-top="%ctrl%TcHmiLine_252::Height%/ctrl%" data-tchmi-top-unit="px" data-tchmi-width="19" data-tchmi-width-unit="px">
+
+<div id="TcHmiLine_256" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiLine" data-tchmi-height="30" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-width="2" data-tchmi-width-unit="px" data-tchmi-x1="0" data-tchmi-x2="0" data-tchmi-y1="0" data-tchmi-y2="30" data-tchmi-zindex="5" data-tchmi-stroke-thickness="%ctrl%TcHmiLine_252::StrokeThickness%/ctrl%">
+
+
+
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-transform" type="application/json">
+[
+  {
+    "transformType": "Origin",
+    "x": 0,
+    "y": 30,
+    "xUnit": "px",
+    "yUnit": "px",
+    "zUnit": "px"
+  },
+  {
+    "transformType": "Rotate",
+    "angle": "%f%if (%pp%MesOpen%/pp%){ 45}else{0}%/f%"
+  }
+]
+</script>
+</div>
+
+</div>
+
+</div>
+
+</div>

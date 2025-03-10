@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1">
+  <DUT Name="Transfo_MV" Id="{db0c4cb6-f9ae-44f7-b0bd-0b4036e021a0}">
+    <Declaration><![CDATA[TYPE Transfo_MV :
+STRUCT
+	
+	MesData						: Transfo ; (* MesData *)
+
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>
+
+
+
+
+
+
+
+

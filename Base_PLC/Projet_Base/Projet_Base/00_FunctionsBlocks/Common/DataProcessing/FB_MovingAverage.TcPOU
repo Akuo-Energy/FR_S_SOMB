@@ -1,0 +1,81 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_MovingAverage" Id="{fd9e6ce8-8a00-437a-8ab3-ac95deee7761}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK  FB_MovingAverage
+//////////////////
+// Calculate the Moving Average of a data. Maximal number of point.
+//////////////////
+
+VAR CONSTANT 
+	CstNbPointMax			: INT := 1000 ; // Average on one hour, with seconds granularity points
+
+END_VAR
+
+
+VAR_INPUT
+	WindowDuration		: DINT ; // (ms) Window of Time during which the average will be done . 
+	ValueIn 			: REAL ; // Value to average
+	UpdatePeriod		: DINT ; // (ms) Period at which the value is updated. 	
+	CycleTime			: INT := CstCycleTime_G; // (ms) Cycle time of the CPU
+END_VAR
+	
+
+VAR_OUTPUT
+	ValueOut			: REAL ; // Averaged Value. 
+	bError 				: BOOL ; // Switch to true if error i inputs				
+END_VAR
+
+VAR
+	Values 				: ARRAY[1..CstNbPointMax] OF REAL; 	// Value to remove from the average calculation
+	
+	NbPoints			: DINT ; 	// Number of points used for calculating the average. 
+	PointPickUpNb		: DINT ; 	// Number of points to skip in average calculation
+	
+	JJ					: DINT;		// Pick Up index . 
+	KK					: DINT;		// For Loop 
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// EVALUATE VARIABLES //
+PointPickUpNb 	:= UpdatePeriod		/	CycleTime ;
+NbPoints 		:= WindowDuration 	/ 	UpdatePeriod  ;  
+
+// CHECK INPUTS //
+IF NbPoints > CstNbPointMax THEN 
+	bError 		:= TRUE ; 
+	ValueOut 	:= -1 ;
+	
+ELSE
+	// UPDATE VALUE ARRAY WITH NEW VALUE AND REMOVE OLD ONE //
+	JJ			:=JJ+1 ;
+	
+	IF JJ = PointPickUpNb THEN 
+		JJ		:= 0 ; // Reinitialize JJ
+		
+		// Move all values in the array on the right
+		FOR KK :=1 TO NbPoints-1 DO 
+			Values[NbPoints-KK+1]	:= Values[NbPoints-KK] ;
+			
+		END_FOR
+		
+		Values[1] 					:= ValueIn ; 	// Assign first index to new value. 
+		
+		// CALCULATE AVERAGE // 
+			ValueOut 						:= 0 ; 
+			
+			FOR KK:=1 TO NbPoints DO 
+				ValueOut 					:= ValueOut + Values[KK] / DINT_TO_REAL(NbPoints) ; 
+			
+			END_FOR
+		
+	END_IF
+END_IF
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_MovingAverage">
+      <LineId Id="518" Count="33" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

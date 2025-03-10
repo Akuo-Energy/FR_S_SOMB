@@ -1,0 +1,329 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="BESS_HMI" Id="{b66401db-ebf5-45f4-a86b-d28f4416f1cb}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM BESS_HMI
+VAR
+
+	MesP_PowerColPair : REAL;
+	MesQ_PowerColPair : REAL;
+
+
+	StateInv		: STRING;
+	PCS_StateInv	: ARRAY[0..100] OF STRING;
+	
+	
+	Pcs_Bat1_On : BOOL;
+	Pcs_Bat2_On : BOOL;
+	NumBmsDisplayed	: UINT := 1;
+	NumPcsDisplayed	: UINT := 1;	
+	NumEssDisplayed	: UINT := 1;
+		
+	BarDisplay_Max	: REAL;
+	BarDisplay_Min	: REAL;
+	BarDisplay_ID	: UINT := 1; // 1:SoC, 2:Idc, 3: Udc, 4:SoH
+	BarDisplay_1	: BOOL := TRUE;
+	BarDisplay_2	: BOOL;
+	BarDisplay_3	: BOOL;
+	BarDisplay_4	: BOOL;
+	
+	IN_NumSystemSelected		: UINT := 1; // Input : numéro du System sélectionné (sur le nombre total de systèmes)
+	ID_ESS_Displayed			: UINT;
+	ID_PCS_ESS_Displayed		: UINT; // Identifiant du premier PCS du système
+	ID_BAT_ESS_Displayed		: UINT; // Identifiant du premier système BMS du système
+	ID_PowerCol_PCS_Displayed	: UINT;	// Identifiant de la première colonne de puissance du système
+	
+	ParamNbSystemESS : UINT := 1;
+	
+	// PCS1
+		Trig_Pcs1GridFormer		: R_TRIG;
+		Trig_Pcs1GridFeeder		: R_TRIG;
+		Trig_Pcs1StartOn		: R_TRIG;
+		Trig_Pcs1StartOff		: R_TRIG;
+		Trig_Pcs1StopOn			: R_TRIG;
+		Trig_Pcs1StopOff		: R_TRIG;
+		Trig_Pcs1StandbyOn		: R_TRIG;
+		Trig_Pcs1StandbyOff		: R_TRIG;
+		
+		Trig_Pcs1CmdPOn			: R_TRIG;
+		Trig_Pcs1CmdPOff		: R_TRIG;
+		Trig_Pcs1CmdQOn			: R_TRIG;
+		Trig_Pcs1CmdQOff		: R_TRIG;	
+		
+		Trig_Pcs1CmdLocalOn		: R_TRIG;
+		Trig_Pcs1CmdLocalOff	: R_TRIG;
+		
+		Trig_Pcs1CmdFreqRegOn	: R_TRIG;
+		Trig_Pcs1CmdFreqRegOff	: R_TRIG;
+		Trig_Pcs1CmdURegOn		: R_TRIG;
+		Trig_Pcs1CmdURegOff		: R_TRIG;	
+		
+	// HVAC
+		Trig_Hvac1CmdStart		: R_TRIG;
+		Trig_Hvac1CmdStop		: R_TRIG;
+		Trig_Hvac2CmdStart		: R_TRIG;
+		Trig_Hvac2CmdStop		: R_TRIG;
+	
+	// PCS1
+		bPcs1GridFormer			: BOOL;
+		bPcs1GridFeeder			: BOOL;
+		bPcs1StartOn			: BOOL;
+		bPcs1StartOff			: BOOL;
+		bPcs1StopOn				: BOOL;
+		bPcs1StopOff			: BOOL;
+		bPcs1SoftStopOn			: BOOL;
+		bPcs1SoftStopOff		: BOOL;
+		bPcs1CmdPOn				: BOOL;
+		bPcs1CmdPOff			: BOOL;
+		bPcs1CmdQOn				: BOOL;
+		bPcs1CmdQOff			: BOOL;	
+		bPcs1CmdFreqRegOn		: BOOL;
+		bPcs1CmdFreqRegOff		: BOOL;
+		bPcs1CmdURegOn			: BOOL;
+		bPcs1CmdURegOff			: BOOL;	
+		bPcs1CmdLocalOn			: BOOL;
+		bPcs1CmdLocalOff		: BOOL;
+		bBat1CmdEnable			: BOOL;
+		bBat2CmdEnable			: BOOL;
+		
+		wSystemBMS_Enable		: WORD;
+		
+	// HVAC
+		bHvac1CmdStart			: BOOL;
+		bHvac1CmdStop			: BOOL;
+		bHvac2CmdStart			: BOOL;
+		bHvac2CmdStop			: BOOL;
+	
+	// PCS1 
+		PCS1_SetptP				: REAL;
+		PCS1_SetptQ				: REAL;
+		PCS1_SetptF				: REAL;
+		PCS1_SetptU				: REAL;
+		
+	// PCS1
+		bChange_Pcs1_StptP		: BOOL;
+		bChange_Pcs1_StptQ		: BOOL;
+		bChange_Pcs1_StptF		: BOOL;
+		bChange_Pcs1_StptU		: BOOL;
+		bReset_Pcs1				: BOOL;
+	
+	BBMS1_OpenDC			: BOOL;
+	BBMS1_CloseDC			: BOOL;
+	BBMS1_Reset				: BOOL;
+	
+	// Watchdog display 
+	
+	PCS1_AlarmsStruct		: ARRAY[1..75] OF ST_ValuesAlarms;
+	SBMS1_AlarmStruct		: ARRAY[1..60] OF ST_ValuesAlarms;
+	StateInv_Local			: STRING;
+	HMI_NamePcsEss					: ARRAY[1..CstNbBat_ESS_G*CstNbESS_G] OF STRING(255);
+	AX_MailAddr						: ARRAY[1..CstNbUser] OF STRING(255);	//Contient tous les numéros des utilisateurs
+	KK: INT;
+	LL: INT;
+	bPcs1CmdQ: INT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[FOR kk := 1 TO CstNbESS_G DO
+	FOR LL := 1 TO CstNbBat_ESS_G DO
+		HMI_NamePcsEss[(KK-1)*CstNbBat_ESS_G + LL] := concat('ESS', CONCAT(INT_TO_STRING(KK), concat(' - BAT', INT_TO_STRING(LL))));
+	END_FOR
+END_FOR
+
+
+
+// Ici, le premier élément est le PCS, on récupère le diviseur
+ID_ESS_Displayed := DINT_TO_UINT(TRUNC((IN_NumSystemSelected-1) / ParamNbSystemESS))+ 1;
+ID_PCS_ESS_Displayed := ((IN_NumSystemSelected-1) MOD CstNbPcs_ESS_G) + 1;
+ID_BAT_ESS_Displayed := ((IN_NumSystemSelected-1) MOD CstNbBat_ESS_G) + 1;
+ID_PowerCol_PCS_Displayed := (((IN_NumSystemSelected-1) MOD CstNbBat_ESS_G) + 1);
+
+
+HMI.BMS_Display 		:= AX_ESS[ID_ESS_Displayed].AX_BAT[ID_BAT_ESS_Displayed].MesDataExd;
+HMI.PCS_Display			:= AX_ESS[ID_ESS_Displayed].AX_PCS[ID_PCS_ESS_Displayed].MesDataExd;
+
+
+HMI.ESS_Display 		:= AX_ESS[ID_ESS_Displayed].MesDataExd;
+
+
+
+(*
+COMMANDS - UNCOMMENT FOR THEM TO WORK
+// PCS1 
+	IF bChange_Pcs1_StptP THEN 
+		bChange_Pcs1_StptP := FALSE;
+		OpcUa.AllvalueW.SetptP_PCS[ID_ESS_Displayed][ID_PCS_ESS_Displayed] := PCS1_SetptP;
+	END_IF
+	IF bChange_Pcs1_StptQ THEN 
+		bChange_Pcs1_StptQ := FALSE;
+		OpcUa.AllvalueW.SetptQ_PCS[ID_ESS_Displayed][ID_PCS_ESS_Displayed] := PCS1_SetptQ;
+	END_IF
+	
+	OpcUa.AllDataWPulse.CmdLocal_PCS[ID_ESS_Displayed][ID_PCS_ESS_Displayed] := Trig_Pcs1CmdLocalOff.Q;
+
+	IF bPcs1StartOn THEN
+		bPcs1StartOn := FALSE;
+		OpcUa.AllDataWPulse.CmdStart_PCS[ID_ESS_Displayed][ID_PCS_ESS_Displayed] := TRUE;
+	END_IF
+	IF bPcs1StopOn THEN
+		bPcs1StopOn := FALSE;
+		OpcUa.AllDataWPulse.CmdStop_PCS[ID_ESS_Displayed][ID_PCS_ESS_Displayed] := TRUE;
+	END_IF
+	IF bPcs1SoftStopOn THEN
+		bPcs1SoftStopOn := FALSE;
+		OpcUa.AllDataWPulse.CmdStandby_PCS[ID_ESS_Displayed][ID_PCS_ESS_Displayed] := TRUE;
+	END_IF
+	IF bPcs1CmdLocalOn THEN
+		bPcs1CmdLocalOn := FALSE;
+		OpcUa.AllDataWPulse.CmdLocal_PCS[ID_ESS_Displayed][ID_PCS_ESS_Displayed] := TRUE;
+	END_IF
+	IF bReset_Pcs1 THEN
+		bReset_Pcs1 := FALSE;
+		OpcUa.AllDataWPulse.CmdReset_PCS[ID_ESS_Displayed][ID_PCS_ESS_Displayed] := TRUE;
+	END_IF
+
+// BMS
+	IF BBMS1_CloseDC THEN
+		BBMS1_CloseDC := FALSE;
+		OpcUa.AllDataWPulse.CmdCloseDc_BAT[ID_ESS_Displayed][ID_BAT_ESS_Displayed] := TRUE;
+	END_IF	
+	IF BBMS1_OpenDC THEN
+		BBMS1_OpenDC := FALSE;
+		OpcUa.AllDataWPulse.CmdOpenDc_BAT[ID_ESS_Displayed][ID_BAT_ESS_Displayed] := TRUE;
+	END_IF	
+	IF BBMS1_Reset THEN
+		BBMS1_Reset := FALSE;
+		OpcUa.AllDataWPulse.CmdReset_BAT[ID_ESS_Displayed][ID_BAT_ESS_Displayed] := TRUE;
+	END_IF	
+*)
+	
+	
+// Display bars
+	CASE BarDisplay_ID OF
+		1:
+			BarDisplay_Min := 0;
+			BarDisplay_Max := 100;
+		2: 
+			BarDisplay_Min := -1400;
+			BarDisplay_Max := 1400;
+		3:
+			BarDisplay_Min := 0;
+			BarDisplay_Max := 1100;
+		4:	
+			BarDisplay_Min := 0;
+			BarDisplay_Max := 100;
+	END_CASE
+
+
+
+
+// Affichage des alarmes
+StateInv_Local := SEL(HMI.PCS_Display.MesData.OUT_CmdPcsLocal, 'Remote', 'Local');
+//StateInv := concat(PCS_StateInv[AX_ESS[ID_ESS_Displayed].AX_PCS[ID_PCS_ESS_Displayed].MesDataExd.MesData.MesIDState],concat(' - ', StateInv_Local)); 
+
+FOR KK := 57 + 10 * (NumEssDisplayed - 1) TO 66 + 10 * (NumEssDisplayed - 1) DO
+	FOR LL := 0 TO 15 DO
+		PCS1_AlarmsStruct[(KK-57)*16 + LL+1] := FUN_Alarms.AX_Journal[KK][LL];
+	END_FOR
+END_FOR
+
+
+CASE HMI.PCS_Display.MesData.MesID_State_Inv OF 
+	973:
+		StateInv := '-';
+	1787:
+		StateInv := 'Init';
+	381:
+		StateInv := 'Stop';
+	1392:
+		StateInv := 'Error';
+	3522:
+		StateInv := 'Update';
+	3523:
+		StateInv := 'Reset';
+	1394:
+		StateInv := 'WaitAC';
+	3524:
+		StateInv := 'ConnectAC';
+	1393:
+		StateInv := 'WaitDC';
+	3525:
+		StateInv := 'ConnectDC';
+	3526:
+		StateInv := 'GridFeed';
+	21429:
+		StateInv := 'GridForm';
+	21584:
+		StateInv := 'ActRampUp';
+	3527:
+		StateInv := 'FRT';
+	3528:
+		StateInv := 'Standby';
+	3529:
+		StateInv := 'QonDemand';
+	3530:
+		StateInv := 'RampDown';
+	375:
+		StateInv := 'Selftest';
+	3533:
+		StateInv := 'IOTest';
+	ELSE
+		StateInv := 'Unknown';
+END_CASE
+]]></ST>
+    </Implementation>
+    <LineIds Name="BESS_HMI">
+      <LineId Id="4192" Count="6" />
+      <LineId Id="4595" Count="0" />
+      <LineId Id="4594" Count="0" />
+      <LineId Id="4599" Count="0" />
+      <LineId Id="4596" Count="0" />
+      <LineId Id="4602" Count="0" />
+      <LineId Id="4201" Count="0" />
+      <LineId Id="4611" Count="0" />
+      <LineId Id="4203" Count="2" />
+      <LineId Id="5376" Count="0" />
+      <LineId Id="4478" Count="0" />
+      <LineId Id="4206" Count="0" />
+      <LineId Id="4366" Count="0" />
+      <LineId Id="4728" Count="0" />
+      <LineId Id="4236" Count="1" />
+      <LineId Id="6039" Count="0" />
+      <LineId Id="4238" Count="0" />
+      <LineId Id="5907" Count="0" />
+      <LineId Id="5911" Count="0" />
+      <LineId Id="5908" Count="1" />
+      <LineId Id="5913" Count="0" />
+      <LineId Id="5915" Count="0" />
+      <LineId Id="4845" Count="0" />
+      <LineId Id="5914" Count="0" />
+      <LineId Id="5917" Count="0" />
+      <LineId Id="4844" Count="0" />
+      <LineId Id="4255" Count="7" />
+      <LineId Id="5129" Count="3" />
+      <LineId Id="4263" Count="0" />
+      <LineId Id="4293" Count="0" />
+      <LineId Id="4959" Count="0" />
+      <LineId Id="4961" Count="0" />
+      <LineId Id="4960" Count="0" />
+      <LineId Id="5120" Count="1" />
+      <LineId Id="5124" Count="0" />
+      <LineId Id="5122" Count="0" />
+      <LineId Id="5075" Count="0" />
+      <LineId Id="4318" Count="0" />
+      <LineId Id="5076" Count="1" />
+      <LineId Id="5079" Count="8" />
+      <LineId Id="5252" Count="0" />
+      <LineId Id="6038" Count="0" />
+      <LineId Id="5249" Count="1" />
+      <LineId Id="4320" Count="16" />
+      <LineId Id="4357" Count="2" />
+      <LineId Id="5503" Count="0" />
+      <LineId Id="5501" Count="0" />
+      <LineId Id="4360" Count="5" />
+      <LineId Id="5623" Count="1" />
+      <LineId Id="5746" Count="40" />
+      <LineId Id="5625" Count="0" />
+      <LineId Id="5090" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

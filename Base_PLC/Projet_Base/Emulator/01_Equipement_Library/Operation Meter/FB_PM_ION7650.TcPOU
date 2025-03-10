@@ -1,0 +1,158 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_PM_ION7650" Id="{86bab016-e5c8-40a4-bd7c-373572e810c0}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_PM_ION7650 EXTENDS FB_PM_Base
+//////////////////
+// Measurement Solution based on Digiware, but access through PMS Socomec
+//////////////////
+VAR CONSTANT
+	// Characteristics of the object (Same for all instances)
+			
+END_VAR
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance specific) 
+	ParamUnitID					: BYTE 		:= 1 ;								// (NA)unit ID
+//	ParamInInterfaceSub			: BOOL := TRUE; // Serial interface RS422/RS485 TYPE (0:EL6021,1:SUB9)
+	ParamIPAdress		   		: STRING 	:= '192.168.20.15'; 				// (NA) IP Adress of ION7650 .
+	ParamTcpPort				: UINT 		:= 502;					
+	
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	
+END_VAR
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//
+	                                                    								                                          								
+
+	//M_READ VARIABLES//
+		FB_ModbusRead				: FB_ModbusRTU ;					// (NA) FB for Modbus Reading
+		InputStructRead 			: ARRAY[1..1] OF  Struct_InputRTU;
+		
+		AX_Quantity					: ARRAY[1..1] OF WORD;					// (NA) Quantity of blocks to read
+		AX_Address					: ARRAY[1..1] OF WORD;					// (NA) Start address of the read
+		MesBlock_Temp 				: ARRAY[1..1] OF ARRAY[1..125] OF WORD;	// (NA) Temporary Block with multiple modbus reading (U30 + I35)
+		Busy						: BOOL;
+		OutErrorMbRead				: ARRAY[1..1] OF BOOL;
+		
+		RTrigI						: R_TRIG;
+	//M_INIT VARIABLES //
+		OutFBCompleteted			: BOOL;
+	// M_EXECUTE VARIABLES //
+ 
+	MesDataExd AT %Q*				: PM_Standard ;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_Execute" Id="{4300ab21-ea51-4925-b25b-4baed51d2cd2}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	// EMULATOR
+		Psoltot		 : REAL;		// Total Solar Power 
+		KK			 : BYTE;		// For Loop
+	
+		MesStateCB 	 : BOOL;
+		MesDataNull 	: PM_Standard ;
+		
+	MesEReactCons_Temp: REAL;
+	MesEActProd_Temp: REAL;
+	MesEActCons_Temp: REAL;
+	MesEReactProd_Temp: REAL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[MesStateCB 	 :=   A1_SUBMV.A1_MainMVCB.MesDataExd.MesData.MesClosed ; 
+MesDataExd.MesData.MesP := - A1_SUBMV.A1_PM_Aux.MesDataExd.MesData.MesP ;	// initiliaze with auxiliaries power 
+MesDataExd.MesData.MesQ := - A1_SUBMV.A1_PM_Aux.MesDataExd.MesData.MesQ   ; // aux + reactif in transfo  
+
+IF MesStateCB THEN
+MesDataExd.MesData.MesU 	:= A1_PP.MesData.MesU;
+MesDataExd.MesData.MesU12 	:= A1_PP.MesData.MesU;
+MesDataExd.MesData.MesU23 	:= A1_PP.MesData.MesU;
+MesDataExd.MesData.MesU31 	:= A1_PP.MesData.MesU;
+MesDataExd.MesData.MesV 	:= A1_PP.MesData.MesU/SQRT(3);
+MesDataExd.MesData.MesV1 	:= A1_PP.MesData.MesU/SQRT(3);
+MesDataExd.MesData.MesV2 	:= A1_PP.MesData.MesU/SQRT(3);
+MesDataExd.MesData.MesV3 	:= A1_PP.MesData.MesU/SQRT(3);
+MesDataExd.MesData.MesFreq := A1_PP.MesData.MesFreq;
+	
+	FOR KK:= 1 TO CstNbPTR_G DO 
+	MesDataExd.MesData.MesP 	:= AX_PTR[KK].MesDataExd.MesData.MesP + MesDataExd.MesData.MesP;  //- ParamLossImpedance * SEL(AX_PTR[KK].MesDataExd.MesData.ProtectRelay_FLAIR.MesDataExd.MesData.MesU12 =0,  EXPT(((AX_PTR[KK].MesDataExd.MesData.MesP*1000) / AX_PTR[KK].MesDataExd.MesData.ProtectRelay_FLAIR.MesDataExd.MesData.MesU12/SQRT(3)),2) , 0 )/1000  ;		// Create some error due to transfo 
+	MesDataExd.MesData.MesQ 	:= AX_PTR[KK].MesDataExd.MesData.MesQ + MesDataExd.MesData.MesQ ;
+	END_FOR
+	
+MesDataExd.MesData.MesQ 	:= MesDataExd.MesData.MesQ + ABS(MesDataExd.MesData.MesP) * 0.1 	; // Add transfo conso
+	
+MesDataExd.MesData.MesP1 	:= MesDataExd.MesData.MesP ;
+MesDataExd.MesData.MesP2 	:= MesDataExd.MesData.MesP ;
+MesDataExd.MesData.MesP3 	:= MesDataExd.MesData.MesP ;
+
+MesDataExd.MesData.MesQ1 	:= MesDataExd.MesData.MesQ;
+MesDataExd.MesData.MesQ2 	:= MesDataExd.MesData.MesQ;
+MesDataExd.MesData.MesQ3 	:= MesDataExd.MesData.MesQ;
+MesDataExd.MesData.MesS := SQRT( MesDataExd.MesData.MesP * MesDataExd.MesData.MesP + MesDataExd.MesData.MesQ*MesDataExd.MesData.MesQ ) ; 
+	
+MesDataExd.MesData.MesI 	:= MesDataExd.MesData.MesS/(SQRT(3)*A1_PP.MesData.MesU);
+MesDataExd.MesData.MesI1 	:= MesDataExd.MesData.MesS/(SQRT(3)*A1_PP.MesData.MesU);
+MesDataExd.MesData.MesI2 	:= MesDataExd.MesData.MesS/(SQRT(3)*A1_PP.MesData.MesU);
+MesDataExd.MesData.MesI3 	:= MesDataExd.MesData.MesS/(SQRT(3)*A1_PP.MesData.MesU);
+ELSE 
+	MesEActProd_Temp 	:= MesDataExd.MesData.MesEActProd 	 ;
+	MesEActCons_Temp  := MesDataExd.MesData.MesEActCons   ;
+	MesEReactProd_Temp:= MesDataExd.MesData.MesEReactProd ;
+	MesEReactCons_Temp:= MesDataExd.MesData.MesEReactCons ;
+	
+//MesDataExd.MesData := MesDataNull;
+MesDataExd.MesData.MesEActProd  	:=MesEActProd_Temp 	  ;
+MesDataExd.MesData.MesEActCons  	:=MesEActCons_Temp    ;
+MesDataExd.MesData.MesEReactProd	:=MesEReactProd_Temp  ;
+MesDataExd.MesData.MesEReactCons	:=MesEReactCons_Temp  ;	
+	
+END_IF
+
+IF MesDataExd.MesData.MesP > 0 THEN
+MesDataExd.MesData.MesEActProd := MesDataExd.MesData.MesEActProd + MesDataExd.MesData.MesP*ParamCycleTime_Emul/3600000	;
+END_IF
+IF MesDataExd.MesData.MesP < 0 THEN
+MesDataExd.MesData.MesEActCons := MesDataExd.MesData.MesEActCons - MesDataExd.MesData.MesP*ParamCycleTime_Emul/3600000	;
+END_IF
+IF MesDataExd.MesData.MesQ > 0 THEN
+MesDataExd.MesData.MesEReactProd := MesDataExd.MesData.MesEReactProd + MesDataExd.MesData.MesQ*ParamCycleTime_Emul/3600000	;
+END_IF
+IF MesDataExd.MesData.MesQ < 0 THEN
+MesDataExd.MesData.MesEReactCons := MesDataExd.MesData.MesEReactCons - MesDataExd.MesData.MesQ*ParamCycleTime_Emul/3600000	;
+END_IF
+
+MesDataNull.MesData.MesEReactCons := MesDataExd.MesData.MesEReactCons;	
+MesDataNull.MesData.MesEReactProd := MesDataExd.MesData.MesEReactProd;	
+MesDataNull.MesData.MesEActCons := MesDataExd.MesData.MesEActCons;		
+MesDataNull.MesData.MesEActProd := MesDataExd.MesData.MesEActProd;		
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_PM_ION7650">
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PM_ION7650.M_Execute">
+      <LineId Id="50" Count="2" />
+      <LineId Id="54" Count="11" />
+      <LineId Id="67" Count="4" />
+      <LineId Id="73" Count="0" />
+      <LineId Id="75" Count="14" />
+      <LineId Id="126" Count="3" />
+      <LineId Id="155" Count="0" />
+      <LineId Id="90" Count="0" />
+      <LineId Id="136" Count="2" />
+      <LineId Id="122" Count="1" />
+      <LineId Id="91" Count="18" />
+      <LineId Id="14" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

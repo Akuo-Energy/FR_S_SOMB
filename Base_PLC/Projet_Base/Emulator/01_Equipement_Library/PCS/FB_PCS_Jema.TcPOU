@@ -1,0 +1,877 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_PCS_Jema" Id="{374c2814-5d9e-4c4b-9980-247fd8d68361}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_PCS_Jema EXTENDS FB_PCS_Base
+//////////////////
+// PLC controller. Jema Object 
+//////////////////
+VAR_INPUT 
+	MesGridForming						: BOOL;
+
+	ParamFvP_Droop						: REAL := 0.02; // P(F) = a x F + b, a = ParamFvP_Droop
+	ParamUvQ_Droop						: REAL := 0.02;
+          
+	FB_RampP							: FB_Ramp ; 
+	FB_RampQ							: FB_Ramp ; 
+        
+	MesPInitial							: REAL;
+	MesQInitial							: REAL;
+	Trig_ClockRead						: R_TRIG;
+	Trig_ClockWrite						: ARRAY[1..3] OF  R_TRIG;
+	CmdWrite							: ARRAY[1..3] OF BOOL;
+	AX_Cmd				AT%Q*			: ARRAY[1..3] OF ARRAY [1..120] OF WORD;
+	AX_Cmd_New							: ARRAY[1..3] OF ARRAY [1..120] OF WORD;
+	bTest								: BOOL;
+END_VAR
+VAR_INPUT PERSISTENT
+	// Parameters of the Object
+		ParamPrange							: REAL := 1559.0 ; // (kW) Power range for sMesIng . 
+		ParamPn							: REAL := 1300.0;	// (kW) Nominal power
+		ParamQn							: REAL := 1300.0;	// (kW) Nominal power
+		
+		ParamIPAddress_DSP					: ARRAY[1..3] OF  STRING ; 	
+
+    	                            		
+		ParamSetPtModbusMode				: BOOL:= TRUE;		// If True, then Setpoints come from Modbus
+		ParamPoverQ							: BOOL:= TRUE;		// If P over Q is True, then Max setpoint for Q calculated from setpoint of P
+    	                    			
+		ParamQfU_UDbHigh    				: REAL;				// (V)JEMA U1 : AKUO U_UDbHigh
+		ParamQfU_Umax		    			: REAL;				// (V)JEMA U2 : AKUO U_Umax
+		ParamQfU_UDbLow	    				: REAL;				// (V)JEMA U3 : AKUO U_UDbLow
+		ParamQfU_Umin		    			: REAL;				// (V)JEMA U4 : AKUO U_Umin
+		                            		
+		ParamQfU_QDbHigh					: REAL;				// (kVAr)JEMA Q1 : AKUO U_QDbHigh. Power per power column (between -500 and 500)
+		ParamQfU_Qmax						: REAL;				// (kVAr)JEMA Q4 : AKUO U_Qmax. Power per power column (between -500 and 500)
+		ParamQfU_QDbLow						: REAL;				// (kVAr)JEMA Q3 : AKUO U_QDbLow. Power per power column (between -500 and 500)
+		ParamQfU_Qmin						: REAL;				// (kVAr)JEMA Q2 : AKUO U_Qmin. Power per power column (between -500 and 500)
+    	                            		
+		ParamPfF_FDbHigh	    			: REAL;				// (Hz)JEMA f1 : AKUO P_FDbHigh
+		ParamPfF_Fmax		    			: REAL;				// (Hz)JEMA f2 : AKUO P_Fmax
+		ParamPfF_FDbLow	    				: REAL;				// (Hz)JEMA f3 : AKUO P_FDbLow
+		ParamPfF_Fmin		    			: REAL;				// (Hz)JEMA f4 : AKUO P_Fmin
+		                            		
+		ParamPfF_PDbHigh					: REAL;				// (kW) JEMA P1 : AKUO P_PDbHigh	 Power per power column
+		ParamPfF_Pmax						: REAL;				// (kW)JEMA P2 : AKUO P_Pmax. Power per power column
+		ParamPfF_PDbLow						: REAL;				// (kW)JEMA P3 : AKUO P_PDbLow. Power per power column
+		ParamPfF_Pmin						: REAL;				// (kW)JEMA P4 : AKUO P_Pmin. Power per power column
+    	
+		ParamPfF_FhystLow					: REAL;				// (Hz)JEMA fst1
+		ParamPfF_FhystHigh					: REAL;				// (Hz)JEMA fst2
+ 
+
+		ParamClockWriteTimeFreqReg			: TIME := T#3S ; 
+   	         	    		
+		ParamTimeSoCRangeReachedRmp			: TIME;				// (ms) Time to ramp P back to the setpoint after the SoC reached its limits
+		ParamTimeFreqRegStbDuration			: TIME;				// (ms) Time to wait after entering the stable before ramping the P back to the setpoint 
+		ParamTimeStblRmp					: TIME; 			// (ms) Time to ramp P back to the setpoint after entering the stable 
+		    
+ 
+	ParamTempoStandby				: TIME	:= T#10S;	// (s)Tempo to let time for PCS to apply a 0 setpoint before stopping . 
+
+   	                           
+   	
+		ParamFreqRegSoCmax 					: REAL;	 			// (%) Jema Stops charging setpoint and overfreq regulation if BESS reaches this value
+		ParamFreqRegSoCmin 					: REAL;				//(%) Jema Stops discharging setpoint and underfreq regulation if BESS reaches this value
+    	
+		ParamLVRT_Enabled					: BOOL; 			// LVRT Enabled 
+		ParamAntiIslanding_Enabled			: BOOL:=TRUE;				// Is Anti Islanding enabled
+
+		ParamDeactivateWatchdog				: BOOL:=TRUE;				// Parameter to deactivate the watchdog
+
+	// Not Used at the moment : used to calculate theoretical Efficiency
+		ParamRendementPcsNom				: REAL := 98;		// (%) Nominal Efficiency of the PCS at optimal conditions  
+		ParamRendementPcsMin				: REAL := 80;		// (%) Minimal Efficiency of the PCS at P = 0  
+		ParamTauxDeChargeRef				: REAL := 10;		// (%) LoadFactor where 1/5 of the efficiency is reached  
+
+	// 
+		ParamTimeoutCmdQ					: TIME := T#15S; 	// (s) Time to activate or deactivate Q regulation before an alarm is raised
+		ParamTimeoutCmdCosPhi				: TIME := T#15S; 	//  (s)Time to activate or deactivate CosPhi regulation before an alarm is raised
+		ParamTimeoutQvU						: TIME := T#15S;	//  (s)Time to activate or deactivate Q(U) regulation before an alarm is raised
+		ParamTimeoutPvF						: TIME := T#15S;	// (s) Time to activate or deactivate P(f) regulation before an alarm is raised
+ 		ParamTimeoutGridFeederTransition	: TIME := T#1M;		// (min) Time elapsed after grid feeder cmd when an alarm is raised   
+ 		ParamTimeoutOffTransition			: TIME := T#1M;		// (min) Time elapsed after CmdStop cmd when an alarm is raised
+ 
+           			
+END_VAR 
+VAR_INPUT   	                   			
+	// Commands :
+		IN_CmdPcsInLocalMode				: BOOL;				// PCS is not included in available PCS' pool (excluded from PP control). 
+		IN_CmdStopOperation					: BOOL;				// BESS Specific command : Stop operation		
+		IN_CmdPreventStart					: BOOL;				// BESS Specific command : Prevent start	
+		IN_CmdOpenAC						: BOOL;				// Cmd To send an Open AC order
+		IN_CmdOpenDC						: BOOL;				// Cmd To send an Open DC order	
+ 		IN_CmdP_On							: BOOL:=TRUE;				// Cmd start regulating on SetptP from outside of PCS : if you wan to know from what source, add a _IO2 value
+		IN_CmdQ_On							: BOOL;				// Cmd start regulating on SetptQ from outside of PCS : if you wan to know from what source, add a _IO2 value
+		IN_CmdCosPhi_On						: BOOL;				// Cmd start regulating on SetptCosPhi from outside of PCS : if you wan to know from what source, add a _IO2 value
+		IN_CmdP_Off							: BOOL;				// Cmd start regulating on SetptP from outside of PCS : if you wan to know from what source, add a _IO2 value
+		IN_CmdQ_Off							: BOOL;				// Cmd start regulating on SetptQ from outside of PCS : if you wan to know from what source, add a _IO2 value
+		IN_CmdCosPhi_Off					: BOOL;				// Cmd start regulating on SetptCosPhi from outside of PCS : if you wan to know from what source, add a _IO2 value
+		IN_CmdFreqregOn						: BOOL;				// Cmd 
+		IN_CmdFreqregOff					: BOOL;				// 
+		IN_CmdUregOn						: BOOL;				// 
+		IN_CmdUregOff						: BOOL;				// 
+
+		
+		IN_CmdStandby						: BOOL;				// Cmd To send a soft Stop (No opening and closing of the AC/DC switch \m/ )
+		IN_CmdStart							: BOOL;				// Cmd To send a start to the PCS (Does the full procedure, Soft + Close AC + Close DC)
+		IN_CmdStop							: BOOL;				// Cmd To send a stop to the PCS (Soft Stop + Open DC + Open AC)
+		                            		
+
+		IN_CmdGridFeeder					: BOOL;				// 
+		IN_SetptP_Local						: REAL;				// Local Command
+		IN_SetptQ_Local						: REAL;				// Local Command
+		
+		IN_CmdWatchdog						: BOOL ; 			// Activate or Deactivate the Watchdog function
+
+                
+END_VAR
+VAR_OUTPUT
+	//Child objects
+		OUt_SetptP_IO					: INT;			// (NA) Analogical value for the active power setpoint (based on ParamPn)
+		OUT_SetptQ_IO					: INT;			// (NA) Analogical value for the reactive power setpoint (based on ParamQn)
+
+END_VAR
+VAR                                     	
+	//M_ALARMMANAGEMENT VARIABLES//     	
+	//M_READ VARIABLES//            		
+		ModbusRead            				: ARRAY [1..CstNbPowerCol_PCS_G+1] OF FB_ModbusRead ; 	// (NA) FB for Modbus Reading
+		MesBlock1_Temp						: ARRAY [1..CstNbPowerCol_PCS_G+1] OF ARRAY[1..120] OF WORD ; // (NA) Temporary Block Matrix for PCS modbus reading		
+		AX_PcsHeartbit						: ARRAY [1..CstNbPowerCol_PCS_G] OF BOOL;
+		                                	
+	///MesDataExd.MesData.cs_Jema						: ARRAY [1..CstNbModule_Pcs] OF PCSJema ; 			// (NA) [H,B] PCS  Data Structure
+		MesModbusReadAlarm 		  			: ARRAY [1..CstNbPowerCol_PCS_G+1] OF BOOL ;				// (NA) Modbus Read Alarm for communication
+		TON_PcsHeartBitAlarm				: ARRAY [1..CstNbPowerCol_PCS_G] OF TON ;	
+		TON_AlarmPcs						: ARRAY [1..CstNbPowerCol_PCS_G] OF TON ; 		// DesInhibate undervoltage alarms on PCS few seconds after PCS connected .  
+                                        	
+		DFV									: ARRAY[1..3] OF FB_DetectFixedValue;	
+		StaticValuesToCompareHeartbit		: ARRAY[1..3] OF REAL;
+		                                	                                     
+		CTU_PcsNb							: CTU ; 
+	
+	// M_EVALUATE VARIABLES//
+//		DataPP								: PP;
+//		DataSUB_MV								: SUB_MV_Exd;
+		DataSystemBMS						: SystemBMS;
+		MesWatchdog					: BOOL;
+		MesHeartbeat_Old					: WORD;
+		Trig_Watchdog						: R_TRIG;
+		CalNbFreqActivePcs					: UINT;			// Number of powercolumn that have frequency regulation 
+		RS_hystlimitmin						: RS;
+		RS_hystlimitmax						: RS;
+                            		
+	//M_WRITECOMMAND VARIABLES//    		
+		ModbusWrite							: ARRAY [1..5] OF FB_ModbusWrite ;		// (NA) Functionnal Block for Writing Command Word through modbus
+		Trig_Write							: ARRAY [1..5] OF R_TRIG;
+		MesModbusWriteCmdAlarm				: ARRAY [1..5] OF BOOL ;				// (NA) Modbus Write Failed  (Command word) . 	
+		MesModbusWriteCode          		: ARRAY [1..5] OF UDINT ; 				// (NA) Modbus Write Alarm Code 
+		CmdWrite			AT%Q*			: ARRAY [1..5] OF BOOL;
+		AX_Cmd				AT%Q*			: ARRAY [1..5] OF ARRAY [1..120] OF WORD;
+		AX_Cmd_Old							: ARRAY [1..5] OF ARRAY [1..120] OF WORD;
+                                   		
+		TRIG_CmdOpenAC						: R_TRIG;			// Trig to detect an order to change Mode
+		TRIG_CmdOpenDC						: R_TRIG;			// Trig to detect an order to change Mode
+		TRIG_CmdP_On						: R_TRIG;			// Trig to detect an order to change Mode
+		TRIG_CmdQ_On			    		: R_TRIG;			// Trig to detect an order to change Mode
+		TRIG_CmdCosPhi_On 					: R_TRIG;			// Trig to detect an order to change Mode
+		TRIG_CmdP_Off						: R_TRIG;			// Trig to detect an order to change Mode
+		TRIG_CmdQ_Off			    		: R_TRIG;			// Trig to detect an order to change Mode
+		TRIG_CmdCosPhi_Off 					: R_TRIG;			// Trig to detect an order to change Mode
+		TRIG_CmdReset						: R_TRIG;		
+		TRIG_FreqReg_On						: R_TRIG;
+		TRIG_FreqReg_Off					: R_TRIG;
+		TRIG_UReg_On						: R_TRIG;
+		TRIG_UReg_Off						: R_TRIG;
+	
+		
+		TOF_FreqRegDisable					: TOF;			// Inhibe frequency regulation when frequency is zero  
+		R_TRIG_FreqRegDisable				: R_TRIG;		// Reactivate after a few seconds to initiaize
+		
+		
+		
+		
+		
+		TRIG_CmdGridFeeder					: R_TRIG;
+	
+		TRIG_CmdStop						: R_TRIG;
+		TRIG_CmdStandby						: R_TRIG;
+		TRIG_CmdStart						: R_TRIG;
+	
+	F_TRIG_Standby: F_TRIG;		                            		
+
+		TP_Reset							: TP ; 				// (NA) Maintain Reset command for a certain time 
+		TP_CmdStandby						: TP;				// TP To maintain a soft stop order
+		TP_CmdStandbyDelay					: TP ; 				// TP to delay application of standby order
+		
+		
+		
+		bMaintainStop					: BOOL;	// Allow to keep setpoint to zero after a standby order .   RS .     	
+
+		FB_Ramp_Standby			: FB_Ramp;	// Ramp to zero after a standby order
+		FB_Ramp_StandbyQ		: FB_Ramp; // Ramp to zero after a standby order
+	
+		
+
+		// Pour la commande start, j'envoie une consigne pour fermer les contacteurs DC des batteries
+		TP_CmdOpenAC						: TP;				// TP To ensure R trig is detected
+		TP_CmdOpenDC						: TP;				// TP To ensure R trig is detected
+
+		TP_CmdStart							: TP;				// TP To ensure R trig is detected
+		TP_CmdPreStart						: TP;				// TP To send a close dc breaker order before sending start order
+		F_TrigPreStart						: F_TRIG;			// failing edge to detect end of TP;
+		
+		// Pour la commande stop, pour éviter qu'on ouvre tout d'un coup, je faire un pré stop pendant 1,5s où j'envoie un autre de standby
+		TP_CmdStop							: TP;				// TP To ensure R trig is detected
+		TP_CmdPreStop						: TP;				// TP to send a soft stop before sending a stop 
+		F_TrigPreStop						: F_TRIG;			// failing edge to detect end of TP;
+		                            		
+		TON_CmdP_On							: TON;			// Detect the non execution of an order
+		TON_CmdQ_On			    			: TON;			// Detect the non execution of an order
+		TON_CmdCosPhi_On 					: TON;			// Detect the non execution of an order
+		TON_CmdP_Off						: TON;			// Detect the non execution of an order
+		TON_CmdQ_Off			    		: TON;			// Detect the non execution of an order
+		TON_CmdCosPhi_Off 					: TON;			// Detect the non execution of an order
+		TON_FreqReg_On						: TON;
+		TON_FreqReg_Off						: TON;
+		TON_UReg_On							: TON;
+		TON_UReg_Off						: TON;
+		TON_CmdGridFeeder					: TON;
+		TON_CmdStart			    		: TON;
+		TON_CmdStop	                		: TON;
+		TON_CmdStandby		        		: TON;
+
+		    
+		TP3					: TP ; // For freq reg Clockwrite
+		TrigWriteFreqReg	: R_TRIG ; 
+		ClockWriteFreqReg	: BOOL ; 
+                        		
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_Evaluate" Id="{d2b4a5f2-7144-4aee-81de-91bdfc4c9633}">
+      <Declaration><![CDATA[METHOD M_Evaluate : BOOL
+VAR_INPUT
+END_VAR
+VAR
+	MesDataExd.MesData.DL 		: PDL_Exd;
+MesDataExd.MesData.bms 	: SystemBMS;
+	KK				: INT;
+	
+	MesS 			: ARRAY[1..3] OF REAL;
+	MesS2 			: REAL;
+	MesS3 			: REAL;
+	NbPcsConnected 	: UINT;
+	III				: INT;
+	CBChoose		: BOOL ;
+
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Evaluate to get the values of the Storage + Substation
+MesDataPDL 		:= A1_SUBMV.MesDataExd.MesData.
+MesDataSbms 	:= AX_ESS[ParamEssNum].AX_Bbms[ParamPcsNum].MesDataExd.MesData.
+
+// Mes frequence 
+CASE ParamEssNum OF 
+	1:
+			CBChoose := A1_SUBMV.A1_CB_ImBess1.MesDataExd.MesData.MesClosed ; 
+	2:
+			CBChoose := A1_SUBMV.A1_CB_ImBess2.MesDataExd.MesData.MesClosed ; 
+	3:
+			CBChoose := A1_SUBMV.A1_CB_ImBess3.MesDataExd.MesData.MesClosed ; 
+	4:
+			CBChoose := A1_SUBMV.A1_CB_ImBess4.MesDataExd.MesData.MesClosed ; 
+	5:
+			CBChoose := A1_SUBMV.A1_CB_ImBess5.MesDataExd.MesData.MesClosed ; 
+	6:
+			CBChoose := A1_SUBMV.A1_CB_ImBess6.MesDataExd.MesData.MesClosed ; 
+
+END_CASE
+
+IF CBChoose THEN
+	MesVacPcs 		:= MesDataExd.MesData.DL.AX_PM1.MesV / MesUGen*500;
+	MesFreqPcs 		:= MesDataExd.MesData.DL.AX_PM1.MesFreq;
+ELSE 
+	MesVacPcs 		:= 0;	
+    MesFreqPcs 		:= 0;
+	CmdStop 		:= TRUE;
+END_IF
+
+MesUsetptWrittenScada	:= WORD_TO_REAL(AX_Cmd[1][15]);
+MesUMesWrittenScada		:= WORD_TO_REAL(AX_Cmd[1][16]);
+
+// Reset 
+TON_Watchdog(In := AX_Cmd[1][38].0, PT := T#10S);
+IF AX_Cmd[1][38].1 THEN
+	FOR KK:= 1 TO ParamNbPcs DO 
+	MesDataExd.MesData.AX_PCS[KK].MesJemaAlarms := Alarms_Null;
+	END_FOR
+END_IF
+
+MesGridForming := AX_Cmd[1][38].2;
+
+TRIG_CmdStart(CLK := AX_Cmd[1][38].5  OR SEL( ParamPcsNum=2, AX_ESS[ParamEssNum].OUT_CmdStartPcs1_IO ,AX_ESS[ParamEssNum].OUT_CmdStartPcs2_IO ) );
+TRIG_CmdStop(CLK := AX_Cmd[1][38].6 OR CmdStop  OR AX_ESS[ParamEssNum].OUT_CmdEmergencyStop );
+TRIG_CmdFreqReg(CLK := AX_Cmd[1][38].8);
+TRIG_CmdUReg(CLK := AX_Cmd[1][38].9);	
+TRIG_CmdStandby(CLK := AX_Cmd[1][38].15 OR SEL( ParamPcsNum=2, AX_ESS[ParamEssNum].OUT_CmdStopPcs1_IO ,AX_ESS[ParamEssNum].OUT_CmdStopPcs2_IO ) OR NOT CBChoose);	
+
+MesSoCWrittenScada			:= WORD_TO_REAL(AX_Cmd[1][4]);
+ParamFreqRegSoCmax			:= WORD_TO_REAL(AX_Cmd[1][2]);
+ParamFreqRegSoCmin			:= WORD_TO_REAL(AX_Cmd[1][3]);
+
+
+
+MesData.MesOnGrid := NOT AX_Cmd[1][38].2;
+MesData.MesOffGrid := AX_Cmd[1][38].2;
+
+
+
+
+// CmdStart
+	IF TRIG_CmdStart.Q THEN
+		MesSoftStop	:= FALSE;
+	MesDataExd.MesData.MesAcBreaker := TRUE;
+	END_IF
+	TP_Precharge(IN := TRIG_CmdStart.Q AND NOT MesDataExd.MesData.MesDcBreaker, PT := T#3S);
+MesDataExd.MesData.MesPrecharge := TP_Precharge.Q;
+	FOR KK:= 1 TO ParamNbPcs DO 
+	MesDataExd.MesData.AX_PCS[KK].MesUdc := MesDataExd.MesData.bms.MesUdc*TIME_TO_REAL(TP_Precharge.ET)/3000;
+	END_FOR
+	
+	TRIG_PrechargeDone(CLK := TP_Precharge.Q);
+	IF TRIG_PrechargeDone.Q THEN
+	MesDataExd.MesData.MesDcBreaker := TRUE;
+	END_IF
+
+// Cmd Stop 
+	IF TRIG_CmdStop.Q THEN
+		CmdStop			:= FALSE;
+	MesDataExd.MesData.MesAcBreaker := FALSE;
+	MesDataExd.MesData.MesDcBreaker := FALSE;
+		FOR KK := 1 TO ParamNbPcs DO
+		MesDataExd.MesData.AX_PCS[KK].MesAcSwitchClosed := FALSE;
+			//MesDataExd.MesData.MesOnGrid := FALSE;
+			//MesDataExd.MesData.MesOffGrid := FALSE;
+		END_FOR
+	END_IF
+// Cmd Soft Stop 
+	IF TRIG_CmdStandby.Q  THEN
+		MesSoftStop := TRUE;
+		FOR KK := 1 TO ParamNbPcs DO
+		MesDataExd.MesData.AX_PCS[KK].MesAcSwitchClosed := FALSE;
+			//MesDataExd.MesData.MesOnGrid := FALSE;
+			//MesDataExd.MesData.MesOffGrid := FALSE;
+		END_FOR
+	END_IF	
+	
+	MesVacPcs_Min := ParamQfU_Umin*500/MesUGen/SQRT(3);
+	MesVacPcs_Max := ParamQfU_Umax*500/MesUGen/SQRT(3);
+	
+	FOR KK:= 1 TO ParamNbPcs DO 
+		TP_CloseAcContact[KK](IN := MesDataExd.MesData.MesDcBreaker AND MesDataExd.MesData.MesAcBreaker AND MesVacPcs > MesVacPcs_Min AND MesVacPcs < MesVacPcs_Max AND NOT MesSoftStop, PT := T#5S);
+		TRIG_CmdAcContact[KK](CLK := TP_CloseAcContact[KK].Q);
+		IF TRIG_CmdAcContact[KK].Q THEN
+
+		MesDataExd.MesData.AX_PCS[KK].MesAcSwitchClosed := TRUE;
+		END_IF
+	END_FOR
+	
+// Gestion de la puissance 
+IF MesDataExd.MesData.MesDcBreaker THEN
+	FOR KK := 1 TO ParamNbPcs DO
+	MesDataExd.MesData.AX_PCS[KK].MesUdc	 		:= MesDataExd.MesData.bms.MesUdc;
+	END_FOR
+ELSE 
+	FOR KK := 1 TO ParamNbPcs DO
+	MesDataExd.MesData.AX_PCS[KK].MesUdc	 		:= 0;
+	END_FOR
+END_IF
+
+// SoC Limit 
+	TP_FreqRampToZeroSoClimit(IN := MesSoCWrittenScada > ParamFreqRegSoCmax OR MesSoCWrittenScada < ParamFreqRegSoCmin, PT := ParamTimeSoCRangeReachedRmp);
+	TRIG_BeginRamp(CLK := TP_FreqRampToZeroSoClimit.Q);
+	
+	IF TRIG_BeginRamp.Q THEN
+		MesPmaxRampSoClimit :=0 ; 
+		FOR KK:= 1 TO ParamNbPcs DO 
+			MesPmaxRampSoClimit := MesPmaxRampSoClimit + MesDataExd.MesData.AX_PCS[KK].MesPac ;
+		END_FOR
+	END_IF
+
+
+// MesData
+	FOR KK := 1 TO ParamNbPcs DO 
+	MesDataExd.MesData.AX_PCS[KK].MesUac 	:= MesVacPcs*SQRT(3);
+	MesDataExd.MesData.AX_PCS[KK].MesFreq 	:= MesFreqPcs;
+		IF MesDataExd.MesData.AX_PCS[KK].MesAcSwitchClosed AND MesDataExd.MesData.AX_PCS[KK].MesUdc >0 AND MesDataExd.MesData.AX_PCS[KK].MesUac >0 THEN
+			IF MesSoCWrittenScada > ParamFreqRegSoCmax AND MesDataExd.MesData.OUT_SetptP < 0 THEN
+			MesDataExd.MesData.AX_PCS[KK].MesPac := (TIME_TO_REAL(TP_FreqRampToZeroSoClimit.PT) - TIME_TO_REAL(TP_FreqRampToZeroSoClimit.ET))/TIME_TO_REAL(TP_FreqRampToZeroSoClimit.PT) * MesPmaxRampSoClimit/ParamNbPcs; 
+			ELSIF MesSoCWrittenScada < ParamFreqRegSoCmin AND MesDataExd.MesData.OUT_SetptP > 0 THEN
+			MesDataExd.MesData.AX_PCS[KK].MesPac := (TIME_TO_REAL(TP_FreqRampToZeroSoClimit.PT) - TIME_TO_REAL(TP_FreqRampToZeroSoClimit.ET))/TIME_TO_REAL(TP_FreqRampToZeroSoClimit.PT) * MesPmaxRampSoClimit/ParamNbPcs; 
+			ELSE
+			MesDataExd.MesData.AX_PCS[KK].MesPac 	:= MesDataExd.MesData.AX_PCS[KK].MesPac+ MesDataExd.MesData.OUT_SetptP/ParamNbPcs -.MesDataExd.MesData.AX_PCS[KK].MesPac)/CoeffSuiviSetpointPcs ;
+			END_IF
+		MesDataExd.MesData.AX_PCS[KK].MesQac 	:= MesDataExd.MesData.AX_PCS[KK].MesQac+ MesDataExd.MesData.OUT_SetptQ/ParamNbPcs -.MesDataExd.MesData.AX_PCS[KK].MesQac)/CoeffSuiviSetpointPcs ;
+
+			MesS[KK] 					:= SQRT( MesDataExd.MesData.AX_PCS[KK].MesPac.MesDataExd.MesData.AX_PCS[KK].MesPac.MesDataExd.MesData.AX_PCS[KK].MesQac.MesDataExd.MesData.AX_PCS[KK].MesQac));
+
+		MesDataExd.MesData.AX_PCS[KK].MesPdc 	:= SEL.MesDataExd.MesData.AX_PCS[KK].MesPac < 0, MesDataExd.MesData.AX_PCS[KK].MesPac/0.96, MesDataExd.MesData.AX_PCS[KK].MesPac*0.96);	
+		MesDataExd.MesData.AX_PCS[KK].MesI1 	:= MesS[KK]*1000/(SQRT(3).MesDataExd.MesData.AX_PCS[KK].MesUac);
+		MesDataExd.MesData.AX_PCS[KK].MesI2 	:= MesDataExd.MesData.AX_PCS[KK].MesI1;
+		MesDataExd.MesData.AX_PCS[KK].MesI3 	:= MesDataExd.MesData.AX_PCS[KK].MesI1;
+		MesDataExd.MesData.AX_PCS[KK].MesIac 	:= MesDataExd.MesData.AX_PCS[KK].MesI1;
+		MesDataExd.MesData.AX_PCS[KK].MesIdc 	:= MesDataExd.MesData.AX_PCS[kk].MesPdc *1000 //MesDataExd.MesData.AX_PCS[KK].MesUdc ;
+		ELSE
+		MesDataExd.MesData.AX_PCS[KK].MesPac 	:= 0;
+		MesDataExd.MesData.AX_PCS[KK].MesQac 	:= 0;
+		MesDataExd.MesData.AX_PCS[KK].MesI1  	:= 0;
+		MesDataExd.MesData.AX_PCS[KK].MesI2  	:= 0;
+		MesDataExd.MesData.AX_PCS[KK].MesI3  	:= 0;
+		MesDataExd.MesData.AX_PCS[KK].MesIac 	:= 0;
+		MesDataExd.MesData.AX_PCS[KK].MesIdc 	:= 0;
+		MesDataExd.MesData.AX_PCS[KK].MesPdc 	:= 0;
+
+		END_IF
+	END_FOR
+
+
+	FOR KK := 1 TO ParamNbPcs DO
+		
+	MesDataExd.MesData.AX_PCS[KK].MesTempCabinet 	:= 30.MesDataExd.MesData.AX_PCS[KK].MesPac/519*5;
+	MesDataExd.MesData.AX_PCS[KK].MesTempControl 	:= 27.5.MesDataExd.MesData.AX_PCS[KK].MesPac/519*5;
+	MesDataExd.MesData.AX_PCS[KK].MesTempPowerUnit := 32.5.MesDataExd.MesData.AX_PCS[KK].MesPac/519*5;
+		NbPcsConnected := NbPcsConnected + SEL.MesDataExd.MesData.AX_PCS[1].MesAcSwitchClosed, 0, 1);
+	END_FOR
+MesDataExd.MesData.MesPnom := 1559.0/3.0*ParamNbPcs;
+	
+MesDataExd.MesData.MesAvailability := UINT_TO_REAL(NbPcsConnected) /ParamNbPcs*100.0;		// A mettre a zero si alarme ? 
+
+
+
+// Regulation de fréquence
+		RS_FreqIsAbove(SET := MesSoCWrittenScada < ParamFreqRegSoCmax AND MesFreqPcs > ParamPfF_FDbHigh, RESET1 := TRIG_FreqRampIsFinished.Q OR NOT MesDataExd.MesData.OUT_CmdFreqregMode	OR NOT CBChoose OR NbPcsConnected=0);	
+		RS_FreqIsBelow(SET := MesSoCWrittenScada > ParamFreqRegSoCmin AND MesFreqPcs < ParamPfF_FDbLow, RESET1 := TRIG_FreqRampIsFinished.Q OR NOT MesDataExd.MesData.OUT_CmdFreqregMode	OR NOT CBChoose OR NbPcsConnected=0);	
+		
+	IF MesDataExd.MesData.OUT_CmdFreqregMode AND CBChoose THEN
+
+		TON_FreqWaitInStableBeforeRamp
+		(
+			IN := (RS_FreqIsAbove.Q1 OR RS_FreqIsBelow.Q1) AND  MesFreqPcs > ParamPfF_FhystLow AND MesFreqPcs < ParamPfF_FhystHigh,
+			PT := ParamTimeEnterStblPriorRmp
+		);
+			
+		IF RS_FreqIsAbove.Q1 THEN
+			FreqMaxForHyst := min(MAX(FreqMaxForHyst, MesFreqPcs), ParamPfF_Fmax);
+			//PmaxForHyst := MAX((FreqMaxForHyst-ParamPfF_FDbHigh)/(ParamPfF_Fmax-ParamPfF_FDbHigh)*ParamPfF_Pmin, ParamPfF_Pmin);
+		ELSIF RS_FreqIsBelow.Q1 THEN
+			FreqMaxForHyst := MAX( MIN(FreqmaxForHyst, MesFreqPcs), ParamPfF_Fmin);
+			//PmaxForHyst := MIN((FreqMaxForHyst-ParamPfF_FDbLow)/(ParamPfF_Fmin-ParamPfF_FDbLow)*ParamPfF_Pmax, ParamPfF_Pmax);
+		ELSE
+			FreqMaxForHyst := 50;
+			PmaxForHyst := 0;
+			MesPInitial	:= MesDataExd.MesData.AX_PCS[1].MesPac + MesDataExd.MesData.AX_PCS[2].MesPac + SEL( ParamNbPcs =3  ,0  , MesDataExd.MesData.AX_PCS[3].MesPac) ; //  MesDataExd.MesData.OUT_SetptP ; 
+		END_IF
+		
+	
+		TP_FreqRampToZeroOnceStable(IN := TON_FreqWaitInStableBeforeRamp.Q, pt := ParamTimeFreqRegStbDuration);
+		TRIG_FreqRampIsFinished(CLK := TP_FreqRampToZeroOnceStable.Q);
+		FB_RampP(IN:= MesPInitial/ParamNbPcs , ASCEND := ParamPnomPcs , DESCEND := ParamPnomPcs , TIMEBASE := ParamTimeFreqRegStbDuration, RESET:= FALSE ) ; 
+		
+		
+		IF TRIG_FreqRampIsFinished.Q THEN
+			FreqMaxForHyst := 50;
+			PmaxForHyst := 0;
+		END_IF
+		FOR KK:= 1 TO ParamNbPcs DO 
+			IF RS_FreqIsAbove.Q1 THEN
+				IF ABS(ParamPfF_FDbHigh - ParamPfF_Fmax ) > 0.001 THEN 
+				MesDataExd.MesData.AX_PCS[KK].MesPac := ( MesPInitial  + MAX((ParamPfF_Pmin *(ParamPfF_FDbHigh -FreqMaxForHyst ) - ParamPfF_PDbHigh*(ParamPfF_Fmax-FreqMaxForHyst) ) * 1/(ParamPfF_FDbHigh-ParamPfF_Fmax),  ParamPfF_Pmin)) /ParamNbPcs ;
+				ELSE
+				MesDataExd.MesData.AX_PCS[KK].MesPac := (MesPInitial + ParamPfF_Pmin) /ParamNbPcs ;
+				
+				END_IF
+				IF TP_FreqRampToZeroOnceStable.Q THEN
+					
+				MesDataExd.MesData.AX_PCS[KK].MesPac :=FB_RampP.OUT ; // MesPInitial/ParamNbPcs + (TIME_TO_REAL(TP_FreqRampToZeroOnceStable.PT)-TIME_TO_REAL(TP_FreqRampToZeroOnceStable.ET))/TIME_TO_REAL(TP_FreqRampToZeroOnceStable.PT)*PmaxForHyst;
+
+				ELSE
+					FB_RampP(RESET:= TRUE , IN_RESET_VALUE := MesDataExd.MesData.AX_PCS[KK].MesPac) ; 
+				END_IF
+			END_IF
+			IF RS_FreqIsBelow.Q1 THEN
+				IF ABS(ParamPfF_Fmin - ParamPfF_FDbLow ) > 0.001 THEN 
+				MesDataExd.MesData.AX_PCS[KK].MesPac := (MesPInitial + MIN(   ((ParamPfF_PDbLow - ParamPfF_Pmax)/(ParamPfF_FDbLow - ParamPfF_Fmin))*( FreqMaxForHyst - ParamPfF_FDbLow ) + ParamPfF_PDbLow ,  ParamPfF_Pmax) )/ParamNbPcs ;
+				ELSE
+				MesDataExd.MesData.AX_PCS[KK].MesPac := (MesPInitial+ ParamPfF_Pmax)/ParamNbPcs  ;
+				END_IF
+				IF TP_FreqRampToZeroOnceStable.Q THEN
+					
+				MesDataExd.MesData.AX_PCS[KK].MesPac :=FB_RampP.OUT ; // MesPInitial/ParamNbPcs+ (TIME_TO_REAL(TP_FreqRampToZeroOnceStable.PT) - TIME_TO_REAL(TP_FreqRampToZeroOnceStable.ET))/TIME_TO_REAL(TP_FreqRampToZeroOnceStable.PT)*PmaxForHyst;
+				ELSE
+					FB_RampP(RESET:= TRUE , IN_RESET_VALUE := MesDataExd.MesData.AX_PCS[KK].MesPac) ;
+				END_IF
+			END_IF
+		END_FOR
+	ELSE 
+		FreqMaxForHyst := 50;
+		PmaxForHyst := 0;
+		MesPInitial	:= MesDataExd.MesData.AX_PCS[1].MesPac + MesDataExd.MesData.AX_PCS[2].MesPac + SEL( ParamNbPcs =3  ,0  , MesDataExd.MesData.AX_PCS[3].MesPac) ; ///MesDataExd.MesData.OUT_SetptP ; 
+	END_IF
+
+// Regulation de tension
+		RS_VoltIsAbove(SET := MesUMesWrittenScada > ParamQfU_UDbHigh, RESET1 := TRIG_VoltRampIsFinished.Q OR NOT MesDataExd.MesData.OUT_CmdUregMode	OR NOT CBChoose OR NbPcsConnected=0);	
+		RS_VoltIsBelow(SET := MesUMesWrittenScada < ParamQfU_UDbLow, RESET1 := TRIG_VoltRampIsFinished.Q OR NOT MesDataExd.MesData.OUT_CmdUregMode	OR NOT CBChoose OR NbPcsConnected=0);	
+		
+	IF MesDataExd.MesData.OUT_CmdUregMode AND CBChoose THEN
+
+		TON_VoltWaitInStableBeforeRamp
+		(
+			IN := (RS_VoltIsAbove.Q1 OR RS_VoltIsBelow.Q1) AND  MesUMesWrittenScada > ParamQfU_UDbLow AND MesUMesWrittenScada < ParamQfU_UDbHigh,
+			PT := ParamTimeEnterStblPriorRmp
+		);
+			
+		IF RS_VoltIsAbove.Q1 THEN
+			VoltMaxForHyst := min(MAX(VoltMaxForHyst, MesUMesWrittenScada), ParamQfU_Umax);
+			//QmaxForHyst := MAX((VoltMaxForHyst-ParamQfU_UDbHigh)/(ParamQfU_Umax-ParamQfU_UDbHigh)*ParamQfU_Qmin, ParamQfU_Qmin);
+		ELSIF RS_VoltIsBelow.Q1 THEN
+			VoltMaxForHyst := MAX( MIN(VoltmaxForHyst, MesUMesWrittenScada), ParamQfU_Umin);
+			//QmaxForHyst := MIN((VoltmaxForHyst-ParamQfU_UDbLow)/(ParamQfU_Umin-ParamQfU_UDbLow)*ParamQfU_Qmax, ParamQfU_Qmax);
+		ELSE
+			VoltMaxForHyst := 10000;
+			QmaxForHyst := 0;
+			MesQInitial	:= MesDataExd.MesData.OUT_SetptQ ; 
+		END_IF
+	
+		TP_VoltRampToZeroOnceStable(IN := TON_VoltWaitInStableBeforeRamp.Q, pt := ParamTimeFreqRegStbDuration);
+		TRIG_VoltRampIsFinished(CLK := TP_VoltRampToZeroOnceStable.Q);
+		FB_RampQ(IN:= MesQInitial/ParamNbPcs , ASCEND := ParamPnomPcs , DESCEND := ParamPnomPcs , TIMEBASE := ParamTimeFreqRegStbDuration, RESET:= FALSE ) ; 
+
+		IF TRIG_VoltRampIsFinished.Q THEN
+			VoltMaxForHyst := 10000;
+			QmaxForHyst := 0;
+		END_IF
+		
+		FOR KK:= 1 TO ParamNbPcs DO 
+			IF RS_VoltIsAbove.Q1 THEN
+			MesDataExd.MesData.AX_PCS[KK].MesQac := MAX(MesQInitial/ParamNbPcs + (VoltMaxForHyst-ParamqfU_UDbHigh)/(ParamQfU_Umax-ParamqfU_UDbHigh)*ParamQfU_Qmin/ParamNbPcs, MesQInitial/ParamNbPcs + ParamQfU_Qmin/ParamNbPcs);
+				IF TP_VoltRampToZeroOnceStable.Q THEN
+				MesDataExd.MesData.AX_PCS[KK].MesQac := FB_RampQ.OUT ; //  MesQInitial/ParamNbPcs + (TIME_TO_REAL(TP_VoltRampToZeroOnceStable.PT)-TIME_TO_REAL(TP_VoltRampToZeroOnceStable.ET))/TIME_TO_REAL(TP_VoltRampToZeroOnceStable.PT)*QmaxForHyst/ParamNbPcs;
+				ELSE
+					FB_RampQ(RESET:= TRUE , IN_RESET_VALUE := MesDataExd.MesData.AX_PCS[KK].MesQac) ;
+				END_IF
+			END_IF
+			IF RS_VoltIsBelow.Q1 THEN
+			MesDataExd.MesData.AX_PCS[KK].MesQac := MIN(MesQInitial/ParamNbPcs + (VoltMaxForHyst-ParamQfU_UDbLow)/(ParamQfU_Umin-ParamQfU_UDbLow)*ParamQfU_Qmax/ParamNbPcs, MesQInitial/ParamNbPcs + ParamQfU_Qmax/ParamNbPcs);
+			IF TP_VoltRampToZeroOnceStable.Q THEN
+			MesDataExd.MesData.AX_PCS[KK].MesQac := FB_RampQ.OUT ; // MesQInitial/ParamNbPcs + (TIME_TO_REAL(TP_VoltRampToZeroOnceStable.PT) - TIME_TO_REAL(TP_VoltRampToZeroOnceStable.ET))/TIME_TO_REAL(TP_VoltRampToZeroOnceStable.PT)*QmaxForHyst/ParamNbPcs;
+			ELSE
+				FB_RampQ(RESET:= TRUE , IN_RESET_VALUE := MesDataExd.MesData.AX_PCS[KK].MesQac) ;
+			END_IF
+			END_IF
+		END_FOR
+	ELSE 
+		VoltMaxForHyst := 10000;
+		QmaxForHyst := 0;
+		MesQInitial	:= MesDataExd.MesData.OUT_SetptQ ; 
+	END_IF
+
+	
+	
+TOF_FreqReg(IN:= MesDataExd.MesData.OUt_CmdFreqregMode, PT:= T#5S )  ; 	
+	
+FOR KK:= 1 TO ParamNbPcs DO 
+MesDataExd.MesData.AX_PCS[KK].MesDeratingWord.4 := RS_VoltIsAbove.Q1 AND MesDataExd.MesData.OUT_CmdUregMode;
+MesDataExd.MesData.AX_PCS[KK].MesDeratingWord.5 := RS_VoltIsBelow.Q1 AND MesDataExd.MesData.OUT_CmdUregMode;
+MesDataExd.MesData.AX_PCS[KK].MesDeratingWord.6 := RS_FreqIsBelow.Q1 AND TOF_FreqReg.Q ;
+MesDataExd.MesData.AX_PCS[KK].MesDeratingWord.7 := RS_FreqIsAbove.Q1 AND TOF_FreqReg.Q;
+	
+MesDataExd.MesData.AX_PCS[KK].MesDoorOpened := FALSE ; 
+	
+MesDataExd.MesData.MesOpeFlag.1 := MesDataExd.MesData.OUt_CmdFreqregMode; 
+MesDataExd.MesData.MesOpeFlag.2 := MesDataExd.MesData.OUT_CmdUregMode ;
+
+MesDataExd.MesData.MesOpeFlag.4 := MesDataExd.MesData.OUT_CmdQ; 
+MesDataExd.MesData.MesOpeFlag.5 := MesDataExd.MesData.OUT_CmdCosPhi; 
+MesDataExd.MesData.MesOpeFlag.6 :=  NOT MesDataExd.MesData.OUT_CmdGridMode; 
+MesDataExd.MesData.MesOpeFlag.9 := TP_VoltRampToZeroOnceStable.Q OR TP_FreqRampToZeroSoClimit.Q OR TP_FreqRampToZeroOnceStable.Q  ; 
+	
+	
+END_FOR
+
+
+
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{a907d959-4347-473b-909f-21c2011ce827}">
+      <Declaration><![CDATA[METHOD M_Init
+
+VAR 
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SUPER^.M_Init() ; 
+
+// 
+MesData.OUT_CmdFreqRegMode := TRUE ; 
+MesData.OUT_CmdURegMode := FALSE ;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Read" Id="{4120e751-9d81-4de2-9fb8-0db5a25a699b}">
+      <Declaration><![CDATA[METHOD M_Read
+//////////////////
+//  Read Modbus Variable for PCS . 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	MW 						: FB_MergeWordsToDint; 
+
+	
+	MesPsetPt_Temp 			: REAL ;
+	MesSetptQ_Temp			: REAL ;
+	MesPavailablePcs_Temp	: REAL;
+	MesPavailable_Temp		: REAL;
+	
+	ComErrorPcs_Temp		: WORD;
+	
+	KK						: BYTE;  					// FOR Loop 
+	LL						: BYTE;						// Alarm Loop
+
+	MesPsetPtPcs_temp		: ARRAY[1..CstNbPcs_Ess] OF  REAL; // Setpt lu sur le module
+	MesSetptQPcs_temp		: ARRAY[1..CstNbPcs_Ess] OF  REAL;
+
+	AX_Qty					: ARRAY[1..3] OF WORD := [68, 68, 68];
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Je récupère le clockRead et le.MesDataExd.MesData.(pour pouvoir réecrire les _Ack)
+(*
+ReadAds[2]
+(
+	NETID := '',
+	PORT := ParamPort[3],
+	IDXGRP := ParamGroup[3],
+	IDXOFFS := ParamOffset[3],
+	LEN := ParamLen[3],
+	DESTADDR := ADR(ClockRead),
+	READ := MAIN_Emul.MesWatchdog,
+	TMOUT := T#100MS
+);
+
+ReadAds[4]		// Setpt P ANA
+(
+	NETID := '',
+	PORT := ParamPort[6],
+	IDXGRP := ParamGroup[6],
+	IDXOFFS := ParamOffset[6],
+	LEN := ParamLen[6],
+	DESTADDR := ADR(OUt_SetptP_IO),
+	READ := MAIN_Emul.MesWatchdog,
+	TMOUT := T#100MS
+);
+
+
+ReadAds[6]		// Setpt Q ANA
+(
+	NETID := '',
+	PORT := ParamPort[7],
+	IDXGRP := ParamGroup[7],
+	IDXOFFS := ParamOffset[7],
+	LEN := ParamLen[7],
+	DESTADDR := ADR(OUt_SetptQ_IO),
+	READ := MAIN_Emul.MesWatchdog,
+	TMOUT := T#100MS
+);
+
+
+
+ReadAds[5]
+(
+	NETID := '',
+	PORT := ParamPort[2],
+	IDXGRP := ParamGroup[2],
+	IDXOFFS := ParamOffset[2],
+	LEN := ParamLen[2],
+	DESTADDR := ADR(MesDataExd.MesData.In),
+	READ := MAIN_Emul.ClockReadIO,
+	TMOUT := T#1S
+);
+
+Trig_ClockRead(CLK := ClockRead);
+
+WriteAds[1]
+(
+	NETID := '',
+	PORT := ParamPort[2],
+	IDXGRP := ParamGroup[2],
+	IDXOFFS := ParamOffset[2],
+	LEN := ParamLen[2],
+	SRCADDR := ADR(MesDataExd.MesData.,
+	WRITE := Trig_ClockRead.Q AND NOT bTest,
+	TMOUT := T#100MS
+);
+*)
+
+// Je garde les tags calculés identiques
+MesData.OUT_CmdP 						:= MesDataExd.MesData.In.out_CmdP					;
+
+MesData.OUT_CmdBlackStart			:= MesDataExd.MesData.In.out_CmdBlackStart			;
+MesData.OUT_CmdCosPhi               := MesDataExd.MesData.In.out_CmdCosPhi             ; 
+MesData.OUT_CmdFreqregMode          := MesDataExd.MesData.In.out_CmdFreqregMode        ; 
+MesData.OUT_CmdGridMode             := MesDataExd.MesData.In.out_CmdGridMode           ; 
+MesData.OUT_CmdMicroCyclingMode     := MesDataExd.MesData.In.out_CmdMicroCyclingMode   ; 
+MesData.OUT_CmdP                    := MesDataExd.MesData.In.out_CmdP                  ; 
+MesData.OUT_CmdQ                    := MesDataExd.MesData.In.out_CmdQ                  ; 
+MesData.OUT_CmdStandby              := MesDataExd.MesData.In.out_CmdStandby            ; 
+MesData.OUT_CmdStop                 := MesDataExd.MesData.In.out_CmdStop               ; 
+MesData.OUT_CmdStart                := MesDataExd.MesData.In.out_CmdStart              ; 
+MesData.OUT_CmdUregMode             := MesDataExd.MesData.In.out_CmdUregMode           ; 
+MesData.OUT_SetptCosPhi             := MesDataExd.MesData.In.out_SetptCosPhi           ; 
+MesData.OUT_SetptP                  := MesDataExd.MesData.In.out_SetptP                ; 
+MesData.OUT_SetptPMax               := MesDataExd.MesData.In.out_SetptPMax             ; 
+MesData.OUT_SetptPMin               := MesDataExd.MesData.In.out_SetptPMin             ; 
+MesData.OUT_SetptQ                  := MesDataExd.MesData.In.out_SetptQ                ; 
+MesData.OUT_SetptQMax               := MesDataExd.MesData.In.out_SetptQMax             ; 
+MesData.OUT_SetptQMin               := MesDataExd.MesData.In.out_SetptQMin             ; 
+MesData.CalAlarm					:= MesDataExd.MesData.In.CalAlarm					;
+MesData.CalAllAcClosed				:= MesDataExd.MesData.In.CalAllAcClosed			;	
+MesData.CalAllDcClosed              := MesDataExd.MesData.In.CalAllDcClosed            ;  
+MesData.CalAtLeastOneAcClosed       := MesDataExd.MesData.In.CalAtLeastOneAcClosed     ;  
+MesData.CalAtLeastOneDcClosed       := MesDataExd.MesData.In.CalAtLeastOneDcClosed     ;  
+MesData.CalAtLeastOnePcsConnected   := MesDataExd.MesData.In.CalAtLeastOnePcsConnected ;  
+MesData.CalCosPhi                   := MesDataExd.MesData.In.CalCosPhi                 ;  
+MesData.CalDynamicEfficiencyPcs     := MesDataExd.MesData.In.CalDynamicEfficiencyPcs   ;  
+MesData.CalI                        := MesDataExd.MesData.In.CalI                      ;  
+MesData.CalIdc                      := MesDataExd.MesData.In.CalIdc                    ;  
+MesData.CalMaxS_ChargeFromBat       := MesDataExd.MesData.In.CalMaxS_ChargeFromBat     ;  
+MesData.CalMaxS_DischargeFromBat    := MesDataExd.MesData.In.CalMaxS_DischargeFromBat  ;  
+MesData.CalNbOnlinePcs              := MesDataExd.MesData.In.CalNbOnlinePcs            ;  
+MesData.CalP                        := MesDataExd.MesData.In.CalP                      ;  
+MesData.CalPdc                      := MesDataExd.MesData.In.CalPdc                    ;  
+MesData.CalQ                        := MesDataExd.MesData.In.CalQ                      ;  
+MesData.CalState                    := MesDataExd.MesData.In.CalState                  ;  
+MesData.CalUac                      := MesDataExd.MesData.In.CalUac                    ;  
+MesData.CalUdc                      := MesDataExd.MesData.In.CalUdc                    ;  
+MesData.CalWarning                  := MesDataExd.MesData.In.CalWarning                ;  
+
+
+
+ParamFreqRegSoCmax				:=  WORD_TO_REAL(AX_Cmd[1][2]	)	;
+ParamFreqRegSoCmin				:=  WORD_TO_REAL(AX_Cmd[1][3]	)	;
+MesSoCWrittenScada				:=  WORD_TO_REAL(AX_Cmd[1][4]	)	;
+ParamQfU_UDbHigh			 	:=  WORD_TO_REAL(AX_Cmd[1][7] 	)	; 
+ParamQfU_Umax				 	:=  WORD_TO_REAL(AX_Cmd[1][8] 	)	; 
+ParamQfU_UDbLow				 	:=  WORD_TO_REAL(AX_Cmd[1][9] 	)	; 
+ParamQfU_Umin				 	:=  WORD_TO_REAL(AX_Cmd[1][10] 	)	; 
+ParamQfU_QDbHigh				:= -WORD_TO_REAL(AX_Cmd[1][11])*ParamPnomPcs/1000.0; 
+ParamQfU_Qmax					:= -WORD_TO_REAL(AX_Cmd[1][12])*ParamPnomPcs/1000.0; 
+ParamQfU_QDbLow					:= -WORD_TO_REAL(AX_Cmd[1][13])*ParamPnomPcs/1000.0; 
+ParamQfU_Qmin					:= -WORD_TO_REAL(AX_Cmd[1][14])*ParamPnomPcs/1000.0; 
+ParampfF_fDbHigh				:=  WORD_TO_REAL(AX_Cmd[1][21])/100.0;
+ParamPfF_Fmax					:=  WORD_TO_REAL(AX_Cmd[1][22])/100.0;
+ParamPfF_FDbLow					:=  WORD_TO_REAL(AX_Cmd[1][23])/100.0;
+ParamPfF_Fmin					:=  WORD_TO_REAL(AX_Cmd[1][24])/100.0;
+ParampfF_fDbHigh				:=  WORD_TO_REAL(AX_Cmd[1][25])/100.0;
+ParamPfF_FDbLow					:=  WORD_TO_REAL(AX_Cmd[1][26])/100.0;
+ParamPfF_FhystLow				:=  WORD_TO_REAL(AX_Cmd[1][27])/100.0;
+ParamPfF_FhystHigh				:=  WORD_TO_REAL(AX_Cmd[1][28])/100.0;		
+ParamPfF_PDbHigh				:=  INT_TO_REAL(WORD_TO_INT(AX_Cmd[1][29] ))*ParamPnom/1000.0; 
+ParamPfF_Pmin					:=  INT_TO_REAL(WORD_TO_INT(AX_Cmd[1][30] ))*ParamPnom/1000.0; 
+ParamPfF_PDbLow					:=  INT_TO_REAL(WORD_TO_INT(AX_Cmd[1][31] ))*ParamPnom/1000.0; 
+ParamPfF_Pmax					:=  INT_TO_REAL(WORD_TO_INT(AX_Cmd[1][32] ))*ParamPnom/1000.0; 
+ParamPfF_PDbHigh				:=  INT_TO_REAL(WORD_TO_INT(AX_Cmd[1][33] ))*ParamPnom/1000.0; 
+ParamPfF_PDbLow					:=  INT_TO_REAL(WORD_TO_INT(AX_Cmd[1][34] ))*ParamPnom/1000.0; 
+ParamTimeSoCRangeReachedRmp		:=	REAL_TO_TIME(REAL_TO_WORD(AX_Cmd[1][35]))*1000/10;				
+ParamTimeEnterStblPriorRmp		:=	REAL_TO_TIME(REAL_TO_WORD(AX_Cmd[1][37]))*1000/10;					
+ParamTimeFreqRegStbDuration		:=	REAL_TO_TIME(REAL_TO_WORD(AX_Cmd[1][36]))*1000/10;				
+		]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_WriteCommand" Id="{9b7204de-50ca-441b-b338-b803b9d3198b}">
+      <Declaration><![CDATA[METHOD M_WriteCommand
+//////////////////
+//  Modbus Write of the command for the PCS. 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+	AX_Adr			: ARRAY[1..5] OF UINT := [1707	, 1802	, 	0217 , 1735	,1741];
+	AX_QTY			: ARRAY[1..5] OF BYTE := [28	, 33	, 	2	 , 6	,6];
+	AX_UnitID		: ARRAY[1..5] OF BYTE := [1		, 1		, 	1	 , 1	,1];	
+
+	KK: INT;
+
+
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Je récupère le clockWrite
+(*
+ReadAds[1]
+(
+	NETID := '',
+	PORT := ParamPort[1],
+	IDXGRP := ParamGroup[1],
+	IDXOFFS := ParamOffset[1],
+	LEN := ParamLen[1],
+	DESTADDR := ADR(CmdWrite),
+	READ := MAIN_Emul.MesWatchdog,
+	TMOUT := T#100MS
+);
+*)
+FOR KK := 1 TO 3 DO
+	Trig_ClockWrite[KK](CLK := CmdWrite[KK]);
+END_FOR
+IF Trig_ClockWrite[1].Q THEN
+	bTest := TRUE;
+END_IF
+(*
+ReadADS[3]
+(
+	NETID := '',
+	PORT := ParamPort[5],
+	IDXGRP := ParamGroup[5],
+	IDXOFFS := ParamOffset[5],
+	LEN := ParamLen[5],
+	DESTADDR := ADR(AX_CMD),
+	READ := MAIN_Emul.MesWatchdog,
+	TMOUT := T#100MS
+);
+*)
+(*
+FOR KK := 1 TO 3 DO
+	IF Trig_ClockWrite[KK].Q THEN
+		AX_CMD[KK] := AX_Cmd_New[KK];
+	END_IF
+END_FOR
+*)]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_PCS_Jema">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PCS_Jema.M_Evaluate">
+      <LineId Id="766" Count="334" />
+      <LineId Id="101" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PCS_Jema.M_Init">
+      <LineId Id="34" Count="1" />
+      <LineId Id="2" Count="0" />
+      <LineId Id="40" Count="1" />
+    </LineIds>
+    <LineIds Name="FB_PCS_Jema.M_Read">
+      <LineId Id="6028" Count="139" />
+      <LineId Id="5853" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PCS_Jema.M_WriteCommand">
+      <LineId Id="3226" Count="38" />
+      <LineId Id="881" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

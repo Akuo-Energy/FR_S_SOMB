@@ -1,0 +1,197 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_ProtectRelay_MaxI" Id="{d26ab1fe-e376-4317-a453-0ace57db9b7e}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_ProtectRelay_MaxI EXTENDS FB_ProtectRelay_Base
+//////////////////
+// SEPAM system for High Voltage or Low Voltage Grid Protection . 
+//////////////////
+
+
+VAR_INPUT PERSISTENT 
+	ParamTcpPort				: UINT:=502;	(* TCP Port parameter*)
+	ParamIPAddress				: STRING; 		(* IP Address*)
+	ParamUnitID					: BYTE; 		(* Unit ID*)
+	
+END_VAR
+
+VAR_INPUT
+	MesDataExd					: ProtectRelay_Standard;
+END_VAR
+
+VAR
+	ClockReadInput				: BOOL;
+	AX_MbRead					: ARRAY[1..1] OF FB_ModbusRead;
+	AX_Word						: ARRAY[1..1] OF ARRAY[1..120] OF WORD;
+	AX_ADDR						: ARRAY[1..1] OF UINT := [300];
+	AX_QTY						: ARRAY[1..1] OF UINT := [16];	
+	AX_UnId						: ARRAY[1..1] OF BYTE := [3];
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{b0d76543-9184-4072-b3e0-ad0924b62cd1}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Manages Sepam Alarms. Alarms opens HT CB until Sepam manual Reset . Warning Opens CB-L but does not maintain warning
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager 	: FB_AlarmCodeManager ; 
+	RS_Trip					: SR;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+MesDataExd.MesData.MesComAlarm		:= AX_MbRead[1].ModbusReadAlarm  ;
+
+// ALARM CODE //
+	FB_AlarmCodeManager(
+		bAlarm1				:= MesDataExd.MesData.MesComAlarm,		// Communication alarm
+		bAlarm2				:= FALSE,
+		bAlarm3				:= FALSE,
+		bAlarm4				:= FALSE,
+		bAlarm5				:= FALSE,         					
+		bAlarm6				:= FALSE, 							
+		bAlarm7				:= FALSE, 
+		bAlarm8				:= FALSE, 
+		bAlarm9				:= FALSE, 
+		bAlarm10			:= FALSE, 
+		bAlarm11			:= FALSE, 
+		bAlarm12			:= FALSE, 
+		bAlarm13			:= FALSE, 
+		bAlarm14			:= FALSE, 
+		bAlarm15			:= FALSE , 	
+		wAlarmCode			=> MesDataExd.MesData.MesAlarmCode);
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_CP" Id="{15ccf890-f9ca-426c-af2f-6d13196b1c3a}">
+      <Declaration><![CDATA[METHOD M_CP
+//////////////////
+//  Emulator
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+SUPER^.M_CP() ; 
+
+
+
+
+Trig_Cmd_Read(CLK:=IN_CmdToggleRead);
+Trig_Cmd_Write(CLK:=IN_CmdToggleWrite);
+	
+IF Trig_Cmd_Read.Q THEN
+	IN_CmdToggleRead := FALSE;
+	MesDataExd.MesData.MesCP_Read := NOT MesDataExd.MesData.MesCP_Read;
+END_IF
+
+
+IF Trig_Cmd_Write.Q THEN
+	IN_CmdToggleWrite := FALSE;
+	MesDataExd.MesData.MesCP_Write := NOT MesDataExd.MesData.MesCP_Write;
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Evaluate" Id="{ec0783d5-85dc-4b17-915a-8d73bf2c23d2}">
+      <Declaration><![CDATA[METHOD M_Evaluate
+VAR_INPUT
+END_VAR
+
+VAR
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{ead49595-23c2-4835-b9f0-838d23ab79f2}">
+      <Declaration><![CDATA[METHOD M_Init
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Read" Id="{caaaed0a-45dc-4368-aba2-6443d0ede0e1}">
+      <Declaration><![CDATA[METHOD M_Read
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR_INPUT
+	
+END_VAR
+VAR 
+	MW					: FB_MergeWordsToFloat;
+	
+
+
+	KK: INT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF MesDataExd.MesData.MesCP_Read THEN
+
+	FOR KK := 1 TO 1 DO
+		AX_MbRead[KK]
+		(
+			pDestAddr := ADR(AX_Word[KK]),
+			sIPAddr := ParamIPAddress,
+			tTimeout := T#2S,
+			nTcpPort := ParamTcpPort,
+			nQuantity := AX_QTY[KK],
+			nMBAddr := AX_ADDR[KK],
+			cbLength := SIZEOF(AX_Word[KK]),
+			nUnitID := AX_UnId[KK],
+			ClockRead := ClockRead
+		);
+	END_FOR
+	
+	MW(WORD_STRONG_F := AX_WORD[1][1], WORD_WEAK_F := AX_Word[1][2], NUMBER_F := MesDataExd.MesData.MesI1);
+	MW(WORD_STRONG_F := AX_WORD[1][3], WORD_WEAK_F := AX_Word[1][4], NUMBER_F := MesDataExd.MesData.MesI2);
+	MW(WORD_STRONG_F := AX_WORD[1][5], WORD_WEAK_F := AX_Word[1][6], NUMBER_F := MesDataExd.MesData.MesI3);
+	MW(WORD_STRONG_F := AX_WORD[1][7], WORD_WEAK_F := AX_Word[1][8], NUMBER_F := MesDataExd.MesData.MesI0);
+	
+END_IF
+
+MesDataExd.MesData.MesI := (MesDataExd.MesData.MesI1 + MesDataExd.MesData.MesI2 + MesDataExd.MesData.MesI3)/3;]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_ProtectRelay_MaxI">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ProtectRelay_MaxI.M_AlarmManagement">
+      <LineId Id="155" Count="1" />
+      <LineId Id="159" Count="19" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ProtectRelay_MaxI.M_CP">
+      <LineId Id="69" Count="19" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ProtectRelay_MaxI.M_Evaluate">
+      <LineId Id="55" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ProtectRelay_MaxI.M_Init">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ProtectRelay_MaxI.M_Read">
+      <LineId Id="509" Count="0" />
+      <LineId Id="513" Count="0" />
+      <LineId Id="515" Count="18" />
+      <LineId Id="511" Count="1" />
+      <LineId Id="549" Count="0" />
+      <LineId Id="420" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

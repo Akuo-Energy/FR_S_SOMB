@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <DUT Name="TAC_Standard" Id="{3422510f-35ba-4005-b48a-b55fbc605f45}">
+    <Declaration><![CDATA[TYPE TAC_Standard :
+STRUCT
+	MesData : TAC; 			(* Main Structure *)
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>
+
+
+
+
+
+
+
+
+
+
+
+

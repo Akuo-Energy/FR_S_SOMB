@@ -1,0 +1,323 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_ANA_SMP1X" Id="{e2d472b0-9d03-4c44-9b2c-af1ac708ba02}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_ANA_SMP1X
+VAR_INPUT PERSISTENT
+	
+	ParamNamePyranometer	: STRING 	:= 'Wind spd + dir + hygro + temp + pluvio';	// (NA) Name of the eqt : to easily identify it
+	ParamTempoComAlarm		: TIME 		:= T#10S ; 										// (s) Config : Tempo to detect LOC Alarm
+	{attribute 'OPC.UA.DA' := '1'} 
+	ParamClockReadTime 		: TIME 		:= TIME#1S;	  									// (Time) Read Modbus Frequency . 
+ 	ParamTimeout			: TIME  	:= T#2S ;		  								// (Time) Timeout for modbus reading
+	ParamUnitID				: BYTE		:= 1;											// (NA) Unit ID for modbus reading
+	ParamZonePTR			: BOOL;														// (NA) Is the Pyranometer connected on the PTR
+END_VAR
+
+VAR_INPUT
+	MesDataExd			    : SMP1X ; 					// (NA) [P,H,B] INV  Data Structure 
+	IN_CmdToggleRead		: BOOL;
+	
+END_VAR
+VAR
+	//M_AlarmManagement
+	TON_ComAlarm				: TON ; 						// Tempo before deteting loss of communication. 
+
+	MesAlarmCom					: BOOL;
+	
+	IN_CmdReset_L					: BOOL;                                                        	
+
+	
+	// M_READ VARIABLES//
+		MesData	AT %Q*	      	: SMP1X ; 					// (NA) [P,H,B] INV  Data Structure 
+	//ModbusRead_RTU				: FB_ReadModbusRTU_V2;			// FB for Modbus Read
+	bReadError					: BOOL;
+	bReadCompleted 				: BOOL;
+	bReadBusy					: BOOL;
+	ReadErrorId					: INT;
+	InputStructRead 			: Struct_InputRTU;
+	
+	MesBlock1_Temp 				: ARRAY[1..125]  OF WORD; 		// (NA) Temporary Block with multiple modbus reading (Caution : Double Word variables)
+	MesModbusReadAlarm 		  	: BOOL ; 						// (NA) Modbus Read Alarm for all modbus frames		
+	MesModbusAlarmCode			: UDINT;						// (NA) Modbus Read Alarm Code	
+	
+	ScaleFactor					: INT;
+	BodyTemp					: REAL;
+	StatusFlag					: WORD;
+	
+	// M_STATEMANAGER//
+	FB_OperationIndex			: FB_OperationIndex ; 
+	CalLastStart				: STRING ;			 			// Datetime of the last Start
+	MesState					: BYTE ; 						// (NA)                                                                                                            	
+	CalRunningTime				: INT ; 						// Total Running Time
+	                                                        	
+	//M_EXECUTE VARIABLES //                                	
+	TP1							: TP ; 							// (NA) Tempo to define Modbus Reading Frequency 
+	                                                        	
+	ClockRead					: BOOL;							// (NA) Modbus reading Clock
+	Trig_ClockRead				: R_TRIG;
+	Trig_Cmd_Read : R_TRIG;
+	
+	//M_INIT //
+	bInit 						: BOOL;							 
+END_VAR
+
+VAR_OUTPUT
+END_VAR
+VAR
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{c221fcdd-9511-404f-8621-8223c4faf1a0}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Manages IntelliGen Alarms
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager : FB_AlarmCodeManager ; 
+	ComWarning			: BOOL;		// Aggregated Wcommunication warning
+	ComAlarm			: BOOL;		// Aggregated communication Alarm
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[ 
+		
+		ComAlarm	:=  MesModbusReadAlarm;
+
+	//Warning
+	
+	//Alarm
+	TON_ComAlarm(IN:= ComAlarm , PT:= ParamTempoComAlarm, Q=>MesAlarmCom) ;	// Alarms if ALL TRAM MODBUS did not work and timeout of 15s
+
+
+// ALARM CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= MesAlarmCom,  						// Com alarm
+		bAlarm2			:= FALSE ,						
+		bAlarm3			:= FALSE ,								 
+		bAlarm4			:= FALSE,      							
+		bAlarm5			:= FALSE,								
+		bAlarm6			:= FALSE,								
+		bAlarm7			:= FALSE,                               
+		bAlarm8			:= FALSE,                               
+		bAlarm9			:= FALSE,								
+		bAlarm10		:= FALSE,					            
+		bAlarm11		:= FALSE,                               
+		bAlarm12		:= FALSE,                               
+		bAlarm13		:= FALSE,                               
+		bAlarm14		:= FALSE, 								
+		bAlarm15		:= FALSE , 								
+		wAlarmCode		=>MesDataExd.MesData.MesAlarmCode);     
+
+// WARNING CODE //
+	FB_AlarmCodeManager(
+ 		bAlarm1			:= FALSE ,				
+		bAlarm2			:= FALSE,				
+		bAlarm3			:= FALSE,				
+		bAlarm4			:= FALSE, 				
+		bAlarm5			:= FALSE,				
+		bAlarm6			:= FALSE,				
+		bAlarm7			:= FALSE,               
+		bAlarm8			:= FALSE,               
+		bAlarm9			:= FALSE,               
+		bAlarm10		:= FALSE,               
+		bAlarm11		:= FALSE,               
+		bAlarm12		:= FALSE,               
+		bAlarm13		:= FALSE,               
+		bAlarm14		:= FALSE,               
+		bAlarm15		:= FALSE,               
+		wAlarmCode		=>MesDataExd.MesData.MesWarningCode);	
+(*
+// ALARM CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= FALSE,  					//Overflow                           
+		bAlarm2			:= FALSE ,					//Underflow                          
+		bAlarm3			:= FALSE ,					//Error flag                         
+		bAlarm4			:= FALSE,      				//ADC Error                          
+		bAlarm5			:= FALSE,					//DAC Error                          
+		bAlarm6			:= FALSE,					//Calibration Error                  
+		bAlarm7			:= FALSE,                   //Update EEPROM error                
+		bAlarm8			:= FALSE,                   //Power failure error                
+		bAlarm9			:= FALSE,					//Tilt sensor error                  
+		bAlarm10		:= FALSE,					//Relative humidity sensor error     
+		bAlarm11		:= FALSE,                   //Relative humidity threshold warning
+		bAlarm12		:= FALSE,                   //Body temperature sensor error      
+		bAlarm13		:= FALSE,                   //                                   
+		bAlarm14		:= FALSE, 					//                                   
+		bAlarm15		:= FALSE , 					//                                   
+		wAlarmCode		=>MesDataExd.MesIDAlarm);    
+		
+		*)]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_CP" Id="{d5926f17-51ac-4bd0-aa69-d21262085801}">
+      <Declaration><![CDATA[METHOD M_CP : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+
+
+
+
+
+Trig_ClockRead(CLK:=IN_CmdToggleRead);
+	
+IF Trig_ClockRead.Q THEN
+	IN_CmdToggleRead := FALSE;
+	MesDataExd.MesData.MesCP_Read := NOT MesDataExd.MesData.MesCP_Read;
+END_IF
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{277b5e86-3f1c-46dc-9771-b904b8ce2c6d}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF NOT bInit THEN
+	M_Init();
+ELSIF CmdInit_G OR IN_CmdReset_L THEN
+	bInit := TRUE;
+END_IF
+
+// READING AND WRITING CLOCK //
+	TP1(IN:=NOT TP1.Q , PT:= ParamClockReadTime);
+	ClockRead 				:= TP1.Q;
+	
+	
+
+// METHODS CALLS//
+	M_CP();
+	
+	M_Read();
+
+
+	/////////
+	M_StateManager() ; 
+	
+
+	M_AlarmManagement();
+	
+	
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{b83380ce-038b-4395-bc7a-a121679a3694}">
+      <Declaration><![CDATA[METHOD M_Init : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+bInit := FALSE;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Read" Id="{40d1926c-b987-4461-8086-82e5d6efecb3}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'M_Read'}
+METHOD M_Read
+//////////
+// Read Method for SMA : Modbus reading
+//////////
+VAR
+	// Method local variables (reinitialized at each cycle) 
+	MW 					: FB_MergeWordsToDint; 
+	
+	Val_Interm: REAL;
+END_VAR
+
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[InputStructRead.InBuffer := ADR(MesBlock1_Temp);
+InputStructRead.InFunction := 4;
+InputStructRead.InQuantity := 8;
+InputStructRead.InStartAddr := 3;
+InputStructRead.InUnitID := ParamUnitID; 
+InputStructRead.OutBusy := ADR(bReadBusy);
+InputStructRead.OutError := ADR(bReadError);
+InputStructRead.OutCompleted := ADR(bReadCompleted);
+
+
+
+IF MesDataExd.MesCP_Read THEN
+	StatusFlag := MesBlock1_Temp[1];
+	ScaleFactor := WORD_TO_INT(MesBlock1_Temp[2]) ; 
+	MW(WORD_STRONG := MesBlock1_Temp[3], SIZE:= 1, Fix := REAL_TO_INT(ScaleFactor), SIGNED := FALSE, VAR_OUT := MesDataExd.MesData.Value);
+END_IF
+
+MesDataExd.MesIDAlarm := StatusFlag;
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_StateManager" Id="{24944b7d-dfa1-4b77-9284-b74991b1f2f1}">
+      <Declaration><![CDATA[METHOD M_StateManager
+//////////////////
+// Detect which is the state of the inverter. IF loss of communication MesState =0 , the last inverter state is kept .  
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+	
+END_VAR
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// OPERATIONNAL INDEX //
+//	FB_OperationIndex(
+//		MesON 				:= MesState>1, 
+//		CmdReset 			:= CmdReInitMaintenanceIndicator_G,
+//		CalRunningTimeHr 	=> CalRunningTime , 
+//		CalNbMove 			=> CalNbMove,
+//		CalTimeStart 		=> CalLastStart) ;  ]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_ANA_SMP1X">
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ANA_SMP1X.M_AlarmManagement">
+      <LineId Id="131" Count="64" />
+      <LineId Id="2" Count="0" />
+      <LineId Id="196" Count="1" />
+    </LineIds>
+    <LineIds Name="FB_ANA_SMP1X.M_CP">
+      <LineId Id="9" Count="13" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ANA_SMP1X.M_Execute">
+      <LineId Id="503" Count="24" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ANA_SMP1X.M_Init">
+      <LineId Id="7" Count="1" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ANA_SMP1X.M_Read">
+      <LineId Id="163" Count="15" />
+      <LineId Id="193" Count="0" />
+      <LineId Id="179" Count="0" />
+      <LineId Id="194" Count="0" />
+      <LineId Id="111" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ANA_SMP1X.M_StateManager">
+      <LineId Id="95" Count="5" />
+      <LineId Id="12" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

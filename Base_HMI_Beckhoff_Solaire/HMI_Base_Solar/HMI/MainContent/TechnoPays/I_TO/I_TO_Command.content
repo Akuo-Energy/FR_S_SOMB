@@ -1,0 +1,651 @@
+﻿<div id="Content1_19" data-tchmi-type="TcHmi.Controls.System.TcHmiContent" data-tchmi-top="0" data-tchmi-left="0" data-tchmi-right="-29" data-tchmi-bottom="0" data-tchmi-width-mode="Parent" data-tchmi-height-mode="Parent" data-tchmi-min-width="0" data-tchmi-creator-viewport-width="480" data-tchmi-left-unit="px" data-tchmi-top-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-width-unit="px" data-tchmi-height-unit="px" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px">
+
+<div id="TcHmiRegion_8" data-tchmi-type="TcHmi.Controls.System.TcHmiRegion" data-tchmi-height="700" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-top="205" data-tchmi-top-unit="px" data-tchmi-width="400" data-tchmi-width-unit="px" data-tchmi-right="0" data-tchmi-width-mode="Parent" data-tchmi-bottom="-5" data-tchmi-height-mode="Parent" data-tchmi-tooltip="" data-tchmi-target-content="HMI/MainContent/TechnoPays/I_TO/Command/I_TO_Command_OnGrid.content" data-tchmi-is-enabled="True" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px" data-tchmi-visibility="%f%if(%s%PLC1.GVL_CFG.A1_PP.ParamLocalMode%/s%){&quot;Visible&quot;}else{&quot;Hidden&quot;}%/f%">
+
+</div>
+
+<div id="TcHmiContainer_130" data-tchmi-type="TcHmi.Controls.System.TcHmiContainer" data-tchmi-height="25" data-tchmi-height-unit="px" data-tchmi-left="50" data-tchmi-left-unit="px" data-tchmi-top="89" data-tchmi-top-unit="px" data-tchmi-width="27" data-tchmi-width-unit="px" data-tchmi-creator-visibility="Collapsed">
+
+
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">[
+  {
+    "event": "TcHmiContainer_130.onPressed",
+    "actions": [
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%s%PLC1.OpcUa.AllDataW.CmdStop%/s%",
+        "valueType": "tchmi:general#/definitions/BOOL",
+        "value": {
+          "objectType": "FunctionExpression",
+          "functionExpression": "Confirm(\"Confirm\",\"Are you sure of this action ?\" ,\"Yes\" ,\"Cancel\" ,\"NoIdea\" )"
+        },
+        "asyncWait": true
+      }
+    ]
+  }
+]</script>
+
+</div>
+
+<div id="Button_Local_Mode" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiToggleButton" data-tchmi-height="50" data-tchmi-height-unit="px" data-tchmi-left="105" data-tchmi-left-unit="px" data-tchmi-text="Local Mode" data-tchmi-top="10" data-tchmi-top-unit="px" data-tchmi-width="124" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-font-size="20" data-tchmi-background-color="%f%if(%s%PLC1.GVL_CFG.A1_PP.ParamLocalMode%/s%){'{&quot;color&quot;:&quot;rgba(153,204,51,1)&quot;}'}else{'{&quot;color&quot;:&quot;rgba(232,226,226,255)&quot;}'}%/f%" data-tchmi-text-color="{
+  &quot;color&quot;: &quot;rgba(0, 0, 0, 1)&quot;
+}" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-text-font-size-unit="px" data-tchmi-text-horizontal-alignment="Center" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-font-weight="Bold" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px">
+
+
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
+[
+  {
+    "event": "Button_Local_Mode.onMouseClick",
+    "actions": [
+      {
+        "objectType": "Condition",
+        "active": true,
+        "parts": [
+          {
+            "if": [
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "symbolExpression": "%s%PLC1.GVL_CFG.A1_PP.ParamLocalMode%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": false
+                },
+                "compareOperator": "==",
+                "logic": null
+              }
+            ],
+            "then": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%s%PLC1.GVL_CFG.A1_PP.ParamLocalMode%/s%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": true
+                },
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "else": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%s%PLC1.GVL_CFG.A1_PP.ParamLocalMode%/s%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": false
+                },
+                "asyncWait": true
+              }
+            ]
+          }
+        ],
+        "asyncWait": true
+      }
+    ]
+  }
+]
+</script>
+
+
+
+
+
+
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-border-width" type="application/json">
+{
+  "left": 1,
+  "right": 1,
+  "top": 1,
+  "bottom": 1,
+  "leftUnit": "px",
+  "rightUnit": "px",
+  "topUnit": "px",
+  "bottomUnit": "px"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-style" type="application/json">
+{
+  "left": "Solid",
+  "right": "Solid",
+  "top": "Solid",
+  "bottom": "Solid"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-color" type="application/json">
+{
+  "color": "rgba(0, 0, 0, 1)"
+}
+</script>
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-text-color" type="application/json">
+"{
+  &quot;color&quot;: &quot;rgba(0, 0, 0, 1)&quot;
+}"
+</script>
+</div>
+
+<div id="Button_ConnectAuth" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="50" data-tchmi-height-unit="px" data-tchmi-left="168" data-tchmi-left-unit="px" data-tchmi-text="Connect Auth" data-tchmi-top="77" data-tchmi-top-unit="px" data-tchmi-width="147" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-font-size="20" data-tchmi-is-enabled="%s%PLC1.GVL_CFG.A1_PP.ParamLocalMode%/s%" data-tchmi-right-unit="px" data-tchmi-text-horizontal-alignment="Right" data-tchmi-bottom-unit="px" data-tchmi-text-font-size-unit="px" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-font-weight="Bold" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px" data-tchmi-background-image-width-unit="px" data-tchmi-background-image-height-unit="px" data-tchmi-icon-width-unit="px" data-tchmi-icon-height-unit="px">
+
+
+
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-border-style" type="application/json">
+{
+  "left": "Solid",
+  "right": "Solid",
+  "top": "Solid",
+  "bottom": "Solid"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-width" type="application/json">
+{
+  "left": 1,
+  "right": 1,
+  "top": 1,
+  "bottom": 1,
+  "leftUnit": "px",
+  "rightUnit": "px",
+  "topUnit": "px",
+  "bottomUnit": "px"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-text-color" type="application/json">
+{
+  "color": "rgba(0, 0, 0, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
+{
+  "color": "rgba(222, 218, 218, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
+[
+  {
+    "event": "Button_ConnectAuth.onMouseClick",
+    "actions": [
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%i%bconfirm%/i%",
+        "value": {
+          "objectType": "FunctionExpression",
+          "functionExpression": "Confirm(\"Confirm\",\"Are you sure ?\" ,\"Yes\" ,\"No\" ,\"NoIdea\" )"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "Condition",
+        "active": true,
+        "parts": [
+          {
+            "if": [
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "symbolExpression": "%i%bconfirm%/i%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/Boolean",
+                  "value": true
+                },
+                "compareOperator": "==",
+                "logic": null
+              }
+            ],
+            "then": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%s%PLC1.OpcUa.AllDataWPulse.CmdAutCpl%/s%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": true
+                },
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "else": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%s%PLC1.OpcUa.AllDataWPulse.CmdAutCpl%/s%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": false
+                },
+                "asyncWait": true
+              }
+            ]
+          }
+        ],
+        "asyncWait": true
+      }
+    ]
+  }
+]
+</script>
+</div>
+<div id="Checkbox_Connect_Auth" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiCheckbox" data-tchmi-height="25" data-tchmi-height-unit="px" data-tchmi-left="175" data-tchmi-left-unit="px" data-tchmi-top="91" data-tchmi-top-unit="px" data-tchmi-width="25" data-tchmi-width-unit="px" data-tchmi-is-enabled="True" data-tchmi-background-color="%f%if(%s%PLC1.OpcUa.AllDataR.SUBMV.GRID.MesData.OUT_CmdAutCpl%/s%==true){'{&quot;color&quot;:&quot;rgba(153,204,51,1)&quot;}'}else{'{&quot;color&quot;:&quot;rgba(250,15,15,0)&quot;}'} %/f%" data-tchmi-toggle-state="Normal" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-text-font-size-unit="px" data-tchmi-text-horizontal-alignment="Left" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px">
+
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-border-radius" type="application/json">
+{
+  "topLeft": 25.0,
+  "topRight": 25.0,
+  "bottomLeft": 25.0,
+  "bottomRight": 25.0,
+  "topLeftUnit": "px",
+  "topRightUnit": "px",
+  "bottomLeftUnit": "px",
+  "bottomRightUnit": "px"
+}
+</script>
+</div>
+<div id="TcHmiContainer_151" data-tchmi-type="TcHmi.Controls.System.TcHmiContainer" data-tchmi-height="25" data-tchmi-height-unit="px" data-tchmi-left="50" data-tchmi-left-unit="px" data-tchmi-top="144" data-tchmi-top-unit="px" data-tchmi-width="27" data-tchmi-width-unit="px" data-tchmi-zindex="1" data-tchmi-creator-visibility="Collapsed">
+
+
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">[
+  {
+    "event": "TcHmiContainer_151.onPressed",
+    "actions": [
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%s%PLC1.OpcUa.AllDataW.CmdConnectAuthorization%/s%",
+        "valueType": "tchmi:general#/definitions/BOOL",
+        "value": {
+          "objectType": "FunctionExpression",
+          "functionExpression": "Confirm(\"Confirm\",\"Are you sure of this action ?\" ,\"Yes\" ,\"Cancel\" ,\"NoIdea\" )"
+        },
+        "asyncWait": true
+      }
+    ]
+  }
+]</script>
+
+</div>
+
+<div id="Button_Disconnect" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="50" data-tchmi-height-unit="px" data-tchmi-left="5" data-tchmi-left-unit="px" data-tchmi-text="Disconnect" data-tchmi-top="77" data-tchmi-top-unit="px" data-tchmi-width="153" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-font-size="20" data-tchmi-is-enabled="%s%PLC1.GVL_CFG.A1_PP.ParamLocalMode%/s%" data-tchmi-right-unit="px" data-tchmi-text-horizontal-alignment="Center" data-tchmi-text-font-size-unit="px" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-font-weight="Bold" data-tchmi-bottom-unit="px" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px">
+
+
+
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-border-style" type="application/json">
+{
+  "left": "Solid",
+  "right": "Solid",
+  "top": "Solid",
+  "bottom": "Solid"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-width" type="application/json">
+{
+  "left": 1,
+  "right": 1,
+  "top": 1,
+  "bottom": 1,
+  "leftUnit": "px",
+  "rightUnit": "px",
+  "topUnit": "px",
+  "bottomUnit": "px"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-text-color" type="application/json">
+{
+  "color": "rgba(0, 0, 0, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
+{
+  "color": "rgba(222, 218, 218, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
+[
+  {
+    "event": "Button_Disconnect.onMouseClick",
+    "actions": [
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%i%bconfirm%/i%",
+        "value": {
+          "objectType": "FunctionExpression",
+          "functionExpression": "Confirm(\"Confirm\",\"Are you sure ?\" ,\"Yes\" ,\"No\" ,\"NoIdea\" )"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "Condition",
+        "active": true,
+        "parts": [
+          {
+            "if": [
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "symbolExpression": "%i%bconfirm%/i%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/Boolean",
+                  "value": true
+                },
+                "compareOperator": "==",
+                "logic": null
+              }
+            ],
+            "then": [
+              {
+                "objectType": "Condition",
+                "active": true,
+                "parts": [
+                  {
+                    "if": [
+                      {
+                        "compare1": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%s%PLC1.OpcUa.AllDataR.SUBMV.GRID.MesData.OUT_CmdDisconnect%/s%"
+                        },
+                        "compare2": {
+                          "objectType": "StaticValue",
+                          "valueType": "tchmi:general#/definitions/BOOL",
+                          "value": false
+                        },
+                        "compareOperator": "==",
+                        "logic": null
+                      }
+                    ],
+                    "then": [
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%s%PLC1.OpcUa.AllDataWPulse.CmdDisconnect%/s%",
+                        "value": {
+                          "objectType": "StaticValue",
+                          "valueType": "tchmi:general#/definitions/BOOL",
+                          "value": true
+                        },
+                        "asyncWait": true
+                      }
+                    ]
+                  },
+                  {
+                    "else": [
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%s%PLC1.OpcUa.AllDataWPulse.CmdDisconnect_end%/s%",
+                        "value": {
+                          "objectType": "StaticValue",
+                          "valueType": "tchmi:general#/definitions/BOOL",
+                          "value": true
+                        },
+                        "asyncWait": true
+                      }
+                    ]
+                  }
+                ],
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "else": []
+          }
+        ],
+        "asyncWait": true
+      }
+    ]
+  }
+]
+</script>
+</div>
+
+<div id="Checkbox_Disconnect" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiCheckbox" data-tchmi-height="25" data-tchmi-height-unit="px" data-tchmi-left="8" data-tchmi-left-unit="px" data-tchmi-top="89" data-tchmi-top-unit="px" data-tchmi-width="25" data-tchmi-width-unit="px" data-tchmi-is-enabled="True" data-tchmi-background-color="%f%if(%s%PLC1.OpcUa.AllDataR.SUBMV.GRID.MesData.OUT_CmdDisconnect%/s%){'{&quot;color&quot;:&quot;rgba(153,204,51,1)&quot;}'}else{'{&quot;color&quot;:&quot;rgba(250,15,15,0)&quot;}'} %/f%" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-text-font-size-unit="px" data-tchmi-text-horizontal-alignment="Right" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px">
+
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-border-radius" type="application/json">
+{
+  "topLeft": 25.0,
+  "topRight": 25.0,
+  "bottomLeft": 25.0,
+  "bottomRight": 25.0,
+  "topLeftUnit": "px",
+  "topRightUnit": "px",
+  "bottomLeftUnit": "px",
+  "bottomRightUnit": "px"
+}
+</script>
+</div>
+<div id="TcHmiContainer_149" data-tchmi-type="TcHmi.Controls.System.TcHmiContainer" data-tchmi-height="25" data-tchmi-height-unit="px" data-tchmi-left="183" data-tchmi-left-unit="px" data-tchmi-top="157" data-tchmi-top-unit="px" data-tchmi-width="27" data-tchmi-width-unit="px" data-tchmi-creator-visibility="Collapsed">
+
+
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">[
+  {
+    "event": "TcHmiContainer_149.onPressed",
+    "actions": [
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%s%PLC1.OpcUa.AllDataW.HPP_CmdOff%/s%",
+        "valueType": "tchmi:general#/definitions/BOOL",
+        "value": {
+          "objectType": "FunctionExpression",
+          "functionExpression": "Confirm(\"Confirm\",\"Are you sure of this action ?\" ,\"Yes\" ,\"Cancel\" ,\"NoIdea\" )"
+        },
+        "asyncWait": true
+      }
+    ]
+  }
+]</script>
+
+</div>
+
+<div id="Button_Decouplage_Urgence" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="50" data-tchmi-height-unit="px" data-tchmi-left="32" data-tchmi-left-unit="px" data-tchmi-text="Emergency Disconnect" data-tchmi-top="137" data-tchmi-top-unit="px" data-tchmi-width="258" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-font-size="20" data-tchmi-is-enabled="%s%PLC1.GVL_CFG.A1_PP.ParamLocalMode%/s%" data-tchmi-right-unit="px" data-tchmi-text-horizontal-alignment="Center" data-tchmi-text-font-size-unit="px" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-font-weight="Bold" data-tchmi-bottom-unit="px" data-tchmi-opacity="1" data-tchmi-grid-column-index="0" data-tchmi-grid-row-index="0" data-tchmi-max-width-unit="px" data-tchmi-max-height-unit="px" data-tchmi-min-width-unit="px" data-tchmi-min-height-unit="px">
+
+
+
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-border-style" type="application/json">
+{
+  "left": "Solid",
+  "right": "Solid",
+  "top": "Solid",
+  "bottom": "Solid"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-width" type="application/json">
+{
+  "left": 1,
+  "right": 1,
+  "top": 1,
+  "bottom": 1,
+  "leftUnit": "px",
+  "rightUnit": "px",
+  "topUnit": "px",
+  "bottomUnit": "px"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-text-color" type="application/json">
+{
+  "color": "rgba(0, 0, 0, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
+{
+  "color": "rgba(222, 218, 218, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
+[
+  {
+    "event": "Button_Decouplage_Urgence.onMouseClick",
+    "actions": [
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%i%bconfirm%/i%",
+        "value": {
+          "objectType": "FunctionExpression",
+          "functionExpression": "Confirm(\"Confirm\",\"Are you sure ?\" ,\"Yes\" ,\"No\" ,\"NoIdea\" )"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "Condition",
+        "active": true,
+        "parts": [
+          {
+            "if": [
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "symbolExpression": "%i%bconfirm%/i%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/Boolean",
+                  "value": true
+                },
+                "compareOperator": "==",
+                "logic": null
+              }
+            ],
+            "then": [
+              {
+                "objectType": "Condition",
+                "active": true,
+                "parts": [
+                  {
+                    "if": [
+                      {
+                        "compare1": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%s%PLC1.OpcUa.AllDataR.SUBMV.GRID.MesData.OUT_CmdEmergencyDisconnect%/s%"
+                        },
+                        "compare2": {
+                          "objectType": "StaticValue",
+                          "valueType": "tchmi:general#/definitions/BOOL",
+                          "value": false
+                        },
+                        "compareOperator": "==",
+                        "logic": null
+                      }
+                    ],
+                    "then": [
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%s%PLC1.OpcUa.AllDataWPulse.CmdEmergencyDisconnect%/s%",
+                        "value": {
+                          "objectType": "StaticValue",
+                          "valueType": "tchmi:general#/definitions/BOOL",
+                          "value": true
+                        },
+                        "asyncWait": true
+                      }
+                    ]
+                  },
+                  {
+                    "else": [
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%s%PLC1.OpcUa.AllDataWPulse.CmdEmergencyDisconnect_end%/s%",
+                        "value": {
+                          "objectType": "StaticValue",
+                          "valueType": "tchmi:general#/definitions/BOOL",
+                          "value": true
+                        },
+                        "asyncWait": true
+                      }
+                    ]
+                  }
+                ],
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "else": []
+          }
+        ],
+        "asyncWait": true
+      }
+    ]
+  }
+]
+</script>
+</div>
+
+<div id="Checkbox_Emergency_Disconnect" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiCheckbox" data-tchmi-height="25" data-tchmi-height-unit="px" data-tchmi-left="38" data-tchmi-left-unit="px" data-tchmi-top="151" data-tchmi-top-unit="px" data-tchmi-width="23" data-tchmi-width-unit="px" data-tchmi-is-enabled="True" data-tchmi-background-color="%f%if(%s%PLC1.OpcUa.AllDataR.SUBMV.GRID.MesData.OUT_CmdEmergencyDisconnect%/s%){'{&quot;color&quot;:&quot;rgba(153,204,51,1)&quot;}'}else{'{&quot;color&quot;:&quot;rgba(250,15,15,0)&quot;}'} %/f%" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px" data-tchmi-text-font-size-unit="px" data-tchmi-text-horizontal-alignment="Right">
+
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-border-radius" type="application/json">
+{
+  "topLeft": 25.0,
+  "topRight": 25.0,
+  "bottomLeft": 25.0,
+  "bottomRight": 25.0,
+  "topLeftUnit": "px",
+  "topRightUnit": "px",
+  "bottomLeftUnit": "px",
+  "bottomRightUnit": "px"
+}
+</script>
+</div>
+
+</div>

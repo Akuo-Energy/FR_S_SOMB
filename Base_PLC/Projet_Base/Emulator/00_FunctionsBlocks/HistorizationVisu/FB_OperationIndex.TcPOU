@@ -1,0 +1,88 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_OperationIndex" Id="{5a96e77b-443b-4124-af2d-65507a454914}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_OperationIndex
+////////////////// 
+// Get Operationnal Indicators . Number of movements. Running hours, Last Move datetime 
+//////////////////	
+VAR_INPUT
+	MesON				: BOOL ; 
+	CmdReset			: BOOL ;
+
+END_VAR
+
+VAR_OUTPUT PERSISTENT
+	CalRunningTimeHr	: INT ; 	// (Hrs) Running Time  
+	CalNbMove			: WORD ;
+	CalTimeStart		: STRING 	;	// DateTime at last Move .  ( hour Granularity ) .
+
+END_VAR
+
+VAR PERSISTENT
+	CalRunningTime		: TIME ;
+	CalRunningTime_Temp	: TIME;		// Previous RunningTime ater last move. 
+	CTU 				: CTU ;		// Count the nb of moves 
+	
+END_VAR 
+
+VAR 
+	ElapsedTime 		: TIME ;	//  Elapsed Time since last move 
+	CurrentTime 		: TIME ; 	// Current Time 
+	TimeStart			: TIME 	;	// TImeHour when the Move starts for the last time
+	R_TRIG 				: R_TRIG ; 	// Detect move starts
+	F_TRIG 				: F_TRIG ; 	// Detect move stops
+
+END_VAR
+
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+// RESET //
+	IF CmdReset THEN 
+		TimeStart 			:= TIME() ; 
+		CalRunningTime 		:= T#0MS ; 
+		CalRunningTime_Temp := T#0MS ;
+		CTU(CU:=FALSE) ; 
+		CTU(RESET:=TRUE); 
+	END_IF
+
+
+
+// NUMBER OF MOVES //
+//	CTU(CU := MesON , RESET:=FALSE , PV:=65535 , CV => CalNbMove ) ; 
+	
+// RUNNING HOURS //
+	R_TRIG(CLK:= MesON ) ; 
+	F_TRIG(CLK:= MesON ) ; 
+	
+	CurrentTime := TIME() ;
+	
+	IF R_TRIG.Q THEN 
+		TimeStart := TIME() ; 
+		CalTimeStart := LEFT(sTimeLocal_G, 16);	 // Minutes granularity . 
+	END_IF
+	
+	ElapsedTime 	:= CurrentTime - TimeStart ;	
+	IF MesON THEN 
+ 
+		CalRunningTime  := CalRunningTime_Temp +  ElapsedTime ;
+		
+	ELSE
+		CalRunningTime_Temp := CalRunningTime ; 
+		
+	END_IF
+
+	CalRunningTimeHr	:= DWORD_TO_INT(TIME_TO_DWORD(CalRunningTime)/1000/3600) ; 
+	
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_OperationIndex">
+      <LineId Id="328" Count="13" />
+      <LineId Id="401" Count="0" />
+      <LineId Id="343" Count="23" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

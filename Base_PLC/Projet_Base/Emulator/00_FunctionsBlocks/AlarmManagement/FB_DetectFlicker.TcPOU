@@ -1,0 +1,49 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_DetectFlicker" Id="{dcd89db8-3f12-4281-a3ed-f6022f87649c}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_DetectFlicker
+// Detect if a booleean variable is flickering 
+
+VAR_INPUT
+	IN_VAR			: BOOL;						// Boolean input to analyze
+	IN_Window		: TIME := T#5S;				// Time Window during which I check the number of value change
+	IN_Count		: UINT;						// Maximum number of change for the tiume duration 
+
+END_VAR
+VAR_OUTPUT
+	OUT_bFlicker		: BOOL;					// Value is considered as flickering
+END_VAR
+VAR
+	COUNT 			: CTU ; 
+	TON				: TON ; 
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[TON(IN:= TRUE , PT:= IN_Window ) ; 
+
+IF COUNT.CV > IN_Count THEN 
+	OUT_bFlicker := TRUE ; 
+ELSIF COUNT.CV < IN_Count AND TON.Q THEN  
+	OUT_bFlicker := FALSE ; 
+END_IF	
+	
+COUNT(CU:= IN_VAR , PV:= 1000 , RESET:=TON.Q)  ; 
+
+IF TON.Q THEN 
+	TON(IN:= FALSE ) ; 
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="FB_DetectFlicker">
+      <LineId Id="42" Count="0" />
+      <LineId Id="55" Count="0" />
+      <LineId Id="57" Count="1" />
+      <LineId Id="56" Count="0" />
+      <LineId Id="62" Count="0" />
+      <LineId Id="61" Count="0" />
+      <LineId Id="59" Count="0" />
+      <LineId Id="16" Count="0" />
+      <LineId Id="47" Count="0" />
+      <LineId Id="44" Count="2" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,73 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_Average" Id="{1c90474e-0714-424f-8b7d-bb84fd0e5d8d}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK  FB_Average
+//////////////////
+// Calculate the (fixed) Average of a data ( finishing convention )
+//////////////////
+VAR_INPUT
+	ValueIn 			: ANY ; // Value to average
+	WindowDuration		: LINT ; // (ms) Window of Time during which the average will be done 
+	CycleTime			: INT := CstCycleTime_G; // (ms) Cycle time of the CPU
+END_VAR
+	
+VAR_OUTPUT
+	ValueOut			: REAL ; // Averaged Value. 
+	bError 				: BOOL ; // Switch to true if error i inputs				
+END_VAR
+
+VAR
+	ValueSum			: REAL ; 							// intermediate Sum value of data in fixed Window range. 
+	pAnyReal			: POINTER TO REAL;
+	pAnyLReal			: POINTER TO LREAL;
+	pAnyULint			: POINTER TO ULINT;
+	pAnyUint			: POINTER TO UINT;
+	NbPoints			: LINT ; 	// Number of points used for calculating the average. 
+	
+	JJ					: DINT;		// Pick Up index .
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// EVALUATE VARIABLES //
+NbPoints 		:= WindowDuration 	/ 	CycleTime  ;  // Number of Cycle in the Window
+//Ceci est un test pour la subversion. KBT
+// CHECK INPUTS //
+IF NbPoints =0 THEN 
+	bError 		:= TRUE ; 
+	ValueOut 	:= -1 ;
+	
+ELSE
+	IF (ValueIn.TypeClass = __SYSTEM.TYPE_CLASS.TYPE_REAL) THEN
+		pAnyReal        := ValueIn.pValue; 
+		ValueSum  		:= ValueSum + (pAnyReal^);
+	ELSIF (ValueIn.TypeClass = __SYSTEM.TYPE_CLASS.TYPE_LREAL) THEN
+		pAnyLReal     	:= ValueIn.pValue; 
+		ValueSum  		:= ValueSum +  LREAL_TO_REAL(pAnyLReal^);
+	ELSIF (ValueIn.TypeClass = __SYSTEM.TYPE_CLASS.TYPE_ULINT) THEN
+		pAnyULint     	:= ValueIn.pValue; 
+		ValueSum  		:= ValueSum +  ULINT_TO_REAL(pAnyULint^);
+	ELSIF (ValueIn.TypeClass = __SYSTEM.TYPE_CLASS.TYPe_uint) THEN
+		pAnyUint		:= ValueIn.pValue;
+		ValueSum		:= ValueSum + UINT_TO_REAL(pAnyUint^);
+	END_IF
+	JJ			:=JJ+1 ;
+	
+	IF JJ >= NbPoints THEN  // in order to reset if online change of Cycle time
+		ValueOut 	:= ValueSum / LINT_TO_REAL(NbPoints)  ; // Average
+		ValueSum 	:= 0 ; 	// Reinitialize sum
+		JJ			:= 0 ; // Reinitialize JJ
+
+	END_IF
+
+END_IF
+
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_Average">
+      <LineId Id="659" Count="33" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

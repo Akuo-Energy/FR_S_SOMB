@@ -1,0 +1,19 @@
+﻿<div id="PCS_Empty_3" data-tchmi-type="TcHmi.Controls.System.TcHmiContent" data-tchmi-top="0" data-tchmi-left="0" data-tchmi-right="-17" data-tchmi-bottom="0" data-tchmi-width-mode="Parent" data-tchmi-height-mode="Parent">
+
+<div id="TcHmiContainer_124" data-tchmi-type="TcHmi.Controls.System.TcHmiContainer" data-tchmi-height="200" data-tchmi-height-unit="px" data-tchmi-left="31" data-tchmi-left-unit="px" data-tchmi-top="35" data-tchmi-top-unit="px" data-tchmi-width-unit="px" data-tchmi-right="-80" data-tchmi-width-mode="Parent" data-tchmi-height-mode="Parent" data-tchmi-bottom="0" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px">
+
+<div id="TcHmiRectangle_222" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiRectangle" data-tchmi-height="329" data-tchmi-height-unit="px" data-tchmi-left="42" data-tchmi-left-unit="px" data-tchmi-top="10" data-tchmi-top-unit="px" data-tchmi-width="883" data-tchmi-width-unit="px" data-tchmi-right-unit="px" data-tchmi-bottom-unit="px">
+
+</div>
+
+<div id="UserControl1_99" data-tchmi-type="TcHmi.Controls.System.TcHmiUserControlHost" data-tchmi-h="60" data-tchmi-height="69" data-tchmi-height-unit="px" data-tchmi-left="444" data-tchmi-left-unit="px" data-tchmi-strokewidth="2" data-tchmi-target-user-control="HMI/UserControls/Fusible.usercontrol" data-tchmi-top="65" data-tchmi-top-unit="px" data-tchmi-w="15" data-tchmi-width="36" data-tchmi-width-unit="px" data-tchmi-state="True">
+
+</div>
+
+<div id="Sectionneur_9" data-tchmi-type="TcHmi.Controls.System.TcHmiUserControlHost" data-tchmi-h="50" data-tchmi-height="91" data-tchmi-height-unit="px" data-tchmi-left="347" data-tchmi-left-unit="px" data-tchmi-r="8" data-tchmi-strokew="2" data-tchmi-target-user-control="HMI/UserControls/Sectionneur.usercontrol" data-tchmi-top="134" data-tchmi-top-unit="px" data-tchmi-w="50" data-tchmi-width="52" data-tchmi-width-unit="px" data-tchmi-mesopen="False">
+
+</div>
+
+</div>
+
+</div>

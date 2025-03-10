@@ -1,0 +1,321 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <POU Name="FB_ProtectRelay_Micom" Id="{708482a1-1a6e-4da1-bb61-8aef3c033681}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_ProtectRelay_Micom EXTENDS FB_ProtectRelay_Base
+//////////////////
+// SEPAM system for High Voltage or Low Voltage Grid Protection. 
+//////////////////
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance/model specific) 
+	   ParamTimeoutRTU						: TIME  := T#10S;					(* (s)	  Com RTU Timeout *)
+	   ParamUnitID							: BYTE 	:= 1;						(* (NA)	  unit ID*)
+	   ParamInInterfaceSub					: BOOL;								(* (NA)   Serial interface RS422/RS485 TYPE (0:EL6021, 1:SUB9)*)
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	OUT_Protect_GTE_LONG_Running			: BOOL; 							// Long GTE fault, PP stop for 2m and lost of autorisation 
+
+END_VAR
+
+VAR_INPUT
+	// I/O Inputs	
+	IN_MesAlarmIMax_IO						: BOOL; 							// I max fault Fault, Losing autorisation and not possible to consumed
+	IN_MesAlarmUmin_IO						: BOOL; 							// U min Fault, Keeping autorisation, If we have 3 gte in 30 min ==> Stop fedding and consumed during 2h
+	IN_MesAlarmPWH_IO						: BOOL; 							// Defaut wattmétrique
+	                                                								                                                	
+	IN_CmdReset_3GTEFault					: BOOL; 							// 3GTE Fault Reset 
+	
+	IN_MesAlarm_GTE3Time_IO					: BOOL;								// C13-100 default        			
+	IN_MesAlarmUmin_Long_IO	                : BOOL;                             // GTE default            
+	IN_MesHomopol_Def_IO				    : BOOL;                             // Homopolar power default
+	
+	
+	MesDataExd						 		: ProtectRelay_Micom; 	
+END_VAR
+
+VAR
+	//M_Read
+	Trig_Read								: R_TRIG;
+	ModbusRTU								: FB_ModbusRTU ;					// (NA) FB for Modbus Reading
+	MbStruct								: ARRAY[1..2] OF Struct_InputRTU;
+
+                                			
+	ModbusAlarm								: ARRAY[1..2] OF BOOL;				// (NA) Read alarm
+	AX_Quantity								: ARRAY[1..2] OF WORD;				// (NA) Quantity of blocks to read
+	AX_Address								: ARRAY[1..2] OF WORD;				// (NA) Start address of the read
+	OutErrorMbRead							: ARRAY[1..2] OF BOOL;
+                                			
+	Busy									: BOOL;
+	MesBlock_Temp							: ARRAY [1..2] OF ARRAY [0..94] OF WORD;
+	                            			
+	RTrigI									: R_TRIG;
+	//MesDataExd						 		: ProtectRelay_Micom; 
+	                            			
+	//M_EVALUATE                			
+	TON_GteIsLong							: TON;
+
+	FB_3GTE									: FB_CountNinTimeWindow; 
+	TP_MesAlarm_GTE3Time					: TP ;	
+	TP_MesAlarmUmin_Long	                : TP ; 
+	TP_MesHomopol_Def				    	: TP ; 
+    TP_MesWatchdog			            	: TP ; 
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{d0796f64-51d3-4808-b012-b1f7a6bc621c}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Manages Sepam Alarms. Alarms opens HT CB until Sepam manual reset. Warning opens CB-L but does not maintain warning.
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager 	: FB_AlarmCodeManager ; 
+ 	ComWarning				: BOOL;
+	ComAlarms				: BOOL;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[ComWarning	:= OutErrorMbRead[1] OR OutErrorMbRead[2];
+ComAlarms	:= OutErrorMbRead[1];
+
+TON_ComAlarm			(IN:= ComAlarms , PT:= ParamTempoComAlarm, Q=> MesDataExd.MesData.MesAlarmCom) ;	
+TP_MesAlarm_GTE3Time	( IN := NOT MesDataExd.MesData.MesAlarm_GTE3Time	  , PT := ParamTimeOut_Alarm ) ;
+TP_MesAlarmUmin_Long	( IN := NOT MesDataExd.MesData.MesAlarmUmin_Long	  , PT := ParamTimeOut_Alarm ) ;
+TP_MesHomopol_Def		( IN := NOT MesDataExd.MesHomopol_Def				  , PT := ParamTimeOut_Alarm ) ;
+TP_MesWatchdog			( IN := NOT MesDataExd.MesData.MesWatchdog			  , PT := ParamTimeOut_Alarm ) ;
+
+
+// ALARM CODE //
+	FB_AlarmCodeManager(
+		bAlarm1				:= MesDataExd.MesData.MesAlarmUmin , 		// Short GTE Fault  #Equipment
+		bAlarm2				:= FALSE ,									//
+		bAlarm3				:= MesDataExd.MesData.MesAlarm_GTE3Time	 ,	// C13-100 default        
+		bAlarm4				:= MesDataExd.MesData.MesAlarmUmin_Long  ,  // GTE default            
+		bAlarm5				:= MesDataExd.MesHomopol_Def			 ,  // Homopolar power default
+		bAlarm6				:= MesDataExd.MesData.MesWatchdog		 ,  // Watchdog alarm              
+		bAlarm7				:= FALSE, 									// 
+		bAlarm8				:= FALSE, 									// 
+		bAlarm9				:= FALSE, 									// 
+		bAlarm10			:= FALSE, 									// 
+		bAlarm11			:= FALSE, 									// 
+		bAlarm12			:= FALSE, 									// 
+		bAlarm13			:= FALSE, 									// 
+		bAlarm14			:= FALSE, 									// 
+		bAlarm15			:= FALSE ,									//  	
+		wAlarmCode			=>MesDataExd.MesData.MesAlarmCode);
+
+// WARNING CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= ComWarning, 									// At least one register do not respond #COM #Equipment
+		bAlarm2			:= MesDataExd.MesData.MesAlarmCom ,				// Communication alarm #COM  #Equipment
+		bAlarm3			:= FALSE , 										//		
+		bAlarm4			:= FALSE , 										//
+		bAlarm5			:= FALSE , 										//
+		bAlarm6			:= FALSE , 										//
+		bAlarm7			:= FALSE , 										//
+		bAlarm8			:= FALSE , 										//
+		bAlarm9			:= FALSE , 										//
+		bAlarm10		:= FALSE, 										//
+		bAlarm11		:= FALSE, 										//
+		bAlarm12		:= FALSE, 										//
+		bAlarm13		:= FALSE, 										//
+		bAlarm14		:= FALSE, 										//
+		bAlarm15		:= FALSE, 										//
+		wAlarmCode		=>MesDataExd.MesData.MesWarningCode);
+
+// EVENT CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:=TP_MesAlarm_GTE3Time .Q ,						// C13-100 default  back to normal       
+		bAlarm2			:=TP_MesAlarmUmin_Long .Q ,						// GTE default   back to normal          
+		bAlarm3			:=TP_MesHomopol_Def	   .Q ,						// Homopolar power default back to normal
+		bAlarm4			:=TP_MesWatchdog	   .Q ,     				// Watchdog alarm back to normal       
+		bAlarm5			:=FALSE, 										//
+		bAlarm6			:=FALSE, 										//
+		bAlarm7			:=FALSE, 										//
+		bAlarm8			:=FALSE, 										//
+		bAlarm9			:=FALSE, 										//
+		bAlarm10		:=FALSE, 										//
+		bAlarm11		:=FALSE, 										//
+		bAlarm12		:=FALSE, 										//
+		bAlarm13		:=FALSE, 										//
+		bAlarm14		:=FALSE, 										//
+		bAlarm15		:=FALSE, 										//
+		wAlarmCode		=>MesDataExd.MesData.MesEventCode);
+IF ParamNC THEN
+		MesDataExd.MesData.MesAlarm_GTE3Time	:= NOT IN_MesAlarm_GTE3Time_IO	;
+        MesDataExd.MesData.MesAlarmUmin_Long    := NOT IN_MesAlarmUmin_Long_IO	;
+        MesDataExd.MesHomopol_Def			    := NOT IN_MesHomopol_Def_IO	    ;
+        MesDataExd.MesData.MesWatchdog		    := NOT IN_MesWatchdog_IO		;  
+ELSE
+		MesDataExd.MesData.MesAlarm_GTE3Time	:=  IN_MesAlarm_GTE3Time_IO	;
+        MesDataExd.MesData.MesAlarmUmin_Long    :=  IN_MesAlarmUmin_Long_IO	;
+        MesDataExd.MesHomopol_Def			    :=  IN_MesHomopol_Def_IO	    ;
+        MesDataExd.MesData.MesWatchdog		    :=  IN_MesWatchdog_IO		;  
+
+END_IF   ]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Evaluate" Id="{e064da40-dcc4-4dc6-9483-17d0b3c6af91}">
+      <Declaration><![CDATA[METHOD M_Evaluate
+VAR_INPUT
+END_VAR
+
+VAR
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// GTE IS LONG AFTER 50S
+//	TON_GteIsLong(IN:=IN_MesAlarmUmin_IO ,PT:=T#50S); 
+//	MesDataExd.MesData.MesAlarmUmin_Long := TON_GteIsLong.Q ; 
+//	
+//	
+//	
+//	
+//	FB_3GTE(IN_bInput := IN_MesAlarmUmin_IO , IN_bReset := IN_CmdReset_3GTEFault , IN_CountMax := 3 , ParamTimeToMeasure := T#30M , OUT_FlagNinT =>MesDataExd.MesData.MesAlarm_GTE3Time ) ; 
+//		
+//	
+//	
+//	
+//	//Update MesData
+//	MesDataExd.MesData.MesI			:= (MesDataExd.MesData.MesI1 + MesDataExd.MesData.MesI2 + MesDataExd.MesData.MesI3) / 3 ;
+//	MesDataExd.MesData.MesAlarmUmin := IN_MesAlarmUmin_IO;
+//	MesDataExd.MesData.MesAlarmImax	:= IN_MesAlarmIMax_IO;
+//	
+//	MesDataExd.MesStopPP_UminLong 	:= OUT_Protect_GTE_LONG_Running;
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{4c99a5e2-051c-45b5-a37a-bb43c881ba17}">
+      <Declaration><![CDATA[METHOD M_Init
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Read" Id="{57d937fb-39c7-43a3-8ba6-11fbc4234740}">
+      <Declaration><![CDATA[METHOD M_Read
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR 
+	MW 					: FB_MergeWordsToDint; 
+	KK : UINT;
+
+	AX_Addr					: ARRAY[1..2] OF UINT 	:= [16#113,		16#10B];
+	AX_Qty					: ARRAY[1..2] OF UINT	:= [94,			1];
+	AX_UnitId				: ARRAY[1..2] OF BYTE	:= [1,			1];
+	AX_Function				: ARRAY[1..2] OF UINT	:= [3,			3];	
+	AX_Priority				: ARRAY[1..2] OF UINT	:= [1,			1];
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// CP-Read / Write 
+
+//	MesDataExd.MesData.MesCP_Read := MesCP_Read ; 
+//	
+//	IF MesCP_Read  THEN	
+//		
+//	
+//	ModbusRTU();
+//	Trig_Read(Clk := CalLocalTimeStruct.wMilliseconds < 200);
+//	IF Trig_Read.Q THEN
+//		FOR KK := 1 TO 2 DO
+//				ModbusRTU.M_AddAction_FIFO(InStruct := MbStruct[KK], InPriority := AX_Priority[KK]);
+//		END_FOR
+//	END_IF
+//	
+//	MbStruct[1].InBuffer 	:= ADR(MesBlock_Temp[1]);
+//	MbStruct[1].InFunction 	:= AX_Function[1];
+//	MbStruct[1].InQuantity 	:= AX_Qty[1];
+//	MbStruct[1].InStartAddr := AX_Addr[1];
+//	MbStruct[1].InUnitID 	:= AX_UnitId[1];
+//	
+//	MbStruct[2].InBuffer 	:= ADR(MesBlock_Temp[2]);
+//	MbStruct[2].InFunction 	:= AX_Function[2];
+//	MbStruct[2].InQuantity 	:= AX_Qty[2];
+//	MbStruct[2].InStartAddr := AX_Addr[2];
+//	MbStruct[2].InUnitID 	:= AX_UnitId[2];
+//	
+//	//MW( WORD_STRONG:= MesBlock_Temp[1][0], SIGNED:=FALSE, FIX:=1 , SIZE:=1, VAR_OUT := MesDataExd.MesData.MesI1);
+//	//MW( WORD_STRONG:= MesBlock_Temp[1][1], SIGNED:=FALSE, FIX:=1 , SIZE:=1, VAR_OUT := MesDataExd.MesData.MesI2);
+//	//MW( WORD_STRONG:= MesBlock_Temp[1][2], SIGNED:=FALSE, FIX:=1 , SIZE:=1, VAR_OUT := MesDataExd.MesData.MesI3);
+//	//MW( WORD_STRONG:= MesBlock_Temp[1][4], SIGNED:=FALSE, FIX:=1 , SIZE:=1, VAR_OUT := MesDataExd.MesData.MesI0);
+//	//MW( WORD_STRONG:= MesBlock_Temp[1][8], SIGNED:=FALSE, FIX:=1 , SIZE:=1, VAR_OUT := MesDataExd.MesData.MesImax1);
+//	//MW( WORD_STRONG:= MesBlock_Temp[1][9], SIGNED:=FALSE, FIX:=1 , SIZE:=1, VAR_OUT := MesDataExd.MesData.MesImax2);
+//	//MW( WORD_STRONG:= MesBlock_Temp[1][10], SIGNED:=FALSE, FIX:=1 , SIZE:=1, VAR_OUT := MesDataExd.MesData.MesImax3);
+//	////MW( WORD_STRONG:= MesBlock_Temp[1][14], SIGNED:=FALSE, FIX:=0 , SIZE:=1, VAR_OUT := MesDataExd.MesV1);
+//	//MW( WORD_STRONG:= MesBlock_Temp[1][15], SIGNED:=FALSE, FIX:=0 , SIZE:=1, VAR_OUT := MesDataExd.MesV2);
+//	//MW( WORD_STRONG:= MesBlock_Temp[1][16], SIGNED:=FALSE, FIX:=0 , SIZE:=1, VAR_OUT := MesDataExd.MesV3);
+//	//MW( WORD_STRONG:= MesBlock_Temp[1][11], SIGNED:=FALSE, FIX:=0 , SIZE:=1, VAR_OUT := MesDataExd.MesData.MesU12);
+//	//MW( WORD_STRONG:= MesBlock_Temp[1][12], SIGNED:=FALSE, FIX:=0 , SIZE:=1, VAR_OUT := MesDataExd.MesData.MesU31);
+//	//MW( WORD_STRONG:= MesBlock_Temp[1][13], SIGNED:=FALSE, FIX:=0 , SIZE:=1, VAR_OUT := MesDataExd.MesData.MesU23);
+//	//MW( WORD_STRONG:= MesBlock_Temp[1][20], SIGNED:=FALSE, FIX:=2 , SIZE:=1, VAR_OUT := MesDataExd.MesData.MesFreq);
+//	//MW( WORD_STRONG:= MesBlock_Temp[1][21], SIGNED:=TRUE, FIX:=0 , SIZE:=1, VAR_OUT := MesDataExd.MesP);
+//	//MW( WORD_STRONG:= MesBlock_Temp[1][22], SIGNED:=TRUE, FIX:=0 , SIZE:=1, VAR_OUT := MesDataExd.MesQ);
+//	//MW( WORD_STRONG:= MesBlock_Temp[1][23], SIGNED:=TRUE, FIX:=0 , SIZE:=1, VAR_OUT := MesDataExd.MesS);
+//	//MW( WORD_STRONG:= MesBlock_Temp[1][26], SIGNED:=TRUE, FIX:=2 , SIZE:=1, VAR_OUT := MesDataExd.MesCosPhi);
+//	//MW( WORD_STRONG:= MesBlock_Temp[1][27], WORD_WEAK := MesBlock_Temp[1][28], SIGNED:=FALSE, FIX:=1 , SIZE:=2, VAR_OUT := MesDataExd.EActProd);
+//	//MW( WORD_STRONG:= MesBlock_Temp[1][29], WORD_WEAK := MesBlock_Temp[1][30], SIGNED:=FALSE, FIX:=1 , SIZE:=2, VAR_OUT := MesDataExd.EActCons);
+//	//MW( WORD_STRONG:= MesBlock_Temp[1][31], WORD_WEAK := MesBlock_Temp[1][32], SIGNED:=FALSE, FIX:=1 , SIZE:=2, VAR_OUT := MesDataExd.EReactProd);
+//	//MW( WORD_STRONG:= MesBlock_Temp[1][33], WORD_WEAK := MesBlock_Temp[1][34], SIGNED:=FALSE, FIX:=1 , SIZE:=2, VAR_OUT := MesDataExd.EReactCons);
+//	
+//	
+//	MesDataExd.Input11 := MesBlock_Temp[2][0].0;
+//	MesDataExd.Input12 := MesBlock_Temp[2][0].1;
+//	MesDataExd.Input13 := MesBlock_Temp[2][0].2;
+//	MesDataExd.Input14 := MesBlock_Temp[2][0].3;
+//	MesDataExd.Input21 := MesBlock_Temp[2][0].4;
+//	MesDataExd.Input22 := MesBlock_Temp[2][0].5;
+//	MesDataExd.Input23 := MesBlock_Temp[2][0].6;
+//	MesDataExd.Input24 := MesBlock_Temp[2][0].7;
+//	MesDataExd.Input25 := MesBlock_Temp[2][0].8;
+//	MesDataExd.Input26 := MesBlock_Temp[2][0].9;
+//	
+//	END_IF
+//	
+//	//// Properties Update 
+//	//MesDataExd.MesU := (MesDataExd.MesData.MesU12 + MesDataExd.MesData.MesU31 + MesDataExd.MesData.MesU23 ) /3 ; 
+//	//
+//	//IF MesDataExd.MesP <> 0 THEN
+//	//MesDataExd.MesTanPhi := MesDataExd.MesQ /MesDataExd.MesP;
+//	//ELSE
+//	//MesDataExd.MesTanPhi := 0;
+//	//END_IF
+	]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_ProtectRelay_Micom">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ProtectRelay_Micom.M_AlarmManagement">
+      <LineId Id="3" Count="3" />
+      <LineId Id="74" Count="4" />
+      <LineId Id="7" Count="56" />
+      <LineId Id="79" Count="0" />
+      <LineId Id="2" Count="0" />
+      <LineId Id="80" Count="3" />
+      <LineId Id="86" Count="3" />
+      <LineId Id="85" Count="0" />
+      <LineId Id="84" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ProtectRelay_Micom.M_Evaluate">
+      <LineId Id="3" Count="17" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ProtectRelay_Micom.M_Init">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ProtectRelay_Micom.M_Read">
+      <LineId Id="3" Count="71" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>
+

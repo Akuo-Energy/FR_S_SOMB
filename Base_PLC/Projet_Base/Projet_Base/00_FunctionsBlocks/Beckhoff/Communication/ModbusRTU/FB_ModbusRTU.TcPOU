@@ -1,0 +1,269 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <POU Name="FB_ModbusRTU" Id="{80df2f3b-269b-45fa-b1cf-7f2cdc3caafd}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_ModbusRTU
+// Send Modbus Read Request for the first element of the buffer . Then remove the first line when executed ( busy)  and move all the other line to the left. Position 2 becomes position 1 , ...
+VAR CONSTANT
+	NbElementsBuffer				: UINT := 20;
+	
+END_VAR
+VAR_INPUT PERSISTENT
+	ParamTimeout					: TIME := T#500MS;
+	ParamInterfaceSub				: BOOL;
+END_VAR
+VAR
+	Buffer 							: ARRAY[1..NbElementsBuffer] OF Struct_InputRTU ; // Buffer to store actions
+	Priority 						: ARRAY[1..NbElementsBuffer] OF UINT; // Array to store priorities
+	InitialStruct 					: Struct_InputRTU;
+	bInit 							: BOOL;
+	ReadRTU1						: FB_ReadModbusRTU_V2;
+
+	KK : UINT;
+	
+	pBoolNull						: BOOL;
+	pIntNull						: INT;
+	pArrayNull						: BYTE;
+
+	R_TRIG_Error					: R_TRIG ;
+	F_Trig_busy						: F_TRIG;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF NOT bInit THEN
+	// Empty all structures . 
+	M_Init();
+ELSE
+	
+		// ATTENTION , IL NE FAUT PAS ENVOYER UN NOUVEAU MODBUS TANT QUE LE PRECEDENT N EST PAS FINI DE TRAITER .DE MEME IL NE FAUT PAS QUE LE CYCLE D AJOUT DU FIFO SOIT PLUS RAPIDE QUE LE TRAITEMENT DU RTU 
+		// TEmpo de 30 s apres une alarmes avant de refaire un essai . il ne faudrait pas que ca bloque les autres commandes .  
+
+		IF priority[1] <> 0 THEN
+
+			ReadRTU1(
+				InClockRead := TRUE,
+				InStartAddr := Buffer[1].InStartAddr,
+				InQuantity := Buffer[1].InQuantity,
+				InUnitID := Buffer[1].InUnitID,
+				InTimeout := ParamTimeout,
+				InAddrDest := Buffer[1].InBuffer,
+				InFunctionRead := Buffer[1].InFunction,
+				InInterfaceSub	:= ParamInterfaceSub 
+			);
+		END_IF
+		
+		
+		
+		MEMCPY(destAddr := Buffer[1].OutBusy, srcAddr := ADR(ReadRTU1.OutBusy), n := SIZEOF(ReadRTU1.OutBusy));		
+
+		//R_TRIG_Error(CLK:= ReadRTU1.OutErrorMbRead) ; 
+		F_Trig_busy(clk := ReadRTU1.OutBusy);
+		IF F_Trig_busy.Q THEN	// La lecture s 'est terminée par une erreur ou correcteemnt, on passe à l'element du buffer suivant . 
+			MEMCPY(destAddr := Buffer[1].OutError, srcAddr := ADR(ReadRTU1.OutErrorMbRead), n := SIZEOF(ReadRTU1.OutErrorMbRead)); // Copy the errOR  
+			MEMCPY(destAddr := Buffer[1].OutErrorId, srcAddr := ADR(ReadRTU1.OutErrorId), n := SIZEOF(ReadRTU1.OutErrorId));
+			MEMCPY(destAddr := Buffer[1].OutCompleted, srcAddr := ADR(ReadRTU1.OutbCompleted), n := SIZEOF(ReadRTU1.OutbCompleted));	
+			ReadRTU1.InClockRead := FALSE ; 
+			ReadRTU1.Reset		:= TRUE ; 
+			M_DeleteAction(InLigne := 1);
+			//R_TRIG_Error(CLK:= FALSE ) ; 
+			
+		END_IF
+END_IF
+]]></ST>
+    </Implementation>
+    <Method Name="M_AddAction_FIFO" Id="{6ac95129-2458-4521-a605-6b4118f63ea5}">
+      <Declaration><![CDATA[METHOD M_AddAction_FIFO : UINT //Method to add an element with a priority using FIFO strategy
+
+VAR_INPUT
+	InStruct 		: Struct_InputRTU;		// Structure input
+	InPriority 		: UINT;					// Strategy input
+END_VAR
+VAR_OUTPUT
+	OutBusy 		: BOOL;					// Output state of the Method
+	OutError 		: BOOL;					// Output error of the Method
+	OutErrorID 		: UINT;					//1: Empty input 2: Full Buffer
+	OutCompleted 	: BOOL;					// Output state of the Method : not busy and no error
+END_VAR
+VAR
+	KK 				: UINT;
+	LineToDelete	: UINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[OutError 	:= FALSE;
+OutBusy 	:= TRUE;
+
+IF NOT (CheckStruct(InStruct1 := InitialStruct, InStruct2 := InStruct)) AND InPriority <> 0 THEN 			// Check that we don't input an empty value
+	IF CheckStruct(InStruct1 := buffer[NbElementsBuffer], InStruct2 := InitialStruct) THEN 			// Check that the buffer isn't already full
+		FOR KK := 1 TO NbElementsBuffer - 1 DO
+			IF NOT CheckStruct(InStruct1 := buffer[NbElementsBuffer-KK], InStruct2 := InitialStruct) AND Priority[NbElementsBuffer-KK] > InPriority THEN 			// If the next position isn't empty  
+				buffer[NbElementsBuffer-KK+1] := buffer[NbElementsBuffer-KK]; 		// I replace this position by the next  ( CE PREMIER IF N EST PAS EXECUTER SI TOUTES LES PRIORITES SONT IDENTIQUES . )
+				Priority[NbElementsBuffer -KK +1 ] := Priority[NbElementsBuffer-KK];
+			ELSE
+				IF NOT CheckStruct(InStruct1 := buffer[NbElementsBuffer-KK], InStruct2 := InitialStruct) THEN		// Detect for buffer element that is not empty and assign new element to read to it. 
+					buffer[NbElementsBuffer-KK+1] 	:= InStruct;
+					M_AddAction_FIFO 				:= NbElementsBuffer-KK+1;
+					Priority[NbElementsBuffer-KK+1] := InPriority;
+					OutCompleted 		:= TRUE;
+					EXIT ;
+				END_IF
+			END_IF
+		END_FOR
+		IF NOT Outcompleted THEN
+			buffer[1] := InStruct;
+			Priority[1] := InPriority;
+			OutCompleted := TRUE;
+			M_AddAction_Fifo := 1;
+		END_IF
+	ELSE
+		OutErrorID 	:= 2;
+		OutError 	:= TRUE;
+	END_IF
+ELSE
+	OutErrorID 	:= 1;
+	OutError 	:= TRUE;
+END_IF
+IF M_VerifActions(OutLigne=>LineToDelete) THEN	// Verifie si il  n ya pas deux fois la meme ligne , sinon, supprime les lignes en doubles . En pratique, forcement la derniere ligne . 
+	M_DeleteAction(InLigne := LineToDelete);
+END_IF
+OutBusy := FALSE;
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_DeleteAction" Id="{0852ab1e-4625-4a62-bdfe-2d3d0183e7d4}">
+      <Declaration><![CDATA[METHOD M_DeleteAction : BOOL
+VAR_INPUT
+	InLigne 	: UINT;			// Input Ligne to delete
+END_VAR
+VAR_OUTPUT
+	OutBusy 		: BOOL;					// Output state of the Method
+	OutError 		: BOOL;					// Output error of the Method
+	OutErrorID 		: UINT;					// 1: InLigne greater than Buffer size, 2: The buffer ligne is already empty, 3: The buffer is full
+	OutCompleted 	: BOOL;					// Output state of the Method : not busy and no error
+	
+END_VAR
+
+VAR
+	KK 				: UINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF InLigne <= NbElementsBuffer THEN // Check the InLigne is in the range of the buffer
+	IF NOT checkstruct(InStruct1 := buffer[InLigne], InStruct2 := InitialStruct) THEN	// Check that the buffer ligne is not already empty
+		IF checkstruct(InStruct1 := buffer[NbElementsBuffer], InStruct2 := InitialStruct)THEN //check that the buffer is not full
+			FOR KK := InLigne TO NbElementsBuffer -1 DO
+				Buffer[KK] := buffer[KK + 1] ;
+				Priority[KK] := Priority[KK + 1] ;
+			END_FOR
+		ELSE
+			OutError := TRUE;
+			OutBusy := FALSE;
+			OutCompleted := FALSE;
+			OutErrorID := 3;
+		END_IF
+	ELSE
+		OutError := TRUE;
+		OutCompleted := FALSE;
+		OutBusy := TRUE;
+		OutErrorID := 2;
+		
+	END_IF
+ELSE
+	OutCompleted := FALSE;
+	OutError := TRUE;
+	OutBusy := FALSE;
+	OutErrorID := 1;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{ec1352ef-092e-4229-812f-80c50c062923}">
+      <Declaration><![CDATA[METHOD M_Init : BOOL
+VAR
+	InStruct : Struct_InputRTU;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+// Initialize the structure with empty elements. 
+
+InitialStruct.InBuffer := ADR(pArrayNull);
+InitialStruct.OutBusy := ADR(pBoolNull);
+InitialStruct.OutCompleted := ADR(pBoolNull);
+InitialStruct.OutError := ADR(pBoolNull);
+InitialStruct.OutErrorId := ADR(pIntNull);
+FOR KK := 1 TO NbElementsBuffer DO 
+	Buffer[KK] := InitialStruct;
+END_FOR	
+
+bInit := TRUE;
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_VerifActions" Id="{f4656f04-4541-4198-a5d7-cc51141a525e}">
+      <Declaration><![CDATA[METHOD M_VerifActions : BOOL // Verifies there is not repeat in the liste : TRUE = At least 2 elements are the same
+VAR_OUTPUT
+	OutLigne 	 : UINT;
+END_VAR
+
+VAR
+	KK: UINT;
+	JJ: UINT;
+	CheckStructValue : BOOL;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[FOR KK := 1 TO NbElementsBuffer DO
+	FOR JJ := 1 + KK TO NbElementsBuffer DO
+		IF CheckStruct(InStruct1 := InitialStruct, instruct2 := buffer[KK]) THEN
+			EXIT;
+		ELSE
+			CheckStructValue :=  checkstruct(InStruct1 := buffer[JJ], InStruct2 := buffer[KK]);
+			M_VerifActions := M_VerifActions OR (CheckStructValue ) ;
+			OutLigne := SEL(CheckStructValue AND Priority[KK]> priority[JJ], KK, JJ);
+		END_IF
+	END_FOR
+END_FOR]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_ModbusRTU">
+      <LineId Id="651" Count="38" />
+      <LineId Id="95" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ModbusRTU.M_AddAction_FIFO">
+      <LineId Id="121" Count="36" />
+      <LineId Id="11" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ModbusRTU.M_DeleteAction">
+      <LineId Id="5" Count="0" />
+      <LineId Id="10" Count="0" />
+      <LineId Id="21" Count="0" />
+      <LineId Id="36" Count="0" />
+      <LineId Id="34" Count="0" />
+      <LineId Id="44" Count="0" />
+      <LineId Id="35" Count="0" />
+      <LineId Id="38" Count="1" />
+      <LineId Id="41" Count="2" />
+      <LineId Id="40" Count="0" />
+      <LineId Id="23" Count="0" />
+      <LineId Id="37" Count="0" />
+      <LineId Id="24" Count="3" />
+      <LineId Id="22" Count="0" />
+      <LineId Id="12" Count="0" />
+      <LineId Id="30" Count="0" />
+      <LineId Id="13" Count="2" />
+      <LineId Id="11" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ModbusRTU.M_Init">
+      <LineId Id="44" Count="12" />
+      <LineId Id="7" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ModbusRTU.M_VerifActions">
+      <LineId Id="5" Count="1" />
+      <LineId Id="15" Count="1" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="29" Count="0" />
+      <LineId Id="19" Count="0" />
+      <LineId Id="28" Count="0" />
+      <LineId Id="17" Count="0" />
+      <LineId Id="12" Count="0" />
+      <LineId Id="7" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

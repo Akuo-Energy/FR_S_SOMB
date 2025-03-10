@@ -1,0 +1,313 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_PTR_Base" Id="{e961b07d-9153-4194-b298-30787eef2742}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_PTR_Base 
+//////////////////
+//  PTR Base Code
+//////////////////
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance specific) 
+	ParamPTRVersion					: STRING;	 		(* PTR Version*)
+	
+	ParamTimeOutStart               : TIME ;			(* (s)  Config : Tempo to start before timeout warning*)
+	ParamTimeOutStop        		: TIME ;			(* (s)  Config : Tempo to stop before timeout warning*)
+	ParamTimeOutDisconnect  		: TIME ;			(* (s)  Config : Tempo to disconnect before timeout warning*)
+	ParamTempoComAlarm				: TIME ;			(* (s) Config : Tempo to detect LOC Alarm*)
+	ParamTempoStartInv				: TIME ;			(* (s)  Config : Tempo to delay starting command and wait for the CB-R to close*)
+	ParamTempoStopInv				: TIME ;			(* (s)  Config : Tempo to delay stopping command and wait for the CB-R to open*)
+	
+	ParamPTRNum						: BYTE ; 			(* (NA) Config :Numerous of PTR in the Hybrid Power Plant*)
+	ParamNbINV						: BYTE ; 			(* (NA) Config :Number of Inverter for the PTR . *)
+	
+	//M_INIT VARIABLES // 	
+	bInit							: BOOL := TRUE ; 	// (NA) Initialize object parameters at first cycle 
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+
+END_VAR
+
+VAR_INPUT
+	// I/O Inputs 
+		IN_CmdStart						: BOOL := TRUE;				// (NA) [P,H] External Start Command
+		IN_CmdStop 						: BOOL; 					// (NA) [P,H] External Stop Command
+
+		IN_CmdStop_Local				: BOOL; 					// (NA) [P,H] External Stop Command, only for this inverter
+		IN_CmdStart_Local				: BOOL :=TRUE;				// (NA) [P,H] External Start Command, only for this inverter
+		IN_CmdDisconnect				: BOOL; 					// (NA) [P,H] External Disconnect CommAND 
+		// M_CURTAILPOWER VARIABLES //
+		IN_SetptPlimit 					: REAL; 					// (kW) [P,H] Active Power Limit setpoint (curtailing)  
+		IN_SetptQlimit 					: REAL; 					// (kVAr) [P,H] Reactive Power Limit setpoint (curtailing)  
+		
+		
+		IN_CmdReset 					: BOOL ;  					//(NA) [P,H]   Reset Command  
+END_VAR
+
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//	
+		TON_ComAlarm				: TON; 						// Tempo before deteting loss of communication                             
+		MesWarningCom				: BOOL ;					//(NA) At least one SMA does not communicate 			
+		CalCurtailAlarm				: BOOL;						//(NA) Impossible to curtail at the good value . Too many uncontrollable inverters . 
+	
+	//M_STATEMANAGER VARIABLES//
+	
+		
+		MesState 					: BYTE ; 					// (NA) Cal [P,H,B]  Bit 0: OFF , Bit 1 : Feeding Master , Bit 2: Feeding Slave 
+
+	// M_STARTSTOP VARIABLES //
+		FB_CheckCommandStart		: FB_CheckCommand ; 		// Check if Start Command Successful
+		FB_CheckCommandStop			: FB_CheckCommand ;			// Check if Stop Command Successful
+		FB_CheckCommandDisconnect	: FB_CheckCommand ;			// Check if Disconnect Command Successful
+		CmdResetEquipement 			: WORD ;  					//(NA) [P,H]   Reset Command of different child 
+		RS_StartStop				: RS; 						// (NA) Bistable Function for Start and Stop 
+		RS_StartStop_Local			: RS;						// (NA) Bistable Function for Start and Stop local
+		CalCompareWarningStart		: BOOL;						// (NA) [H,B] Start not performed warning
+		CalStartInProgress			: BOOL;                     // (NA) [H,B] Start in Progress
+		CalCompareWarningStop		: BOOL;                 	// (NA) [H,B] Stop not performed warning
+		CalStopInProgress			: BOOL;                     // (NA) [H,B] Stop in Progress
+		CalCompareWarningDisconnect	: BOOL;                     // (NA) [H,B] Disconnect not performed warning
+		CalDisconnectInProgress		: BOOL;                     // (NA) [H,B] Disconnect in Progress
+	
+	//M_EVALUATE VARIABLES//
+//	MesDataExd				: PTR ;						// (NA) [P,H,B] PTR concept Data structure 
+		                        	            				
+		MesPnomtot					: REAL; 					// (kW)  Cal: [H] Total nominal Power fo the SPP Product
+		MesPavailable				: REAL; 					// (kW)  Cal:[P,H] Available (no alarm) active Power in the PTR product
+		MesPconnected 				: REAL;						// (kW)  Cal:[P,H] Connected active Power in the SPP product 
+		                        	            				
+		MesNbInv_Connected			: BYTE; 					//(NA) Cal: Number of connected inverters 
+		CalNbInvAvailable			: BYTE ; 					//(NA) Number of available inverters
+		CalNbInvUnControllable		: BYTE;						//(NA) Number of inverters that are connected and Available , so Controllable 
+                                	
+	// M_EXECUTE //             	
+		KK							: BYTE ; 					// (NA) Loop over child objects 
+		
+	//GET/SET PROPERTY MANAGEMENT//
+		R_TRIG_Reset				: R_TRIG ;					// (NA) Rising Edge Detection for Reset 
+		
+	// I/O //
+		// Outputs	
+
+	
+	//EMULATOR//
+
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{7daeae9e-2213-44ae-86e7-bf58090a677c}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Generates object alarms and manages resets. 
+//////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_CurtailPower" Id="{f56e5678-6ee0-42d6-96d3-886ee489cde1}">
+      <Declaration><![CDATA[METHOD M_CurtailPower
+//////////////////
+// Split Active Power curtailing limit among all active inverters. 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_EquipmentCalls" Id="{5d73a3ae-01f6-462a-8b98-e1bd44f3a64d}">
+      <Declaration><![CDATA[METHOD M_EquipmentCalls
+//////////////////
+// Evaluate AMS characteristics
+//////////////////
+
+VAR
+	// Method local variables (reinitialized at each cycle) 
+
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Evaluate" Id="{1f8eb0fa-a8c3-4dee-8721-8dad716d109a}">
+      <Declaration><![CDATA[METHOD M_Evaluate
+//////////////////
+// Evaluate available Powers and AMG characteristics . 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{78091ef3-71c4-4ae3-84c0-dade414f7b92}">
+      <Declaration><![CDATA[METHOD M_Execute
+/////////////////////
+// Action Calls and Object Calls
+/////////////////////
+VAR
+	
+
+
+
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+// INITIALIZE // 
+	IF bInit THEN
+		M_Init() ; 
+		bInit		:= FALSE ; 
+		
+	ELSIF CmdInit_G OR IN_CmdReset THEN 
+		bInit		:= TRUE ;
+		
+	END_IF
+
+// OBJECT CALLS //
+	M_EquipmentCalls() ; 
+	
+// METHODS CALLS //
+	// Order is important 
+	M_StartStop();  		
+	M_CurtailPower();
+	M_StateManager() ; 
+	M_Evaluate();
+	M_AlarmManagement(); 
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{e17db485-39aa-43c2-a5e7-ef19f94988d1}">
+      <Declaration><![CDATA[METHOD M_Init 
+VAR
+
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_StartStop" Id="{d4b7badb-3883-4a69-9148-99a0f543c1f5}">
+      <Declaration><![CDATA[METHOD M_StartStop
+//////////////////
+// Start and Stop AMG
+/////////////////
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[RS_StartStop_Local(SET:=IN_CmdStart_Local,Reset1:= IN_CmdStop_Local); // TRUE START, FALSE STOP
+RS_StartStop(SET:=IN_CmdStart,Reset1 := IN_CmdStop OR NOT RS_StartStop_Local.Q1 ); // TRUE START, FALSE STOP
+
+(*
+		
+// CHECK CONSISTENCY //
+	FB_CheckCommandStart(
+		T					:= ParamTimeOutStart ,
+		bCmd				:= IN_CmdStart, 
+		bMes				:= NOT MesState.0,
+		bImpulsion			:= TRUE , 
+		bReset 				:= GVL_CFG.CmdClearFault_G OR IN_CmdStop OR IN_CmdDisconnect, 
+		bWarning 			=> CalCompareWarningStart,
+		bInProgress			=> CalStartInProgress); 
+			
+ 	FB_CheckCommandStop(
+		T					:= ParamTimeOutStop ,
+		bCmd				:= IN_CmdStop, 
+		bMes				:= MesDataExd.MesData.MesP < 1000,  				// Power inferior at 1 kW . 
+		bImpulsion			:= TRUE , 
+		bReset 				:= GVL_CFG.CmdClearFault_G OR IN_CmdStart, 
+		bWarning 			=> CalCompareWarningStop,
+		bInProgress			=> CalStopInProgress);
+		
+	FB_CheckCommandDisconnect(
+		T					:= ParamTimeOutDisconnect ,
+		bCmd				:= IN_CmdDisconnect, 
+		bMes				:= MesState.0,
+		bImpulsion			:= TRUE , 
+		bReset 				:= CmdClearFault_G OR IN_CmdStart, 
+		bWarning 			=> CalCompareWarningDisconnect,
+		bInProgress			=> CalDisconnectInProgress);
+	*)	
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_StateManager" Id="{91d8656f-61c8-45dc-aaac-8de7b4e7f87c}">
+      <Declaration><![CDATA[METHOD M_StateManager
+//////////////////
+// Manages AMG State
+//////////////////
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_PTR_Base">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PTR_Base.M_AlarmManagement">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PTR_Base.M_CurtailPower">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PTR_Base.M_EquipmentCalls">
+      <LineId Id="49" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PTR_Base.M_Evaluate">
+      <LineId Id="12" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PTR_Base.M_Execute">
+      <LineId Id="184" Count="11" />
+      <LineId Id="227" Count="0" />
+      <LineId Id="208" Count="7" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PTR_Base.M_Init">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PTR_Base.M_StartStop">
+      <LineId Id="165" Count="0" />
+      <LineId Id="127" Count="0" />
+      <LineId Id="176" Count="0" />
+      <LineId Id="167" Count="0" />
+      <LineId Id="166" Count="0" />
+      <LineId Id="128" Count="8" />
+      <LineId Id="138" Count="18" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PTR_Base.M_StateManager">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

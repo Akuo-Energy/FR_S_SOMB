@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="FSS_Standard" Id="{fbb08bc9-f36d-4eb8-b9c0-a615a4b5ec4c}">
+    <Declaration><![CDATA[TYPE FSS_Standard :
+STRUCT
+	
+	MesData  : FSS  ;  (* Object *)
+	
+END_STRUCT		
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

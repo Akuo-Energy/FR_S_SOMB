@@ -1,0 +1,96 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_Average" Id="{f81a6950-7abf-401a-9ae7-594f5f7db6ce}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK  FB_Average
+//////////////////
+// Calculate the (fixed) Average of a data ( finishing convention )
+//////////////////
+VAR_INPUT
+	ValueIn 			: ANY ; // Value to average
+	WindowDuration		: LINT ; // (ms) Window of Time during which the average will be done . 
+	
+END_VAR
+	
+VAR_OUTPUT
+	ValueOut			: REAL ; // Averaged Value. 
+	bError 				: BOOL ; // Switch to true if error i inputs				
+END_VAR
+
+VAR
+	ValueSum			: REAL ; 							// intermediate Sum value of data in fixed Window range. 
+	pAnyReal			: POINTER TO REAL;
+	pAnyLReal			: POINTER TO LREAL;
+	pAnyULint			: POINTER TO ULINT;
+	pAnyUint			: POINTER TO UINT;
+	NbPoints			: LINT ; 	// Number of points used for calculating the average. 
+	
+	JJ					: DINT;		// Pick Up index .
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// EVALUATE VARIABLES //
+NbPoints 		:= WindowDuration 	/ 	CstCycleTime_G  ;  // Number of Cycle in the Window. 
+//Ceci est un test pour la subversion. KBT
+// CHECK INPUTS //
+IF NbPoints =0 THEN 
+	bError 		:= TRUE ; 
+	ValueOut 	:= -1 ;
+	
+ELSE
+	IF (ValueIn.TypeClass = __SYSTEM.TYPE_CLASS.TYPE_REAL) THEN
+		pAnyReal        := ValueIn.pValue; 
+		ValueSum  		:= ValueSum + (pAnyReal^);
+	ELSIF (ValueIn.TypeClass = __SYSTEM.TYPE_CLASS.TYPE_LREAL) THEN
+		pAnyLReal     	:= ValueIn.pValue; 
+		ValueSum  		:= ValueSum +  LREAL_TO_REAL(pAnyLReal^);
+	ELSIF (ValueIn.TypeClass = __SYSTEM.TYPE_CLASS.TYPE_ULINT) THEN
+		pAnyULint     	:= ValueIn.pValue; 
+		ValueSum  		:= ValueSum +  ULINT_TO_REAL(pAnyULint^);
+	ELSIF (ValueIn.TypeClass = __SYSTEM.TYPE_CLASS.TYPe_uint) THEN
+		pAnyUint		:= ValueIn.pValue;
+		ValueSum		:= ValueSum + UINT_TO_REAL(pAnyUint^);
+	END_IF
+	JJ			:=JJ+1 ;
+	
+	IF JJ =NbPoints THEN  
+		ValueOut 	:= ValueSum / LINT_TO_REAL(NbPoints)  ; // Average
+		ValueSum 	:= 0 ; 	// Reinitialize sum
+		JJ			:= 0 ; // Reinitialize JJ
+
+	END_IF
+
+END_IF
+
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_Average">
+      <LineId Id="495" Count="1" />
+      <LineId Id="399" Count="0" />
+      <LineId Id="401" Count="0" />
+      <LineId Id="405" Count="1" />
+      <LineId Id="440" Count="0" />
+      <LineId Id="407" Count="0" />
+      <LineId Id="414" Count="0" />
+      <LineId Id="566" Count="2" />
+      <LineId Id="571" Count="2" />
+      <LineId Id="575" Count="2" />
+      <LineId Id="603" Count="1" />
+      <LineId Id="606" Count="0" />
+      <LineId Id="508" Count="0" />
+      <LineId Id="416" Count="0" />
+      <LineId Id="509" Count="0" />
+      <LineId Id="513" Count="0" />
+      <LineId Id="522" Count="0" />
+      <LineId Id="514" Count="0" />
+      <LineId Id="519" Count="0" />
+      <LineId Id="517" Count="0" />
+      <LineId Id="510" Count="0" />
+      <LineId Id="404" Count="0" />
+      <LineId Id="402" Count="0" />
+      <LineId Id="546" Count="1" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

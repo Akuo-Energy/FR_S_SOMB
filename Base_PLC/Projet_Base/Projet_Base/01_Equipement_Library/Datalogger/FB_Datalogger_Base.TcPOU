@@ -1,0 +1,134 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_Datalogger_Base" Id="{69bb4aad-2e4b-4d33-a92a-70ff01112575}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Datalogger_Base
+
+VAR_INPUT PERSISTENT
+	ParamTcpPort				: UINT	:=	502;		 (* (NA) Modbus TCP port*)
+	ParamIPAddress				: STRING;				 (* (NA) Config: IP Adress *)
+	ParamUnitID					: BYTE;					 (* (NA) Modbus Unit ID *)
+	ParamClockRead 				: TIME 	:= TIME#2S; 	 (* (Time) Read Modbus frequency  	*)
+	
+	bInit						: BOOL  := TRUE; 		 // (NA) Initialisation 
+END_VAR
+
+VAR_INPUT           	
+	IN_CmdToggleRead			: BOOL;
+	IN_CmdToggleWrite			: BOOL;
+	IN_CmdReset_L				: BOOL;
+END_VAR             	
+      	
+VAR                 	
+//INPUT
+	ClockRead					: BOOL;							// (NA) Modbus reading Clock
+    TP1							: TP ; 							// (NA) Tempo to define Modbus Reading Frequency 
+	
+	Trig_Cmd_Read				: R_Trig;
+	Trig_Cmd_Write              : R_Trig;
+	
+//  MesDataExd.MesData.                    : Datalogger;
+END_VAR
+
+VAR PERSISTENT
+
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{d7b2b898-806d-4f9e-bf00-f0f4af0ee6eb}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Generates object alarms and manages resets. 
+//////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager		: FB_AlarmCodeManager ;  
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_CP" Id="{e848d81d-f814-429b-970c-ec7ff36f85ac}">
+      <Declaration><![CDATA[METHOD M_CP
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{bd433fe1-55fe-446b-a9cb-46ef9881f596}">
+      <Declaration><![CDATA[METHOD M_Execute : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[	
+	TP1(IN:=NOT TP1.Q , PT:= ParamClockRead );
+	ClockRead 	:= TP1.Q;
+	
+	M_CP();
+		
+	M_Read();
+	
+	M_Write();
+	
+	M_AlarmManagement();
+
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Read" Id="{7f33589c-2613-46e7-bce2-5c6872880762}">
+      <Declaration><![CDATA[METHOD M_Read : BOOL
+VAR_INPUT
+END_VAR
+
+VAR
+	MW					: FB_MergeWordsToFloat;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Write" Id="{107d5a44-da27-4d6c-a7c7-bb8b6620fb27}">
+      <Declaration><![CDATA[METHOD M_Write : BOOL
+VAR
+		CmdbyCom	: WORD;
+		
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_Datalogger_Base">
+      <LineId Id="151" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Datalogger_Base.M_AlarmManagement">
+      <LineId Id="2012" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Datalogger_Base.M_CP">
+      <LineId Id="159" Count="1" />
+      <LineId Id="51" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Datalogger_Base.M_Execute">
+      <LineId Id="74" Count="6" />
+      <LineId Id="83" Count="5" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Datalogger_Base.M_Read">
+      <LineId Id="147" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Datalogger_Base.M_Write">
+      <LineId Id="41" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>
+

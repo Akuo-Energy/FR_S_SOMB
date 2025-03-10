@@ -1,0 +1,208 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_PIDRegulation" Id="{cb5e6e66-b366-408c-ad89-c5b43c90b7fc}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_PIDRegulation
+// Akuo Version of PID Regulation  for solar power plant . Input can be P or Q . 
+// Out  = Error *K (1+ 1/Ti sum(error) + Td delta(error) ) 
+(*
+	DATE :						07/2020																										
+	Developper:				GGY																												
+	Version :					V1.0																										
+	Function :																																																																		
+*)
+VAR_INPUT PERSISTENT
+
+	ParamK				: REAL ; // Proportionnal 
+	ParamTi				: REAL ; // Integral (s) . 0 to disable
+	ParamTd				: REAL ; // Derivative (s). 0 to disable . 
+	
+	ParamXmax			: REAL ; // maximal Value for X. Shall account for number of available PTR . 
+	ParamXmin			: REAL; // minimal value for X 
+	
+	ParamOutmax			: REAL ; // Maximal output value
+	ParamOutmin			: REAL ; // Maximal input value 
+	
+	
+	
+END_VAR
+
+VAR_INPUT
+	IN_SetptX				: REAL ; // Value to reach 
+	IN_MesX					: REAL ; // Measure to compare with
+	IN_MesComXError			: BOOL ; // Communication lost with the measure tool. 
+	IN_SetptOpenLoop		: REAL  ; // Output of the PID when disabled. This shall be equal to an evaluation of the correct output. Usually SetptX. OpenLoop setpoint. 
+
+	
+	IN_CmdReset				: BOOL ; // Reset PID 
+	IN_CmdPIDOn				: BOOL ; // Activate/ Desactivate PID . outpout equals to the offset if desactivated/ 
+END_VAR
+
+VAR_OUTPUT
+	OUT_X					: REAL ; // Output of the PID 
+	OUT_PIDMode				: INT ; // Mode of the PID ( 1: Bypassed  , 3 : Proportionnal , 4 : PI , 5 PID , 6: PD). 
+	
+END_VAR
+VAR
+	
+	CalSetptOffset 			: REAL  ; // Offset to be added to the PID to ensure continuity when resetting it or activating it. 
+
+	IntegralX			: REAL ; // Intergal
+	DerivativeX			: REAL ; // Derivative
+	ErrorX				: REAL;	// Error  
+	CP_PID				: BOOL;	// PID Enabled
+	Clock				: TON ; // Calculate Elapsed Time ; 
+	DeltaTime			: DWORD ; // 
+	// Derivative
+	StepDerivative		: INT := 0; // Derivative Step ( initialization , methode degre 1 , methode degre 2) 
+	X2,X1				:REAL;
+	T1					:DWORD;
+	CalReset: BOOL;
+	
+	KCopy				: REAL ; 
+	TiCopy				: REAL ; 
+	TdCopy				: REAL ; 
+	X_Temp				: REAL ; // Intermediate result . 
+	
+	CalOutLimitReached_Up	: BOOL;		// Output reached maximum output limit
+	CalOutLimitReached_Down	: BOOL;		// Output reached minimum output limit
+	
+	TrigCP_PID: BOOL;
+	bInit: BOOL := TRUE  ; 
+	time_new: INT;
+	delta_time: INT;
+	time_old: INT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// INITIALIZE 
+	OUT_PIDMode := 1 ;
+
+	CalReset := IN_CmdReset OR NOT IN_CmdPIDOn OR ABS(KCopy-ParamK)>0.000001 OR ABS(TiCopy-ParamTi)>0.000001 OR ABS(TdCopy-ParamTd)>0.000001 OR IN_MesComXError; // Reset if change of parameters >> passage en boucle ouverte. 
+
+	CP_PID :=   (ParamK>0.00001 OR ParamK<-0.00001)  AND NOT CalReset  ; // PID Enable ssi Activation and K >0 and not communication alarm with power meter . and not K change . 
+	
+
+	IF NOT CP_PID OR bInit THEN 
+		// Début proposition de modif KBT
+		time_old := TIME_TO_INT(TIME());
+		// Fin proposition de modif KBT
+
+		
+		Clock(IN:=FALSE ) ; 
+		Clock(IN:=TRUE, PT:=T#1H);	//Initialize clock 
+		bInit	:= FALSE ; 
+	ELSE 
+		Clock();
+		DeltaTime	:= TIME_TO_DWORD(CLOCK.ET) ; 	// 
+		
+		// Début proposition de modif KBT
+		time_new := TIME_TO_INT(TIME());
+		IF time_old <> 0 THEN
+			delta_time := time_new - time_old;
+		END_IF
+		time_old := TIME_TO_INT(TIME());
+		// Fin proposition de modif KBT
+	END_IF
+
+
+	KCopy 	:=  ParamK ; 
+	TiCopy	:= ParamTi ; 
+	TdCopy	:= ParamTd ; 
+	
+// CHECK INPUT // 
+	IN_SetptX := MAX(MIN(IN_SetptX, ParamXmax ), ParamXmin); // Limit the Input with Min/ Max values.
+
+	IN_SetptOpenLoop := MAX(MIN(IN_SetptOpenLoop, ParamXmax ), ParamXmin); // Limit the Input with Min/ Max values.
+	
+// EVALUATE QUANTITIES //
+	// Clock
+	
+	IF DeltaTime > 0 THEN	// We calculate on time cycle. When the time cycle is over , we reinitialize the clock
+		Clock(IN:=FALSE ) ; 
+		Clock(IN:=TRUE, PT:=T#1H);	//Initialize clock 
+	ELSE
+		CLOCK(PT:=T#1H,IN:=TRUE);
+	END_IF
+	// Error 
+		ErrorX := IN_SetptX - IN_MesX ; 
+
+	//Integral
+		// Sauturate the integral if overflow or if limts are reached or output reaches limits Reset the integral if command reset. 
+		IF (NOT(1E30 - ErrorX*DeltaTime/1000 < IntegralX OR -1E30 - ErrorX*DeltaTime/1000 > IntegralX) AND ParamTi>0 ) OR CalReset THEN
+			IF NOT ((ErrorX > 0 AND  CalOutLimitReached_Up) OR (ErrorX < 0 AND CalOutLimitReached_Down)) THEN 
+				IntegralX:=SEL(CalReset,IntegralX+ErrorX*DeltaTime/1000 , 0) ;
+			END_IF
+			
+			
+		END_IF
+		
+	// Derivative 
+		IF StepDerivative=0 OR CalReset THEN		// Reinitializa derivative if reset commAND  
+			X1:=ErrorX;
+			X2:=ErrorX;
+			T1:=DeltaTime;
+			DerivativeX := 0;
+			StepDerivative:=1;
+		ELSIF StepDerivative=1 AND ParamTd>0 THEN 
+			DerivativeX := (ErrorX - X1)/(DeltaTime-T1) ; // f'(x) = (f(x+h)-f(x))/h
+			X2:=X1;
+			X1:=ErrorX;
+			T1:=DeltaTime;	
+			StepDerivative:=2 ; 		
+		ELSE	
+			IF DeltaTime>0 AND DerivativeX < 1E30 AND DerivativeX> 1E30 AND ParamTd>0  THEN		// Saturate the derivative if going too high. 
+				IF NOT ((ErrorX > 0 AND  CalOutLimitReached_Up) OR (ErrorX < 0 AND CalOutLimitReached_Down)) THEN 
+					DerivativeX:=(3*(ErrorX)-4*X1+X2)/(2*(DeltaTime-T1)*1000);		// Formule de Gear au second degré . f'(x) = 1/2h*(3*f(x+2h)-4*f(x+h)+f(x))
+					X2:=X1;
+					X1:=ErrorX;
+					T1:=DeltaTime;
+				END_IF
+			END_IF;
+		END_IF;
+	
+// PID CALCULATION
+	IF CP_PID THEN
+
+		
+		TrigCP_PID	:= TRUE ; 
+		// PID Enable 
+		IF  ParamTi>0 AND ParamTd>0 THEN // Integral and derivative activated
+			X_Temp:=CalSetptOffset+ParamK*(ErrorX+IntegralX/ParamTi+DerivativeX*ParamTd);
+			OUT_PIDMode := 5 ; 
+		ELSIF ParamTd>0 THEN // Derivative activated 
+			X_Temp:= CalSetptOffset+ParamK*(ErrorX+DerivativeX*ParamTd) ; 
+			OUT_PIDMode := 6 ; 
+		ELSIF ParamTi>0 THEN // Integral activated 
+			X_Temp:=CalSetptOffset+ParamK*(ErrorX+IntegralX/ParamTi);
+			OUT_PIDMode := 4 ; 
+		ELSE	// Only proportionnal
+			X_Temp:=CalSetptOffset+ParamK*(ErrorX) ; 
+			OUT_PIDMode := 3 ; 
+		END_IF
+		
+	ELSE
+		
+		CalSetptOffset := IN_SetptOpenLoop ; // At the moment when i activated the PID, i need to ensure continuity of the OUT_X and start the PID from there . 
+	
+		TrigCP_PID	:= FALSE ; 
+		//PID Disable. Open Loop . 
+		X_Temp := IN_SetptOpenLoop ;
+		OUT_PIDMode:=1 ;
+	END_IF
+	
+// Saturate the OUtput with limits : 
+CalOutLimitReached_Up := (X_Temp > ParamOutmax)  ;
+CalOutLimitReached_Down:= (X_Temp < ParamOutmin)  ;
+ 
+
+OUT_X :=  MAX(MIN(ParamOutmax , X_Temp ) , ParamOutmin ) ; 
+
+		
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_PIDRegulation">
+      <LineId Id="1748" Count="123" />
+      <LineId Id="213" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

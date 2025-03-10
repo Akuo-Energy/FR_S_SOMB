@@ -1,0 +1,64 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_CB_MVSwitch" Id="{4522da7a-7c7d-48f4-81d1-da2dd7bc8289}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_CB_MVSwitch EXTENDS FB_CB_Base
+//////////////////
+//  Motorized Circuit Breaker with telecommAND   Requires Open and Close impulsions.
+//////////////////
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance/model specific) 
+	
+END_VAR
+
+VAR_INPUT
+	// I/O Inputs              	
+		
+END_VAR
+
+VAR
+	//M_OPENCLOSE VARIABLES//
+
+	
+	//M_ALARMMANAGEMENT VARIABLES//
+		
+	//M_STATEMANAGER VARIABLES//
+MesDataExd	       			 :  CB_Standard ; 
+	// M_EXECUTE VARIABLES //
+		
+	// EMULATOR //
+
+		
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_Execute" Id="{349ad086-1311-4863-98ac-18fba007325d}">
+      <Declaration><![CDATA[METHOD M_Execute
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+
+SUPER^.M_Execute();
+
+// updat.MesDataExd.MesData.to be used in other functions 
+MesDataExd.MesData.MesClosed := RS_Emulate.Q1 ; ]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_CB_MVSwitch">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_CB_MVSwitch.M_Execute">
+      <LineId Id="69" Count="1" />
+      <LineId Id="75" Count="0" />
+      <LineId Id="2" Count="0" />
+      <LineId Id="80" Count="1" />
+      <LineId Id="79" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,42 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="HMI" Id="{6d01684d-6c73-4991-ab6c-aac9e62c35d7}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM HMI
+VAR_INPUT
+	BMS_Display				: BAT_NARADA;
+	PCS_Display				: PCS_Sma;
+	ESS_Display 			: ESS_Exd;
+	
+	PTR_Display				: PTR_Exd;
+	INV_Display				: INV_Huawei;
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// HPP
+	HPP_HMI();
+	
+	BESS_HMI();
+	
+	SPP_HMI();]]></ST>
+    </Implementation>
+    <Method Name="M_UserManagement" Id="{6cb76ec5-7d1f-45f7-b294-0686a4d23b9e}">
+      <Declaration><![CDATA[METHOD M_UserManagement : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="HMI">
+      <LineId Id="5" Count="1" />
+      <LineId Id="10" Count="1" />
+      <LineId Id="54" Count="0" />
+      <LineId Id="30" Count="0" />
+    </LineIds>
+    <LineIds Name="HMI.M_UserManagement">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

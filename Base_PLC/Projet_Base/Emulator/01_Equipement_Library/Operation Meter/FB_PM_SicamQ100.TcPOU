@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_PM_SicamQ100" Id="{9803bc02-f843-4a6f-b20a-bdcb85caaa22}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_PM_SicamQ100 EXTENDS FB_PM_Base
+VAR_INPUT
+		ParamIPAddress				: STRING 	:= '192.168.20.66'; 	// (NA)Config: IP Adress of PV INverter
+		ParamUnitID 				: BYTE  	:= 1; 			  		// (NA)   Modbus Unit ID. 
+		ParamTCPPort				: UINT		:= 502;					// (NA) TCP port for modbus
+
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	// M_READ VARIABLES//
+
+	MesDataExd			: PM_SicamQ100 ; 
+		AX_STR						: ARRAY [1..CstNbSB_INV_G] OF STR;
+		AX_ModbusRead		   		: ARRAY [1..3] OF FB_ModbusRead ; 					// (NA) FB for Modbus Reading
+		
+		MesBlock1_Temp 				: ARRAY[1..2]  OF WORD; 			// (NA) Temporary Block with multiple modbus reading (Caution : Double Word variables)
+		MesBlock2_Temp 				: ARRAY[1..76]  OF WORD; 			// (NA) Temporary Block with multiple modbus reading (Caution : Double Word variables)
+		MesBlock3_Temp 				: ARRAY[1..38]  OF WORD; 			// (NA) Temporary Block with multiple modbus reading (Caution : Double Word variables)
+
+		AX_ReadAlarm 		  		: ARRAY [1..3] OF BOOL ; 							// (NA) Modbus Read Alarm for all modbus frames		
+		AX_ReadAlarmCode			: ARRAY [1..3] OF UDINT;							// (NA) Modbus Read Alarm Code		
+		AX_ReadBusy					: ARRAY [1..3] OF BOOL;								// (NA) Modbus Read Busy  
+		AX_ReadCompleted			: ARRAY [1..3] OF BOOL;								// (NA) Modbus Read Completed
+				
+	// M_STATEMANAGER//
+		bErrorState					: BOOL;								//(NA) Inverter is in incoherent state
+		
+		
+	
+
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <LineIds Name="FB_PM_SicamQ100">
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

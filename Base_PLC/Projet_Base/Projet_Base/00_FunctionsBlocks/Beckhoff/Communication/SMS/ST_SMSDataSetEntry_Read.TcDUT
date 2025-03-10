@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="ST_SMSDataSetEntry_Read" Id="{f5ed7d3a-94a1-452e-ad96-fcbbe130df10}">
+    <Declaration><![CDATA[TYPE ST_SMSDataSetEntry_Read :
+STRUCT
+	Message : STRING(160);  // Commande envoyé par message
+	Num		: STRING(20);  //  Numéro de l'utilisateur
+END_STRUCT
+END_TYPE
+ 	]]></Declaration>
+  </DUT>
+</TcPlcObject>

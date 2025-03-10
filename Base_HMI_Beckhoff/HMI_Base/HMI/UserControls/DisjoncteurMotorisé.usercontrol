@@ -1,0 +1,92 @@
+﻿<div id="UserControl1_117" data-tchmi-type="TcHmi.Controls.System.TcHmiUserControl" 
+     data-tchmi-top="0" data-tchmi-left="0" 
+     data-tchmi-width="139" data-tchmi-height="132" data-tchmi-width-unit="px" data-tchmi-height-unit="px"
+     data-tchmi-creator-viewport-width="500" data-tchmi-creator-viewport-height="500" data-tchmi-width-mode="Content" data-tchmi-height-mode="Content" data-tchmi-zindex="2">
+
+<div id="TcHmiContainer_137" data-tchmi-type="TcHmi.Controls.System.TcHmiContainer" data-tchmi-height="80" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-width="56" data-tchmi-width-unit="px" data-tchmi-zindex="1">
+
+<div id="TcHmiLine_246" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiLine" data-tchmi-height="25" data-tchmi-height-unit="px" data-tchmi-left="11" data-tchmi-left-unit="px" data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-width="1" data-tchmi-width-unit="px" data-tchmi-x1="0" data-tchmi-x2="0" data-tchmi-y1="0" data-tchmi-y2="25" data-tchmi-zindex="5" data-tchmi-stroke-thickness="3">
+
+</div>
+
+<div id="TcHmiContainer_138" data-tchmi-type="TcHmi.Controls.System.TcHmiContainer" data-tchmi-height="20" data-tchmi-height-unit="px" data-tchmi-left="2" data-tchmi-left-unit="px" data-tchmi-top="%f%%ctrl%TcHmiLine_246::Height%/ctrl%-%ctrl%TcHmiContainer_138::Height%/ctrl%/2%/f%" data-tchmi-top-unit="px" data-tchmi-width="20" data-tchmi-width-unit="px" data-tchmi-zindex="5">
+
+<div id="TcHmiLine_247" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiLine" data-tchmi-height="18" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-width="18" data-tchmi-width-unit="px" data-tchmi-x1="18" data-tchmi-x2="0" data-tchmi-y1="0" data-tchmi-y2="18" data-tchmi-x1-unit="px" data-tchmi-x2-unit="px" data-tchmi-zindex="3" data-tchmi-stroke-thickness="3">
+
+</div>
+
+<div id="TcHmiLine_248" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiLine" data-tchmi-height="18" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-width="18" data-tchmi-width-unit="px" data-tchmi-x1="0" data-tchmi-x2="18" data-tchmi-y1="0" data-tchmi-y2="18" data-tchmi-x1-unit="px" data-tchmi-x2-unit="px" data-tchmi-zindex="2" data-tchmi-stroke-thickness="3">
+
+</div>
+
+</div>
+
+<div id="TcHmiLine_249" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiLine" data-tchmi-height="%ctrl%TcHmiLine_246::Height%/ctrl%" data-tchmi-height-unit="px" data-tchmi-left="11" data-tchmi-left-unit="px" data-tchmi-top="%f%%ctrl%TcHmiContainer_139::Top%/ctrl%+%ctrl%TcHmiContainer_139::Height%/ctrl%%/f%" data-tchmi-top-unit="px" data-tchmi-width="1" data-tchmi-width-unit="px" data-tchmi-x1="0" data-tchmi-x2="0" data-tchmi-y1="0" data-tchmi-y2="%ctrl%TcHmiLine_246::Height%/ctrl%" data-tchmi-zindex="5" data-tchmi-stroke-thickness="%ctrl%TcHmiLine_246::StrokeThickness%/ctrl%">
+
+</div>
+
+<div id="TcHmiContainer_139" data-tchmi-type="TcHmi.Controls.System.TcHmiContainer" data-tchmi-height="%ctrl%TcHmiLine_251::Height%/ctrl%" data-tchmi-height-unit="px" data-tchmi-left="%ctrl%TcHmiLine_246::Left%/ctrl%" data-tchmi-left-unit="px" data-tchmi-top="%ctrl%TcHmiLine_246::Height%/ctrl%" data-tchmi-top-unit="px" data-tchmi-width="44" data-tchmi-width-unit="px">
+
+<div id="TcHmiContainer_140" data-tchmi-type="TcHmi.Controls.System.TcHmiContainer" data-tchmi-height="30" data-tchmi-height-unit="px" data-tchmi-left="%ctrl%TcHmiLine_250::Width%/ctrl%" data-tchmi-left-unit="px" data-tchmi-top="%f%%ctrl%TcHmiLine_250::Top%/ctrl%-%ctrl%TcHmiEllipse_67::Height%/ctrl%/2%/f%" data-tchmi-top-unit="px" data-tchmi-width="20" data-tchmi-width-unit="px" data-tchmi-zindex="1">
+
+<div id="TcHmiEllipse_67" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiEllipse" data-tchmi-height="20" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-width="20" data-tchmi-width-unit="px" data-tchmi-stroke-thickness="2" data-tchmi-zindex="1">
+
+</div>
+
+<div id="TcHmiTextblock_14055" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="20" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-text="M" data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-width="20" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-horizontal-alignment="Center" data-tchmi-text-vertical-alignment="Center" data-tchmi-zindex="0">
+
+</div>
+
+</div>
+
+<div id="TcHmiLine_250" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiLine" data-tchmi-height="28" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-top="%f%%ctrl%TcHmiLine_251::Height%/ctrl%/2%/f%" data-tchmi-top-unit="px" data-tchmi-width="24" data-tchmi-width-unit="px" data-tchmi-x1="0" data-tchmi-x2="24" data-tchmi-y1="0" data-tchmi-zindex="6" data-tchmi-stroke-thickness="%ctrl%TcHmiLine_246::StrokeThickness%/ctrl%" data-tchmi-y2="0" data-tchmi-stroke-style="5 2">
+
+
+<script data-tchmi-target-attribute="data-tchmi-transform" type="application/json">
+[
+  {
+    "transformType": "Scale",
+    "x": "%f%if(%pp%MesOpen%/pp%){3/5}else{1}%/f%",
+    "y": 1.0,
+    "z": 1.0
+  },
+  {
+    "transformType": "Translate",
+    "x": "%f%if(%pp%MesOpen%/pp%){8}else{0}%/f%",
+    "yUnit": "px",
+    "zUnit": "px"
+  }
+]
+</script>
+</div>
+
+<div id="TcHmiLine_251" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiLine" data-tchmi-height="30" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-width="2" data-tchmi-width-unit="px" data-tchmi-x1="0" data-tchmi-x2="0" data-tchmi-y1="0" data-tchmi-y2="30" data-tchmi-zindex="5" data-tchmi-stroke-thickness="%ctrl%TcHmiLine_246::StrokeThickness%/ctrl%">
+
+
+
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-transform" type="application/json">
+[
+  {
+    "transformType": "Origin",
+    "x": 0,
+    "y": 30,
+    "xUnit": "px",
+    "yUnit": "px",
+    "zUnit": "px"
+  },
+  {
+    "transformType": "Rotate",
+    "angle": "%f%if (%pp%MesOpen%/pp%){ 45}else{0}%/f%"
+  }
+]
+</script>
+</div>
+
+</div>
+
+</div>
+
+</div>

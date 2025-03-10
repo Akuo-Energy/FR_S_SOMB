@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="PM_Prometer" Id="{88fda014-8270-4ff8-aeb4-e177f12073a1}">
+    <Declaration><![CDATA[TYPE PM_Prometer :
+STRUCT
+		//MesData 					: PM;
+	
+
+	    F11 	: PM;       // F11                                           								
+       	F15 	: PM;           // F15                                             								                               								
+       	F21 	: PM;                                                 								
+       	F22 	: PM;   
+       	T1 	: PM;                                                 								
+       	T2 	: PM;                                                 								
+       	T4	: PM;
+		T5 	: PM;    
+	
+	
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

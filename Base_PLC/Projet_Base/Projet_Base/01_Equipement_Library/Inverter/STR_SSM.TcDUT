@@ -1,0 +1,254 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="STR_SSM" Id="{1e7f8ece-ba09-452d-9aed-19f74e94b81d}">
+    <Declaration><![CDATA[TYPE STR_SSM :
+STRUCT
+		MesData			: STR ; 
+
+
+		MesPdc				: REAL ; (* (A) DC Power *)
+(*		MesIdc_1			: REAL;   						(* (A) DC current *)
+		MesIdc_2			: REAL;   						(* (A) DC current *)
+		MesIdc_3			: REAL;   						(* (A) DC current *)
+		MesIdc_4			: REAL;   						(* (A) DC current *)
+		MesIdc_5			: REAL;   						(* (A) DC current *)
+		MesIdc_6			: REAL;   						(* (A) DC current *)
+		MesIdc_7			: REAL;   						(* (A) DC current *)
+		MesIdc_8			: REAL;   						(* (A) DC current *)		
+		
+		MesPdc				: REAL ; (* (A) DC Power *)	 *)
+END_STRUCT
+END_TYPE
+(*
+AX_PTR[1].AX_INV[2].BJMonitor[1].STR[1]. MesIdc_1
+AX_PTR[1].AX_INV[2].BJMonitor[1].STR[1]. MesIdc_2
+AX_PTR[1].AX_INV[2].BJMonitor[1].STR[1]. MesIdc_3
+AX_PTR[1].AX_INV[2].BJMonitor[1].STR[1]. MesIdc_4
+AX_PTR[1].AX_INV[2].BJMonitor[1].STR[1]. MesIdc_5
+AX_PTR[1].AX_INV[2].BJMonitor[1].STR[1]. MesIdc_6
+AX_PTR[1].AX_INV[2].BJMonitor[1].STR[1]. MesIdc_7
+AX_PTR[1].AX_INV[2].BJMonitor[1].STR[1]. MesIdc_8
+AX_PTR[1].AX_INV[2].BJMonitor[1].STR[1]. MesPdc
+AX_PTR[1].AX_INV[2].BJMonitor[1].STR[2]. MesIdc_1
+AX_PTR[1].AX_INV[2].BJMonitor[1].STR[2]. MesIdc_2
+AX_PTR[1].AX_INV[2].BJMonitor[1].STR[2]. MesIdc_3
+AX_PTR[1].AX_INV[2].BJMonitor[1].STR[2]. MesIdc_4
+AX_PTR[1].AX_INV[2].BJMonitor[1].STR[2]. MesIdc_5
+AX_PTR[1].AX_INV[2].BJMonitor[1].STR[2]. MesIdc_6
+AX_PTR[1].AX_INV[2].BJMonitor[1].STR[2]. MesIdc_7
+AX_PTR[1].AX_INV[2].BJMonitor[1].STR[2]. MesIdc_8
+AX_PTR[1].AX_INV[2].BJMonitor[1].STR[2]. MesPdc
+AX_PTR[1].AX_INV[2].BJMonitor[1].STR[3]. MesIdc_1
+AX_PTR[1].AX_INV[2].BJMonitor[1].STR[3]. MesIdc_2
+AX_PTR[1].AX_INV[2].BJMonitor[1].STR[3]. MesIdc_3
+AX_PTR[1].AX_INV[2].BJMonitor[1].STR[3]. MesIdc_4
+AX_PTR[1].AX_INV[2].BJMonitor[1].STR[3]. MesIdc_5
+AX_PTR[1].AX_INV[2].BJMonitor[1].STR[3]. MesIdc_6
+AX_PTR[1].AX_INV[2].BJMonitor[1].STR[3]. MesIdc_7
+AX_PTR[1].AX_INV[2].BJMonitor[1].STR[3]. MesIdc_8
+AX_PTR[1].AX_INV[2].BJMonitor[1].STR[3]. MesPdc
+AX_PTR[1].AX_INV[2].BJMonitor[2].STR[1]. MesIdc_1
+AX_PTR[1].AX_INV[2].BJMonitor[2].STR[1]. MesIdc_2
+AX_PTR[1].AX_INV[2].BJMonitor[2].STR[1]. MesIdc_3
+AX_PTR[1].AX_INV[2].BJMonitor[2].STR[1]. MesIdc_4
+AX_PTR[1].AX_INV[2].BJMonitor[2].STR[1]. MesIdc_5
+AX_PTR[1].AX_INV[2].BJMonitor[2].STR[1]. MesIdc_6
+AX_PTR[1].AX_INV[2].BJMonitor[2].STR[1]. MesIdc_7
+AX_PTR[1].AX_INV[2].BJMonitor[2].STR[1]. MesIdc_8
+AX_PTR[1].AX_INV[2].BJMonitor[2].STR[1]. MesPdc
+AX_PTR[1].AX_INV[2].BJMonitor[2].STR[2]. MesIdc_1
+AX_PTR[1].AX_INV[2].BJMonitor[2].STR[2]. MesIdc_2
+AX_PTR[1].AX_INV[2].BJMonitor[2].STR[2]. MesIdc_3
+AX_PTR[1].AX_INV[2].BJMonitor[2].STR[2]. MesIdc_4
+AX_PTR[1].AX_INV[2].BJMonitor[2].STR[2]. MesIdc_5
+AX_PTR[1].AX_INV[2].BJMonitor[2].STR[2]. MesIdc_6
+AX_PTR[1].AX_INV[2].BJMonitor[2].STR[2]. MesIdc_7
+AX_PTR[1].AX_INV[2].BJMonitor[2].STR[2]. MesIdc_8
+AX_PTR[1].AX_INV[2].BJMonitor[2].STR[2]. MesPdc
+AX_PTR[1].AX_INV[2].BJMonitor[2].STR[3]. MesIdc_1
+AX_PTR[1].AX_INV[2].BJMonitor[2].STR[3]. MesIdc_2
+AX_PTR[1].AX_INV[2].BJMonitor[2].STR[3]. MesIdc_3
+AX_PTR[1].AX_INV[2].BJMonitor[2].STR[3]. MesIdc_4
+AX_PTR[1].AX_INV[2].BJMonitor[2].STR[3]. MesIdc_5
+AX_PTR[1].AX_INV[2].BJMonitor[2].STR[3]. MesIdc_6
+AX_PTR[1].AX_INV[2].BJMonitor[2].STR[3]. MesIdc_7
+AX_PTR[1].AX_INV[2].BJMonitor[2].STR[3]. MesIdc_8
+AX_PTR[1].AX_INV[2].BJMonitor[2].STR[3]. MesPdc
+AX_PTR[1].AX_INV[2].BJMonitor[3].STR[1]. MesIdc_1
+AX_PTR[1].AX_INV[2].BJMonitor[3].STR[1]. MesIdc_2
+AX_PTR[1].AX_INV[2].BJMonitor[3].STR[1]. MesIdc_3
+AX_PTR[1].AX_INV[2].BJMonitor[3].STR[1]. MesIdc_4
+AX_PTR[1].AX_INV[2].BJMonitor[3].STR[1]. MesIdc_5
+AX_PTR[1].AX_INV[2].BJMonitor[3].STR[1]. MesIdc_6
+AX_PTR[1].AX_INV[2].BJMonitor[3].STR[1]. MesIdc_7
+AX_PTR[1].AX_INV[2].BJMonitor[3].STR[1]. MesIdc_8
+AX_PTR[1].AX_INV[2].BJMonitor[3].STR[1]. MesPdc
+AX_PTR[1].AX_INV[2].BJMonitor[3].STR[2]. MesIdc_1
+AX_PTR[1].AX_INV[2].BJMonitor[3].STR[2]. MesIdc_2
+AX_PTR[1].AX_INV[2].BJMonitor[3].STR[2]. MesIdc_3
+AX_PTR[1].AX_INV[2].BJMonitor[3].STR[2]. MesIdc_4
+AX_PTR[1].AX_INV[2].BJMonitor[3].STR[2]. MesIdc_5
+AX_PTR[1].AX_INV[2].BJMonitor[3].STR[2]. MesIdc_6
+AX_PTR[1].AX_INV[2].BJMonitor[3].STR[2]. MesIdc_7
+AX_PTR[1].AX_INV[2].BJMonitor[3].STR[2]. MesIdc_8
+AX_PTR[1].AX_INV[2].BJMonitor[3].STR[2]. MesPdc
+AX_PTR[1].AX_INV[2].BJMonitor[3].STR[3]. MesIdc_1
+AX_PTR[1].AX_INV[2].BJMonitor[3].STR[3]. MesIdc_2
+AX_PTR[1].AX_INV[2].BJMonitor[3].STR[3]. MesIdc_3
+AX_PTR[1].AX_INV[2].BJMonitor[3].STR[3]. MesIdc_4
+AX_PTR[1].AX_INV[2].BJMonitor[3].STR[3]. MesIdc_5
+AX_PTR[1].AX_INV[2].BJMonitor[3].STR[3]. MesIdc_6
+AX_PTR[1].AX_INV[2].BJMonitor[3].STR[3]. MesIdc_7
+AX_PTR[1].AX_INV[2].BJMonitor[3].STR[3]. MesIdc_8
+AX_PTR[1].AX_INV[2].BJMonitor[3].STR[3]. MesPdc
+AX_PTR[1].AX_INV[2].BJMonitor[4].STR[1]. MesIdc_1
+AX_PTR[1].AX_INV[2].BJMonitor[4].STR[1]. MesIdc_2
+AX_PTR[1].AX_INV[2].BJMonitor[4].STR[1]. MesIdc_3
+AX_PTR[1].AX_INV[2].BJMonitor[4].STR[1]. MesIdc_4
+AX_PTR[1].AX_INV[2].BJMonitor[4].STR[1]. MesIdc_5
+AX_PTR[1].AX_INV[2].BJMonitor[4].STR[1]. MesIdc_6
+AX_PTR[1].AX_INV[2].BJMonitor[4].STR[1]. MesIdc_7
+AX_PTR[1].AX_INV[2].BJMonitor[4].STR[1]. MesIdc_8
+AX_PTR[1].AX_INV[2].BJMonitor[4].STR[1]. MesPdc
+AX_PTR[1].AX_INV[2].BJMonitor[4].STR[2]. MesIdc_1
+AX_PTR[1].AX_INV[2].BJMonitor[4].STR[2]. MesIdc_2
+AX_PTR[1].AX_INV[2].BJMonitor[4].STR[2]. MesIdc_3
+AX_PTR[1].AX_INV[2].BJMonitor[4].STR[2]. MesIdc_4
+AX_PTR[1].AX_INV[2].BJMonitor[4].STR[2]. MesIdc_5
+AX_PTR[1].AX_INV[2].BJMonitor[4].STR[2]. MesIdc_6
+AX_PTR[1].AX_INV[2].BJMonitor[4].STR[2]. MesIdc_7
+AX_PTR[1].AX_INV[2].BJMonitor[4].STR[2]. MesIdc_8
+AX_PTR[1].AX_INV[2].BJMonitor[4].STR[2]. MesPdc
+AX_PTR[1].AX_INV[2].BJMonitor[4].STR[3]. MesIdc_1
+AX_PTR[1].AX_INV[2].BJMonitor[4].STR[3]. MesIdc_2
+AX_PTR[1].AX_INV[2].BJMonitor[4].STR[3]. MesIdc_3
+AX_PTR[1].AX_INV[2].BJMonitor[4].STR[3]. MesIdc_4
+AX_PTR[1].AX_INV[2].BJMonitor[4].STR[3]. MesIdc_5
+AX_PTR[1].AX_INV[2].BJMonitor[4].STR[3]. MesIdc_6
+AX_PTR[1].AX_INV[2].BJMonitor[4].STR[3]. MesIdc_7
+AX_PTR[1].AX_INV[2].BJMonitor[4].STR[3]. MesIdc_8
+AX_PTR[1].AX_INV[2].BJMonitor[4].STR[3]. MesPdc
+AX_PTR[1].AX_INV[2].BJMonitor[5].STR[1]. MesIdc_1
+AX_PTR[1].AX_INV[2].BJMonitor[5].STR[1]. MesIdc_2
+AX_PTR[1].AX_INV[2].BJMonitor[5].STR[1]. MesIdc_3
+AX_PTR[1].AX_INV[2].BJMonitor[5].STR[1]. MesIdc_4
+AX_PTR[1].AX_INV[2].BJMonitor[5].STR[1]. MesIdc_5
+AX_PTR[1].AX_INV[2].BJMonitor[5].STR[1]. MesIdc_6
+AX_PTR[1].AX_INV[2].BJMonitor[5].STR[1]. MesIdc_7
+AX_PTR[1].AX_INV[2].BJMonitor[5].STR[1]. MesIdc_8
+AX_PTR[1].AX_INV[2].BJMonitor[5].STR[1]. MesPdc
+AX_PTR[1].AX_INV[2].BJMonitor[5].STR[2]. MesIdc_1
+AX_PTR[1].AX_INV[2].BJMonitor[5].STR[2]. MesIdc_2
+AX_PTR[1].AX_INV[2].BJMonitor[5].STR[2]. MesIdc_3
+AX_PTR[1].AX_INV[2].BJMonitor[5].STR[2]. MesIdc_4
+AX_PTR[1].AX_INV[2].BJMonitor[5].STR[2]. MesIdc_5
+AX_PTR[1].AX_INV[2].BJMonitor[5].STR[2]. MesIdc_6
+AX_PTR[1].AX_INV[2].BJMonitor[5].STR[2]. MesIdc_7
+AX_PTR[1].AX_INV[2].BJMonitor[5].STR[2]. MesIdc_8
+AX_PTR[1].AX_INV[2].BJMonitor[5].STR[2]. MesPdc
+AX_PTR[1].AX_INV[2].BJMonitor[5].STR[3]. MesIdc_1
+AX_PTR[1].AX_INV[2].BJMonitor[5].STR[3]. MesIdc_2
+AX_PTR[1].AX_INV[2].BJMonitor[5].STR[3]. MesIdc_3
+AX_PTR[1].AX_INV[2].BJMonitor[5].STR[3]. MesIdc_4
+AX_PTR[1].AX_INV[2].BJMonitor[5].STR[3]. MesIdc_5
+AX_PTR[1].AX_INV[2].BJMonitor[5].STR[3]. MesIdc_6
+AX_PTR[1].AX_INV[2].BJMonitor[5].STR[3]. MesIdc_7
+AX_PTR[1].AX_INV[2].BJMonitor[5].STR[3]. MesIdc_8
+AX_PTR[1].AX_INV[2].BJMonitor[5].STR[3]. MesPdc
+AX_PTR[1].AX_INV[2].BJMonitor[6].STR[1]. MesIdc_1
+AX_PTR[1].AX_INV[2].BJMonitor[6].STR[1]. MesIdc_2
+AX_PTR[1].AX_INV[2].BJMonitor[6].STR[1]. MesIdc_3
+AX_PTR[1].AX_INV[2].BJMonitor[6].STR[1]. MesIdc_4
+AX_PTR[1].AX_INV[2].BJMonitor[6].STR[1]. MesIdc_5
+AX_PTR[1].AX_INV[2].BJMonitor[6].STR[1]. MesIdc_6
+AX_PTR[1].AX_INV[2].BJMonitor[6].STR[1]. MesIdc_7
+AX_PTR[1].AX_INV[2].BJMonitor[6].STR[1]. MesIdc_8
+AX_PTR[1].AX_INV[2].BJMonitor[6].STR[1]. MesPdc
+AX_PTR[1].AX_INV[2].BJMonitor[6].STR[2]. MesIdc_1
+AX_PTR[1].AX_INV[2].BJMonitor[6].STR[2]. MesIdc_2
+AX_PTR[1].AX_INV[2].BJMonitor[6].STR[2]. MesIdc_3
+AX_PTR[1].AX_INV[2].BJMonitor[6].STR[2]. MesIdc_4
+AX_PTR[1].AX_INV[2].BJMonitor[6].STR[2]. MesIdc_5
+AX_PTR[1].AX_INV[2].BJMonitor[6].STR[2]. MesIdc_6
+AX_PTR[1].AX_INV[2].BJMonitor[6].STR[2]. MesIdc_7
+AX_PTR[1].AX_INV[2].BJMonitor[6].STR[2]. MesIdc_8
+AX_PTR[1].AX_INV[2].BJMonitor[6].STR[2]. MesPdc
+AX_PTR[1].AX_INV[2].BJMonitor[6].STR[3]. MesIdc_1
+AX_PTR[1].AX_INV[2].BJMonitor[6].STR[3]. MesIdc_2
+AX_PTR[1].AX_INV[2].BJMonitor[6].STR[3]. MesIdc_3
+AX_PTR[1].AX_INV[2].BJMonitor[6].STR[3]. MesIdc_4
+AX_PTR[1].AX_INV[2].BJMonitor[6].STR[3]. MesIdc_5
+AX_PTR[1].AX_INV[2].BJMonitor[6].STR[3]. MesIdc_6
+AX_PTR[1].AX_INV[2].BJMonitor[6].STR[3]. MesIdc_7
+AX_PTR[1].AX_INV[2].BJMonitor[6].STR[3]. MesIdc_8
+AX_PTR[1].AX_INV[2].BJMonitor[6].STR[3]. MesPdc
+AX_PTR[1].AX_INV[2].BJMonitor[7].STR[1]. MesIdc_1
+AX_PTR[1].AX_INV[2].BJMonitor[7].STR[1]. MesIdc_2
+AX_PTR[1].AX_INV[2].BJMonitor[7].STR[1]. MesIdc_3
+AX_PTR[1].AX_INV[2].BJMonitor[7].STR[1]. MesIdc_4
+AX_PTR[1].AX_INV[2].BJMonitor[7].STR[1]. MesIdc_5
+AX_PTR[1].AX_INV[2].BJMonitor[7].STR[1]. MesIdc_6
+AX_PTR[1].AX_INV[2].BJMonitor[7].STR[1]. MesIdc_7
+AX_PTR[1].AX_INV[2].BJMonitor[7].STR[1]. MesIdc_8
+AX_PTR[1].AX_INV[2].BJMonitor[7].STR[1]. MesPdc
+AX_PTR[1].AX_INV[2].BJMonitor[7].STR[2]. MesIdc_1
+AX_PTR[1].AX_INV[2].BJMonitor[7].STR[2]. MesIdc_2
+AX_PTR[1].AX_INV[2].BJMonitor[7].STR[2]. MesIdc_3
+AX_PTR[1].AX_INV[2].BJMonitor[7].STR[2]. MesIdc_4
+AX_PTR[1].AX_INV[2].BJMonitor[7].STR[2]. MesIdc_5
+AX_PTR[1].AX_INV[2].BJMonitor[7].STR[2]. MesIdc_6
+AX_PTR[1].AX_INV[2].BJMonitor[7].STR[2]. MesIdc_7
+AX_PTR[1].AX_INV[2].BJMonitor[7].STR[2]. MesIdc_8
+AX_PTR[1].AX_INV[2].BJMonitor[7].STR[2]. MesPdc
+AX_PTR[1].AX_INV[2].BJMonitor[7].STR[3]. MesIdc_1
+AX_PTR[1].AX_INV[2].BJMonitor[7].STR[3]. MesIdc_2
+AX_PTR[1].AX_INV[2].BJMonitor[7].STR[3]. MesIdc_3
+AX_PTR[1].AX_INV[2].BJMonitor[7].STR[3]. MesIdc_4
+AX_PTR[1].AX_INV[2].BJMonitor[7].STR[3]. MesIdc_5
+AX_PTR[1].AX_INV[2].BJMonitor[7].STR[3]. MesIdc_6
+AX_PTR[1].AX_INV[2].BJMonitor[7].STR[3]. MesIdc_7
+AX_PTR[1].AX_INV[2].BJMonitor[7].STR[3]. MesIdc_8
+AX_PTR[1].AX_INV[2].BJMonitor[7].STR[3]. MesPdc
+
+(*
+AX_PTR[1].AX_INV[1].BJMonitor[1].STR[1].MesComError
+AX_PTR[1].AX_INV[1].BJMonitor[1].STR[2].MesComError
+AX_PTR[1].AX_INV[1].BJMonitor[1].STR[3].MesComError
+AX_PTR[1].AX_INV[1].BJMonitor[2].STR[1].MesComError
+AX_PTR[1].AX_INV[1].BJMonitor[2].STR[2].MesComError
+AX_PTR[1].AX_INV[1].BJMonitor[2].STR[3].MesComError
+AX_PTR[1].AX_INV[1].BJMonitor[3].STR[1].MesComError
+AX_PTR[1].AX_INV[1].BJMonitor[3].STR[2].MesComError
+AX_PTR[1].AX_INV[1].BJMonitor[3].STR[3].MesComError
+AX_PTR[1].AX_INV[1].BJMonitor[4].STR[1].MesComError
+AX_PTR[1].AX_INV[1].BJMonitor[4].STR[2].MesComError
+AX_PTR[1].AX_INV[1].BJMonitor[4].STR[3].MesComError
+AX_PTR[1].AX_INV[1].BJMonitor[5].STR[1].MesComError
+AX_PTR[1].AX_INV[1].BJMonitor[5].STR[2].MesComError
+AX_PTR[1].AX_INV[1].BJMonitor[5].STR[3].MesComError
+AX_PTR[1].AX_INV[1].BJMonitor[6].STR[1].MesComError
+AX_PTR[1].AX_INV[1].BJMonitor[6].STR[2].MesComError
+AX_PTR[1].AX_INV[1].BJMonitor[6].STR[3].MesComError
+AX_PTR[1].AX_INV[1].BJMonitor[7].STR[1].MesComError
+AX_PTR[1].AX_INV[1].BJMonitor[7].STR[2].MesComError
+AX_PTR[1].AX_INV[1].BJMonitor[7].STR[3].MesComError
+*)
+AX_PTR[2].AX_INV[1].IN_MesClosed_BJ_IO[1]
+AX_PTR[2].AX_INV[1].IN_MesClosed_BJ_IO[2]
+AX_PTR[2].AX_INV[1].IN_MesClosed_BJ_IO[3]
+AX_PTR[2].AX_INV[1].IN_MesClosed_BJ_IO[4]
+AX_PTR[2].AX_INV[1].IN_MesClosed_BJ_IO[5]
+AX_PTR[2].AX_INV[1].IN_MesClosed_BJ_IO[6]
+AX_PTR[2].AX_INV[1].IN_MesClosed_BJ_IO[7]
+AX_PTR[2].AX_INV[2].IN_MesClosed_BJ_IO[1]
+AX_PTR[2].AX_INV[2].IN_MesClosed_BJ_IO[2]
+AX_PTR[2].AX_INV[2].IN_MesClosed_BJ_IO[3]
+AX_PTR[2].AX_INV[2].IN_MesClosed_BJ_IO[4]
+AX_PTR[2].AX_INV[2].IN_MesClosed_BJ_IO[5]
+AX_PTR[2].AX_INV[2].IN_MesClosed_BJ_IO[6]
+AX_PTR[2].AX_INV[2].IN_MesClosed_BJ_IO[7]
+
+
+*)]]></Declaration>
+  </DUT>
+</TcPlcObject>

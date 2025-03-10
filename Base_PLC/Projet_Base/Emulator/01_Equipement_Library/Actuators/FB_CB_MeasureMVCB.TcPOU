@@ -1,0 +1,71 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_CB_MeasureMVCB" Id="{0e21c7d9-e2e1-42cc-b2fe-6274b62fee6c}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_CB_MeasureMVCB EXTENDS FB_CB_Base
+//////////////////
+//  Motorized Circuit Breaker with telecommAND   Requires Open and Close impulsions.
+//////////////////
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance/model specific) 
+	ParamTP_Impulsion	   : TIME := T#2S ;			// (s) 	 Config : Tempo for the start or stop command impulsion
+	ParamFuseNC		       : BOOL ;					//  False: TRUE = Closed , True : TRUE = opened	
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	
+END_VAR
+
+VAR_INPUT
+	// I/O Inputs              
+	IN_MesFuse_IO				: BOOL;
+	IN_MesEarth_IO			: BOOL ; 
+	
+END_VAR
+
+VAR
+	//M_OPENCLOSE VARIABLES//	
+		RsFuse			:RS ;
+		
+	//M_ALARMMANAGEMENT VARIABLES//
+	MesDataExd	: CB_MeasureMVCB_Sch ;
+ 
+	//M_STATEMANAGER VARIABLES//
+	
+	// M_EXECUTE VARIABLES //
+		
+ 
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_Execute" Id="{ddb0a1bb-3f27-4726-8e62-e145022fbecb}">
+      <Declaration><![CDATA[METHOD M_Execute
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+
+SUPER^.M_Execute();
+
+// updat.MesDataExd.MesData.to be used in other functions 
+MesDataExd.MesData.MesClosed := RS_Emulate.Q1 ; ]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_CB_MeasureMVCB">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_CB_MeasureMVCB.M_Execute">
+      <LineId Id="69" Count="1" />
+      <LineId Id="75" Count="0" />
+      <LineId Id="2" Count="0" />
+      <LineId Id="80" Count="1" />
+      <LineId Id="79" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

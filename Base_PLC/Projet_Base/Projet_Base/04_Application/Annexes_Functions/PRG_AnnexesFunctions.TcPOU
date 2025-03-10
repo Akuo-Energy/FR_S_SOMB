@@ -1,0 +1,198 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="PRG_AnnexesFunctions" Id="{fdd9b82b-fe92-4e8c-8388-7800d25e4cca}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM PRG_AnnexesFunctions
+VAR_INPUT PERSISTENT
+	ParamServiceName_OPCUA			: STRING(255) := 'OPCUA\';	(*OPC UA Folder Name*)
+	ParamServiceName_Teamviewer		: STRING(255) := 'Teamviewer\';	(* Teamviewer Folder Name*)	
+	ParamServiceName_HMIServer		: STRING(255) := 'HmiServer\';	(*HmiServer Service Name*)	
+	ParamServiceName_Telegraf		: STRING(255) := 'Telegraf\';	(* Telegraf Folder Name*)	
+END_VAR
+VAR_INPUT
+	IN_bStartPing				: BOOL;	
+    IN_bStart_IP				: BOOL;
+    IN_bStart_PLC				: BOOL;
+
+	IN_CmdRestart_OPCUA 		: BOOL;	// OPC UA , Docker , OPEn VPN , Codesys. Push button
+	IN_CmdRestart_Teamviewer 	: BOOL;	// OPC UA , Docker , OPEn VPN , Codesys. Push button
+	IN_CmdRestart_HMIServer 	: BOOL;	// OPC UA , Docker , OPEn VPN , Codesys. Push button
+	IN_CmdRestart_Telegraf 		: BOOL;	// OPC UA , Docker , OPEn VPN , Codesys. Push button
+
+	IN_bStartVpnConnection		: BOOL;
+	IN_bStopVpnConnection		: BOOL;
+	IN_AdrIP					: STRING(50);
+END_VAR
+
+VAR_INPUT PERSISTENT
+	ParamRestartTCHour			: WORD := 3;
+	ParamRestartTCEnabled		: BOOL ; 
+END_VAR
+
+VAR PERSISTENT 
+	RestartCounter 				: UINT;
+END_VAR
+
+VAR
+		bInit					: BOOL := TRUE ; 
+		PRG_RestartService		: ARRAY[1..4] OF FB_RestartService ; 
+		StartProcess 			: NT_StartProcess;
+		CpuUsage				: TC_CpuUsage;
+		TON_ALarm				: TON ; // TON to inhibate alarmes during the first secondes after initailization 
+
+		// Restart Twincta
+		Step: INT;
+		R_Trig_TP_IP			: R_TRIG;
+		TC_Restart1				: TC_Restart;	
+		TP_GetIPPublic			: TP;
+
+END_VAR
+VAR_OUTPUT 
+	CPUUsage_PLC				: UDINT ; 
+END_VAR
+
+
+
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF bInit THEN
+	M_Init();
+	///////// 
+END_IF
+
+
+
+
+// Get Public IP : 	Auto query every 10 minutes
+	FUN_GetPublicIp(
+		ParamNetID := CstNetAmsId_IndusPC ,
+		IN_DirExe := 'C:\TwinCAT\Functions\Annex_Fonctions\GetPublicIp\',
+		IN_CmdStart := IN_bStart_IP OR (CalLocalTimeStruct.wMinute MOD 10 = 0 AND CalLocalTimeStruct.wSecond = 0
+	));
+
+// Ping Host 	
+//	FUN_PingHost(IN_bStart := IN_bStartPing, IN_PingAdr := IN_AdrIP, IN_DirBatLocation := 'C:\TwinCAT\Functions\Fonction_Com\Ping\');
+
+// CHECK STATES
+	// CPU Usage 	
+		CpuUsage(NETID := '', Start := CalLocalTimeStruct.wSecond = 0, TMOUT := T#1S);
+		CPUUsage_PLC := 	CpuUsage.USAGE ; 
+		
+	// Check Disk Space = planned task
+	// Check Services = planned task
+	// Network Scan = planned task
+	
+	// VPN Management
+		FUN_ConnectVPN(IN_CmdStart := IN_bStartVpnConnection, IN_OpenVpnFile := GVL_BASE.ParamOpenVpnFile);
+		FUN_DisconnectVPN(IN_CmdStart := IN_bStopVpnConnection);
+		
+
+// RESTART SERVICES 
+	// Restart OPC UA  	
+
+
+			PRG_RestartService[1](ParamNetID:='' , IN_Directory := CONCAT(STR1:='C:\TwinCAT\Functions\AnnexFunctions\RestartService\',STR2:= ParamServiceName_OPCUA), Start:= IN_CmdRestart_OPCUA , IN_ServiceName := 'RestartService.exe');
+			PRG_RestartService[2](ParamNetID:='' , IN_Directory := CONCAT(STR1:='C:\TwinCAT\Functions\AnnexFunctions\RestartService\',STR2:= ParamServiceName_Teamviewer), Start:= IN_CmdRestart_Teamviewer , IN_ServiceName := 'RestartService.exe');
+			PRG_RestartService[3](ParamNetID:='' , IN_Directory := CONCAT(STR1:='C:\TwinCAT\Functions\AnnexFunctions\RestartService\',STR2:= ParamServiceName_HMIServer), Start:= IN_CmdRestart_HMIServer , IN_ServiceName := 'RestartService.exe');
+			PRG_RestartService[4](ParamNetID:='' , IN_Directory := CONCAT(STR1:='C:\TwinCAT\Functions\AnnexFunctions\RestartService\',STR2:= ParamServiceName_Telegraf), Start:= IN_CmdRestart_Telegraf , IN_ServiceName := 'RestartService.exe');
+
+
+
+	// Restart PLC 	
+		PRG_RestartPlc(CmdRestart:= IN_bStart_PLC);
+		
+	// Restart Twincat at specified date and time to fix EL6614 issue 
+		CASE Step OF
+			0: //	
+				IF CalLocalTimeStruct.wHour = ParamRestartTCHour AND CalLocalTimeStruct.wMinute = 0 AND (CalLocalTimeStruct.wSecond >= 0 AND CalLocalTimeStruct.wSecond <=  5) AND ParamRestartTCEnabled  THEN 
+					Step := 1;
+				END_IF
+			1:
+				TC_Restart1(
+					RESTART:= TRUE, 
+					TMOUT:= T#500MS );
+					RestartCounter:=RestartCounter+1;
+		END_CASE
+	
+// ALARMS	
+	//Gestion des alarmes sur active configuration --> Alarme inhibées pendant 10s
+	TON_ALarm(IN:= MAIN.OUT_CalRunningPLC_IO , PT:= T#10S) ; 
+
+	IF TON_Alarm.Q THEN 
+		FUN_Alarms(IN_Directory := ParamDirBaseStore);
+	END_IF
+	
+	FUN_CreateDir_CSV(InDirectory := ParamDirBaseStore);
+	FUN_Write_CSV	(InDirectory := ParamDirBaseStore);
+
+	
+// Interfaces // 	
+
+ModbusTcp() ; 
+//HMI();]]></ST>
+    </Implementation>
+    <Method Name="M_Init" Id="{506ef970-a1ac-43da-b5fc-c0cc36fb0319}">
+      <Declaration><![CDATA[METHOD M_Init : BOOL
+VAR_INPUT
+END_VAR
+
+VAR
+	KK: UINT;
+	LL: UINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[	// Add code activation to the alarms
+	
+	FUN_Alarms_CSV.FIFO.A_Get();
+	FUN_Alarms_CSV.FIFO.A_Remove();	
+	FUN_Alarms_CSV.FIFO.In.Message := 'Code Activation';
+	FUN_Alarms_CSV.FIFO.In.TimeStamp_Act := SYSTEMTIME_TO_STRING(CalLocalTimeStruct);
+	FUN_Alarms_CSV.FIFO.A_Add();
+	
+	InfluxDb_AlarmsManagement.IN_FIFO.A_Get();
+	InfluxDb_AlarmsManagement.IN_FIFO.A_Remove();
+	InfluxDb_AlarmsManagement.IN_FIFO.In.Message := 'Code Activation';
+	InfluxDb_AlarmsManagement.IN_FIFO.In.TimeStamp_Act := SYSTEMTIME_TO_STRING(CalLocalTimeStruct);
+	InfluxDb_AlarmsManagement.IN_FIFO.A_Add();	
+	
+	FUN_SendMail.FIFO.A_Get();
+	FUN_SendMail.FIFO.A_Remove();
+	FUN_SendMail.FIFO.In.Message := 'Code Activation';
+	FUN_SendMail.FIFO.In.TimeStamp_Act := SYSTEMTIME_TO_STRING(CalLocalTimeStruct);
+	FUN_SendMail.FIFO.A_Add();
+	
+	// Reinitialize all Alarms values 
+	FOR KK := 1 TO CstNbAlarmCode DO
+		FUN_Alarms.AX_MesAlarmCode[KK] := 0 ; 
+		FOR LL:=0 TO 15 DO 
+			FUN_Alarms.AX_Journal[KK][LL].Value := FALSE ;
+		END_FOR 
+	END_FOR
+	
+	bInit:= False ; ]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="PRG_AnnexesFunctions">
+      <LineId Id="945" Count="33" />
+      <LineId Id="1080" Count="0" />
+      <LineId Id="1148" Count="4" />
+      <LineId Id="991" Count="17" />
+      <LineId Id="1011" Count="10" />
+      <LineId Id="24" Count="0" />
+      <LineId Id="75" Count="3" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="PRG_AnnexesFunctions.M_Init">
+      <LineId Id="30" Count="19" />
+      <LineId Id="53" Count="0" />
+      <LineId Id="55" Count="0" />
+      <LineId Id="64" Count="0" />
+      <LineId Id="61" Count="0" />
+      <LineId Id="56" Count="0" />
+      <LineId Id="63" Count="0" />
+      <LineId Id="57" Count="0" />
+      <LineId Id="54" Count="0" />
+      <LineId Id="16" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,304 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FUN_SendMail" Id="{b6977fb8-4574-446c-8cb5-40aa72797840}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM FUN_SendMail
+////////////////// 
+// Send Alarms by mails. 
+//////////////////
+
+VAR_INPUT 
+	
+	IN_Reset_OPC					: BOOL;					// Reset Mail server and alarms. 
+	IN_ChangePhoneMailInfos_OPC		: BOOL;					// Change users Info (mails, name, Lvl, ... ) 
+	FIFO							: FB_DBDatasetFifo;		// Buffer of the alarmes). 
+	
+	MesData			: ServerMail;
+	
+END_VAR
+
+VAR_OUTPUT
+	OUT_Error						: BOOL ; // Send Email Error 
+	OUT_Completed					: BOOL;		// Juste un trig pour dire que c'est fini. Written by the SMTP.Exe
+	OUT_NbMailSent 					: UINT;	// Number of mail being sent. 
+	
+END_VAR
+
+VAR PERSISTENT
+	
+	AX_MailAddr						: ARRAY[1..CstNbUser] OF STRING(255);	//Contient tous les numéros des utilisateurs
+	AX_Subscribed					: ARRAY[1..CstNbUser] OF BOOL		;	// List of subscription. 
+	AX_NomUtili						: ARRAY[1..CstNbUser] OF STRING(50)	;	// List of user names. 
+	AX_User_LVL						: ARRAY[1..CstNbUser] OF WORD;			//Contient tous les niveau d'adhésion des utilisateurs.
+	
+END_VAR
+
+VAR_INPUT PERSISTENT
+	
+	ParamTempoRetry					: TIME := T#1M;  (* (s) Tempo before send email retry *) 
+	
+END_VAR
+
+VAR
+
+	// M_AlarmManager 
+
+	RS_AlarmDestinator		: RS;
+	RS_AlarmSendMailFail	: RS;
+	
+	// M_Write Param	
+	bAlarmNoDestinator		: BOOL;
+	bSendMail				: BOOL;
+	
+	Body					: T_MaxString;
+	MailAddr				: T_MaxString;
+	MesTimeStamp			: STRING(17);	
+	CalTimeStamp			: STRING(255);
+	
+	//M_OPC
+	Trig_OPC				: R_TRIG;
+	RS_OPC					: RS;
+	Trig_Reset				: R_TRIG;
+
+	KK						: UINT;
+	NbDest					: INT;
+	TON_Retry				: TON;
+	Old_Count				: UDINT;
+	R_TRIG_Retry			: R_TRIG;
+
+// New Sender
+	NewSender 				: NT_StartProcess;
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[M_AlarmManager();
+M_OPC();
+M_Evaluate();
+
+IF IN_Reset_OPC THEN
+	M_Reset();
+END_IF
+TON_Retry(IN := Old_Count = fifo.nCount AND NOT R_TRIG_Retry.Q, pt := ParamTempoRetry);
+
+R_TRIG_Retry(clk := TON_Retry.Q);
+IF old_count <> fifo.nCount THEN
+	Old_Count := fifo.nCount;
+END_IF
+
+fifo.A_Get();	// Get the next alarm to send. 
+
+MesTimeStamp := CONCAT(REPLACE(STR1:= left(str := FIFO.Out.TimeStamp_Act, 16), STR2 := ' ', L := 1, P := 11), ' ') ;
+ReplaceAll( In_StringTosearch := MesTimeStamp, In_StringToFind := '/', IN_StringToReplace := '-', OUT_StringToSearch => CalTimeStamp);
+
+Body := concat(left(FIFO.Out.Message, 125),SEL(FIFO.Out.Value, ' : Desactive"',' : Active"')) ; 
+Body := concat( STR1:= UINT_TO_STRING(FIFO.Out.ID) , STR2:= concat(STR1:=' ,' , STR2:=Body )) ; 
+Body := concat( STR1:= 'ID:' , STR2:=Body ) ; 
+Body := concat('"', Concat(CalTimeStamp,Body));
+
+
+MailAddr := '"';
+NbDest := 0;
+FOR KK := 1 TO CstNbUser DO
+	IF AX_Subscribed[KK] AND AX_MailAddr[KK] <> '' AND (AX_User_LVL[KK] AND Fifo.out.Alarms_LVL)>0 THEN		// If user is subscribed to this alarm, add his mail adress to the list. 
+		IF MailAddr = '"' THEN
+			MailAddr := concat('"', AX_MailAddr[KK]);	// Initialize first sender. 
+		END_IF
+		NbDest := NbDest + 1;
+	END_IF
+END_FOR
+
+IF NbDest >0 THEN
+	IF NbDest>1 THEN
+		FOR KK := 1 TO CstNbUser DO
+			IF AX_Subscribed[KK] AND MailAddr <> AX_MailAddr[KK] AND (AX_User_LVL[KK] AND Fifo.out.Alarms_LVL)>0 THEN
+				MailAddr := concat(concat(MailAddr, ', '), AX_MailAddr[KK]);		// append other mail adress if several users subsribed to this alarm. 
+			END_IF
+		END_FOR
+	END_IF
+	MailAddr := concat(MailAddr, '"');
+	bSendMail := TRUE;
+	bAlarmNoDestinator	:= FALSE;
+ELSE 
+	bAlarmNoDestinator	:= TRUE;
+	bSendMail 			:= FALSE;
+	FIFO.A_Remove();	// remove alarm from FIFO if no destinator to avoid blocking the process
+END_IF	
+
+IF fifo.nCount = 0 THEN
+	bSendMail := FALSE;
+END_IF
+
+IF OUT_Completed THEN 
+	OUT_Completed := FALSE;
+	OUT_NbMailSent := OUT_NbMailSent + 1;
+
+	bSendMail := FALSE;
+	FIFO.A_Remove();
+END_IF	
+
+IF OUT_NbMailSent > 30000 THEN
+	OUT_NbMailSent := 0;
+END_IF]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManager" Id="{762b8683-b750-4c61-9bed-7525b8797915}">
+      <Declaration><![CDATA[METHOD M_AlarmManager
+VAR
+	
+	FB_AlarmCodeManager : FB_AlarmCodeManager;
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Gestion des alarmes internes au code
+
+RS_AlarmDestinator(SET:= bAlarmNoDestinator , RESET1:= IN_Reset_OPC ) ; 
+RS_AlarmSendMailFail(set := OUT_Error, reset1 := IN_Reset_OPC);
+
+FB_AlarmCodeManager
+(
+	bAlarm1 := RS_AlarmDestinator.Q1,			// No recipient for at least one alarm
+	bAlarm2 := FALSE,						// 
+	bAlarm3 := RS_AlarmSendMailFail.Q1,			// Execution of NewSender.exe did not work.  
+	bAlarm4 := FIFO.bOverwrite,					// Fifo Overflow
+	bAlarm5 := FALSE,							//
+	bAlarm6 := FALSE,    						//
+	bAlarm7 := FALSE,    						//
+	bAlarm8 := FALSE,    						//
+	bAlarm9 := FALSE,    						//
+	bAlarm10 :=FALSE,   						//
+	bAlarm11 :=FALSE,   						//
+	bAlarm12 :=FALSE,   						//
+	bAlarm13 :=FALSE,   						//
+	bAlarm14 :=FALSE,   						//
+	bAlarm15 :=FALSE,							//	
+	wAlarmCode =>MesData.MesAlarmCode
+);]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Evaluate" Id="{ef901e1d-125e-4ba8-881a-845d5c518dc5}">
+      <Declaration><![CDATA[METHOD M_Evaluate
+VAR 
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+Mesdata.AX_MailAddr		:= AX_MailAddr			;
+Mesdata.AX_Subscribed	:= AX_Subscribed	    ;
+MesData.AX_NomUtili		:= AX_NomUtili		    ;
+MesData.OUT_NbMailSent	:= OUT_NbMailSent		;
+MesData.AX_UserLVL		:= AX_User_LVL		    ;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{a56f8085-07d1-4295-b0f3-f9b874f5a0b5}">
+      <Declaration><![CDATA[METHOD M_Init : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_OPC" Id="{5d9610f0-112f-4781-b547-2d15e5aa9922}">
+      <Declaration><![CDATA[METHOD M_OPC : BOOL
+VAR
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[Trig_OPC(CLK := IN_ChangePhoneMailInfos_OPC);
+RS_OPC(SET:= Trig_OPC.Q);
+
+//TrigRestartService(CLK := IN_Restart_Service_OPC);
+//FUN_RestartStunnel(IN_Start := TrigRestartService.Q, IN_Directory := IN_Directory);
+
+
+IF RS_OPC.Q1 THEN
+	// Numéro de téléphone
+	AX_MailAddr := OpcUa.AllValueW.AX_MailAddr_OPC;
+	
+	// Nom d'utilisateur
+	AX_NomUtili	:= OpcUa.AllValueW.AX_NamesUsers_OPC;
+	
+	// User LVL . 
+	AX_User_LVL := OpcUa.AllValueW.AX_UserLVL;
+	
+	// Mise a jour de la liste des subscribed
+	AX_Subscribed := OpcUa.AllValueW.AX_SubscribedMail_OPC;
+
+	RS_OPC(RESET1:= TRUE);
+	RS_OPC(Reset1 := FALSE);
+END_IF
+
+Trig_Reset(CLK := IN_Reset_OPC);
+IN_Reset_OPC := Trig_Reset.Q;
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Reset" Id="{af3397da-1b0c-4842-85e3-4fd23bf21546}">
+      <Declaration><![CDATA[METHOD M_Reset : BOOL
+VAR_INPUT
+END_VAR
+VAR
+	
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[FIFO.A_Reset();
+IN_Reset_OPC 			:= FALSE;
+bAlarmNoDestinator 		:= FALSE ;	
+bSendMail				:= FALSE;
+
+
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FUN_SendMail">
+      <LineId Id="3894" Count="12" />
+      <LineId Id="3991" Count="0" />
+      <LineId Id="3908" Count="37" />
+      <LineId Id="3977" Count="0" />
+      <LineId Id="3976" Count="0" />
+      <LineId Id="3978" Count="0" />
+      <LineId Id="3980" Count="0" />
+      <LineId Id="3955" Count="1" />
+      <LineId Id="3958" Count="8" />
+      <LineId Id="427" Count="0" />
+    </LineIds>
+    <LineIds Name="FUN_SendMail.M_AlarmManager">
+      <LineId Id="261" Count="0" />
+      <LineId Id="293" Count="1" />
+      <LineId Id="301" Count="0" />
+      <LineId Id="263" Count="4" />
+      <LineId Id="302" Count="0" />
+      <LineId Id="275" Count="8" />
+      <LineId Id="286" Count="1" />
+      <LineId Id="284" Count="0" />
+      <LineId Id="269" Count="0" />
+      <LineId Id="196" Count="0" />
+    </LineIds>
+    <LineIds Name="FUN_SendMail.M_Evaluate">
+      <LineId Id="149" Count="2" />
+      <LineId Id="140" Count="0" />
+      <LineId Id="154" Count="0" />
+      <LineId Id="157" Count="0" />
+    </LineIds>
+    <LineIds Name="FUN_SendMail.M_Init">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FUN_SendMail.M_OPC">
+      <LineId Id="196" Count="13" />
+      <LineId Id="234" Count="0" />
+      <LineId Id="211" Count="2" />
+      <LineId Id="228" Count="0" />
+      <LineId Id="216" Count="6" />
+      <LineId Id="18" Count="0" />
+    </LineIds>
+    <LineIds Name="FUN_SendMail.M_Reset">
+      <LineId Id="88" Count="0" />
+      <LineId Id="69" Count="1" />
+      <LineId Id="73" Count="1" />
+      <LineId Id="76" Count="1" />
+      <LineId Id="55" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

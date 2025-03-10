@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="PowerCol_INV" Id="{17248ced-e9e9-4890-a23c-14588258aed1}">
+    <Declaration><![CDATA[TYPE PowerCol_INV :
+STRUCT
+	MesUdc 				: REAL;  	(* (V) DC Voltage measure*)
+	MesIdc 				: REAL; 	(* (A) Total DC current from batteries (+ = discharge)*)
+	MesV1 				: REAL;  	(* (V) AC Voltage measure*)
+	MesV2				: REAL;     (* (V) AC Voltage measure*)
+	MesV3				: REAL;     (* (V) AC Voltage measure*)
+	MesI1				: REAL; 	(* (A) Phase 1 AC Current*)
+	MesI2				: REAL;     (* (A) Phase 2 AC Current*)
+	MesI3				: REAL;     (* (A) Phase 3 AC Current*)
+	MesPdc				: REAL; 	(* (kW) DC Power . *)
+	MesP 				: REAL; 	(* (kW) Active Power output (AC) of PCS*)
+	MesQ 				: REAL; 	(* (kVAr) Reactive AC Power Produced by PCS *)
+	MesCosPhi 			: REAL;  	(* (p.u) Power factor*)
+	MesFreq				: REAL; 	(* (Hz) Frequency*)
+	MesAcSwitchClosed	: BOOL ; 	(*NA) Position of the AC Switch : True = Switch closed*)
+
+	MesAlarmCode		: WORD ; 		(* (NA) 	Internal Akuo AlarmCode         *)             															
+	MesWarningCode		: WORD ; 		(* (NA) 	Internal Akuo WarningCode       *)             															
+	MesEventCode		: WORD ; 		(* (NA) 	Internal Akuo EventCode         *)
+	
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

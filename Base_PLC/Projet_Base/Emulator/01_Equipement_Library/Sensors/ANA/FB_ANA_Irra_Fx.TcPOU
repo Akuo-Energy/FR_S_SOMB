@@ -1,0 +1,60 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_ANA_Irra_Fx" Id="{52c98e1e-dfd1-4981-83f7-4a71a6d94da8}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_ANA_Irra_Fx EXTENDS FB_ANA_Base
+//////////////////
+// (4-20 mA) sensor . 
+//////////////////
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance/model specific) 
+	ParamSensibility				: REAL ;			// Sensibility of the sensor ? 
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	
+END_VAR
+
+VAR_INPUT
+	// I/O Inputs 
+	
+END_VAR         			
+                			
+VAR             			
+	A						: REAL;     // F(x) = Ax+B
+	B						: REAL;     // F(x) = Ax+B
+
+	 MesData			: ANA ;   
+		
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_Execute" Id="{936a17f8-f9c8-42f4-b5c0-e663e614568f}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+SUPER^.M_Execute() ; ]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_ANA_Irra_Fx">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ANA_Irra_Fx.M_Execute">
+      <LineId Id="8" Count="1" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

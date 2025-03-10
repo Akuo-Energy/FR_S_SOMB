@@ -1,0 +1,49 @@
+﻿<div id="Sectionneur_10" data-tchmi-type="TcHmi.Controls.System.TcHmiUserControl" 
+     data-tchmi-top="0" data-tchmi-left="0" 
+
+     data-tchmi-creator-viewport-width="500" data-tchmi-creator-viewport-height="500" data-tchmi-width="74" data-tchmi-height="91">
+
+<div id="TcHmiLine_238" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiLine" data-tchmi-height="%f%%pp%H%/pp%/2-%pp%R%/pp%-0.1*%pp%H%/pp%+%pp%R%/pp%/2%/f%" data-tchmi-height-unit="px" data-tchmi-left="%f%%pp%W%/pp%/2%/f%" data-tchmi-left-unit="px" data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-width="15" data-tchmi-width-unit="px" data-tchmi-x1="0" data-tchmi-x2="0" data-tchmi-y1="0" data-tchmi-y2="%f%%pp%H%/pp%/2-%pp%R%/pp%-0.1*%pp%H%/pp%+%pp%R%/pp%/2%/f%" data-tchmi-zindex="3" data-tchmi-stroke-thickness="%pp%StrokeW%/pp%" data-tchmi-y2-unit="px">
+
+</div>
+
+<div id="TcHmiLine_239" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiLine" data-tchmi-height="%f%0.2*%pp%H%/pp%%/f%" data-tchmi-height-unit="px" data-tchmi-left="%f%%pp%W%/pp%/2%/f%" data-tchmi-left-unit="px" data-tchmi-top="%f%%pp%H%/pp%/2-0.1*%pp%H%/pp%+%pp%R%/pp%/2%/f%" data-tchmi-top-unit="px" data-tchmi-width="2" data-tchmi-width-unit="px" data-tchmi-x1="0" data-tchmi-x2="0" data-tchmi-y1="0" data-tchmi-zindex="3" data-tchmi-stroke-thickness="%pp%StrokeW%/pp%" data-tchmi-y2="%f%0.2*%pp%H%/pp%%/f%" data-tchmi-y2-unit="px">
+
+
+
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-transform" type="application/json">
+[
+  {
+    "transformType": "Origin",
+    "x": 0,
+    "y": "%f%%pp%H%/pp%*0.2%/f%",
+    "xUnit": "px",
+    "zUnit": "px"
+  },
+  {
+    "transformType": "Rotate",
+    "angle": "%f%if (%pp%MesOpen%/pp%){ 45}else{0}%/f%",
+    "angleUnit": "deg"
+  }
+]
+</script>
+</div>
+
+<div id="TcHmiLine_240" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiLine" data-tchmi-height="%f%%pp%H%/pp%/2-0.1*%pp%H%/pp%-%pp%R%/pp%/2%/f%" data-tchmi-height-unit="px" data-tchmi-left="%f%%pp%W%/pp%/2%/f%" data-tchmi-left-unit="px" data-tchmi-top="%f%%pp%H%/pp%/2+0.1*%pp%H%/pp%+%pp%R%/pp%/2%/f%" data-tchmi-top-unit="px" data-tchmi-width="1" data-tchmi-width-unit="px" data-tchmi-x1="0" data-tchmi-x2="0" data-tchmi-y1="0" data-tchmi-y2="%f%%pp%H%/pp%/2-0.1*%pp%H%/pp%%/f%" data-tchmi-zindex="3" data-tchmi-stroke-thickness="%pp%StrokeW%/pp%" data-tchmi-y2-unit="px">
+
+</div>
+
+<div id="TcHmiEllipse_66" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiEllipse" data-tchmi-height="%pp%R%/pp%" data-tchmi-height-unit="25" data-tchmi-left="%f%%pp%W%/pp%/2-%pp%R%/pp%/2%/f%" data-tchmi-left-unit="px" data-tchmi-top="%f%%pp%H%/pp%/2-(0.1*%pp%H%/pp%)-%pp%R%/pp%/2%/f%" data-tchmi-top-unit="px" data-tchmi-width="%pp%R%/pp%" data-tchmi-width-unit="25" data-tchmi-stroke-thickness="%pp%StrokeW%/pp%" data-tchmi-zindex="5">
+
+
+<script data-tchmi-target-attribute="data-tchmi-fill-color" type="application/json">
+{
+  "color": "None"
+}
+</script>
+</div>
+
+</div>

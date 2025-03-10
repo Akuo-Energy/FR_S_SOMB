@@ -1,0 +1,2831 @@
+<?xml version="1.0"?>
+<TcSmProject xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.beckhoff.com/schemas/2012/07/TcSmProject" TcSmVersion="1.0" TcVersion="3.1.4024.55">
+	<DataTypes>
+		<DataType>
+			<Name GUID="{53200B55-8F55-8C0D-0BE6-2BC4A4B64020}" AutoDeleteType="true">INV</Name>
+			<Comment><![CDATA[ Structure For Inverter. Main Operating Data to be saved (ex: OPC).  ]]></Comment>
+			<BitSize>736</BitSize>
+			<SubItem>
+				<Name>MesP</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[ (kW) 	Active Power output (AC) of inverter PCS01]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>0</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesQ</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[ (kVAr)   Reactive AC Power Produced				  ]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>32</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesPdc</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[ (kW) 	Power measure (DC) of inverter			  ]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>64</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesIdc</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[ (A) 	    Total Current measure (DC)				  ]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>96</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesUdc</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[ (V)  	Mean Voltage measure (DC)				  ]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>128</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesU</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[ (V) 	    Mean Voltage measure (AC)				  ]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>160</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesV</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[ (V)      Mean Phase to Neutral voltage			  ]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>192</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesI</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[ (A)      Mean Phase Current						  ]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>224</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesI0</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[ (A) 		Residual current						  ]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>256</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesFreq</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[ (Hz)     Frequency                                 ]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>288</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesS</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[ (kVA)     Apparent Power						      ]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>320</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesInsuResistor</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[ (kOhms) Insulation Resistance					  ]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>352</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesCosPhi</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[ (p.u) Power Factor								  ]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>384</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesTemp</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[ (C) Inverter Temperature							  ]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>416</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesState_Inv</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000005}">UINT</Type>
+				<Comment><![CDATA[ (NA) Manufacturer Inverter Status								  ]]></Comment>
+				<BitSize>16</BitSize>
+				<BitOffs>448</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>ParamPn</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[ (kW) Nominal Capacity of SMA 25000 TL Inverter	  ]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>480</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>ParamQn</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[ (kVAr) Nominal reactive power 					  ]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>512</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesCurtl</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
+				<Comment><![CDATA[ (NA)Cal True if the inverter is curtailing Power	  ]]></Comment>
+				<BitSize>8</BitSize>
+				<BitOffs>544</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesAlarmCom</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
+				<Comment><![CDATA[ (NA) Communication Alarm							  ]]></Comment>
+				<BitSize>8</BitSize>
+				<BitOffs>552</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesCP_Read</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
+				<Comment><![CDATA[ (NA) Cal : Permanent Condition for Read			  ]]></Comment>
+				<BitSize>8</BitSize>
+				<BitOffs>560</BitOffs>
+				<Default>
+					<Bool>false</Bool>
+				</Default>
+			</SubItem>
+			<SubItem>
+				<Name>MesCP_Write</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
+				<Comment><![CDATA[ (NA) Cal : Permanenent Condition for Write		  ]]></Comment>
+				<BitSize>8</BitSize>
+				<BitOffs>568</BitOffs>
+				<Default>
+					<Bool>false</Bool>
+				</Default>
+			</SubItem>
+			<SubItem>
+				<Name>MesOpened_Ac</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
+				<Comment><![CDATA[ (NA) Ac switch is opened							  ]]></Comment>
+				<BitSize>8</BitSize>
+				<BitOffs>576</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesOpened_Dc</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
+				<Comment><![CDATA[ (NA) Dc switch is opened							  ]]></Comment>
+				<BitSize>8</BitSize>
+				<BitOffs>584</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>OUT_CmdStart</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
+				<Comment><![CDATA[ (NA) OUT start command 							  ]]></Comment>
+				<BitSize>8</BitSize>
+				<BitOffs>592</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>OUT_CmdStop</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
+				<Comment><![CDATA[ (NA) OUT stop command   							  ]]></Comment>
+				<BitSize>8</BitSize>
+				<BitOffs>600</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>OUT_SetptPLimit</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[ (kW) OUT P setpoint  							  ]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>608</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>OUT_SetptQ</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[ (kVAr)  OUT Q setpoint   						  ]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>640</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesState</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000004}">WORD</Type>
+				<Comment><![CDATA[ (NA) Cal: Akuo Internal State . O=Stopped, 1 = RUN, 2 = Curtailment ]]></Comment>
+				<BitSize>16</BitSize>
+				<BitOffs>672</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesAlarmCode</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000004}">WORD</Type>
+				<Comment><![CDATA[ (NA) Internal Akuo AlarmCode                       ]]></Comment>
+				<BitSize>16</BitSize>
+				<BitOffs>688</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesWarningCode</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000004}">WORD</Type>
+				<Comment><![CDATA[ (NA) Internal Akuo WarningCode                     ]]></Comment>
+				<BitSize>16</BitSize>
+				<BitOffs>704</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesEventCode</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000004}">WORD</Type>
+				<Comment><![CDATA[ (NA) Internal Akuo EventCode                       ]]></Comment>
+				<BitSize>16</BitSize>
+				<BitOffs>720</BitOffs>
+			</SubItem>
+		</DataType>
+		<DataType>
+			<Name GUID="{54BB25CF-9B95-4183-08B6-7916E4B80BF8}" AutoDeleteType="true">STR</Name>
+			<BitSize>64</BitSize>
+			<SubItem>
+				<Name>MesIdc</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[(A) Intensity of String Box]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>0</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesUdc</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[(V) DC voltage  of String Box]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>32</BitOffs>
+			</SubItem>
+		</DataType>
+		<DataType>
+			<Name GUID="{7BE26BE7-A38F-F58F-F728-F3ABCEAD0BBE}" AutoDeleteType="true">INV_Huawei</Name>
+			<Comment><![CDATA[ Structure For Inverter. Main Operating Data to be saved ( ex: OPC ) .  ]]></Comment>
+			<BitSize>3264</BitSize>
+			<SubItem>
+				<Name>MesData</Name>
+				<Type GUID="{53200B55-8F55-8C0D-0BE6-2BC4A4B64020}">INV</Type>
+				<Comment><![CDATA[ INV ]]></Comment>
+				<BitSize>736</BitSize>
+				<BitOffs>0</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>STR</Name>
+				<Type GUID="{54BB25CF-9B95-4183-08B6-7916E4B80BF8}">STR</Type>
+				<ArrayInfo>
+					<LBound>1</LBound>
+					<Elements>32</Elements>
+				</ArrayInfo>
+				<Comment><![CDATA[ STR ]]></Comment>
+				<BitSize>2048</BitSize>
+				<BitOffs>736</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesEDay</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[ (kWh)Daily Energy	]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>2784</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesETot</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[ (kWh)Total Energy	]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>2816</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesI1</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[	(A) MesI1			]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>2848</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesI2</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[	(A) MesI2			]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>2880</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesI3</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[	(A) MesI3			]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>2912</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesU12</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[	(V) MesU12			]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>2944</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesU23</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[	(V) MesU23			]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>2976</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesU31</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[	(V) MesU31			]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>3008</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesV1</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[	(V) MesV1			]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>3040</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesV2</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[	(V) MesV2			]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>3072</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesV3</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[	(V) MesV3			]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>3104</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesStateIndic</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000004}">WORD</Type>
+				<Comment><![CDATA[	(NA) Device status 		]]></Comment>
+				<BitSize>16</BitSize>
+				<BitOffs>3136</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesDeviceStatus</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000004}">WORD</Type>
+				<BitSize>16</BitSize>
+				<BitOffs>3152</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesOpeStatus</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000004}">WORD</Type>
+				<Comment><![CDATA[	(NA) MesOpeStatus 		]]></Comment>
+				<BitSize>16</BitSize>
+				<BitOffs>3168</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesAlm1</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000004}">WORD</Type>
+				<Comment><![CDATA[	(NA) MesAlm1				]]></Comment>
+				<BitSize>16</BitSize>
+				<BitOffs>3184</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesAlm2</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000004}">WORD</Type>
+				<Comment><![CDATA[	(NA) MesAlm2				]]></Comment>
+				<BitSize>16</BitSize>
+				<BitOffs>3200</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesAlm3</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000004}">WORD</Type>
+				<Comment><![CDATA[	(NA) MesAlm3				]]></Comment>
+				<BitSize>16</BitSize>
+				<BitOffs>3216</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesID_DevStatus1</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000004}">WORD</Type>
+				<Comment><![CDATA[ (NA) Akuo Created satus to compute device status alarms]]></Comment>
+				<BitSize>16</BitSize>
+				<BitOffs>3232</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesID_DevStatus2</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000004}">WORD</Type>
+				<Comment><![CDATA[ (NA) Akuo Created satus to compute device status alarms]]></Comment>
+				<BitSize>16</BitSize>
+				<BitOffs>3248</BitOffs>
+			</SubItem>
+		</DataType>
+		<DataType>
+			<Name GUID="{E6499284-7479-4F5C-84B6-BA0E5A37C48A}" Namespace="Tc2_SerialCom" AutoDeleteType="true">EL6inData22B</Name>
+			<Comment><![CDATA[ This data type is corresponding to the
+   KL-6xxx data structure used in the
+   TwinCAT SystemManager
+   (KL-6xxx version using 5 data bytes / 
+    non-alternative (standard) output ) 
+]]></Comment>
+			<BitSize>192</BitSize>
+			<SubItem>
+				<Name>Status</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000004}">WORD</Type>
+				<BitSize>16</BitSize>
+				<BitOffs>0</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>D</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000001}">BYTE</Type>
+				<ArrayInfo>
+					<LBound>0</LBound>
+					<Elements>22</Elements>
+				</ArrayInfo>
+				<BitSize>176</BitSize>
+				<BitOffs>16</BitOffs>
+			</SubItem>
+		</DataType>
+		<DataType>
+			<Name GUID="{35981FBA-5B55-4AB9-8D5B-6225EC03103C}" Namespace="Tc2_ModbusRTU" AutoDeleteType="true">MB_PcComInData</Name>
+			<BitSize>528</BitSize>
+			<SubItem>
+				<Name>SerStatus</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000004}">WORD</Type>
+				<BitSize>16</BitSize>
+				<BitOffs>0</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>D</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000001}">BYTE</Type>
+				<ArrayInfo>
+					<LBound>0</LBound>
+					<Elements>64</Elements>
+				</ArrayInfo>
+				<BitSize>512</BitSize>
+				<BitOffs>16</BitOffs>
+			</SubItem>
+			<Properties>
+				<Property>
+					<Name>hide</Name>
+				</Property>
+			</Properties>
+		</DataType>
+		<DataType>
+			<Name GUID="{B455BB90-BA2F-4777-AF66-CE525D4DD1AE}" Namespace="Tc2_ModbusRTU" AutoDeleteType="true">MB_KL6inData22B</Name>
+			<BitSize>192</BitSize>
+			<SubItem>
+				<Name>Status</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000004}">WORD</Type>
+				<BitSize>16</BitSize>
+				<BitOffs>0</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>D</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000001}">BYTE</Type>
+				<ArrayInfo>
+					<LBound>0</LBound>
+					<Elements>22</Elements>
+				</ArrayInfo>
+				<BitSize>176</BitSize>
+				<BitOffs>16</BitOffs>
+			</SubItem>
+			<Properties>
+				<Property>
+					<Name>hide</Name>
+				</Property>
+			</Properties>
+		</DataType>
+		<DataType>
+			<Name GUID="{876BCC03-BF5A-4120-B430-A25E6D8DB8FE}" Namespace="Tc2_SerialCom" AutoDeleteType="true">EL6outData22B</Name>
+			<Comment><![CDATA[ This data type is corresponding to the
+   KL-6xxx data structure used in the
+   TwinCAT SystemManager
+   (KL-6xxx version using 5 data bytes / 
+    non-alternative (standard) output ) 
+]]></Comment>
+			<BitSize>192</BitSize>
+			<SubItem>
+				<Name>Ctrl</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000004}">WORD</Type>
+				<BitSize>16</BitSize>
+				<BitOffs>0</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>D</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000001}">BYTE</Type>
+				<ArrayInfo>
+					<LBound>0</LBound>
+					<Elements>22</Elements>
+				</ArrayInfo>
+				<BitSize>176</BitSize>
+				<BitOffs>16</BitOffs>
+			</SubItem>
+		</DataType>
+		<DataType>
+			<Name GUID="{6CCDA922-6D7D-5CA3-2691-B1BA37BB54BD}" AutoDeleteType="true">Datalogger</Name>
+			<BitSize>80</BitSize>
+			<SubItem>
+				<Name>MesAlarmCom</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
+				<Comment><![CDATA[ (NA) Communication alarm ]]></Comment>
+				<BitSize>8</BitSize>
+				<BitOffs>0</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesAlarmCode</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000004}">WORD</Type>
+				<Comment><![CDATA[ (NA) Internal Akuo Alarm Code				]]></Comment>
+				<BitSize>16</BitSize>
+				<BitOffs>16</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesWarningCode</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000004}">WORD</Type>
+				<Comment><![CDATA[ (NA) Internal Akuo Warning Code       	]]></Comment>
+				<BitSize>16</BitSize>
+				<BitOffs>32</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesEventCode</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000004}">WORD</Type>
+				<Comment><![CDATA[ (NA) Internal Akuo Event Code         	]]></Comment>
+				<BitSize>16</BitSize>
+				<BitOffs>48</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesCP_Read</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
+				<Comment><![CDATA[ (NA) Permanent conditions for read		]]></Comment>
+				<BitSize>8</BitSize>
+				<BitOffs>64</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesCP_Write</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
+				<Comment><![CDATA[ (NA) Permanent conditions for read		]]></Comment>
+				<BitSize>8</BitSize>
+				<BitOffs>72</BitOffs>
+			</SubItem>
+		</DataType>
+		<DataType>
+			<Name GUID="{EF0CDAE6-8273-AF15-BF9C-ED2C8446A891}" AutoDeleteType="true">TOR</Name>
+			<BitSize>128</BitSize>
+			<SubItem>
+				<Name>MesAlarmState</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
+				<Comment><![CDATA[ TRUE = ALARM													]]></Comment>
+				<BitSize>8</BitSize>
+				<BitOffs>0</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesCountAlarm</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000008}">UDINT</Type>
+				<Comment><![CDATA[ Count the number of time the alarm has been triggered.       ]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>32</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesAlarmCode</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000004}">WORD</Type>
+				<Comment><![CDATA[ (NA) Internal Akuo AlarmCode                                 ]]></Comment>
+				<BitSize>16</BitSize>
+				<BitOffs>64</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesWarningCode</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000004}">WORD</Type>
+				<Comment><![CDATA[ (NA) Internal Akuo WarningCode                               ]]></Comment>
+				<BitSize>16</BitSize>
+				<BitOffs>80</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesEventCode</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000004}">WORD</Type>
+				<Comment><![CDATA[ (NA) Internal Akuo EventCode		                            ]]></Comment>
+				<BitSize>16</BitSize>
+				<BitOffs>96</BitOffs>
+			</SubItem>
+		</DataType>
+		<DataType>
+			<Name GUID="{283659BA-4756-901E-5099-82B3E9F848D3}" AutoDeleteType="true">TOR_Standard</Name>
+			<BitSize>128</BitSize>
+			<SubItem>
+				<Name>MesData</Name>
+				<Type GUID="{EF0CDAE6-8273-AF15-BF9C-ED2C8446A891}">TOR</Type>
+				<Comment><![CDATA[ MesData 											 ]]></Comment>
+				<BitSize>128</BitSize>
+				<BitOffs>0</BitOffs>
+			</SubItem>
+		</DataType>
+		<DataType>
+			<Name GUID="{BBA15605-FDC4-0D44-BD38-49A73AC7E4E1}" AutoDeleteType="true">Transfo</Name>
+			<BitSize>96</BitSize>
+			<SubItem>
+				<Name>MesWarningTemp</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
+				<Comment><![CDATA[ Transfo Temperature warning		    ]]></Comment>
+				<BitSize>8</BitSize>
+				<BitOffs>0</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesAlarmTemp</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
+				<Comment><![CDATA[ Transfo Temperature Alarm		    ]]></Comment>
+				<BitSize>8</BitSize>
+				<BitOffs>8</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesAlarmGas</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
+				<Comment><![CDATA[ Transfo Gas Alarm			        ]]></Comment>
+				<BitSize>8</BitSize>
+				<BitOffs>16</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesAlarmOilLevel</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
+				<Comment><![CDATA[ Transfo Oil Level Alarm		        ]]></Comment>
+				<BitSize>8</BitSize>
+				<BitOffs>24</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesAlarmsSynthesis</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
+				<Comment><![CDATA[ Transfo Synthesis Alarm              ]]></Comment>
+				<BitSize>8</BitSize>
+				<BitOffs>32</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesAlarmCode</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000004}">WORD</Type>
+				<Comment><![CDATA[ (NA) Internal Akuo AlarmCode         ]]></Comment>
+				<BitSize>16</BitSize>
+				<BitOffs>48</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesWarningCode</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000004}">WORD</Type>
+				<Comment><![CDATA[ (NA) Internal Akuo WarningCode       ]]></Comment>
+				<BitSize>16</BitSize>
+				<BitOffs>64</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesEventCode</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000004}">WORD</Type>
+				<Comment><![CDATA[ (NA) Internal Akuo EventCode	        ]]></Comment>
+				<BitSize>16</BitSize>
+				<BitOffs>80</BitOffs>
+			</SubItem>
+		</DataType>
+		<DataType>
+			<Name GUID="{988C928E-F7A1-21F3-99D7-6DBDFB17A9AF}" AutoDeleteType="true">Transfo_MV</Name>
+			<BitSize>96</BitSize>
+			<SubItem>
+				<Name>MesData</Name>
+				<Type GUID="{BBA15605-FDC4-0D44-BD38-49A73AC7E4E1}">Transfo</Type>
+				<Comment><![CDATA[ MesData ]]></Comment>
+				<BitSize>96</BitSize>
+				<BitOffs>0</BitOffs>
+			</SubItem>
+		</DataType>
+		<DataType>
+			<Name GUID="{45461DC2-71F9-1144-38C9-1AD9BC85EA5D}" AutoDeleteType="true">Datalogger_SchSkid</Name>
+			<BitSize>608</BitSize>
+			<SubItem>
+				<Name>MesData</Name>
+				<Type GUID="{6CCDA922-6D7D-5CA3-2691-B1BA37BB54BD}">Datalogger</Type>
+				<Comment><![CDATA[ MesData ]]></Comment>
+				<BitSize>80</BitSize>
+				<BitOffs>0</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesComutLocal</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
+				<Comment><![CDATA[ FALSE := Local, TRUE := Remote (DI_204) ]]></Comment>
+				<BitSize>8</BitSize>
+				<BitOffs>80</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesState_MVCB</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
+				<Comment><![CDATA[ True := Fermé, False := Ouvert (DI_205) ]]></Comment>
+				<BitSize>8</BitSize>
+				<BitOffs>88</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesWatchdog_ProtectRelayVIP</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
+				<Comment><![CDATA[ WatchDog of VIP410 (DI_201)			   ]]></Comment>
+				<BitSize>8</BitSize>
+				<BitOffs>96</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesFault_ProtectRelayVIP</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
+				<Comment><![CDATA[ TRUE:= Fault, False:= OK, Déclenchement du défaut VIP (DI_206) ]]></Comment>
+				<BitSize>8</BitSize>
+				<BitOffs>104</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesToggleRead</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
+				<Comment><![CDATA[ Cal State com of FB IO ]]></Comment>
+				<BitSize>8</BitSize>
+				<BitOffs>112</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesToggleWrite</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
+				<Comment><![CDATA[ Cal State com of FB IO ]]></Comment>
+				<BitSize>8</BitSize>
+				<BitOffs>120</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>DS_Synthesis</Name>
+				<Type GUID="{283659BA-4756-901E-5099-82B3E9F848D3}">TOR_Standard</Type>
+				<Comment><![CDATA[ Synthesis of door sensors True = a door is opened (DI_209) 			 ]]></Comment>
+				<BitSize>128</BitSize>
+				<BitOffs>128</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>CB_INV</Name>
+				<Type GUID="{283659BA-4756-901E-5099-82B3E9F848D3}">TOR_Standard</Type>
+				<ArrayInfo>
+					<LBound>1</LBound>
+					<Elements>2</Elements>
+				</ArrayInfo>
+				<Comment><![CDATA[ TRUE := CB opened, False : CB closed, INV 1 (DI_202) / INV 2 (DI_203) ]]></Comment>
+				<BitSize>256</BitSize>
+				<BitOffs>256</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>Transfo_Synthesis</Name>
+				<Type GUID="{988C928E-F7A1-21F3-99D7-6DBDFB17A9AF}">Transfo_MV</Type>
+				<Comment><![CDATA[ Transfo ]]></Comment>
+				<BitSize>96</BitSize>
+				<BitOffs>512</BitOffs>
+			</SubItem>
+		</DataType>
+		<DataType>
+			<Name GUID="{19C79A2C-62C9-4D7C-AADA-EB22A16B4867}" Namespace="Tc2_ModbusRTU" AutoDeleteType="true">MB_PcComOutData</Name>
+			<BitSize>528</BitSize>
+			<SubItem>
+				<Name>SerCtrl</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000004}">WORD</Type>
+				<BitSize>16</BitSize>
+				<BitOffs>0</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>D</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000001}">BYTE</Type>
+				<ArrayInfo>
+					<LBound>0</LBound>
+					<Elements>64</Elements>
+				</ArrayInfo>
+				<BitSize>512</BitSize>
+				<BitOffs>16</BitOffs>
+			</SubItem>
+			<Properties>
+				<Property>
+					<Name>hide</Name>
+				</Property>
+			</Properties>
+		</DataType>
+		<DataType>
+			<Name GUID="{9D7700B4-894B-4E2F-85F1-4E3036BF2605}" Namespace="Tc2_ModbusRTU" AutoDeleteType="true">MB_KL6outData22B</Name>
+			<BitSize>192</BitSize>
+			<SubItem>
+				<Name>Ctrl</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000004}">WORD</Type>
+				<BitSize>16</BitSize>
+				<BitOffs>0</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>D</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000001}">BYTE</Type>
+				<ArrayInfo>
+					<LBound>0</LBound>
+					<Elements>22</Elements>
+				</ArrayInfo>
+				<BitSize>176</BitSize>
+				<BitOffs>16</BitOffs>
+			</SubItem>
+			<Properties>
+				<Property>
+					<Name>hide</Name>
+				</Property>
+			</Properties>
+		</DataType>
+		<DataType>
+			<Name GUID="{E64F2887-0745-746D-79C4-4529CE6ABB00}" AutoDeleteType="true">PM</Name>
+			<Comment><![CDATA[ Structure For I35. Main Operating Data to be saved ( ex: OPC ) .  ]]></Comment>
+			<BitSize>1184</BitSize>
+			<SubItem>
+				<Name>MesU12</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[(V) 		Phase1 - Phase 2 AC Voltage 		]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>0</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesU23</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[(V) 		Phase2 - Phase 3 AC Voltage         ]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>32</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesU31</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[(V) 		Phase3 - Phase 1 AC Voltage         ]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>64</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesV1</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[(V) 		Phase1 AC Voltage                   ]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>96</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesV2</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[(V) 		Phase2 AC Voltage                   ]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>128</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesV3</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[(V) 		Phase3 AC Voltage		            ]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>160</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesFreq</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[(Hz)		Frequency		                    ]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>192</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesI1</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[(A) 		AC current Phase 1                  ]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>224</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesI2</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[(A) 		AC current Phase 2                  ]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>256</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesI3</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[(A) 		AC current Phase 3                  ]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>288</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesIn</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[(A) 		Neutral AC current                  ]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>320</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesP</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[(kW) 	Total Active power                  ]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>352</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesQ</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[(kVAr) 	Total Reactive Power Phase 1        ]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>384</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesS</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[(kVA) 	Total Apparent power		        ]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>416</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesCosPhi</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[(NA) 	Power factor                        ]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>448</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesP1</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[(kW) 	Active Power Phase 1                ]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>480</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesP2</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[(kW) 	Active Power Phase 2                ]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>512</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesP3</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[(kW) 	Active Power phase 3                ]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>544</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesQ1</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[(kVAr) 	Reactive Power Phase 1              ]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>576</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesQ2</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[(kVAr) 	Reactive Power Phase 2              ]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>608</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesQ3</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[(kVAr) 	Reactive Power Phase 3              ]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>640</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesS1</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[(kVA) 	Total Apparent power Phase 1        ]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>672</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesS2</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[(kVA) 	Total Apparent power Phase 2        ]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>704</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesS3</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[(kVA) 	Total Apparent power Phase 3        ]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>736</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesEActCons</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[(kWh) 	Recieved active energy              ]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>768</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesEReactCons</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[(kVArh) 	Recieved reactive energy            ]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>800</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesEActProd</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[(kWh) 	Delivered active energy             ]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>832</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesEReactProd</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[(kVArh) 	Delivered reactive energy	        ]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>864</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesI</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[(A) 		Mean AC current                     ]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>896</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesV</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[(V) 		Mean Simple Phase AC Voltage        ]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>928</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesU</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[(V) 		Mean Phase - Phase  AC Voltage      ]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>960</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesCosPhi1</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[(-) 		Total Power Factor Phase 1          ]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>992</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesCosPhi2</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[(-) 		Total Power Factor Phase 2          ]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>1024</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesCosPhi3</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[(-) 		Total Power Factor Phase 3          ]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>1056</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesTanPhi</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+				<Comment><![CDATA[(-) 		Total Tangeante phi                 ]]></Comment>
+				<BitSize>32</BitSize>
+				<BitOffs>1088</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesAlarmCom</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
+				<Comment><![CDATA[Communication Error with I35 module  		]]></Comment>
+				<BitSize>8</BitSize>
+				<BitOffs>1120</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesCP_Read</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
+				<Comment><![CDATA[CAL Read FUNCTION enable 		]]></Comment>
+				<BitSize>8</BitSize>
+				<BitOffs>1128</BitOffs>
+				<Default>
+					<Value>0</Value>
+				</Default>
+			</SubItem>
+			<SubItem>
+				<Name>MesAlarmCode</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000004}">WORD</Type>
+				<Comment><![CDATA[ Internal Akuo Alarm Code]]></Comment>
+				<BitSize>16</BitSize>
+				<BitOffs>1136</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>MesWarningCode</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000004}">WORD</Type>
+				<Comment><![CDATA[ Internal Akuo Warning Code]]></Comment>
+				<BitSize>16</BitSize>
+				<BitOffs>1152</BitOffs>
+			</SubItem>
+			<Hides>
+				<Hide GUID="{F4B112E4-063F-F351-9DCF-C5B179EA79B0}"/>
+			</Hides>
+		</DataType>
+		<DataType>
+			<Name GUID="{9ACB7805-AB79-11F6-48D2-BE5D8A0DD128}" AutoDeleteType="true">PM_Standard</Name>
+			<Comment><![CDATA[ Structure For I35. Main Operating Data to be saved (ex: OPC).  ]]></Comment>
+			<BitSize>1184</BitSize>
+			<SubItem>
+				<Name>MesData</Name>
+				<Type GUID="{E64F2887-0745-746D-79C4-4529CE6ABB00}">PM</Type>
+				<Comment><![CDATA[ Object ]]></Comment>
+				<BitSize>1184</BitSize>
+				<BitOffs>0</BitOffs>
+			</SubItem>
+		</DataType>
+		<DataType>
+			<Name GUID="{9B48DF92-1926-6D4F-F6A1-3851A7EC98F3}" IecBaseType="true" AutoDeleteType="true">ARRAY [1..3] OF WORD</Name>
+			<BitSize>48</BitSize>
+			<BaseType GUID="{18071995-0000-0000-0000-000000000004}">WORD</BaseType>
+			<ArrayInfo>
+				<LBound>1</LBound>
+				<Elements>3</Elements>
+			</ArrayInfo>
+		</DataType>
+		<DataType>
+			<Name GUID="{18071995-0000-0000-0000-002000000001}" IecBaseType="true" BitType="true" AutoDeleteType="true" HideSubItems="true">ARRAY [0..0] OF BIT</Name>
+			<BitSize>1</BitSize>
+			<BaseType GUID="{18071995-0000-0000-0000-000000000010}">BIT</BaseType>
+			<ArrayInfo>
+				<LBound>0</LBound>
+				<Elements>1</Elements>
+			</ArrayInfo>
+		</DataType>
+		<DataType>
+			<Name GUID="{18071995-0000-0000-0000-002000000006}" IecBaseType="true" BitType="true" AutoDeleteType="true" HideSubItems="true">ARRAY [0..5] OF BIT</Name>
+			<BitSize>6</BitSize>
+			<BaseType GUID="{18071995-0000-0000-0000-000000000010}">BIT</BaseType>
+			<ArrayInfo>
+				<LBound>0</LBound>
+				<Elements>6</Elements>
+			</ArrayInfo>
+		</DataType>
+	</DataTypes>
+	<ImageDatas>
+		<ImageData Id="1000">424dd6020000000000003600000028000000100000000e0000000100180000000000a0020000c40e0000c40e00000000000000000000ff00ffff00ffff00ff808080808080808080808080808080808080808080808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ff0000c00000c0ffffffc0c0c0000000c0c0c0000000808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ff0000c00000c0ffffffc0c0c000ffffc0c0c000ffff808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ff0000c00000c0ffffffc0c0c0c0c0c0c0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ff0000c00000c0ffffffc0c0c0000000c0c0c0000000808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ff0000c00000c0ffffffc0c0c0ff0000c0c0c0ff0000808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ff0000c00000c0ffffffc0c0c0c0c0c0c0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ff0000c00000c0ffffffc0c0c0000000c0c0c0000000808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ff0000c00000c0ffffffc0c0c00000ffc0c0c00000ff808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ff0000c00000c0ffffffc0c0c0c0c0c0c0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ff0000c00000c0ffffffc0c0c0000000c0c0c0000000808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ff0000c00000c0ffffffc0c0c0c0c0c0c0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ff0000c00000c0ffffffc0c0c0008000c0c0c0008000808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ff0000c00000c0ffffffc0c0c0c0c0c0c0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ff</ImageData>
+		<ImageData Id="1001">424dd6020000000000003600000028000000100000000e0000000100180000000000a0020000c40e0000c40e00000000000000000000ff00ffff00ffff00ffff00ffff00ffff00ff808080808080808080808080808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffc0c0c0000000c0c0c0000000808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffc0c0c000ffffc0c0c000ffff808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffc0c0c0c0c0c0c0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffc0c0c0000000c0c0c0000000808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffc0c0c0ff0000c0c0c0ff0000808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffc0c0c0c0c0c0c0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ffff0000ff0000ff0000ff0000ff0000ff0000c0c0c0000000c0c0c0000000808080ff00ffff00ffff00ffff00ffff00ffff0000ff0000ff0000ff0000ff0000ff0000c0c0c00000ffc0c0c00000ff808080ff00ffff00ffff00ffff00ffff00ffff0000ff0000ff0000ff0000ff0000ff0000c0c0c0c0c0c0c0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ffff0000ff0000ff0000ff0000ff0000ff0000c0c0c0000000c0c0c0000000808080ff00ffff00ffff00ffff00ffff00ffff0000ff0000ff0000ff0000ff0000ff0000c0c0c0c0c0c0c0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ffff0000ff0000ff0000ff0000ff0000ff0000c0c0c0008000c0c0c0008000808080ff00ffff00ffff00ffff00ffff00ffff0000ff0000ff0000ff0000ff0000ff0000c0c0c0c0c0c0c0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ff</ImageData>
+		<ImageData Id="1002">424dd6020000000000003600000028000000100000000e0000000100180000000000a0020000c40e0000c40e00000000000000000000ff00ffff00ffff00ffff00ffff00ffff00ff808080808080808080808080808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffc0c0c0000000c0c0c0000000808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffc0c0c000ffffc0c0c000ffff808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffc0c0c0c0c0c0c0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffc0c0c0000000c0c0c0000000808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffc0c0c0ff0000c0c0c0ff0000808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffc0c0c0c0c0c0c0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ff00ff0000ff0000ff0000ff0000ff0000ff00c0c0c0000000c0c0c0000000808080ff00ffff00ffff00ffff00ffff00ff00ff0000ff0000ff0000ff0000ff0000ff00c0c0c00000ffc0c0c00000ff808080ff00ffff00ffff00ffff00ffff00ff00ff0000ff0000ff0000ff0000ff0000ff00c0c0c0c0c0c0c0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ff00ff0000ff0000ff0000ff0000ff0000ff00c0c0c0000000c0c0c0000000808080ff00ffff00ffff00ffff00ffff00ff00ff0000ff0000ff0000ff0000ff0000ff00c0c0c0c0c0c0c0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ff00ff0000ff0000ff0000ff0000ff0000ff00c0c0c0008000c0c0c0008000808080ff00ffff00ffff00ffff00ffff00ff00ff0000ff0000ff0000ff0000ff0000ff00c0c0c0c0c0c0c0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ff</ImageData>
+		<ImageData Id="1003">424dd6020000000000003600000028000000100000000e0000000100180000000000a0020000c40e0000c40e00000000000000000000ff00ffff00ffff00ffff00ffff00ffff00ff808080808080808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffc0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffc0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffc0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffc0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffc0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffc0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ff007fff007fff007fff007fff007fff007fffc0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ff007fff007fff007fff007fff007fff007fffc0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ff007fff007fff007fff007fff007fff007fffc0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ff007fff007fff007fff007fff007fff007fffc0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ff007fff007fff007fff007fff007fff007fffc0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ff007fff007fff007fff007fff007fff007fffc0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ff007fff007fff007fff007fff007fff007fffc0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ff</ImageData>
+	</ImageDatas>
+	<Project ProjectGUID="{CF0B9C18-455C-4116-B3E7-DEBB90FA85F2}" Target64Bit="true" ShowHideConfigurations="#x306">
+		<System>
+			<Settings MaxCpus="16" NonWinCpus="1">
+				<Cpu CpuId="15"/>
+			</Settings>
+			<Licenses>
+				<Target>
+					<ManualSelect>{92583661-35AE-45CE-BD4F-C35BFE16F07E}</ManualSelect>
+					<ManualSelect>{BDCC0070-42D5-49AE-ABF1-1D4434813D60}</ManualSelect>
+					<ManualSelect>{796D380F-D49E-4C0C-A05F-500052FAC883}</ManualSelect>
+					<ManualSelect>{6952449D-F68C-49A2-ADE4-8639D85B33A4}</ManualSelect>
+				</Target>
+			</Licenses>
+			<Tasks>
+				<Task Id="3" Priority="8" CycleTime="100000" AmsPort="350" AdtTasks="true">
+					<Name>PlcTask</Name>
+				</Task>
+				<Task Id="4" Priority="16" CycleTime="250000" AmsPort="351" AdtTasks="true">
+					<Name>Emul_Task</Name>
+				</Task>
+				<Task Id="5" Priority="14" CycleTime="1000000" AmsPort="352" AdtTasks="true">
+					<Name>Database_Task</Name>
+				</Task>
+				<Task Id="6" Priority="6" CycleTime="100000" AmsPort="301">
+					<Name>IOTask</Name>
+					<Vars VarGrpType="1" InsertType="1">
+						<Name>Inputs</Name>
+					</Vars>
+					<Vars VarGrpType="2" InsertType="1">
+						<Name>Outputs</Name>
+					</Vars>
+					<Image Id="4" AddrType="1" ImageType="1">
+						<Name>Image</Name>
+					</Image>
+				</Task>
+				<Task Id="7" Priority="10" CycleTime="1000000" AmsPort="353" AdtTasks="true">
+					<Name>AnnexFunction</Name>
+				</Task>
+			</Tasks>
+		</System>
+		<Plc>
+			<Project GUID="{3FCC350A-67B4-4E7F-9313-2520CB15239B}" Name="Projet_Base" PrjFilePath="Projet_Base\Projet_Base.plcproj" TmcFilePath="Projet_Base\Projet_Base.tmc" ReloadTmc="true" AmsPort="851" TargetArchiveSettings="#x000f" FileArchiveSettings="#x0000" CopyTmcToTarget="true" SymbolicMapping="true">
+				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="Projet_Base\Projet_Base.tmc" TmcHash="{DC1C9C2F-924F-34B6-73EE-7D2F48852FC7}">
+					<Name>Projet_Base Instance</Name>
+					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
+					<Vars VarGrpType="1">
+						<Name>PlcTask Inputs</Name>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL1809_1[1].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL1809_1[2].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL1809_1[3].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL1809_1[4].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL1809_1[5].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL1809_1[6].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL1809_1[7].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL1809_1[8].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL1809_1[9].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL1809_1[10].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL1809_1[11].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL1809_1[12].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL1809_1[13].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL1809_1[14].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL1809_1[15].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL1809_1[16].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL1809_2[1].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL1809_2[2].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL1809_2[3].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL1809_2[4].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL1809_2[5].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL1809_2[6].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL1809_2[7].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL1809_2[8].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL1809_2[9].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL1809_2[10].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL1809_2[11].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL1809_2[12].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL1809_2[13].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL1809_2[14].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL1809_2[15].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL1809_2[16].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL1809_3[1].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL1809_3[2].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL1809_3[3].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL1809_3[4].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL1809_3[5].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL1809_3[6].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL1809_3[7].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL1809_3[8].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL1809_3[9].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL1809_3[10].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL1809_3[11].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL1809_3[12].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL1809_3[13].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL1809_3[14].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL1809_3[15].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL1809_3[16].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL3024_5[1].Value</Name>
+							<Type>INT</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL3024_5[2].Value</Name>
+							<Type>INT</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL3024_5[3].Value</Name>
+							<Type>INT</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL3024_5[4].Value</Name>
+							<Type>INT</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_1_EL3024_8[1].Value</Name>
+							<Type>INT</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_1_EL3024_8[2].Value</Name>
+							<Type>INT</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_1_EL3024_8[3].Value</Name>
+							<Type>INT</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_1_EL3024_8[4].Value</Name>
+							<Type>INT</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_1_EL1809_9[1].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_1_EL1809_9[2].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_1_EL1809_9[3].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_1_EL1809_9[4].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_1_EL1809_9[5].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_1_EL1809_9[6].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_1_EL1809_9[7].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_1_EL1809_9[8].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_1_EL1809_9[9].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_1_EL1809_9[10].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_1_EL1809_9[11].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_1_EL1809_9[12].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_1_EL1809_9[13].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_1_EL1809_9[14].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_1_EL1809_9[15].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_1_EL1809_9[16].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_2_EL3024_8[1].Value</Name>
+							<Type>INT</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_2_EL3024_8[2].Value</Name>
+							<Type>INT</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_2_EL3024_8[3].Value</Name>
+							<Type>INT</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_2_EL3024_8[4].Value</Name>
+							<Type>INT</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_2_EL1809_9[1].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_2_EL1809_9[2].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_2_EL1809_9[3].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_2_EL1809_9[4].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_2_EL1809_9[5].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_2_EL1809_9[6].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_2_EL1809_9[7].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_2_EL1809_9[8].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_2_EL1809_9[9].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_2_EL1809_9[10].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_2_EL1809_9[11].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_2_EL1809_9[12].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_2_EL1809_9[13].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_2_EL1809_9[14].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_2_EL1809_9[15].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_2_EL1809_9[16].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_3_EL3024_8[1].Value</Name>
+							<Type>INT</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_3_EL3024_8[2].Value</Name>
+							<Type>INT</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_3_EL3024_8[3].Value</Name>
+							<Type>INT</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_3_EL3024_8[4].Value</Name>
+							<Type>INT</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_3_EL1809_9[1].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_3_EL1809_9[2].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_3_EL1809_9[3].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_3_EL1809_9[4].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_3_EL1809_9[5].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_3_EL1809_9[6].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_3_EL1809_9[7].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_3_EL1809_9[8].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_3_EL1809_9[9].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_3_EL1809_9[10].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_3_EL1809_9[11].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_3_EL1809_9[12].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_3_EL1809_9[13].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_3_EL1809_9[14].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_3_EL1809_9[15].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_3_EL1809_9[16].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_PP.MesMissingDongle</Name>
+							<Comment><![CDATA[ (NA) Dongle has been removed  IO]]></Comment>
+							<Type>UINT</Type>
+						</Var>
+					</Vars>
+					<Vars VarGrpType="2" AreaNo="1">
+						<Name>PlcTask Outputs</Name>
+						<Var>
+							<Name>MAIN.FB_MasterBackup.nCounter</Name>
+							<Comment><![CDATA[ (NA) Variable to increment in the master	]]></Comment>
+							<Type>BYTE</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL2809_4[1].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL2809_4[2].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL2809_4[3].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL2809_4[4].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL2809_4[5].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL2809_4[6].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL2809_4[7].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL2809_4[8].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL2809_4[9].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL2809_4[10].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL2809_4[11].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL2809_4[12].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL2809_4[13].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL2809_4[14].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL2809_4[15].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_SUBMV_EL2809_4[16].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_1_EL2809_10[1].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_1_EL2809_10[2].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_1_EL2809_10[3].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_1_EL2809_10[4].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_1_EL2809_10[5].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_1_EL2809_10[6].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_1_EL2809_10[7].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_1_EL2809_10[8].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_1_EL2809_10[9].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_1_EL2809_10[10].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_1_EL2809_10[11].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_1_EL2809_10[12].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_1_EL2809_10[13].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_1_EL2809_10[14].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_1_EL2809_10[15].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_1_EL2809_10[16].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_2_EL2809_10[1].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_2_EL2809_10[2].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_2_EL2809_10[3].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_2_EL2809_10[4].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_2_EL2809_10[5].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_2_EL2809_10[6].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_2_EL2809_10[7].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_2_EL2809_10[8].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_2_EL2809_10[9].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_2_EL2809_10[10].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_2_EL2809_10[11].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_2_EL2809_10[12].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_2_EL2809_10[13].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_2_EL2809_10[14].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_2_EL2809_10[15].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_2_EL2809_10[16].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_3_EL2809_10[1].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_3_EL2809_10[2].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_3_EL2809_10[3].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_3_EL2809_10[4].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_3_EL2809_10[5].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_3_EL2809_10[6].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_3_EL2809_10[7].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_3_EL2809_10[8].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_3_EL2809_10[9].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_3_EL2809_10[10].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_3_EL2809_10[11].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_3_EL2809_10[12].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_3_EL2809_10[13].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_3_EL2809_10[14].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_3_EL2809_10[15].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>PRG_IO.MesIO_PTR_3_EL2809_10[16].Value</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_PTR[1].AX_INV[1].MesDataExd</Name>
+							<Type GUID="{7BE26BE7-A38F-F58F-F728-F3ABCEAD0BBE}">INV_Huawei</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_PTR[1].AX_INV[2].MesDataExd</Name>
+							<Type GUID="{7BE26BE7-A38F-F58F-F728-F3ABCEAD0BBE}">INV_Huawei</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_PTR[2].AX_INV[1].MesDataExd</Name>
+							<Type GUID="{7BE26BE7-A38F-F58F-F728-F3ABCEAD0BBE}">INV_Huawei</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_PTR[2].AX_INV[2].MesDataExd</Name>
+							<Type GUID="{7BE26BE7-A38F-F58F-F728-F3ABCEAD0BBE}">INV_Huawei</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_PTR[3].AX_INV[1].MesDataExd</Name>
+							<Type GUID="{7BE26BE7-A38F-F58F-F728-F3ABCEAD0BBE}">INV_Huawei</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_PTR[3].AX_INV[2].MesDataExd</Name>
+							<Type GUID="{7BE26BE7-A38F-F58F-F728-F3ABCEAD0BBE}">INV_Huawei</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_PTR[4].AX_INV[1].MesDataExd</Name>
+							<Type GUID="{7BE26BE7-A38F-F58F-F728-F3ABCEAD0BBE}">INV_Huawei</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_PTR[4].AX_INV[2].MesDataExd</Name>
+							<Type GUID="{7BE26BE7-A38F-F58F-F728-F3ABCEAD0BBE}">INV_Huawei</Type>
+						</Var>
+					</Vars>
+					<Vars VarGrpType="1" ContextId="1" AreaNo="16">
+						<Name>AnnexFunction Inputs</Name>
+						<Var>
+							<Name>GVL_Beckhoff.stPCComInData</Name>
+							<Comment><![CDATA[PcComInData; 	//DATA qui rentre  ELinData22B;]]></Comment>
+							<Type GUID="{E6499284-7479-4F5C-84B6-BA0E5A37C48A}" Namespace="Tc2_SerialCom">EL6inData22B</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_PTR[1].A1_TempTR.IN_MesVar1Fault_IO</Name>
+							<Comment><![CDATA[(NA)  sensor 1 has a 0 mA fault  ]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_PTR[2].A1_TempTR.IN_MesVar1Fault_IO</Name>
+							<Comment><![CDATA[(NA)  sensor 1 has a 0 mA fault  ]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_PTR[3].A1_TempTR.IN_MesVar1Fault_IO</Name>
+							<Comment><![CDATA[(NA)  sensor 1 has a 0 mA fault  ]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_PTR[4].A1_TempTR.IN_MesVar1Fault_IO</Name>
+							<Comment><![CDATA[(NA)  sensor 1 has a 0 mA fault  ]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_SUBMV.A1_ProtectRelay.ModbusRTU.ReadRTU1.MB.InData</Name>
+							<Type GUID="{35981FBA-5B55-4AB9-8D5B-6225EC03103C}" Namespace="Tc2_ModbusRTU">MB_PcComInData</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_SUBMV.A1_ProtectRelay.ModbusRTU.ReadRTU1.MB_EL.InData</Name>
+							<Type GUID="{B455BB90-BA2F-4777-AF66-CE525D4DD1AE}" Namespace="Tc2_ModbusRTU">MB_KL6inData22B</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_SUBHV.A1_PM.FB_ModbusRead.ReadRTU1.MB.InData</Name>
+							<Type GUID="{35981FBA-5B55-4AB9-8D5B-6225EC03103C}" Namespace="Tc2_ModbusRTU">MB_PcComInData</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_SUBHV.A1_PM.FB_ModbusRead.ReadRTU1.MB_EL.InData</Name>
+							<Type GUID="{B455BB90-BA2F-4777-AF66-CE525D4DD1AE}" Namespace="Tc2_ModbusRTU">MB_KL6inData22B</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_WS.A1_Pyran_GTI_1.IN_MesVar1Fault_IO</Name>
+							<Comment><![CDATA[(NA)  sensor 1 has a 0 mA fault  ]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_WS.A1_Pyran_GTI_2.IN_MesVar1Fault_IO</Name>
+							<Comment><![CDATA[(NA)  sensor 1 has a 0 mA fault  ]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_WS.A1_Pyran_GHI_1.IN_MesVar1Fault_IO</Name>
+							<Comment><![CDATA[(NA)  sensor 1 has a 0 mA fault  ]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_WS.A1_Pyran_GHI_2.IN_MesVar1Fault_IO</Name>
+							<Comment><![CDATA[(NA)  sensor 1 has a 0 mA fault  ]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_WS.A1_TempSensor_Panel_1.IN_MesVar1Fault_IO</Name>
+							<Comment><![CDATA[(NA)  sensor 1 has a 0 mA fault  ]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_WS.A1_TempSensor_Panel_2.IN_MesVar1Fault_IO</Name>
+							<Comment><![CDATA[(NA)  sensor 1 has a 0 mA fault  ]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_WS.A1_TempSensor_Panel_3.IN_MesVar1Fault_IO</Name>
+							<Comment><![CDATA[(NA)  sensor 1 has a 0 mA fault  ]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_WS.A1_TempSensor_Panel_4.IN_MesVar1Fault_IO</Name>
+							<Comment><![CDATA[(NA)  sensor 1 has a 0 mA fault  ]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_WS.AX_TempSensor_Panel[1].IN_MesVar1Fault_IO</Name>
+							<Comment><![CDATA[(NA)  sensor 1 has a 0 mA fault  ]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_WS.AX_TempSensor_Panel[2].IN_MesVar1Fault_IO</Name>
+							<Comment><![CDATA[(NA)  sensor 1 has a 0 mA fault  ]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_WS.AX_TempSensor_Panel[3].IN_MesVar1Fault_IO</Name>
+							<Comment><![CDATA[(NA)  sensor 1 has a 0 mA fault  ]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_WS.AX_TempSensor_Panel[4].IN_MesVar1Fault_IO</Name>
+							<Comment><![CDATA[(NA)  sensor 1 has a 0 mA fault  ]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_WS.AX_Pyrano_GHI[1].IN_MesVar1Fault_IO</Name>
+							<Comment><![CDATA[(NA)  sensor 1 has a 0 mA fault  ]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_WS.AX_Pyrano_GHI[2].IN_MesVar1Fault_IO</Name>
+							<Comment><![CDATA[(NA)  sensor 1 has a 0 mA fault  ]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_WS.AX_Pyrano_GHI[3].IN_MesVar1Fault_IO</Name>
+							<Comment><![CDATA[(NA)  sensor 1 has a 0 mA fault  ]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_WS.AX_Pyrano_GHI[4].IN_MesVar1Fault_IO</Name>
+							<Comment><![CDATA[(NA)  sensor 1 has a 0 mA fault  ]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_WS.AX_Pyrano_GHI[5].IN_MesVar1Fault_IO</Name>
+							<Comment><![CDATA[(NA)  sensor 1 has a 0 mA fault  ]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_WS.AX_Pyrano_GTI[1].IN_MesVar1Fault_IO</Name>
+							<Comment><![CDATA[(NA)  sensor 1 has a 0 mA fault  ]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_WS.AX_Pyrano_GTI[2].IN_MesVar1Fault_IO</Name>
+							<Comment><![CDATA[(NA)  sensor 1 has a 0 mA fault  ]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_WS.AX_Pyrano_GTI[3].IN_MesVar1Fault_IO</Name>
+							<Comment><![CDATA[(NA)  sensor 1 has a 0 mA fault  ]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_WS.AX_Pyrano_GTI[4].IN_MesVar1Fault_IO</Name>
+							<Comment><![CDATA[(NA)  sensor 1 has a 0 mA fault  ]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_WS.AX_Pyrano_GTI[5].IN_MesVar1Fault_IO</Name>
+							<Comment><![CDATA[(NA)  sensor 1 has a 0 mA fault  ]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_WS.ModbusRTU.ReadRTU1.MB.InData</Name>
+							<Type GUID="{35981FBA-5B55-4AB9-8D5B-6225EC03103C}" Namespace="Tc2_ModbusRTU">MB_PcComInData</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_WS.ModbusRTU.ReadRTU1.MB_EL.InData</Name>
+							<Type GUID="{B455BB90-BA2F-4777-AF66-CE525D4DD1AE}" Namespace="Tc2_ModbusRTU">MB_KL6inData22B</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_WS.ModbusRTU_2.ReadRTU1.MB.InData</Name>
+							<Type GUID="{35981FBA-5B55-4AB9-8D5B-6225EC03103C}" Namespace="Tc2_ModbusRTU">MB_PcComInData</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_WS.ModbusRTU_2.ReadRTU1.MB_EL.InData</Name>
+							<Type GUID="{B455BB90-BA2F-4777-AF66-CE525D4DD1AE}" Namespace="Tc2_ModbusRTU">MB_KL6inData22B</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_ESS[1].ModbusRTU.ReadRTU1.MB.InData</Name>
+							<Type GUID="{35981FBA-5B55-4AB9-8D5B-6225EC03103C}" Namespace="Tc2_ModbusRTU">MB_PcComInData</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_ESS[1].ModbusRTU.ReadRTU1.MB_EL.InData</Name>
+							<Type GUID="{B455BB90-BA2F-4777-AF66-CE525D4DD1AE}" Namespace="Tc2_ModbusRTU">MB_KL6inData22B</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_ESS[2].ModbusRTU.ReadRTU1.MB.InData</Name>
+							<Type GUID="{35981FBA-5B55-4AB9-8D5B-6225EC03103C}" Namespace="Tc2_ModbusRTU">MB_PcComInData</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_ESS[2].ModbusRTU.ReadRTU1.MB_EL.InData</Name>
+							<Type GUID="{B455BB90-BA2F-4777-AF66-CE525D4DD1AE}" Namespace="Tc2_ModbusRTU">MB_KL6inData22B</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_ESS[3].ModbusRTU.ReadRTU1.MB.InData</Name>
+							<Type GUID="{35981FBA-5B55-4AB9-8D5B-6225EC03103C}" Namespace="Tc2_ModbusRTU">MB_PcComInData</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_ESS[3].ModbusRTU.ReadRTU1.MB_EL.InData</Name>
+							<Type GUID="{B455BB90-BA2F-4777-AF66-CE525D4DD1AE}" Namespace="Tc2_ModbusRTU">MB_KL6inData22B</Type>
+						</Var>
+					</Vars>
+					<Vars VarGrpType="2" ContextId="1" AreaNo="17">
+						<Name>AnnexFunction Outputs</Name>
+						<Var>
+							<Name>GVL_Beckhoff.stPCComOutData</Name>
+							<Comment><![CDATA[PcComOutData; //DATA qui sort  EL6outData22B;]]></Comment>
+							<Type GUID="{876BCC03-BF5A-4120-B430-A25E6D8DB8FE}" Namespace="Tc2_SerialCom">EL6outData22B</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_PTR[1].A1_Datalogger.MesDataExd</Name>
+							<Comment><![CDATA[ I/O Inputs ]]></Comment>
+							<Type GUID="{45461DC2-71F9-1144-38C9-1AD9BC85EA5D}">Datalogger_SchSkid</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_PTR[1].A1_Datalogger.CmdbyCom</Name>
+							<Type>WORD</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_PTR[1].AX_INV[1].ClockRead</Name>
+							<Comment><![CDATA[ (NA) Modbus reading Clock]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_PTR[1].AX_INV[1].ClockWrite</Name>
+							<Comment><![CDATA[ (NA) Modbus writing Clock 	]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_PTR[1].AX_INV[2].ClockRead</Name>
+							<Comment><![CDATA[ (NA) Modbus reading Clock]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_PTR[1].AX_INV[2].ClockWrite</Name>
+							<Comment><![CDATA[ (NA) Modbus writing Clock 	]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_PTR[2].A1_Datalogger.MesDataExd</Name>
+							<Comment><![CDATA[ I/O Inputs ]]></Comment>
+							<Type GUID="{45461DC2-71F9-1144-38C9-1AD9BC85EA5D}">Datalogger_SchSkid</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_PTR[2].A1_Datalogger.CmdbyCom</Name>
+							<Type>WORD</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_PTR[2].AX_INV[1].ClockRead</Name>
+							<Comment><![CDATA[ (NA) Modbus reading Clock]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_PTR[2].AX_INV[1].ClockWrite</Name>
+							<Comment><![CDATA[ (NA) Modbus writing Clock 	]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_PTR[2].AX_INV[2].ClockRead</Name>
+							<Comment><![CDATA[ (NA) Modbus reading Clock]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_PTR[2].AX_INV[2].ClockWrite</Name>
+							<Comment><![CDATA[ (NA) Modbus writing Clock 	]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_PTR[3].A1_Datalogger.MesDataExd</Name>
+							<Comment><![CDATA[ I/O Inputs ]]></Comment>
+							<Type GUID="{45461DC2-71F9-1144-38C9-1AD9BC85EA5D}">Datalogger_SchSkid</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_PTR[3].A1_Datalogger.CmdbyCom</Name>
+							<Type>WORD</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_PTR[3].AX_INV[1].ClockRead</Name>
+							<Comment><![CDATA[ (NA) Modbus reading Clock]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_PTR[3].AX_INV[1].ClockWrite</Name>
+							<Comment><![CDATA[ (NA) Modbus writing Clock 	]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_PTR[3].AX_INV[2].ClockRead</Name>
+							<Comment><![CDATA[ (NA) Modbus reading Clock]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_PTR[3].AX_INV[2].ClockWrite</Name>
+							<Comment><![CDATA[ (NA) Modbus writing Clock 	]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_PTR[4].A1_Datalogger.MesDataExd</Name>
+							<Comment><![CDATA[ I/O Inputs ]]></Comment>
+							<Type GUID="{45461DC2-71F9-1144-38C9-1AD9BC85EA5D}">Datalogger_SchSkid</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_PTR[4].A1_Datalogger.CmdbyCom</Name>
+							<Type>WORD</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_PTR[4].AX_INV[1].ClockRead</Name>
+							<Comment><![CDATA[ (NA) Modbus reading Clock]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_PTR[4].AX_INV[1].ClockWrite</Name>
+							<Comment><![CDATA[ (NA) Modbus writing Clock 	]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_PTR[4].AX_INV[2].ClockRead</Name>
+							<Comment><![CDATA[ (NA) Modbus reading Clock]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_PTR[4].AX_INV[2].ClockWrite</Name>
+							<Comment><![CDATA[ (NA) Modbus writing Clock 	]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_SUBMV.A1_ProtectRelay.ClockRead</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_SUBMV.A1_ProtectRelay.ModbusRTU.ReadRTU1.MB.OutData</Name>
+							<Type GUID="{19C79A2C-62C9-4D7C-AADA-EB22A16B4867}" Namespace="Tc2_ModbusRTU">MB_PcComOutData</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_SUBMV.A1_ProtectRelay.ModbusRTU.ReadRTU1.MB_EL.OutData</Name>
+							<Type GUID="{9D7700B4-894B-4E2F-85F1-4E3036BF2605}" Namespace="Tc2_ModbusRTU">MB_KL6outData22B</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_SUBMV.A1_PM.ClockRead</Name>
+							<Comment><![CDATA[ Clock Read]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_SUBMV.A1_PM_BESS.ClockRead</Name>
+							<Comment><![CDATA[ Clock Read]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_SUBMV.A1_PM_BESS.MesDataExd</Name>
+							<Type GUID="{9ACB7805-AB79-11F6-48D2-BE5D8A0DD128}">PM_Standard</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_SUBMV.A1_PM_SPP.ClockRead</Name>
+							<Comment><![CDATA[ Clock Read]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_SUBMV.A1_PM_SPP.MesDataExd</Name>
+							<Type GUID="{9ACB7805-AB79-11F6-48D2-BE5D8A0DD128}">PM_Standard</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_SUBMV.A1_PM_Aux.ClockRead</Name>
+							<Comment><![CDATA[ Clock Read]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_SUBMV.A1_PM_Aux.MesDataExd</Name>
+							<Type GUID="{9ACB7805-AB79-11F6-48D2-BE5D8A0DD128}">PM_Standard</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_SUBMV.A1_UPS_48v.ClockRead</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_SUBMV.A1_UPS_24v.ClockRead</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_SUBHV.A1_DataLogger_PPC.MesDataExd</Name>
+							<Comment><![CDATA[ I/O Inputs ]]></Comment>
+							<Type GUID="{45461DC2-71F9-1144-38C9-1AD9BC85EA5D}">Datalogger_SchSkid</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_SUBHV.A1_DataLogger_PPC.CmdbyCom</Name>
+							<Type>WORD</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_SUBHV.A1_PM.ClockRead</Name>
+							<Comment><![CDATA[ Clock Read]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_SUBHV.A1_PM.FB_ModbusRead.ReadRTU1.MB.OutData</Name>
+							<Type GUID="{19C79A2C-62C9-4D7C-AADA-EB22A16B4867}" Namespace="Tc2_ModbusRTU">MB_PcComOutData</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_SUBHV.A1_PM.FB_ModbusRead.ReadRTU1.MB_EL.OutData</Name>
+							<Type GUID="{9D7700B4-894B-4E2F-85F1-4E3036BF2605}" Namespace="Tc2_ModbusRTU">MB_KL6outData22B</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_WS.A1_WS600.ClockRead</Name>
+							<Comment><![CDATA[ (NA) Modbus reading Clock]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_WS.ModbusRTU.ReadRTU1.MB.OutData</Name>
+							<Type GUID="{19C79A2C-62C9-4D7C-AADA-EB22A16B4867}" Namespace="Tc2_ModbusRTU">MB_PcComOutData</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_WS.ModbusRTU.ReadRTU1.MB_EL.OutData</Name>
+							<Type GUID="{9D7700B4-894B-4E2F-85F1-4E3036BF2605}" Namespace="Tc2_ModbusRTU">MB_KL6outData22B</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_WS.ModbusRTU_2.ReadRTU1.MB.OutData</Name>
+							<Type GUID="{19C79A2C-62C9-4D7C-AADA-EB22A16B4867}" Namespace="Tc2_ModbusRTU">MB_PcComOutData</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.A1_WS.ModbusRTU_2.ReadRTU1.MB_EL.OutData</Name>
+							<Type GUID="{9D7700B4-894B-4E2F-85F1-4E3036BF2605}" Namespace="Tc2_ModbusRTU">MB_KL6outData22B</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_ESS[1].AX_PCS[1].ClockRead</Name>
+							<Comment><![CDATA[ (NA) Modbus reading Clock]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_ESS[1].AX_PCS[1].ClockWrite</Name>
+							<Comment><![CDATA[ (NA) Modbus writing Clock 	]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_ESS[1].AX_PCS[2].ClockRead</Name>
+							<Comment><![CDATA[ (NA) Modbus reading Clock]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_ESS[1].AX_PCS[2].ClockWrite</Name>
+							<Comment><![CDATA[ (NA) Modbus writing Clock 	]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_ESS[1].AX_Bat[1].AX_Cmd</Name>
+							<Comment><![CDATA[M_WRITE VARIABLES //  ]]></Comment>
+							<Type GUID="{9B48DF92-1926-6D4F-F6A1-3851A7EC98F3}">ARRAY [1..3] OF WORD</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_ESS[1].AX_Bat[2].AX_Cmd</Name>
+							<Comment><![CDATA[M_WRITE VARIABLES //  ]]></Comment>
+							<Type GUID="{9B48DF92-1926-6D4F-F6A1-3851A7EC98F3}">ARRAY [1..3] OF WORD</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_ESS[1].AX_FSS[1].ParamCableCutSecurity</Name>
+							<Comment><![CDATA[ FALSE = ALARM 						]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_ESS[1].AX_FSS[2].ParamCableCutSecurity</Name>
+							<Comment><![CDATA[ FALSE = ALARM 						]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_ESS[1].ModbusRTU.ReadRTU1.MB.OutData</Name>
+							<Type GUID="{19C79A2C-62C9-4D7C-AADA-EB22A16B4867}" Namespace="Tc2_ModbusRTU">MB_PcComOutData</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_ESS[1].ModbusRTU.ReadRTU1.MB_EL.OutData</Name>
+							<Type GUID="{9D7700B4-894B-4E2F-85F1-4E3036BF2605}" Namespace="Tc2_ModbusRTU">MB_KL6outData22B</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_ESS[1].OUT_EmergencyStop_IO</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_ESS[1].OUT_CmdBuzzer_IO</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_ESS[2].AX_PCS[1].ClockRead</Name>
+							<Comment><![CDATA[ (NA) Modbus reading Clock]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_ESS[2].AX_PCS[1].ClockWrite</Name>
+							<Comment><![CDATA[ (NA) Modbus writing Clock 	]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_ESS[2].AX_PCS[2].ClockRead</Name>
+							<Comment><![CDATA[ (NA) Modbus reading Clock]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_ESS[2].AX_PCS[2].ClockWrite</Name>
+							<Comment><![CDATA[ (NA) Modbus writing Clock 	]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_ESS[2].AX_Bat[1].AX_Cmd</Name>
+							<Comment><![CDATA[M_WRITE VARIABLES //  ]]></Comment>
+							<Type GUID="{9B48DF92-1926-6D4F-F6A1-3851A7EC98F3}">ARRAY [1..3] OF WORD</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_ESS[2].AX_Bat[2].AX_Cmd</Name>
+							<Comment><![CDATA[M_WRITE VARIABLES //  ]]></Comment>
+							<Type GUID="{9B48DF92-1926-6D4F-F6A1-3851A7EC98F3}">ARRAY [1..3] OF WORD</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_ESS[2].AX_FSS[1].ParamCableCutSecurity</Name>
+							<Comment><![CDATA[ FALSE = ALARM 						]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_ESS[2].AX_FSS[2].ParamCableCutSecurity</Name>
+							<Comment><![CDATA[ FALSE = ALARM 						]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_ESS[2].ModbusRTU.ReadRTU1.MB.OutData</Name>
+							<Type GUID="{19C79A2C-62C9-4D7C-AADA-EB22A16B4867}" Namespace="Tc2_ModbusRTU">MB_PcComOutData</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_ESS[2].ModbusRTU.ReadRTU1.MB_EL.OutData</Name>
+							<Type GUID="{9D7700B4-894B-4E2F-85F1-4E3036BF2605}" Namespace="Tc2_ModbusRTU">MB_KL6outData22B</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_ESS[2].OUT_EmergencyStop_IO</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_ESS[2].OUT_CmdBuzzer_IO</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_ESS[3].AX_PCS[1].ClockRead</Name>
+							<Comment><![CDATA[ (NA) Modbus reading Clock]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_ESS[3].AX_PCS[1].ClockWrite</Name>
+							<Comment><![CDATA[ (NA) Modbus writing Clock 	]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_ESS[3].AX_PCS[2].ClockRead</Name>
+							<Comment><![CDATA[ (NA) Modbus reading Clock]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_ESS[3].AX_PCS[2].ClockWrite</Name>
+							<Comment><![CDATA[ (NA) Modbus writing Clock 	]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_ESS[3].AX_Bat[1].AX_Cmd</Name>
+							<Comment><![CDATA[M_WRITE VARIABLES //  ]]></Comment>
+							<Type GUID="{9B48DF92-1926-6D4F-F6A1-3851A7EC98F3}">ARRAY [1..3] OF WORD</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_ESS[3].AX_Bat[2].AX_Cmd</Name>
+							<Comment><![CDATA[M_WRITE VARIABLES //  ]]></Comment>
+							<Type GUID="{9B48DF92-1926-6D4F-F6A1-3851A7EC98F3}">ARRAY [1..3] OF WORD</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_ESS[3].AX_FSS[1].ParamCableCutSecurity</Name>
+							<Comment><![CDATA[ FALSE = ALARM 						]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_ESS[3].AX_FSS[2].ParamCableCutSecurity</Name>
+							<Comment><![CDATA[ FALSE = ALARM 						]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_ESS[3].ModbusRTU.ReadRTU1.MB.OutData</Name>
+							<Type GUID="{19C79A2C-62C9-4D7C-AADA-EB22A16B4867}" Namespace="Tc2_ModbusRTU">MB_PcComOutData</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_ESS[3].ModbusRTU.ReadRTU1.MB_EL.OutData</Name>
+							<Type GUID="{9D7700B4-894B-4E2F-85F1-4E3036BF2605}" Namespace="Tc2_ModbusRTU">MB_KL6outData22B</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_ESS[3].OUT_EmergencyStop_IO</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_CFG.AX_ESS[3].OUT_CmdBuzzer_IO</Name>
+							<Type>BOOL</Type>
+						</Var>
+					</Vars>
+					<Contexts>
+						<Context>
+							<Id>0</Id>
+							<Name>PlcTask</Name>
+							<ManualConfig>
+								<OTCID>#x02010030</OTCID>
+							</ManualConfig>
+							<Priority>8</Priority>
+							<CycleTime>10000000</CycleTime>
+						</Context>
+						<Context>
+							<Id>1</Id>
+							<Name>AnnexFunction</Name>
+							<ManualConfig>
+								<OTCID>#x02010070</OTCID>
+							</ManualConfig>
+							<Priority>10</Priority>
+							<CycleTime>100000000</CycleTime>
+						</Context>
+					</Contexts>
+					<TaskPouOids>
+						<TaskPouOid Prio="8" OTCID="#x08502001"/>
+						<TaskPouOid Prio="10" OTCID="#x08502002"/>
+					</TaskPouOids>
+				</Instance>
+			</Project>
+		</Plc>
+		<Io>
+			<Device Id="1" Disabled="true" DevType="111" DevFlags="#x0003" AmsPort="28673" AmsNetId="192.168.13.104.2.1" RemoteName="Périphérique 1 (EtherCAT)" InfoImageId="2">
+				<Name>Périphérique 1 (EtherCAT)</Name>
+				<AddressInfo>
+					<Ccat>
+						<Address>-801112064</Address>
+						<Offset>131072</Offset>
+						<Size>8192</Size>
+						<BaseAddr>0</BaseAddr>
+						<BusNo>3</BusNo>
+						<SlotNo>0</SlotNo>
+						<VendorId>5612</VendorId>
+						<DeviceId>20480</DeviceId>
+						<Dma>
+							<Address>0</Address>
+							<Offset>4096</Offset>
+							<Size>256</Size>
+							<BaseAddr>2</BaseAddr>
+							<RxChn>0</RxChn>
+							<TxChn>1</TxChn>
+						</Dma>
+						<Identification>
+							<Value>498694182</Value>
+							<Version>1</Version>
+							<Size>256</Size>
+						</Identification>
+					</Ccat>
+				</AddressInfo>
+				<Image Id="1" AddrType="9" ImageType="3">
+					<Name>Image</Name>
+				</Image>
+				<Box Id="1" BoxType="9099">
+					<Name>Terme 1 (EK1200)</Name>
+					<ImageId>1000</ImageId>
+					<EtherCAT PdiType="#x0100" CycleMBoxPollingTime="0" VendorId="#x00000002" ProductCode="#x04b02c52" RevisionNo="#x00001388" InfoDataState="false" PortPhys="49" MaxSlotCount="256" MaxSlotGroupCount="1" SlotPdoIncrement="1" SlotIndexIncrement="16" Type="EK1200-5000 EtherCAT Power supply (2A E-Bus)" Desc="EK1200" PortABoxInfo="#x00ffffff"/>
+					<Box Id="2" BoxType="9099" BoxFlags="#x00000020">
+						<Name>Terme 2 (EL4024)</Name>
+						<ImageId>1001</ImageId>
+						<EtherCAT SlaveType="2" PdiType="#x0405" MboxDataLinkLayer="true" StateMBoxPolling="true" CycleMBoxPollingTime="0" CoeType="3" FoeType="1" VendorId="#x00000002" ProductCode="#x0fb83052" RevisionNo="#x00150000" InfoDataAddr="true" TimeoutMailbox2="2000" CheckRevisionNoType="3" PortPhys="51" MaxSlotCount="256" MaxSlotGroupCount="1" SlotPdoIncrement="1" SlotIndexIncrement="16" Type="EL4024 4Ch. Ana. Output 4-20mA, 12bit" Desc="EL4024" PortABoxInfo="#x01000001">
+							<SyncMan>001080002600010001000000800080008000001026010000</SyncMan>
+							<SyncMan>801080002200010002000000800080008000801022010000</SyncMan>
+							<SyncMan>001108002400010003000000000000000800001124010000</SyncMan>
+							<SyncMan>801100000000000004000000000000000000801100000000</SyncMan>
+							<Fmmu>0000000000000000001100020100000001000000000000000000000000000000</Fmmu>
+							<Fmmu>00000000000000000d0800010100000003000000000000000000000000000000</Fmmu>
+							<BootStrapData>0010f400f410f400</BootStrapData>
+							<DcMode>53796e6368726f6e0000000000000000534d2d53796e6368726f6e000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000</DcMode>
+							<DcMode>4443000000000000000000000000000044432d53796e6368726f6e0000000000000000000000000000000000000000000000000000000000a0860100000000070100000000000000000000000000000000000000000000000000000000000000</DcMode>
+							<MBoxUserCmdData>020003000a0000000e00000003000000000000000000000000000000000000002000801302000000ff3f44656661756c74206f757470757400</MBoxUserCmdData>
+							<Pdo Name="AO Outputs Channel 1" Index="#x1600" InOut="1" Flags="#x0011" SyncMan="2">
+								<Entry Name="Analog output" Index="#x7000" Sub="#x11" Flags="#x00040000">
+									<Type>INT</Type>
+								</Entry>
+							</Pdo>
+							<Pdo Name="AO Outputs Channel 2" Index="#x1601" InOut="1" Flags="#x0011" SyncMan="2">
+								<Entry Name="Analog output" Index="#x7010" Sub="#x11" Flags="#x00040000">
+									<Type>INT</Type>
+								</Entry>
+							</Pdo>
+							<Pdo Name="AO Outputs Channel 3" Index="#x1602" InOut="1" Flags="#x0011" SyncMan="2">
+								<Entry Name="Analog output" Index="#x7020" Sub="#x11" Flags="#x00040000">
+									<Type>INT</Type>
+								</Entry>
+							</Pdo>
+							<Pdo Name="AO Outputs Channel 4" Index="#x1603" InOut="1" Flags="#x0011" SyncMan="2">
+								<Entry Name="Analog output" Index="#x7030" Sub="#x11" Flags="#x00040000">
+									<Type>INT</Type>
+								</Entry>
+							</Pdo>
+							<CoeProfile ProfileNo="26219401"/>
+							<CoeProfile ProfileNo="26219401"/>
+							<CoeProfile ProfileNo="26219401"/>
+							<CoeProfile ProfileNo="26219401"/>
+						</EtherCAT>
+					</Box>
+					<Box Id="3" BoxType="9099" BoxFlags="#x00000020">
+						<Name>Terme 3 (EL3024)</Name>
+						<ImageId>1002</ImageId>
+						<EtherCAT SlaveType="2" PdiType="#x0005" MboxDataLinkLayer="true" StateMBoxPolling="true" CycleMBoxPollingTime="0" CoeType="7" FoeType="1" VendorId="#x00000002" ProductCode="#x0bd03052" RevisionNo="#x00130000" InfoDataAddr="true" TimeoutMailbox2="2000" CheckRevisionNoType="3" PortPhys="51" MaxSlotCount="256" MaxSlotGroupCount="1" SlotPdoIncrement="1" SlotIndexIncrement="16" Type="EL3024 4Ch. Ana. Input 4-20mA DIFF" Desc="EL3024" PortABoxInfo="#x01000002">
+							<SyncMan>001080002600010001000000800080008000001026010000</SyncMan>
+							<SyncMan>801080002200010002000000800080008000801022010000</SyncMan>
+							<SyncMan>001100000400000003000000000000000000001104000000</SyncMan>
+							<SyncMan>801110002000010004000000000000001000801120010000</SyncMan>
+							<Fmmu>0000000000000000801100010100000002000000000000000000000000000000</Fmmu>
+							<Fmmu>00000000000000000d0800010100000003000000000000000000000000000000</Fmmu>
+							<BootStrapData>0010f400f410f400</BootStrapData>
+							<Pdo Name="AI Standard Channel 1" Index="#x1a00" Flags="#x0010" SyncMan="3">
+								<ExcludePdo>#x1a01</ExcludePdo>
+								<Entry Name="Status__Underrange" Index="#x6000" Sub="#x01">
+									<Type>BIT</Type>
+									<Comment><![CDATA[Underrange event active]]></Comment>
+								</Entry>
+								<Entry Name="Status__Overrange" Index="#x6000" Sub="#x02">
+									<Type>BIT</Type>
+									<Comment><![CDATA[Overrange event active]]></Comment>
+								</Entry>
+								<Entry Name="Status__Limit 1" Index="#x6000" Sub="#x03">
+									<Type>BIT2</Type>
+									<Comment><![CDATA[Bit0: Value smaller/equal Limit1
+Bit1: Value bigger/equal Limit1]]></Comment>
+								</Entry>
+								<Entry Name="Status__Limit 2" Index="#x6000" Sub="#x05">
+									<Type>BIT2</Type>
+									<Comment><![CDATA[Bit0: Value smaller/equal Limit2
+Bit1: Value bigger/equal Limit2]]></Comment>
+								</Entry>
+								<Entry Name="Status__Error" Index="#x6000" Sub="#x07">
+									<Type>BIT</Type>
+									<Comment><![CDATA[Bit set when Over- or Underrange]]></Comment>
+								</Entry>
+								<Entry Name="Status__">
+									<Type GUID="{18071995-0000-0000-0000-002000000001}">ARRAY [0..0] OF BIT</Type>
+								</Entry>
+								<Entry Name="Status__">
+									<Type GUID="{18071995-0000-0000-0000-002000000006}">ARRAY [0..5] OF BIT</Type>
+								</Entry>
+								<Entry Name="Status__TxPDO State" Index="#x6000" Sub="#x0f">
+									<Type>BIT</Type>
+									<Comment><![CDATA[TRUE when this TxPDO is not valid]]></Comment>
+								</Entry>
+								<Entry Name="Status__TxPDO Toggle" Index="#x6000" Sub="#x10">
+									<Type>BIT</Type>
+									<Comment><![CDATA[Bit toggles everytime when new value available]]></Comment>
+								</Entry>
+								<Entry Name="Value" Index="#x6000" Sub="#x11" Flags="#x00040000">
+									<Type>INT</Type>
+								</Entry>
+							</Pdo>
+							<Pdo Name="AI Compact Channel 1" Index="#x1a01" Flags="#x0010">
+								<ExcludePdo>#x1a00</ExcludePdo>
+								<Entry Name="Value" Index="#x6000" Sub="#x11" Flags="#x00040000">
+									<Type>INT</Type>
+								</Entry>
+							</Pdo>
+							<Pdo Name="AI Standard Channel 2" Index="#x1a02" Flags="#x0010" SyncMan="3">
+								<ExcludePdo>#x1a03</ExcludePdo>
+								<Entry Name="Status__Underrange" Index="#x6010" Sub="#x01">
+									<Type>BIT</Type>
+									<Comment><![CDATA[Underrange event active]]></Comment>
+								</Entry>
+								<Entry Name="Status__Overrange" Index="#x6010" Sub="#x02">
+									<Type>BIT</Type>
+									<Comment><![CDATA[Overrange event active]]></Comment>
+								</Entry>
+								<Entry Name="Status__Limit 1" Index="#x6010" Sub="#x03">
+									<Type>BIT2</Type>
+									<Comment><![CDATA[Bit0: Value smaller/equal Limit1
+Bit1: Value bigger/equal Limit1]]></Comment>
+								</Entry>
+								<Entry Name="Status__Limit 2" Index="#x6010" Sub="#x05">
+									<Type>BIT2</Type>
+									<Comment><![CDATA[Bit0: Value smaller/equal Limit2
+Bit1: Value bigger/equal Limit2]]></Comment>
+								</Entry>
+								<Entry Name="Status__Error" Index="#x6010" Sub="#x07">
+									<Type>BIT</Type>
+									<Comment><![CDATA[Bit set when Over- or Underrange]]></Comment>
+								</Entry>
+								<Entry Name="Status__">
+									<Type GUID="{18071995-0000-0000-0000-002000000001}">ARRAY [0..0] OF BIT</Type>
+								</Entry>
+								<Entry Name="Status__">
+									<Type GUID="{18071995-0000-0000-0000-002000000006}">ARRAY [0..5] OF BIT</Type>
+								</Entry>
+								<Entry Name="Status__TxPDO State" Index="#x6010" Sub="#x0f">
+									<Type>BIT</Type>
+									<Comment><![CDATA[TRUE when this TxPDO is not valid]]></Comment>
+								</Entry>
+								<Entry Name="Status__TxPDO Toggle" Index="#x6010" Sub="#x10">
+									<Type>BIT</Type>
+									<Comment><![CDATA[Bit toggles everytime when new value available]]></Comment>
+								</Entry>
+								<Entry Name="Value" Index="#x6010" Sub="#x11" Flags="#x00040000">
+									<Type>INT</Type>
+								</Entry>
+							</Pdo>
+							<Pdo Name="AI Compact Channel 2" Index="#x1a03" Flags="#x0010">
+								<ExcludePdo>#x1a02</ExcludePdo>
+								<Entry Name="Value" Index="#x6010" Sub="#x11" Flags="#x00040000">
+									<Type>INT</Type>
+								</Entry>
+							</Pdo>
+							<Pdo Name="AI Standard Channel 3" Index="#x1a04" Flags="#x0010" SyncMan="3">
+								<ExcludePdo>#x1a05</ExcludePdo>
+								<Entry Name="Status__Underrange" Index="#x6020" Sub="#x01">
+									<Type>BIT</Type>
+									<Comment><![CDATA[Underrange event active]]></Comment>
+								</Entry>
+								<Entry Name="Status__Overrange" Index="#x6020" Sub="#x02">
+									<Type>BIT</Type>
+									<Comment><![CDATA[Overrange event active]]></Comment>
+								</Entry>
+								<Entry Name="Status__Limit 1" Index="#x6020" Sub="#x03">
+									<Type>BIT2</Type>
+									<Comment><![CDATA[Bit0: Value smaller/equal Limit1
+Bit1: Value bigger/equal Limit1]]></Comment>
+								</Entry>
+								<Entry Name="Status__Limit 2" Index="#x6020" Sub="#x05">
+									<Type>BIT2</Type>
+									<Comment><![CDATA[Bit0: Value smaller/equal Limit2
+Bit1: Value bigger/equal Limit2]]></Comment>
+								</Entry>
+								<Entry Name="Status__Error" Index="#x6020" Sub="#x07">
+									<Type>BIT</Type>
+									<Comment><![CDATA[Bit set when Over- or Underrange]]></Comment>
+								</Entry>
+								<Entry Name="Status__">
+									<Type GUID="{18071995-0000-0000-0000-002000000001}">ARRAY [0..0] OF BIT</Type>
+								</Entry>
+								<Entry Name="Status__">
+									<Type GUID="{18071995-0000-0000-0000-002000000006}">ARRAY [0..5] OF BIT</Type>
+								</Entry>
+								<Entry Name="Status__TxPDO State" Index="#x6020" Sub="#x0f">
+									<Type>BIT</Type>
+									<Comment><![CDATA[TRUE when this TxPDO is not valid]]></Comment>
+								</Entry>
+								<Entry Name="Status__TxPDO Toggle" Index="#x6020" Sub="#x10">
+									<Type>BIT</Type>
+									<Comment><![CDATA[Bit toggles everytime when new value available]]></Comment>
+								</Entry>
+								<Entry Name="Value" Index="#x6020" Sub="#x11" Flags="#x00040000">
+									<Type>INT</Type>
+								</Entry>
+							</Pdo>
+							<Pdo Name="AI Compact Channel 3" Index="#x1a05" Flags="#x0010">
+								<ExcludePdo>#x1a04</ExcludePdo>
+								<Entry Name="Value" Index="#x6020" Sub="#x11" Flags="#x00040000">
+									<Type>INT</Type>
+								</Entry>
+							</Pdo>
+							<Pdo Name="AI Standard Channel 4" Index="#x1a06" Flags="#x0010" SyncMan="3">
+								<ExcludePdo>#x1a07</ExcludePdo>
+								<Entry Name="Status__Underrange" Index="#x6030" Sub="#x01">
+									<Type>BIT</Type>
+									<Comment><![CDATA[Underrange event active]]></Comment>
+								</Entry>
+								<Entry Name="Status__Overrange" Index="#x6030" Sub="#x02">
+									<Type>BIT</Type>
+									<Comment><![CDATA[Overrange event active]]></Comment>
+								</Entry>
+								<Entry Name="Status__Limit 1" Index="#x6030" Sub="#x03">
+									<Type>BIT2</Type>
+									<Comment><![CDATA[Bit0: Value smaller/equal Limit1
+Bit1: Value bigger/equal Limit1]]></Comment>
+								</Entry>
+								<Entry Name="Status__Limit 2" Index="#x6030" Sub="#x05">
+									<Type>BIT2</Type>
+									<Comment><![CDATA[Bit0: Value smaller/equal Limit2
+Bit1: Value bigger/equal Limit2]]></Comment>
+								</Entry>
+								<Entry Name="Status__Error" Index="#x6030" Sub="#x07">
+									<Type>BIT</Type>
+									<Comment><![CDATA[Bit set when Over- or Underrange]]></Comment>
+								</Entry>
+								<Entry Name="Status__">
+									<Type GUID="{18071995-0000-0000-0000-002000000001}">ARRAY [0..0] OF BIT</Type>
+								</Entry>
+								<Entry Name="Status__">
+									<Type GUID="{18071995-0000-0000-0000-002000000006}">ARRAY [0..5] OF BIT</Type>
+								</Entry>
+								<Entry Name="Status__TxPDO State" Index="#x6030" Sub="#x0f">
+									<Type>BIT</Type>
+									<Comment><![CDATA[TRUE when this TxPDO is not valid]]></Comment>
+								</Entry>
+								<Entry Name="Status__TxPDO Toggle" Index="#x6030" Sub="#x10">
+									<Type>BIT</Type>
+									<Comment><![CDATA[Bit toggles everytime when new value available]]></Comment>
+								</Entry>
+								<Entry Name="Value" Index="#x6030" Sub="#x11" Flags="#x00040000">
+									<Type>INT</Type>
+								</Entry>
+							</Pdo>
+							<Pdo Name="AI Compact Channel 4" Index="#x1a07" Flags="#x0010">
+								<ExcludePdo>#x1a06</ExcludePdo>
+								<Entry Name="Value" Index="#x6030" Sub="#x11" Flags="#x00040000">
+									<Type>INT</Type>
+								</Entry>
+							</Pdo>
+							<CoeProfile ProfileNo="19665801"/>
+							<CoeProfile ProfileNo="19665801"/>
+							<CoeProfile ProfileNo="19665801"/>
+							<CoeProfile ProfileNo="19665801"/>
+						</EtherCAT>
+					</Box>
+					<Box Id="4" BoxType="9099">
+						<Name>Terme 4 (EL9011)</Name>
+						<ImageId>1003</ImageId>
+						<EtherCAT CycleMBoxPollingTime="0" VendorId="#x00000002" ProductCode="#x23333050" InfoDataState="false" MaxSlotCount="256" MaxSlotGroupCount="1" SlotPdoIncrement="1" SlotIndexIncrement="16" Type="EL9011 End Terminal" Desc="EL9011" PortABoxInfo="#x01000003"/>
+					</Box>
+				</Box>
+				<EtherCAT/>
+			</Device>
+		</Io>
+	</Project>
+</TcSmProject>

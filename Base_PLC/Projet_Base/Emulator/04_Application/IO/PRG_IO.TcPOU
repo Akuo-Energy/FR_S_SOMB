@@ -1,0 +1,435 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="PRG_IO" Id="{e9f99a0f-19b9-4ea6-a203-e40b5c9b2299}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM PRG_IO
+///////////
+// This Program is used as an interface between code variable and the I/O cards
+//////////
+VAR_INPUT
+	
+//PP States //
+	MesCouplerStateSUBMV		: ST_AI ; 
+
+// EXECUTE VARIABLES //
+	IN_CmdInhibOutput_OPC		: BOOL :=TRUE ; 
+	
+END_VAR
+VAR 	
+//M_INIT VARIABLES //
+	bInit						: BOOL	:=TRUE ;			// Initialization variables
+	iTest                       : INT;
+END_VAR
+
+VAR_INPUT
+	KK : INT ;
+	
+	MesIO_SUBMV_EL1809_1 : ARRAY [1..16] OF ST_DI ; 
+	MesIO_SUBMV_EL1809_2 : ARRAY [1..16] OF ST_DI ; 
+	MesIO_SUBMV_EL1809_3 : ARRAY [1..16] OF ST_DI ;
+	MesIO_SUBMV_EL1809_14 : ARRAY [1..16] OF ST_DI ; 
+	MesIO_SUBMV_EL2809_4 : ARRAY [1..16] OF ST_DO ; 
+	MesIO_SUBMV_EL3024_5 : ARRAY [1..4] OF ST_AI ; 
+	MesIO_SUBMV_EL3024_12 : ARRAY [1..4]  OF ST_AI ;
+	MesIO_SUBMV_EL3024_13 : ARRAY [1..4]  OF ST_AI ;
+	MesIO_PTR_1_EL3024_8 : ARRAY [1..4] OF ST_AI ; 
+	MesIO_PTR_1_EL1809_9 : ARRAY [1..16] OF ST_DI ; 
+	MesIO_PTR_1_EL2809_10 : ARRAY [1..16] OF ST_DO ; 
+	MesIO_PTR_2_EL3024_8 : ARRAY [1..4] OF ST_AI ; 
+	MesIO_PTR_2_EL1809_9 : ARRAY [1..16] OF ST_DI ; 
+	MesIO_PTR_2_EL2809_10 : ARRAY [1..16] OF ST_DO ; 
+	MesIO_PTR_3_EL3024_8 : ARRAY [1..4] OF ST_AI ; 
+	MesIO_PTR_3_EL1809_9 : ARRAY [1..16] OF ST_DI ; 
+	MesIO_PTR_3_EL2809_10 : ARRAY [1..16] OF ST_DO ; 
+	
+END_VAR
+
+
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// Initializing the static variables //  
+	IF bInit OR CmdInit_G THEN
+		M_Init() ; 
+		bInit		:= FALSE ; 
+	END_IF
+	
+	// EMULATOR OF IO 
+	
+	// On met ici les calculs pour émuler des variables IO qui ne serait pas liée à des commandes 
+
+A1_SUBMV.IN_MesCouplerState_IO							:= iCouplerStatePDL ;
+A1_SUBMV.A1_MeasureMVCB.IN_CmdExternalClose_Emul 		:=  MeasureMVCB_Closed ; 
+A1_SUBMV.A1_MeasureMVCB.IN_CmdExternalOpen_Emul 		:=  MeasureMVCB_Opened ; 
+
+FOR KK:= 1 TO CstNbFeederMVCB_G DO 
+	A1_SUBMV.AX_FeederMVCB[KK].IN_CmdExternalClose_Emul := FeederMVCBClose_External[KK] ;
+	A1_SUBMV.AX_FeederMVCB[KK].IN_CmdExternalOpen_Emul  := FeederMVCBOpen_External[KK] ;
+	A1_SUBMV.AX_FeederMVCB[KK].IN_MesComutLocal_IO 		:=  FeederMVCB_ComutLocal[KK] ; 
+	A1_SUBMV.AX_FeederMVCB[KK].IN_MesEarth_IO 			:=  FeederMVCB_Malt[KK]; 
+END_FOR
+
+// Close cells 
+A1_SUBMV.A1_GridMVCB.IN_CmdExternalClose_Emul 		  := TRUE;
+A1_SUBMV.A1_AuxMVCB.IN_CmdExternalClose_Emul   		  := TRUE;
+A1_SUBMV.A1_MainMVCB.A1_Sect.IN_CmdExternalClose_Emul := TRUE; 
+
+
+A1_SUBMV.A1_MeasureMVCB.IN_MesFuse_IO :=  MeasureMVCB_Fuse ; 
+A1_SUBMV.A1_MeasureMVCB.IN_MesEarth_IO :=  MeasureMVCB_Malt ; 
+
+IF A1_SUBMV.A1_MainMVCB.ParamComutNc THEN 
+	A1_SUBMV.A1_MainMVCB.IN_MesComutLocal_IO :=  NOT MainMVCB_ComutLocal ; 
+ELSE
+	A1_SUBMV.A1_MainMVCB.IN_MesComutLocal_IO :=   MainMVCB_ComutLocal ;
+END_IF
+
+A1_SUBMV.A1_MainMVCB.IN_MesEarth_IO :=  MainMVCB_Malt ; 
+A1_SUBMV.A1_MainMVCB.IN_CmdExternalClose_Emul	:= MainMVCB_Close ; 
+A1_SUBMV.A1_MainMVCB.IN_CmdExternalOpen_Emul	:= MainMVCB_Open OR PDLRPNAlarmIPos_IO OR PDLRPNAlarmVolt_IO; 
+
+A1_SUBMV.A1_ES_LV.IN_MesState1_IO                    := PDLEsState1_IO                   ;
+A1_SUBMV.A1_ES_MV.IN_MesState1_IO                    := PDLEsState1_IO                   ;
+A1_SUBMV.A1_MainCB_LV.IN_MesState1_IO                := PDLMainCBAuxState1_IO            ;
+
+A1_SUBMV.A1_UPS_24v.IN_MesCbUPS_IO                   := PDLIN_MesCbUPS_IO                ;    
+A1_SUBMV.A1_UPS_48v.IN_MesCbUPS_IO                   := PDLIN_MesCbUPS_IO                ;    
+
+//A1_SUBMV.A1_SAFE_FireSystem.IN_MesCBFSS_IO            := PDLFireSystemCBFSS_IO         ;
+A1_SUBMV.A1_DS_LV.IN_MesState1_IO                    := PDLDsBTState1_IO                 ;
+A1_SUBMV.A1_DS_MV.IN_MesState1_IO                    := PDLDsHTState1_IO                 ;
+A1_SUBMV.A1_UPS_24v.IN_MesFault_IO              	 := PDLUPSFaultSynthesis_IO          ; 
+A1_SUBMV.A1_UPS_48v.IN_MesFault_IO              	 := PDLUPSFaultSynthesis_IO          ; 
+
+A1_SUBMV.A1_ProtectRelay.IN_MesWatchDog_IO           := PDLRPNWatchDog_IO                ; 
+A1_SUBMV.A1_ProtectRelay.IN_MesWatchDog_IO           := PDLRPNWatchdogREU615_IO          ; 
+A1_SUBMV.A1_ProtectRelay.IN_MesAlarmIMax_IO          := PDLRPNAlarmIPos_IO               ; 
+A1_SUBMV.A1_ProtectRelay.IN_MesAlarmUmin_IO			 := PDLRPNAlarmVolt_IO				;		
+
+// WS 
+A1_WS.A1_Temp_Ext.IN_MesValue1_IO	:= MesTempExt ; 
+A1_WS.AX_Temp_Panel[1].IN_MesValue1_IO := MesTempExt;
+A1_WS.A1_WindDir.IN_MesValue1_IO	:= MesWindDir ; 
+A1_WS.A1_WindSp.IN_MesValue1_IO	:= MesWindSpd ; 
+
+FOR KK:=1 TO CstNbPyrano DO 
+	A1_WS.Ax_Pyrano[KK].IN_MesValue1_IO :=  MesPyra ; 
+END_FOR 		
+
+
+
+
+// ESS
+(*	
+FOR KK := 1 TO CstNbEss DO
+	AX_ESS[KK].AX_TmpSensors[1].IN_MesValue_IO1 := MesTemp[KK][1];
+	AX_ESS[KK].AX_HygroSensors[1].IN_MesValue_IO1 := MesHygr[KK][1];
+	
+	FOR LL := 2 TO 4 DO
+		AX_ESS[KK].AX_TmpSensors[LL].IN_MesValue_IO1 := REAL_TO_INT(AX_ESS[KK].AX_HVAC[1].MesDataExd.MesData.MesTempRoom/50*32767) ; //MesTemp[KK][LL];
+		AX_ESS[KK].AX_HygroSensors[LL].IN_MesValue_IO1 := REAL_TO_INT(AX_ESS[KK].AX_HVAC[1].MesDataExd.MesData.MesHygroAmb/100*32767) ;// MesHygr[KK][LL];
+		
+	END_FOR
+	//MesIoESS_DI_1[KK][4].Value := GVL_EmulConfig.MesSpdState[KK];
+	
+	
+	AX_Ess[KK].A1_Spd.IN_MesState1_IO 								:= 	MesSpdState[KK];						
+	AX_ESS[KK].A1_Ds_Pcs.IN_MesState1_IO 							:=  MesPcsDs[KK];								
+	AX_ESS[KK].A1_Ds_Bat.IN_MesState1_IO 							:=  MesBatDs[KK];								
+	AX_ESS[KK].A1_ToS.IN_MesState1_IO 								:=  MesToS[KK];								
+	AX_ESS[KK].A1_Cb_Q31.IN_CmdExternalClose_Emul							:=  Cb_Q31_Close[KK];							
+	AX_ESS[KK].A1_Cb_Q31.IN_CmdExternalOpen_Emul 							:=  Cb_Q31_Open[KK];							
+	AX_ESS[KK].A1_Sd_Pcs.IN_MesState1_IO 							:=  MesPcs1Sd[KK];							
+	AX_ESS[KK].A1_Sd_Pcs.IN_MesState2_IO 							:=  MesPcs2Sd[KK];							
+//	AX_ESS[KK].A1_Sd_Bat.IN_MesState1_IO 							:=  MesBat1Sd[KK];							
+	AX_ESS[KK].A1_Es.IN_MesState1_IO 								:=  MesEs[KK];										
+	AX_ESS[KK].A1_Ds_Pcs.IN_MesState1_IO 							:=  Ds_Pcs[KK];						
+//	AX_ESS[KK].A1_Fuse1_Cab1.IN_MesState1_IO 						:=  Fuse1_Cab1[KK];						
+//	AX_ESS[KK].A1_Fuse2_Cab1.IN_MesState1_IO 						:=  Fuse2_Cab1[KK];						
+	AX_ESS[KK].A1_Ds_Bat.IN_MesState1_IO 							:=  Ds_Bat[KK];						
+//	AX_ESS[KK].A1_Fuse1_Cab2.IN_MesState1_IO  						:=  Fuse1_Cab2[KK];						
+//	AX_ESS[KK].A1_Fuse2_Cab2.IN_MesState1_IO  						:=  Fuse2_Cab2[KK];					
+	AX_ESS[KK].IN_CmdReset_IO 										:=  CmdReset_IO[KK];				
+	AX_ESS[KK].A1_UPS.IN_MesFaultSynthesis_IO						:=  MesUpsAlarm[KK];	
+	AX_ESS[KK].A1_UPS.IN_MesDischarging_IO							:=  MesUpsDischarging[KK] ; 				
+	AX_ESS[KK].A1_CB_PLC24V.IN_MesState1_IO					 		:=  MesSup_10A_PLC[KK];			
+	AX_ESS[KK].A1_CB_RackCtrl24V.IN_MesState1_IO					:=  MesSupplyFlt_40A_RC[KK];			
+	AX_ESS[KK].A1_FSS.IN_MesWarning_IO					 			:=  bBatFireWarning[KK];		
+	AX_ESS[KK].A1_FSS.IN_MesFault_IO					 			:=  bBatFireFault[KK];	
+	AX_ESS[KK].A1_FSS.IN_MesAlarm_IO					 			:=  bBatFireAlarm[KK];		
+	AX_ESS[KK].AX_CB_ChainDcSwitchBank[1].IN_MesState1_IO           :=  bDcSwitchBank1[KK];		     
+	AX_ESS[KK].AX_CB_ChainDcSwitchBank[2].IN_MesState1_IO           :=  bDcSwitchBank2[KK];	
+	AX_ESS[KK].AX_CB_ChainFanBank[1].IN_MesState1_IO                :=  bFanBank1[KK];		     
+	AX_ESS[KK].AX_CB_ChainFanBank[2].IN_MesState1_IO                :=  bFanBank2[KK];	   
+	AX_ESS[KK].IN_MesCouplerState_IO								:= iCouplerState[KK] ;
+	AX_ESS[KK].IN_CmdReset_IO										:= bCmdResetEss[KK] ; 	
+
+
+END_FOR
+
+	
+*)]]></ST>
+    </Implementation>
+    <Method Name="M_Init" Id="{83ee8368-5505-40a5-b6b9-7c7f16bee98e}">
+      <Declaration><![CDATA[METHOD M_Init : BOOL
+VAR
+	KK : BYTE;
+	
+	LL: UINT ; 
+	MM: INT;
+	JJ: INT;
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+// WS
+	MesTempExt	:= 16000 ; 
+	MesWindDir     := 16000 ; 
+	MesWindSpd     := 16000 ; 
+	MesHygroExt	:= 16000 ; 
+	MesPyra		:= 16000 ; 
+// 
+(*
+
+FOR KK:= 1 TO CstNbESS_G DO 
+	FOR LL:= 1 TO CstNbBank_Ess DO 
+		FOR MM := 1 TO AX_ESS[KK].AX_Bbms[LL].ParamNbRacks DO
+			FOR JJ := 1 TO AX_ESS[KK].AX_Bbms[LL].ParamNbRackString DO 
+				MEMCPY(destAddr := ADR(AX_ESS[KK].AX_Bbms[LL].Rea.MesDataExd.MesData.AX_Rack[KK].AX_RACKSTRING[JJ].MesSoC) , srcAddr := ADR(SoCInit) , n:= SIZEOF(SoCInit)) ; 
+			END_FOR
+		END_FOR
+	END_FOR
+END_FOR
+
+
+iCouplerStatePDL :=  8 ; 
+
+PDLChainBESSState1_IO := TRUE ;
+FOR KK := 1 TO CstNbEss DO
+	FOR LL := 1 TO 4 DO
+			 MesTemp[KK][LL] := 16000 ;		//32767 ma value 
+			MesHygr[KK][LL] := 16000;
+		
+	END_FOR
+	//MesIoESS_DI_1[KK][4].Value := GVL_EmulConfig.MesSpdState[KK];
+	
+	
+MesSpdState[KK]					:= FALSE ;			
+MesPcsDs[KK]					:= FALSE ;				
+MesBatDs[KK]					:= FALSE ;				
+MesToS[KK]						:= TRUE ;			
+Cb_Q31_Close[KK]				:= TRUE ;				
+Cb_Q31_Open[KK]					:= FALSE ;				
+MesPcs1Sd[KK]					:= FALSE ;			
+MesPcs2Sd[KK]					:= FALSE ;			
+MesEs[KK]						:= FALSE ;					
+Ds_Pcs[KK]						:= FALSE ;	
+Ds_Bat[KK]						:= FALSE ;	
+CmdReset_IO[KK]					:= FALSE ;	
+MesUpsAlarm[KK]	        		:= FALSE ;
+MesUpsDischarging[KK] 			:= FALSE ;			
+MesSup_10A_PLC[KK]				:= TRUE ;
+MesSupplyFlt_40A_RC[KK]			:= TRUE ;		
+bBatFireWarning[KK]				:= FALSE ;
+bBatFireFault[KK]        		:= FALSE ;
+bBatFireAlarm[KK]	    		:= FALSE ;
+bDcSwitchBank1[KK]	    		:= FALSE ; 
+bDcSwitchBank2[KK]      	 	:= FALSE ;
+bFanBank1[KK]		        	:= TRUE ;
+bFanBank2[KK]   				:= TRUE ;
+iCouplerState[KK]				:= 8 ;
+END_FOR
+		*)]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Inputs" Id="{4c3aeea5-158a-4c8f-a020-144406882f61}">
+      <Declaration><![CDATA[METHOD M_Inputs
+///////////
+// Intput interface between POUs and I/O Cards
+//////////////
+
+VAR 
+KK							: BYTE ; 					// For LOOP 
+MesCouplerStateSUB_MV			: ST_AI ; 
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+MesIO_SUBMV_EL1809_1[ 1].value  			:= A1_SUBMV.AX_FeederMVCB[1].IN_MesOpened_IO 	;	
+MesIO_SUBMV_EL1809_1[ 2].value        		:=   A1_SUBMV.AX_FeederMVCB[2].IN_MesOpened_IO	;
+MesIO_SUBMV_EL1809_1[ 3].value        	:=   A1_SUBMV.AX_FeederMVCB[3].IN_MesOpened_IO	;	
+MesIO_SUBMV_EL1809_1[ 4].value        		:=   A1_SUBMV.A1_MainMVCB.IN_MesOpened_IO		;
+MesIO_SUBMV_EL1809_1[ 5].value        		:=   A1_SUBMV.A1_MainMVCB.IN_MesTripped_IO		;
+MesIO_SUBMV_EL1809_1[ 6].value        		:=   A1_SUBMV.A1_MainMVCB.IN_MesEarth_IO  		;
+MesIO_SUBMV_EL1809_1[ 7].value        		:=   A1_SUBMV.A1_MainMVCB.IN_MesComutLocal_IO	;
+MesIO_SUBMV_EL1809_1[ 8].value        		:=   A1_SUBMV.A1_MainMVCB.IN_MesAlarmPwr_IO		;
+MesIO_SUBMV_EL1809_1[ 9].value        		:=   A1_SUBMV.AX_FeederMVCB[1].IN_MesTripped_IO	;
+MesIO_SUBMV_EL1809_1[ 10].value    			:=   A1_SUBMV.AX_FeederMVCB[2].IN_MesTripped_IO	;	
+MesIO_SUBMV_EL1809_1[ 11].value    		:=   A1_SUBMV.AX_FeederMVCB[3].IN_MesTripped_IO	;  
+MesIO_SUBMV_EL1809_1[ 12].value    			:=   A1_SUBMV.AX_FeederMVCB[1].IN_MesAlarmPwr_IO;  	
+MesIO_SUBMV_EL1809_1[ 13].value    			:=   A1_SUBMV.AX_FeederMVCB[2].IN_MesAlarmPwr_IO;  	
+MesIO_SUBMV_EL1809_1[ 14].value    		:=   A1_SUBMV.AX_FeederMVCB[3].IN_MesAlarmPwr_IO;  
+MesIO_SUBMV_EL1809_1[ 15].value    			:=   A1_SUBMV.AX_FeederMVCB[1].IN_MesEarth_IO	;  
+MesIO_SUBMV_EL1809_1[ 16].value    			:=   A1_SUBMV.AX_FeederMVCB[2].IN_MesEarth_IO	;  
+MesIO_SUBMV_EL1809_2[ 1].value     		:=   A1_SUBMV.AX_FeederMVCB[3].IN_MesEarth_IO	;  
+MesIO_SUBMV_EL1809_2[ 2].value     			:=   A1_SUBMV.AX_FeederMVCB[1].IN_MesComutLocal_IO;   
+MesIO_SUBMV_EL1809_2[ 3].value     			:=   A1_SUBMV.AX_FeederMVCB[2].IN_MesComutLocal_IO;   
+MesIO_SUBMV_EL1809_2[ 4].value    		:= A1_SUBMV.AX_FeederMVCB[3].IN_MesComutLocal_IO ;
+MesIO_SUBMV_EL1809_2[ 5].value       		:=   A1_SUBMV.A1_GridMVCB.IN_MesOpened_IO			 ;		
+MesIO_SUBMV_EL1809_2[ 6].value       		:=   A1_SUBMV.A1_MeasureMVCB.IN_MesOpened_IO		 ;		
+MesIO_SUBMV_EL1809_2[ 7].value       		:=   A1_SUBMV.A1_MeasureMVCB.IN_MesFuse_IO  		 ;		
+MesIO_SUBMV_EL1809_2[ 8].value       		:=   A1_SUBMV.A1_MeasureMVCB.IN_MesEarth_IO 		 ;		
+MesIO_SUBMV_EL1809_2[ 9].value       		:=   A1_SUBMV.A1_AuxMVCB.IN_MesOpened_IO			 ; 			
+MesIO_SUBMV_EL1809_2[ 10].value       		:=   A1_SUBMV.A1_AuxMVCB.IN_MesFuse_IO				 ;
+MesIO_SUBMV_EL1809_2[ 11].value       		:=   A1_SUBMV.A1_AuxMVCB.IN_MesEarth_IO				 ;
+MesIO_SUBMV_EL1809_2[ 12].value       		:=   A1_SUBMV.A1_ES_LV.IN_MesState1_IO				 ;
+MesIO_SUBMV_EL1809_2[ 13].value       		:=   A1_SUBMV.A1_ES_MV.IN_MesState1_IO				 ;
+MesIO_SUBMV_EL1809_2[ 14].value       		:=   A1_SUBMV.A1_SD_LV.IN_MesState1_IO				 ;
+MesIO_SUBMV_EL1809_2[ 15].value       		:=   A1_SUBMV.A1_SD_MV.IN_MesState1_IO				 ;
+MesIO_SUBMV_EL1809_2[ 16].value       		:=   A1_SUBMV.A1_Transfo_Aux.IN_MesAlarmsSynthesis_IO;
+MesIO_SUBMV_EL1809_3[ 1].value 				:= 	 A1_SUBMV.A1_MainMVCB.A1_Sect.IN_MesClosed_IO 	 ;    
+MesIO_SUBMV_EL1809_3[ 2].value       		:=   A1_SUBMV.A1_Transfo_Aux.IN_MesAlarmGas_IO		 ; 
+MesIO_SUBMV_EL1809_3[ 3].value       		:=   A1_SUBMV.A1_Transfo_Aux.IN_MesWarningTemp_IO	 ; 
+MesIO_SUBMV_EL1809_3[ 4].value       		:=   A1_SUBMV.A1_Transfo_Aux.IN_MesAlarmTemp_IO		 ; 
+MesIO_SUBMV_EL1809_3[ 5].value       		:=   A1_SUBMV.A1_UPS_24v.IN_MesDischarging_IO		 ; 
+MesIO_SUBMV_EL1809_3[ 6].value       		:=   A1_SUBMV.A1_UPS_24v.IN_MesFault_IO				 ; 
+MesIO_SUBMV_EL1809_3[ 7].value       		:=   A1_SUBMV.A1_UPS_24v.IN_MesBatLow_IO			 ; 
+MesIO_SUBMV_EL1809_3[ 8].value       		:=   A1_SUBMV.A1_ProtectRelay.IN_MesAlarmIMax_IO	 ; 
+MesIO_SUBMV_EL1809_14[ 6].value       		:=   A1_SUBMV.A1_ProtectRelay.IN_MesAlarmUmin_IO	 ; 
+MesIO_SUBMV_EL3024_5[ 1].value       		:=   A1_WS.Ax_Pyrano[1].IN_MesValue1_IO				 ; 
+MesIO_SUBMV_EL3024_5[ 2].value       		:=   A1_WS.Ax_Pyrano[2].IN_MesValue1_IO				 ; 
+MesIO_SUBMV_EL3024_5[ 3].value       		:=   A1_WS.A1_Temp_Ext.IN_MesValue1_IO				 ; 
+MesIO_SUBMV_EL3024_5[ 4].value       		:=   A1_WS.A1_Hygro_Ext.IN_MesValue1_IO				 ; 
+MesIO_SUBMV_EL3024_13[ 1].value       		:=   A1_WS.A1_WindDir.IN_MesValue1_IO				 ; 
+MesIO_SUBMV_EL3024_13[ 2].value       		:=   A1_WS.A1_WindSp.IN_MesValue1_IO				 ; 
+MesIO_PTR_1_EL3024_8[ 1].value       		:=   A1_WS.AX_Temp_Panel[1].IN_MesValue1_IO			 ; 
+MesIO_PTR_1_EL3024_8[ 2].value       		:=   A1_WS.AX_Temp_Panel[1].IN_MesValue2_IO			 ; 
+MesIO_PTR_1_EL3024_8[ 3].value       		:=   A1_WS.Ax_Pyrano[3].IN_MesValue1_IO				 ; 
+MesIO_PTR_1_EL1809_9[ 1].value       		:=   AX_PTR[1].A1_MainMVCB_PTR.IN_MesAlarmPwr_IO 	 ; 
+MesIO_PTR_1_EL1809_9[ 2].value       		:=   AX_PTR[1].A1_MainMVCB_PTR.IN_MesTripped_IO		 ; 
+MesIO_PTR_1_EL1809_9[ 3].value       		:=   AX_PTR[1].A1_MainMVCB_PTR.IN_MesComutLocal_IO	 ; 
+MesIO_PTR_1_EL1809_9[ 4].value       		:=   AX_PTR[1].A1_MainMVCB_PTR.IN_MesEarth_IO		 ; 
+MesIO_PTR_1_EL1809_9[ 5].value       		:=   AX_PTR[1].A1_SD_Transfo.IN_MesState1_IO		 ; 
+MesIO_PTR_1_EL1809_9[ 6].value       		:=   AX_PTR[1].A1_SD_INV.IN_MesState1_IO			 ; 
+MesIO_PTR_1_EL1809_9[ 7].value       		:=   AX_PTR[1].A1_DS_Transfo.IN_MesState1_IO		 ; 
+MesIO_PTR_1_EL1809_9[ 8].value       		:=   AX_PTR[1].A1_DS_INV.IN_MesState1_IO			 ; 
+MesIO_PTR_1_EL1809_9[ 9].value       		:=   AX_PTR[1].A1_Transfo.IN_MesAlarmsSynthesis_IO	 ; 
+MesIO_PTR_1_EL1809_9[ 11].value      		:=   AX_PTR[1].A1_Transfo.IN_MesAlarmGas_IO			 ;
+MesIO_PTR_1_EL1809_9[ 12].value      		:=   AX_PTR[1].A1_Transfo.IN_MesWarningTemp_IO		 ;
+MesIO_PTR_1_EL1809_9[ 13].value      		:=   AX_PTR[1].A1_Transfo.IN_MesAlarmTemp_IO		 ;
+MesIO_PTR_1_EL1809_9[ 14].value      		:=   AX_PTR[1].A1_MainCBAux.IN_MesState1_IO			 ;
+MesIO_PTR_2_EL3024_8[ 1].value       		:=   A1_WS.AX_Temp_Panel[2].IN_MesValue1_IO			 ; 
+MesIO_PTR_2_EL3024_8[ 2].value       		:=   A1_WS.AX_Temp_Panel[2].IN_MesValue2_IO			 ; 
+MesIO_PTR_2_EL3024_8[ 3].value       		:=   A1_WS.Ax_Pyrano[4].IN_MesValue1_IO				 ; 
+MesIO_PTR_2_EL1809_9[ 1].value       		:=   AX_PTR[2].A1_MainMVCB_PTR.IN_MesAlarmPwr_IO	 ;  
+MesIO_PTR_2_EL1809_9[ 2].value       		:=   AX_PTR[2].A1_MainMVCB_PTR.IN_MesTripped_IO 	 ; 
+MesIO_PTR_2_EL1809_9[ 3].value       		:=   AX_PTR[2].A1_MainMVCB_PTR.IN_MesComutLocal_IO	 ; 
+MesIO_PTR_2_EL1809_9[ 4].value       		:=   AX_PTR[2].A1_MainMVCB_PTR.IN_MesEarth_IO		 ; 
+MesIO_PTR_2_EL1809_9[ 5].value       		:=   AX_PTR[2].A1_SD_Transfo.IN_MesState1_IO 		 ; 
+MesIO_PTR_2_EL1809_9[ 6].value       		:=   AX_PTR[2].A1_SD_INV.IN_MesState1_IO			 ; 
+MesIO_PTR_2_EL1809_9[ 7].value       		:=   AX_PTR[2].A1_DS_Transfo.IN_MesState1_IO		 ; 
+MesIO_PTR_2_EL1809_9[ 8].value       		:=   AX_PTR[2].A1_DS_INV.IN_MesState1_IO			 ; 
+MesIO_PTR_2_EL1809_9[ 9].value       		:=   AX_PTR[2].A1_Transfo.IN_MesAlarmsSynthesis_IO	 ; 
+MesIO_PTR_2_EL1809_9[ 11].value      		:=   AX_PTR[2].A1_Transfo.IN_MesAlarmGas_IO			 ; 
+MesIO_PTR_2_EL1809_9[ 12].value      		:=   AX_PTR[2].A1_Transfo.IN_MesWarningTemp_IO		 ; 
+MesIO_PTR_2_EL1809_9[ 13].value      		:=   AX_PTR[2].A1_Transfo.IN_MesAlarmTemp_IO		 ; 
+MesIO_PTR_2_EL1809_9[ 14].value      		:=   AX_PTR[2].A1_MainCBAux.IN_MesState1_IO 		 ; 
+MesIO_PTR_3_EL3024_8[ 1].value       		:=   A1_WS.AX_Temp_Panel[3].IN_MesValue1_IO 		 ; 
+MesIO_PTR_3_EL3024_8[ 2].value       		:=   A1_WS.AX_Temp_Panel[3].IN_MesValue2_IO 		 ; 
+MesIO_PTR_3_EL3024_8[ 3].value       		:=   A1_WS.Ax_Pyrano[5].IN_MesValue1_IO				 ; 
+MesIO_PTR_3_EL1809_9[ 1].value       		:=   AX_PTR[3].A1_MainMVCB_PTR.IN_MesAlarmPwr_IO	 ; 
+MesIO_PTR_3_EL1809_9[ 2].value       		:=   AX_PTR[3].A1_MainMVCB_PTR.IN_MesTripped_IO		 ; 
+MesIO_PTR_3_EL1809_9[ 3].value       		:=   AX_PTR[3].A1_MainMVCB_PTR.IN_MesComutLocal_IO	 ; 
+MesIO_PTR_3_EL1809_9[ 4].value       		:=   AX_PTR[3].A1_MainMVCB_PTR.IN_MesEarth_IO		 ; 
+MesIO_PTR_3_EL1809_9[ 5].value       		:=   AX_PTR[3].A1_SD_Transfo.IN_MesState1_IO		 ; 
+MesIO_PTR_3_EL1809_9[ 6].value       		:=   AX_PTR[3].A1_SD_INV.IN_MesState1_IO			 ; 
+MesIO_PTR_3_EL1809_9[ 7].value       		:=   AX_PTR[3].A1_DS_Transfo.IN_MesState1_IO		 ; 
+MesIO_PTR_3_EL1809_9[ 8].value       		:=   AX_PTR[3].A1_DS_INV.IN_MesState1_IO			 ; 
+MesIO_PTR_3_EL1809_9[ 9].value       		:=   AX_PTR[3].A1_Transfo.IN_MesAlarmsSynthesis_IO	 ; 
+MesIO_PTR_3_EL1809_9[ 11].value       		:=   AX_PTR[3].A1_Transfo.IN_MesAlarmGas_IO			 ;
+MesIO_PTR_3_EL1809_9[ 12].value       		:=   AX_PTR[3].A1_Transfo.IN_MesWarningTemp_IO		 ;
+MesIO_PTR_3_EL1809_9[ 13].value       		:=   AX_PTR[3].A1_Transfo.IN_MesAlarmTemp_IO		 ;
+MesIO_PTR_3_EL1809_9[ 14].value       		:=   AX_PTR[3].A1_MainCBAux.IN_MesState1_IO			 ;
+
+MesIO_SUBMV_EL1809_3[ 9].value				:= 	A1_SUBMV.A1_GRID.IN_CmdAutCpl_IO			 	  	; 
+MesIO_SUBMV_EL1809_3[ 10].value 			:= 	A1_SUBMV.A1_GRID.IN_CmdDisconnect_End_IO		  	; 
+MesIO_SUBMV_EL1809_3[ 11].value 			:= 	A1_SUBMV.A1_GRID.IN_CmdDisconnect_IO			  	; 
+MesIO_SUBMV_EL1809_3[ 12].value 			:= 	A1_SUBMV.A1_GRID.IN_CmdRSEOn_IO					  	; 
+MesIO_SUBMV_EL1809_3[ 13].value 			:= 	A1_SUBMV.A1_GRID.IN_CmdRSEOff_IO				  	; 
+MesIO_SUBMV_EL1809_3[ 14].value 			:= 	A1_SUBMV.A1_GRID.IN_CmdTAOn_IO 					  	; 
+MesIO_SUBMV_EL1809_3[ 15].value 			:= 	A1_SUBMV.A1_GRID.IN_CmdTAOff_IO					  	; 
+MesIO_SUBMV_EL1809_3[ 16].value 			:= 	A1_SUBMV.A1_GRID.IN_CmdStopPReg_IO 				  	; 
+
+MesIO_SUBMV_EL1809_14[ 1].value 			:= 	A1_SUBMV.A1_GRID.IN_CmdStartPReg_IO				  	; 
+MesIO_SUBMV_EL1809_14[ 2].value 			:= 	A1_SUBMV.A1_GRID.IN_CmdStopQReg_IO 				  	; 
+MesIO_SUBMV_EL1809_14[ 3].value 			:= 	A1_SUBMV.A1_GRID.IN_CmdStartQReg_IO				  	; 
+MesIO_SUBMV_EL1809_14[ 4].value 			:= 	A1_SUBMV.A1_GRID.IN_CmdEmergencyDisconnect_End_IO	; 
+MesIO_SUBMV_EL1809_14[ 5].value 			:= 	A1_SUBMV.A1_GRID.IN_CmdEmergencyDisconnect_IO	  	; 
+
+MesIO_SUBMV_EL3024_12[ 1].value             :=  A1_SUBMV.A1_GRID.IN_MesP0Reg_IO; 
+MesIO_SUBMV_EL3024_12[ 2].value 			:=  A1_SUBMV.A1_GRID.IN_MesQ0Reg_IO; 
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Outputs" Id="{e8233ee1-d045-4c20-8504-7a05efef41fe}">
+      <Declaration><![CDATA[METHOD M_Outputs : BOOL
+///////////
+// Intput interface between POUs and I/O Cards
+//////////////
+VAR
+	KK	: BYTE;
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+MEMCPY( destAddr  :=  ADR(A1_SUBMV.A1_MainMVCB.OUT_CmdOpen_IO  )		, SrcAddr :=  ADR(MesIO_SUBMV_EL2809_4[ 1].value ), n:= SIZEOF(MesIO_SUBMV_EL2809_4[ 1].value ) ) ; 				
+MEMCPY( destAddr  :=  ADR(A1_SUBMV.A1_MainMVCB.OUT_CmdClose_IO )		, SrcAddr :=  ADR(MesIO_SUBMV_EL2809_4[ 2].value ), n:= SIZEOF(MesIO_SUBMV_EL2809_4[ 2].value ) ) ; 				
+MEMCPY( destAddr  :=  ADR(A1_SUBMV.AX_FeederMVCB[1].OUT_CmdClose_IO )	, SrcAddr :=  ADR(MesIO_SUBMV_EL2809_4[ 3].value ), n:= SIZEOF(MesIO_SUBMV_EL2809_4[ 3].value ) ) ; 				
+MEMCPY( destAddr  :=  ADR(A1_SUBMV.AX_FeederMVCB[2].OUT_CmdClose_IO )	, SrcAddr :=  ADR(MesIO_SUBMV_EL2809_4[ 4].value ), n:= SIZEOF(MesIO_SUBMV_EL2809_4[ 4].value ) ) ; 				
+//MEMCPY( destAddr  :=  ADR(A1_SUBMV.AX_FeederMVCB[3].OUT_CmdClose_IO )	, SrcAddr :=  ADR(MesIO_SUBMV_EL2809_4[ 5].value ), n:= SIZEOF(MesIO_SUBMV_EL2809_4[ 5].value ) ) ; 				
+MEMCPY( destAddr  :=  ADR(A1_SUBMV.AX_FeederMVCB[1].OUT_CmdOpen_IO )	, SrcAddr :=  ADR(MesIO_SUBMV_EL2809_4[ 6].value ), n:= SIZEOF(MesIO_SUBMV_EL2809_4[ 6].value ) ) ; 				
+MEMCPY( destAddr  :=  ADR(A1_SUBMV.AX_FeederMVCB[2].OUT_CmdOpen_IO )	, SrcAddr :=  ADR(MesIO_SUBMV_EL2809_4[ 7].value ), n:= SIZEOF(MesIO_SUBMV_EL2809_4[ 7].value ) ) ; 				
+//MEMCPY( destAddr  :=  ADR(A1_SUBMV.AX_FeederMVCB[3].OUT_CmdOpen_IO )	, SrcAddr :=  ADR(MesIO_SUBMV_EL2809_4[ 8].value ), n:= SIZEOF(MesIO_SUBMV_EL2809_4[ 8].value ) ) ; 				
+MEMCPY( destAddr  :=  ADR(AX_PTR[1].A1_MainMVCB_PTR.OUT_CmdOpen_IO )	, SrcAddr :=  ADR(MesIO_PTR_1_EL2809_10[ 1].value), n:= SIZEOF(MesIO_PTR_1_EL2809_10[ 1].value) ) ; 				
+MEMCPY( destAddr  :=  ADR(AX_PTR[1].A1_MainMVCB_PTR.OUT_CmdClose_IO )	, SrcAddr :=  ADR(MesIO_PTR_1_EL2809_10[ 2].value), n:= SIZEOF(MesIO_PTR_1_EL2809_10[ 2].value) ) ; 				
+MEMCPY( destAddr  :=  ADR(AX_PTR[2].A1_MainMVCB_PTR.OUT_CmdOpen_IO )	, SrcAddr :=  ADR(MesIO_PTR_2_EL2809_10[ 1].value), n:= SIZEOF(MesIO_PTR_2_EL2809_10[ 1].value) ) ; 				
+MEMCPY( destAddr  :=  ADR(AX_PTR[2].A1_MainMVCB_PTR.OUT_CmdClose_IO )	, SrcAddr :=  ADR(MesIO_PTR_2_EL2809_10[ 2].value), n:= SIZEOF(MesIO_PTR_2_EL2809_10[ 2].value) ) ; 				
+MEMCPY( destAddr  :=  ADR(AX_PTR[3].A1_MainMVCB_PTR.OUT_CmdOpen_IO )	, SrcAddr :=  ADR(MesIO_PTR_3_EL2809_10[ 1].value), n:= SIZEOF(MesIO_PTR_3_EL2809_10[ 1].value) ) ; 				
+MEMCPY( destAddr  :=  ADR(AX_PTR[3].A1_MainMVCB_PTR.OUT_CmdClose_IO )	, SrcAddr :=  ADR(MesIO_PTR_3_EL2809_10[ 2].value), n:= SIZEOF(MesIO_PTR_3_EL2809_10[ 2].value) ) ; 				
+
+
+// Use NOT instead of X_end variable for Grid Disconnect/EmergencyDisconnect, example: 
+//MesIO_SUBMV_EL2624_8[ 1].value 	:= NOT A1_SUBMV.A1_GRID.OUT_MesEmergencyDisconnect_IO AND NOT IN_CmdInhibOutput_OPC; ]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="PRG_IO">
+      <LineId Id="784" Count="38" />
+      <LineId Id="826" Count="81" />
+    </LineIds>
+    <LineIds Name="PRG_IO.M_Init">
+      <LineId Id="6" Count="3" />
+      <LineId Id="71" Count="0" />
+      <LineId Id="10" Count="52" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="PRG_IO.M_Inputs">
+      <LineId Id="148" Count="32" />
+      <LineId Id="258" Count="0" />
+      <LineId Id="181" Count="70" />
+      <LineId Id="278" Count="0" />
+      <LineId Id="252" Count="3" />
+      <LineId Id="32" Count="0" />
+      <LineId Id="257" Count="0" />
+      <LineId Id="256" Count="0" />
+      <LineId Id="267" Count="0" />
+      <LineId Id="277" Count="0" />
+      <LineId Id="276" Count="0" />
+    </LineIds>
+    <LineIds Name="PRG_IO.M_Outputs">
+      <LineId Id="10" Count="14" />
+      <LineId Id="32" Count="0" />
+      <LineId Id="34" Count="0" />
+      <LineId Id="43" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

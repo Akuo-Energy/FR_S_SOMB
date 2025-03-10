@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="ST_IEC104AkuoParam" Id="{f6598040-8d3c-4c77-977c-1821b3743298}">
+    <Declaration><![CDATA[TYPE ST_IEC104AkuoParam :
+STRUCT
+	bEnableFlicker 	: BOOL :=  TRUE ;
+	tFlickerWindow	: TIME := T#10S ; 
+	uFlickerNumber	: UINT := 7  ; 
+
+	iLocalPort 		: UDINT := 2404;						// locl port
+	sLocalHost		: STRING := '127.0.0.1'; 			// server IP address. 
+	iAOnb			: INT ;								// Number of AO being treated ( <GVL_Cst.CstNbAOEntries)
+ 
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

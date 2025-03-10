@@ -1,0 +1,68 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_TOR_Base" Id="{3ce2a5ce-e585-4eda-a34b-dd3da59d6a3d}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_TOR_Base
+//////////////////
+//  Digital SensOR  Base FB . 
+//////////////////
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance/model specific) 
+	ParamNbSensors			: INT 		:=1			; // (NA) Config : Number of sensors, If =9 Then sensor is bi-stable contactOR 
+	ParamAtleastOne			: BOOL 		:= TRUE ;  // If TRUE, the output is true if at leat one of the sensor is active. Otherwise , the output is true only if both are active
+	ParamCableCutSecurity	: BOOL		:=FALSE;	// FALSE = ALARM ; 
+	
+	CalCountAlarm			: UDINT 	:=0 ; // Count number of times the alarm has been triggered.
+	
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	
+END_VAR
+
+VAR_INPUT
+	// I/O Inputs 		                                     				
+		IN_MesState1_IO 					: BOOL;	 				// (NA) First  Smoke detector IO, IF bi-stable NC
+		IN_MesState2_IO					: BOOL ; 				// (NA) Second Smoke detector IO, IF Bi-stable NO
+		IN_CmdReset_L					: BOOL;				// LOCAL Reset Value For Alarms
+		IN_ResetCounter 				: BOOL ; 			// Reset counter . 
+END_VAR
+
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//
+
+	//STATE MANAGEMENT //
+//	MesDataExd				: TOR ; 	
+		R_TRIGAlarm					: R_TRIG  ; 
+
+	// EMULATOR 
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_Execute" Id="{faf2eab7-a952-412e-a502-306978e99f08}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_TOR_Base">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_TOR_Base.M_Execute">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

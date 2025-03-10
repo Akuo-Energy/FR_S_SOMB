@@ -1,0 +1,303 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_Write_CSV" Id="{98bac0c9-84d2-4f97-92ac-8fc312b9123a}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Write_CSV
+VAR_INPUT
+	InDirectory 		: T_MaxString;
+	AX_StructureValues	: ARRAY[1..500] OF ST_ValuesWrite;
+	
+	ParamNbColumns		: UINT := 200; 				(* (NA) Number of columns of the file*)
+	ParamSeparateur		: STRING := ';';			(* (NA) Separator*)
+	ParamDec			: STRING := ',';			(* (NA) ParamDec*)
+	ParamExtension		: T_MaxString := '.csv'; 	(* (NA) csv extension *)
+	
+	
+	MesData		: LoggerCSV;
+	
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	
+    CompressFile        : FB_CompressFile;
+
+
+	bWriteAlarm			: BOOL;						// Writing CSV File failed 
+	TON_WritealarmFile	: TON;	
+	// Data processing 
+	format_string		: FB_FormatString;
+	AX_AverageFunctions	: ARRAY[1..1000] OF FB_Average;
+	AX_AverageValues	: ARRAY[1..1000] OF REAL;
+	LenStringToWrite	: INT;
+	
+	GetHostName			: FB_GetHostName;
+	CalFileName			: STRING;
+	CalFileName_Old		: STRING;
+	CalDate				: STRING;
+	CalDate_Old			: STRING;
+	
+	//Test existence file 
+
+	bFileOK				: BOOL := TRUE ;
+	bDirChange			: BOOL;
+	FindFile 			: FB_EnumFindFileEntry ;
+	FileInfo			: ST_FindFileEntry;
+	
+	//Initial File creation 
+	InitLine			: T_MaxString;
+	LastInitLine		: T_MaxString;
+	WelcomeMessage 		: T_MaxString := 'Daily rawdata file';
+	ForDay				: T_MaxString := 'for day : ';
+	ForPlant	 		: T_MaxString := 'for plant : ';
+	NewLineVar			: T_MaxString := '$N';
+	TimeStampVar		: T_MaxString := 'TimeStamp';
+	len_to_write		: INT;
+	len_to_add			: INT;
+	
+	WriteFileInit		: FB_WriteFile;
+	WriteFile			: FB_WriteFile;
+	MessageInitial		: ARRAY[1..100] OF T_Maxstring;
+	MessageInitialNull	: ARRAY[1..100] OF T_Maxstring;
+	bInitWrite			: BOOL;
+	bInitWriting		: BOOL;
+	
+	// Write File
+	LineToWrite			: ARRAY [1..100] OF  T_Maxstring;
+	LineToWrite_Null	: ARRAY [1..100] OF  T_Maxstring;
+	ValueToWrite		: T_MaxString;
+	TriggerSampling		: R_TRIG;
+	
+	// General variables
+	KK: UINT;
+	bInit : BOOL;
+	MesTimeStamp : STRING(19);
+	
+
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[M_AlarmManager();
+M_DataProcessing ();
+
+IF NOT bInit THEN
+	GetHostName(bExecute := FALSE);
+	GetHostName(bExecute := TRUE);
+	bInit := TRUE;
+END_IF
+
+format_string(
+	sFormat := 'RAWDATA_%0.2d-%0.2d-%0.2d%s', 
+	arg1 := F_WORD(in:=CalLocalTimeStruct.wYear),	arg2 := F_WORD(in:=CalLocalTimeStruct.wMonth),	arg3 := F_WORD(in:=CalLocalTimeStruct.wDay),
+	arg4 := F_STRING(in:=ParamExtension),
+	sOut => CalFileName
+);
+
+format_string(
+	sFormat := '%0.2d-%0.2d-%0.2d', 
+	arg1 := F_WORD(in:=CalLocalTimeStruct.wYear),	arg2 := F_WORD(in:=CalLocalTimeStruct.wMonth),	arg3 := F_WORD(in:=CalLocalTimeStruct.wDay),
+	sOut => CalDate
+);
+
+format_string(
+	sFormat := '%0.2d-%0.2d-%0.2d %0.2d:%0.2d:%0.2d', 
+	arg1 := F_WORD(in:=CalLocalTimeStruct.wYear),	arg2 := F_WORD(in:=CalLocalTimeStruct.wMonth),	arg3 := F_WORD(in:=CalLocalTimeStruct.wDay),
+	arg4 := F_WORD(in:=CalLocalTimeStruct.wHour),	arg5 := F_WORD(in:=CalLocalTimeStruct.wMinute),	arg6 := F_WORD(in:=CalLocalTimeStruct.wSecond),
+	sOut => MesTimeStamp
+);
+
+InitLine := concat(str1:=WelcomeMessage, STR2:= concat(str1:=
+	ParamSeparateur, str2:=concat(STR1:=ForDay, STR2:=concat(str1:= ParamSeparateur, STR2:= concat(str1:= 
+	CalDate,str2:=concat(str1:= ParamSeparateur, str2 := CONCAT(str1:=
+	ForPlant,str2:=Concat(str1:=ParamSeparateur, str2:= CONCAT(str1:= GetHostName.sHostName, str2:=ParamSeparateur)
+))))))));
+
+IF InitLine <> LastInitLine OR InitLine = '' OR (NOT FindFile.bError AND NOT bFileOK) THEN
+	LastInitLine := InitLine;
+	bInitWriting := TRUE;
+END_IF
+	
+IF FUN_CreateDir_CSV.bDirOK THEN
+	FindFile
+	(
+		sNetId := '',
+		sPathName := concat(FUN_CreateDir_CSV.AX_DirNames[2],CalFileName),
+		eCmd := eEnumCmd_First,
+		bExecute := TRUE,
+		tTimeout := T#3S,
+		stFindFile => FileInfo
+	);
+	
+MesData.TimeCreation 	:= FILETIME_TO_SYSTEMTIME(filetime := FileInfo.creationTime);
+MesData.TimeModif	 	:= FILETIME_TO_SYSTEMTIME(filetime := FileInfo.lastWriteTime);
+MesData.FileSize  		:= ULARGE_TO_ULINT(in := FileInfo.fileSize);	
+	
+	IF NOT FindFile.bBusy THEN
+		FindFile(bExecute := FALSE);
+		bFileOK := MesData.FileSize > 0 ; 
+	END_IF
+	
+	IF FindFile.bError OR  NOT bFileOK THEN
+		FUN_CreateDir_CSV(InDirectory := ParamDirBaseStore, RESET2 := TRUE);
+	END_IF
+	
+	IF NOT FindFile.bBusy AND NOT bFileOK AND bInitWriting THEN
+		// je réinitialise les longueurs
+		len_to_write := 0;
+		MessageInitial := MessageInitialNull;
+		MEMCPY(destAddr := ADR(MessageInitial)+len_to_write, srcAddr := ADR(InitLine), n := len(InitLine));
+		len_to_add := len(InitLine);			len_to_write := len_to_write + len_to_add;
+		
+		MEMCPY(destAddr := ADR(MessageInitial)+len_to_write, srcAddr := ADR(NewLineVar), n := len(NewLineVar));
+		len_to_add := len(NewLineVar);			len_to_write := len_to_write + len_to_add;
+		
+		MEMCPY(destAddr := ADR(MessageInitial)+len_to_write, srcAddr := ADR(TimeStampVar), n := len(TimeStampVar));
+		len_to_add := len(TimeStampVar);		len_to_write := len_to_write + len_to_add;
+		
+		MEMCPY(destAddr := ADR(MessageInitial)+len_to_write, srcAddr := ADR(ParamSeparateur), n := len(ParamSeparateur));
+		len_to_add := len(ParamSeparateur);		len_to_write := len_to_write + len_to_add;
+		
+		FOR KK := 1 TO ParamNbColumns DO
+			MEMCPY(destAddr := ADR(MessageInitial)+len_to_write, srcAddr := ADR(AX_StructureValues[KK].Description), n := len(AX_StructureValues[KK].Description));
+			len_to_add := len(AX_StructureValues[KK].Description);			len_to_write := len_to_write + len_to_add;
+			
+			MEMCPY(destAddr := ADR(MessageInitial)+len_to_write, srcAddr := ADR(ParamSeparateur), n := len(ParamSeparateur));
+			len_to_add := len(ParamSeparateur);								len_to_write := len_to_write + len_to_add;
+		END_FOR
+		
+		MEMCPY(destAddr := ADR(MessageInitial)+len_to_write, srcAddr := ADR(NewLineVar), n := len(NewLineVar));
+		len_to_add := len(NewLineVar);			len_to_write := len_to_write + len_to_add;
+		
+		WriteFileInit
+		(
+			InStart := TRUE,
+			InDirFile := concat(FUN_CreateDir_CSV.AX_DirNames[2], CalFileName),
+			InAmsId := '', 
+			InPMessage := ADR(MessageInitial),
+			InLMessage := len_to_write
+		);
+		
+		IF WriteFileInit.OutCompleted OR bFileOK THEN
+			WriteFileInit(InStart := FALSE);
+		END_IF
+	END_IF
+	
+	
+	// Write file on SampleRate
+	
+	TriggerSampling(clk := CalLocalTimeStruct.wSecond = 10);
+
+	IF bFileOK AND MesData.FileSize < 100000000  THEN
+		bInitWriting := FALSE;
+		len_to_write := 0;
+		LineToWrite := LineToWrite_Null;
+		MEMCPY(destAddr := ADR(LineToWrite)+len_to_write, srcAddr := ADR(MesTimeStamp), n := len(MesTimeStamp));
+		len_to_add := len(MesTimeStamp);		len_to_write := len_to_write + len_to_add;
+		
+		MEMCPY(destAddr := ADR(LineToWrite)+len_to_write, srcAddr := ADR(ParamSeparateur), n := len(ParamSeparateur));
+		len_to_add := len(ParamSeparateur);		len_to_write := len_to_write + len_to_add;
+		
+		FOR KK := 1 TO ParamNbColumns DO
+			ReplaceAll(IN_StringToSearch := REAL_TO_STRING(AX_AverageValues[KK]), IN_StringToFind := '.', IN_StringToReplace := ParamDec, OUT_StringToSearch => ValueToWrite);
+			//ValueToWrite := REAL_TO_STRING(AX_AverageValues[KK]);
+			MEMCPY(destAddr := ADR(LineToWrite)+len_to_write, srcAddr := ADR(ValueToWrite), n := len(ValueToWrite));
+			len_to_add := len(ValueToWrite);	len_to_write := len_to_write + len_to_add;
+			
+			MEMCPY(destAddr := ADR(LineToWrite)+len_to_write, srcAddr := ADR(ParamSeparateur), n := len(ParamSeparateur));
+			len_to_add := len(ParamSeparateur);	len_to_write := len_to_write + len_to_add;
+		END_FOR
+		MEMCPY(destAddr := ADR(LineToWrite)+len_to_write, srcAddr := ADR(NewLineVar), n := len(NewLineVar));
+		len_to_add := len(NewLineVar);			len_to_write := len_to_write + len_to_add;
+		
+		WriteFile
+		(
+			InStart := TriggerSampling.Q,
+			InDirFile := concat(FUN_CreateDir_CSV.AX_DirNames[2], CalFileName),
+			InAmsId := '', 
+			InpMessage := ADR(LineToWrite),
+			InLMessage := len_to_write
+		);
+		
+		IF NOT WriteFile.OutBusy AND NOT WriteFile.OutError AND WriteFile.OutCompleted THEN
+			// File has been writen successfully
+			bWriteAlarm	:= FALSE ;
+		ELSIF WriteFile.OutError THEN 
+			// In case of writing error, try again to write the alarm. 
+			bWriteAlarm	:= TRUE ;
+		
+		END_IF		
+		
+	END_IF
+
+END_IF
+
+CompressFile(IN_Directory := InDirectory);]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManager" Id="{3bdb122b-ed44-4356-a76f-97ba11a33fc8}">
+      <Declaration><![CDATA[METHOD M_AlarmManager
+VAR
+
+	FB_AlarmCodeManager			: FB_AlarmCodeManager ;
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[TON_WritealarmFile(IN:= NOT bFileOK  , PT:= T#10S  ) ;
+
+// ALARM CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= bWriteAlarm	  ,				// Write CSV Alarm
+		bAlarm2			:= FALSE   ,					// 
+		bAlarm3			:= TON_WritealarmFile.Q   ,		// Can not create CSV Alarm file 
+		bAlarm4			:= FALSE	 ,					//
+		bAlarm5			:= FALSE	,					// 
+		bAlarm6			:= FALSE,									//
+		bAlarm7			:= FALSE,                                   //
+		bAlarm8			:= FALSE,                                   //
+		bAlarm9			:= FALSE,                                   //
+		bAlarm10		:= FALSE,                                   //
+		bAlarm11		:= FALSE,									//
+		bAlarm12		:= FALSE,                                   //
+		bAlarm13		:= FALSE,                                   //
+		bAlarm14		:= FALSE,                                   //
+		bAlarm15		:= FALSE,                                   //
+		wAlarmCode		=>MesData.MesAlarmCode);]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_DataProcessing" Id="{07da492b-089c-4369-b2a8-c8535e015a72}">
+      <Declaration><![CDATA[METHOD M_DataProcessing : BOOL
+VAR
+		
+	KK : UINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[FOR KK := 1 TO ParamNbColumns DO 
+	IF AX_StructureValues[KK].Address <> 0 THEN 	
+		AX_AverageFunctions[KK](ValueIn := AX_StructureValues[KK].Address^, WindowDuration := AX_StructureValues[KK].Sampling, CycleTime := CstCycleTime_Annex, ValueOut=> AX_AverageValues[KK]);	
+	ELSIF AX_StructureValues[KK].AddressLR <> 0 THEN 	
+		AX_AverageFunctions[KK](ValueIn := AX_StructureValues[KK].AddressLR^, WindowDuration := AX_StructureValues[KK].Sampling, CycleTime := CstCycleTime_Annex, ValueOut=> AX_AverageValues[KK]);	
+	ELSIF AX_StructureValues[KK].AddressUL <> 0 THEN 	
+		AX_AverageFunctions[KK](ValueIn := AX_StructureValues[KK].AddressUL^, WindowDuration := AX_StructureValues[KK].Sampling, CycleTime := CstCycleTime_Annex, ValueOut=> AX_AverageValues[KK]);	
+	ELSIF AX_StructureValues[KK].AddressUI <> 0 THEN
+		AX_AverageFunctions[KK](ValueIn := AX_StructureValues[KK].AddressUI^, WindowDuration := AX_StructureValues[KK].Sampling, CycleTime := CstCycleTime_Annex, ValueOut=> AX_AverageValues[KK]);			
+	ELSE
+		AX_AverageValues[KK] := 0;
+	END_IF
+END_FOR]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_Write_CSV">
+      <LineId Id="3904" Count="153" />
+      <LineId Id="10" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Write_CSV.M_AlarmManager">
+      <LineId Id="4" Count="18" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Write_CSV.M_DataProcessing">
+      <LineId Id="29" Count="11" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

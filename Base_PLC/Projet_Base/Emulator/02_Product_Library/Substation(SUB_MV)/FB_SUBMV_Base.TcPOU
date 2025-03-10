@@ -1,0 +1,141 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_SUBMV_Base" Id="{dd38f053-28f8-4df7-865d-82970423efcf}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_SUBMV_Base 
+// SUB_MV Base Code . 
+//////////////////
+VAR CONSTANT
+	// Characteristics of the object (Same for all instances)
+
+
+END_VAR
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance specific)  
+	ParamSUB_MVVersion				: STRING:='SUB_MV' 	;				// (NA) SUB_MV Version
+	ParamTimeOutConnect			: TIME 	:=T#60S	;				//(s) Tempo for connecting before Timeout warning	 
+	ParamTimeOutDisconnect		: TIME 	:=T#30S	;				//(s) Tempo for disconnecting before Timeout warning	
+	ParamTempoComAlarm			: TIME 	:=T#5S		;			// (s) Config : Tempo to detect LOC Alarm					
+	ParamPmax					: REAL 		;					// (kW) Config :Maximal Power connexion.
+	ParamPmin					: REAL 		;					// (kW) Config :Maximal Power connexion.	
+	
+	
+	
+	//M_INIT VARIABLES // = Factory reset 	
+		bInit						: BOOL := TRUE ; // (NA) Initialize object parameters at first cycle 	
+	
+END_VAR
+
+VAR_INPUT 
+	
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+
+END_VAR
+
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//
+	
+	
+	//MesDataExd				: SUBMV ;						// (NA) [P,H,B] SUB_MV concept Data structure
+		
+		KK							: BYTE ; 					// (NA) Loop over child objects 
+		
+	
+END_VAR			
+ ]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_EquipmentCalls" Id="{37c7bfed-582e-4b14-935b-2d092adeb4d8}">
+      <Declaration><![CDATA[METHOD M_EquipmentCalls
+//////////////////
+// Equipement Calls 
+//////////////////
+
+VAR
+	// Method local variables (reinitialized at each cycle) 
+
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Evaluate" Id="{dea05fc9-1dbe-4e2a-a778-b94298819464}">
+      <Declaration><![CDATA[METHOD M_Evaluate
+//////////////////
+// Evaluate SUB_MV Data 
+//////////////////
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{a1f04181-3243-4e53-9391-a2a1da43e036}">
+      <Declaration><![CDATA[METHOD M_Execute
+/////////////////////
+// Action Calls and Object Calls
+/////////////////////
+VAR
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+// INITIALIZE // 
+	IF bInit THEN
+		M_Init() ; 
+		bInit:= FALSE ; 
+		
+	ELSIF CmdInit_G  THEN 
+		bInit:= TRUE ;
+		
+	END_IF
+
+// OBJECT CALLS //
+	M_EquipmentCalls() ; 
+
+// METHODS CALLS //
+
+	M_Evaluate();
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{834f5efb-5fbc-472a-80ca-9232ddd852c0}">
+      <Declaration><![CDATA[METHOD M_Init
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_SUBMV_Base">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SUBMV_Base.M_EquipmentCalls">
+      <LineId Id="49" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SUBMV_Base.M_Evaluate">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SUBMV_Base.M_Execute">
+      <LineId Id="160" Count="15" />
+      <LineId Id="177" Count="1" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SUBMV_Base.M_Init">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

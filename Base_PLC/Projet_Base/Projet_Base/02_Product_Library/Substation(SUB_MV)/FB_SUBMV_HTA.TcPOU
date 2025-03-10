@@ -1,0 +1,1041 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_SUBMV_HTA" Id="{d1105bec-0b3d-4678-8aa2-895e6860ac51}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_SUBMV_HTA EXTENDS FB_SUBMV_Base
+//////////////////
+// MV Substation
+//////////////////
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance specific)  
+		ParamTempoPoste						: TIME := T#1S; 		(*(s) Temps entre fermeture depart de chaque poste*)
+		ParamTempoUnknowFault				: TIME := T#15S;		(*(s) Temps max pour que la MainMVCB reste ouverte avec Aucun défaut et une autorisation de couplage ==> aboutit a une perte d'autorisation*)
+		ParamTempoSepamCloseAfterGte		: TIME := T#15S; 		(*(s)Param renseigné dans le Code du sepam + 10 ms *)
+		ParamAutoCloseMainMVCBEnabled		: BOOL := TRUE ; 		(* (NA) Enable Automatic closing of the HV coupling Cell without Couplig Authorizatioon  *)
+END_VAR
+
+VAR_INPUT 
+	// I/O Inputs 
+		IN_MesCouplerState_IO				: UINT ; 											    // Coupler State IO
+		                                                        									                                                           									
+		IN_MesStopMVCC						: BOOL ; 											   // Stop the sequence for closing or opening 
+		IN_CmdNoFeeding						: BOOL ; 											   // Order to disconnect generators to the grid
+	{attribute 'OPC.UA.DA' := '1'} 
+		IN_CmdFeeding						: BOOL ; 											   // Order to connect generators to the grid
+		IN_CmdOpenMainMVCB					: BOOL ;
+		IN_CmdCloseMainMVCB					: BOOL ;
+		
+		IN_CmdOpenFeederMVCB				: ARRAY[1..CstNbFeederMVCB_G] OF BOOL ;	
+		IN_CmdCloseFeederMVCB				: ARRAY[1..CstNbFeederMVCB_G] OF BOOL ;		
+		
+	// EQUIPMENTS
+		A1_AuxMVCB							: FB_CB_AuxMVCB;				// Auxiliary cell 			
+		A1_MainCB_LV						: FB_TOR_Standard ;      
+		A1_FeederMVCB						: FB_CB_FeederMVCB ;   		
+		A1_DS_PTR							: FB_TOR_Ds ;					// (NA)TOR Door Sensor object instance Filter room
+		A1_DS_PCS							: FB_TOR_Ds ;
+		A1_ES_MV							: FB_TOR_Es ;	
+		A1_ES_LV							: FB_TOR_Es ;	
+		A1_MS								: FB_TOR_MS ;
+		A1_SD								: FB_TOR_Sd;
+		A1_UPS_48v							: FB_UPS_ENERIS;
+		A1_SPD								: FB_TOR_SPD;
+		A1_Transfo_Aux						: FB_Transfo_MV;
+		A1_Transfo							: FB_Transfo_MV;
+		
+		A1_Temp_Transfo_Aux					: FB_ANA_IO;		
+		A1_Temp_Transfo						: FB_ANA_IO;	
+
+	//Other
+		OUT_HVcellsMoving					: BOOL;
+
+END_VAR
+
+VAR_OUTPUT
+	
+END_VAR
+
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//	
+	 	R_TRIG_Event						: ARRAY[1..17] OF R_TRIG ;  
+		MesComErrorEthercat	 				: BOOL;														//(NA) Communication Error with Ethercat coupler 
+		TOF_Ethercat					 	: TOF ;	
+		
+		AX_AlarmWords						: ARRAY[1..45] OF ST_ValuesAlarms;
+		AX_AlarmWords_Null					: ARRAY[1..45] OF ST_ValuesAlarms;
+		NumAlarmsActive						: UINT;
+	
+	//M_STATEMANAGER  VARIABLES//   	           
+		FB_ModbusReadRTU					: FB_ModbusRTU ; 
+                         	
+	//M_CONNECTDISCONNECT VARIABLES//
+        HVcellsMoving						: BOOL;														// Etat indiquant qu'une sequence est en cours sur les cellules. 
+        SR_CloseMainMVCBManual				: SR ;     
+        SR_CloseManual_FeederMVCB			: ARRAY[1..CstNbFeederMVCB_G] OF  SR;					   // Manage force manual opening 
+               
+		R_TRIG_Feeding						: R_TRIG;    
+		F_TRIGFeed							: F_TRIG;
+		RSFeed								: RS;    	
+		F_TRIGNoFeed						: F_TRIG;
+		RSNoFeed							: RS;
+		R_TRIG_NoFeeding					: R_TRIG;
+		TON_ComutDistant					: TON;
+	//M_CONNECTDISCONNECT VARIABLES//
+             
+		F_TRIG_GTELong						: F_TRIG;
+		TP_GTELong							: TP ; 
+		TON_GteIsLong						: TON;
+		TON_GteLongHVMoving					: TON;
+		FTRIG_ProtectGTELong				: F_TRIG ; 
+    	                                    
+		TPCloseMainMVCB						: TP;         
+
+	// Unknown fault 
+		UnknownFault						: BOOL;         // MainMVCB est reste ouverte avec Aucun défaut et une autorisation de couplage ==> aboutit a une perte d'autorisation    
+		RTrigEndGte							: R_TRIG;       //
+		TPSepamCloseAfterGte				: TP;  			// 
+		
+		FB_UnknownFault : FB_UnknownEvent ; 			
+
+	//M_Decouplage //               	
+		CompletedNoFeed						: BYTE;   			// bit 0: terminé sans Erreur, bit 1: terminé avec alarms, bit 2: terminé avec warning
+		CompletedFeed						: BYTE;   			// bit 0: terminé sans Erreur, bit 1: terminé avec alarms, bit 2: terminé avec warning
+		CompletedFeedAlarm					: BYTE;  			// bit 0: terminé sans Erreur, bit 1: terminé avec alarms, bit 2: terminé avec warning
+		CompletedNoFeedAlarm				: BYTE;
+		ReCloseMainMVCB						: BOOL;
+		TON_FeedMainMVCB					: TON;
+		TON_NoFeedTR						: TON;
+		TON_NoFeedMainMVCB					: TON;
+		TP_Feed								: TP;
+		TP_UnknownFault						: TP;
+		TP_Feed_TR_Open						: TP;
+		TON_FeedTR							: TON;
+		TON_FeedStep						: ARRAY[1..CstNbFeederMVCB_G+1] OF TON;
+		TON_RecloseMainMVCB					: TON;
+		TON_Reclose							: TON;
+
+	//M_EVALUATE VARIABLES//        	
+	MesDataExd					: SUBMV_Exd;  		// (NA) [P,H,B] MCA SUB_MV specific Data structure    
+		R_TRIG_Centraledecouplee			: R_TRIG;			// detect centrale decouplée
+
+END_VAR			
+ ]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{039c7f4e-1a5f-4a7e-9102-6e5b1f07e4bf}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Generates object alarms and manages resets. 
+//////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager			: FB_AlarmCodeManager ; 
+
+	MesAlarmSynthesischild			: BOOL;
+	MesWarningSynthesischild			: BOOL;
+	
+	GG: INT;
+	LL: INT;
+	ID_Journal: INT;
+	WordTest: WORD;
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[(*
+TOUS LES FB_TOR_BASE DOIVENT ETRE MAPPES DANS LE M_ALARMMANAGEEMNT DU PRODUIT AUQUEL ILS APPARTIENNENT. LEUR PROPRE ALARMCODE NE SERONT PAS MAPPES PAR LE CONFIGURATOR
+*)
+
+
+// ALARM AGGREGATION  // (* TO BE filled with SUB_MV equipement except TOR and PM that are mapped directly in the Alarm and warning words) 
+	MesAlarmSynthesischild := A1_AuxMVCB.MesDataExd.MesData.MesOpened OR A1_ProtectRelay.MesDataExd.MesData.MesAlarmCode.0 OR A1_UPS_24v.MesDataExd.MesData.MesAlarmCode.0 OR A1_UPS_48v.MesDataExd.MesData.MesAlarmCode.0; 
+	MesWarningSynthesischild := A1_ProtectRelay.MesDataExd.MesData.MesAlarmCode.0 OR A1_ProtectRelay.MesDataExd.MesData.MesWarningCode.0 OR
+								A1_MainMVCB.MesDataExd.MesData.MesAlarmCode.0 OR A1_MainMVCB.MesDataExd.MesData.MesWarningCode.0 OR
+								A1_GridMVCB.MesDataExd.MesData.MesAlarmCode.0 OR A1_GridMVCB.MesDataExd.MesData.MesWarningCode.0 OR
+								A1_MeasureMVCB.MesDataExd.MesData.MesAlarmCode.0 OR A1_MeasureMVCB.MesDataExd.MesData.MesWarningCode.0 OR	
+								A1_AuxMVCB.MesDataExd.MesData.MesAlarmCode.0 OR A1_AuxMVCB.MesDataExd.MesData.MesWarningCode.0 OR							
+								A1_GRID.MesDataExd.MesData.MesAlarmCode.0 OR A1_GRID.MesDataExd.MesData.MesWarningCode.0 OR
+								A1_UPS_48v.MesDataExd.MesData.MesAlarmCode.0 OR A1_UPS_48v.MesDataExd.MesData.MesWarningCode.0 OR
+								A1_UPS_24v.MesDataExd.MesData.MesAlarmCode.0 OR A1_UPS_24v.MesDataExd.MesData.MesWarningCode.0 OR
+								A1_Transfo_Aux.MesDataExd.MesData.MesAlarmCode.0 OR A1_Transfo_Aux.MesDataExd.MesData.MesWarningCode.0 ; 
+								
+							
+FOR KK:= 1 TO CstNbFeederMVCB_G DO 
+	MesWarningSynthesischild := MesWarningSynthesischild OR AX_FeederMVCB[KK].MesDataExd.MesData.MesAlarmCode.0 OR AX_FeederMVCB[KK].MesDataExd.MesData.MesWarningCode.0 ;
+	MesAlarmSynthesischild 	 := MesAlarmSynthesischild   OR AX_FeederMVCB[KK].MesDataExd.MesData.MesAlarmCode.0;
+END_FOR
+
+	//Com
+	//COMMUNCATION //	
+	TOF_Ethercat(IN:= NOT (SHR(SHL(UINT_TO_BYTE(IN_MesCouplerState_IO),4),4)=8),PT:=ParamTempoComAlarm)  ; 	
+	MesComErrorEthercat 	:= TOF_Ethercat.Q  ; 			// Not OP State  
+
+// ALARM CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= A1_PM.MesDataExd.MesData.MesAlarmCom, 				// Power meter communication alarm 								#COM
+		bAlarm2			:= MesComErrorEthercat ,					// Ethercat Communication Error 								#COM
+		bAlarm3			:= NOT A1_ES_LV.MesDataExd.MesData.MesAlarmState,  	// LV Emergency Stop released  									#Security
+		bAlarm4			:= NOT A1_ES_MV.MesDataExd.MesData.MesAlarmState,	 	// MV Emergency Stop released  									#Security
+		bAlarm5			:= CompletedFeedAlarm.1,					// Not possible to closed MainMVCB during coupling sequence
+		bAlarm6			:= IN_MesStopMVCC, 							// PMS in errOR  Open all MV SwitchGears 
+		bAlarm7			:= CompletedFeedAlarm.2, 					// At least one FeederMVCB did not close 
+		bAlarm8			:= A1_ES_LV.MesDataExd.MesData.MesAlarmState,  		// LV Emergency Stop triggered  								#Security
+		bAlarm9			:= A1_ES_MV.MesDataExd.MesData.MesAlarmState,	 		// MV Emergency Stop triggered  								#Security
+		bAlarm10		:= FALSE ,									//  
+		bAlarm11		:= CompletedNoFeedAlarm.1,					// MainMVCB stayed closed during disconnect sequence
+		bAlarm12		:= FALSE, 									// 
+		bAlarm13		:= A1_GridMVCB.MesOpened,					// GridMVCB is opened 
+		bAlarm14		:= MesDataExd.MesData.MesState.2 ,			// Powerplant is stopped (not injecting)
+		bAlarm15		:= MesAlarmSynthesischild , 				// Child alarm synthèsis
+		wAlarmCode		=>MesDataExd.MesData.MesAlarmCode);     
+                                          	
+          	
+                                                              	
+// WARNING CODE //                                              	
+	FB_AlarmCodeManager(                                        	
+ 		bAlarm1			:= A1_CB_230V.MesDataExd.MesData.MesAlarmState, 		// 230V CB chain is opened
+		bAlarm2			:= A1_CB_24V.MesDataExd.MesData.MesAlarmState,			// 24V CB chain is opened
+		bAlarm3			:= A1_MainCB_LV.MesDataExd.MesData.MesAlarmState, 		// MainCB_LV is opened 
+		bAlarm4			:= MesDataExd.MesData.MesOpened_ALOFeederMVCB,// At least one HV cell is opened      		
+		bAlarm5			:= A1_CB_48V.MesDataExd.MesData.MesAlarmState ,		// 48V CB chain is opened
+		bAlarm6			:= FALSE , 									//       			   
+		bAlarm7			:= CompletedNoFeedAlarm.2,					// Generators did not stop during disconnect sequence
+		bAlarm8			:= A1_SD_MV.MesDataExd.MesData.MesAlarmState,			// Smoke detection in MV area 									#Security
+		bAlarm9			:= A1_SD_LV.MesDataExd.MesData.MesAlarmState,				// Smoke detection in LV area #Security
+		bAlarm10		:= A1_DS_LV.MesDataExd.MesData.MesAlarmState,          // Door opened in LV area #Securiy 										#Security
+		bAlarm11		:= A1_DS_MV.MesDataExd.MesData.MesAlarmState,			// Door opened in MV area #Securiy										#Security
+		bAlarm12		:= FALSE,									// 
+		bAlarm13		:= FALSE,         							//           
+		bAlarm14		:= FALSE,              						//       			
+		bAlarm15		:= MesWarningSynthesischild,				// Synthesis from Child		
+		wAlarmCode		=>MesDataExd.MesData.MesWarningCode);  		
+
+// EVENT CODE //
+	FB_AlarmCodeManager(
+		bAlarm1			:= R_TRIG_Event[1].Q,						// LV Emergency Stop released  									#Security
+		bAlarm2			:= R_TRIG_Event[2].Q,     					// MV Emergency Stop released  									#Security
+		bAlarm3			:= R_TRIG_Event[3].Q, 						// Connexion command     
+		bAlarm4			:= R_TRIG_Event[4].Q, 						// Disconnexion Command
+		bAlarm5			:= R_TRIG_Event[5].Q, 						// Reset Command         
+		bAlarm6			:= R_TRIG_Event[6].Q,						// Coupling sequence has been launched   
+		bAlarm7			:= R_TRIG_Event[7].Q, 						// DeCoupling sequence has been launched  
+		bAlarm8			:= R_TRIG_Event[8].Q, 						// Close MainMVCB order
+		bAlarm9			:= R_TRIG_Event[9].Q, 						// Close FeederMVCB.1 order
+		bAlarm10		:= R_TRIG_Event[10].Q,                      // Close FeederMVCB.2 order
+		bAlarm11		:= R_TRIG_Event[11].Q,                      // Open MainMVCB order
+		bAlarm12		:= R_TRIG_Event[12].Q,                      // Open FeederMVCB.1 order
+		bAlarm13		:= R_TRIG_Event[13].Q,                      // Open FeederMVCB.2 order
+		bAlarm14		:= R_TRIG_Event[14].Q,                      // Grid MVCB is closed 
+		bAlarm15		:= R_TRIG_Event[15].Q OR R_TRIG_Event[16].Q,// ADSL OR 4G restarts 
+		wAlarmCode		=>MesDataExd.MesData.MesEventCode);   
+
+		
+	FB_AlarmCodeManager(
+		bAlarm1			:= NOT A1_DS_LV.MesDataExd.MesData.MesAlarmState,      // Door closed in LV area     									#Security
+		bAlarm2			:= NOT A1_DS_MV.MesDataExd.MesData.MesAlarmState,		// Door closed in MV area     									#Security       
+		bAlarm3			:= FALSE , 									//
+		bAlarm4			:= FALSE , 									//
+		bAlarm5			:= FALSE , 									//
+		bAlarm6			:= FALSE , 									//
+		bAlarm7			:= FALSE , 									//
+		bAlarm8			:= FALSE , 									//
+		bAlarm9			:= FALSE , 									//
+		bAlarm10		:= FALSE ,                               	//
+		bAlarm11		:= FALSE ,                               	//
+		bAlarm12		:= FALSE ,                               	//
+		bAlarm13		:= FALSE ,                               	//
+		bAlarm14		:= FALSE ,                               	//
+		bAlarm15		:= FALSE ,                               	//
+		wAlarmCode		=>MesDataExd.MesData.MesEventCode2);  		
+		
+R_TRIG_Event[1](CLK	:=NOT A1_ES_LV.MesDataExd.MesData.MesAlarmState) ; 		
+R_TRIG_Event[2](CLK	:=NOT A1_ES_MV.MesDataExd.MesData.MesAlarmState) ;			 	
+R_TRIG_Event[3](CLK	:=IN_CmdConnect    ) ; 
+R_TRIG_Event[4](CLK	:=IN_CmdDisconnect ) ;  
+R_TRIG_Event[5](CLK	:=IN_CmdReset_L    ) ;  
+R_TRIG_Event[6](CLK	:=IN_CmdFeeding	   ) ;  
+R_TRIG_Event[7](CLK	:=IN_CmdNoFeeding  ) ;  
+R_TRIG_Event[8](CLK	:=IN_CmdCloseMainMVCB   ) ;  
+R_TRIG_Event[9](CLK	:=IN_CmdCloseFeederMVCB[1]) ;  
+R_TRIG_Event[10](CLK:= IN_CmdCloseFeederMVCB[2]) ; 
+R_TRIG_Event[11](CLK:= IN_CmdOpenMainMVCB ) ; 
+R_TRIG_Event[12](CLK:= IN_CmdOpenFeederMVCB[1]) ; 
+R_TRIG_Event[13](CLK:= IN_CmdOpenFeederMVCB[2]) ;	
+R_TRIG_Event[14](CLK:= NOT A1_GridMVCB.MesOpened) ;	
+R_TRIG_Event[15](CLK:= A1_Router_ADSL.IN_CmdRestart) ;	
+R_TRIG_Event[16](CLK:= A1_Router_4G.IN_CmdRestart);
+R_TRIG_Event[17](CLK:= A1_IPC.IN_CmdRestart);
+
+// CALCUL DES ALARMCODES //
+NumAlarmsActive := 0;
+AX_AlarmWords := AX_AlarmWords_Null;
+FOR GG := 1 TO 3 DO	// Loop over alarm , warning and event 
+	
+	FOR LL := 1 TO 15 DO
+		ID_Journal := 5 + (GG- 1);
+		
+		WordTest := ROR(FUN_Alarms.AX_RecupWord[ID_Journal],LL);
+		IF WordTest.0 THEN
+			NumAlarmsActive := NumAlarmsActive + 1;
+			AX_AlarmWords[NumAlarmsActive].Message := FUN_Alarms.AX_Journal[ID_Journal][LL].Message;
+		ELSE
+			AX_AlarmWords[NumAlarmsActive+1].Message := '';
+		END_IF
+	END_FOR
+END_FOR]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_ConnectDisconnect" Id="{24328b66-a1f8-4d97-ac6e-a3ad310d329d}">
+      <Declaration><![CDATA[METHOD M_ConnectDisconnect
+//////////////////
+// Connect / Disconnect Load
+//////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+	Protect_GTE_LONG									: BOOL; // Long GTE fault, PP stop for 2m and lost of autorisation 
+	CmdCloseMainMVCB_EndGTELong								: BOOL;
+	
+	IN_CmdOpenFeederMVCB_1: BOOL;
+	IN_CmdCloseFeederMVCB_2: INT;
+	CalFeederManualCmd				: BOOL;		// One open or closed command received form OPC UA for at least one of the feeder . 
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//Disconnect := Effacement d'urgence ==> Ouverture de la MainMVCB seulement,
+//Connect    := Fermeture de la MainMVCB seulement
+//Gestion des decouplage de securité
+//Disconnect := Effacement d'urgence ==> Ouverture de la MainMVCB seulement,
+//Connect    := Fermeture de la MainMVCB seulement
+//Gestion des decouplage de securité
+
+// GTE Long Management
+//IF GTE LONG , Protect during 3min after end of GTE  .
+F_TRIG_GTELong(CLK:=A1_ProtectRelay.MesDataExd.MesData.MesAlarmUmin_Long ) ; // detect end of GTE long
+
+
+TP_GTELong(IN:=F_TRIG_GTELong.Q (* OR MesBootPLC*) ,PT:=T#3M);// AFTER GTE LONG := Lost of Autorisation feeding and stop production during 3 min. Enabled also after SUB_MV ReInit to allow closing of MainMVCB, after PLC restart.  
+
+
+Protect_GTE_LONG 	:= TP_GTELong.Q ;	// disable cloding MainMVCB for 3 minutes after GTE long
+
+FTRIG_ProtectGTELong(CLK:= Protect_GTE_LONG ) ; 
+
+TPCloseMainMVCB(IN:=FTRIG_ProtectGTELong.Q, PT:=T#2S);		// 3 min after GTE long ended
+
+CmdCloseMainMVCB_EndGTELong := TPCloseMainMVCB.Q;  // Ordre de fermeture de la MainMVCB for 2 seconds when the 3 minutes have passed . 
+
+
+//MainMVCB
+
+SR_CloseMainMVCBManual(SET1 := IN_CmdOpenMainMVCB,  RESET:= IN_CmdCloseMainMVCB OR IN_CmdReset_L ) ; // Inhibate the closing of MainMVCB after a manual opened commAND  A manual close command is then required. 
+
+
+	// Open Command
+	A1_MainMVCB.IN_CmdOpen :=  (IN_CmdDisconnect OR IN_CmdOpenMainMVCB OR   A1_SUBMV.A1_ProtectRelay.MesDataExd.MesData.MesAlarmCom)AND NOT A1_PP.ParamForcedStayConnect;
+	// Close Command
+	A1_MainMVCB.IN_CmdClose := IN_CmdConnect OR (CmdCloseMainMVCB_EndGTELong AND MesDataExd.MesData.MesOpened_AllFeederMVCB AND ParamAutoCloseMainMVCBEnabled) OR (IN_CmdCloseMainMVCB AND MesDataExd.MesData.MesOpened_AllFeederMVCB) AND NOT SR_CloseMainMVCBManual.Q1;
+
+	
+//CELLULES DEPART
+	//Equation logique ouverture du Départ FeederMVCB_1
+
+CalFeederManualCmd := FALSE ; 
+	FOR KK:= 1 TO CstNbFeederMVCB_G DO 
+		SR_CloseManual_FeederMVCB[KK](SET1 := IN_CmdOpenFeederMVCB[KK],  RESET:= IN_CmdCloseFeederMVCB[kk] OR IN_CmdReset_L ) ; // Inhibate the closing of MainMVCB after a manual opened commAND  A manual close command is then required . 
+
+		AX_FeederMVCB[KK].IN_CmdOpen := AX_FeederMVCB[KK].MesDataExd.MesData.MesClosed AND NOT AX_FeederMVCB[KK].MesDataExd.MesComutLocal AND (NOT A1_MainMVCB.MesDataExd.MesData.MesClosed OR IN_CmdOpenFeederMVCB[KK]);
+		AX_FeederMVCB[KK].IN_CmdClose 	:= NOT AX_FeederMVCB[KK].MesDataExd.MesData.MesClosed AND NOT AX_FeederMVCB[KK].MesDataExd.MesComutLocal AND IN_CmdCloseFeederMVCB[kk];
+
+		CalFeederManualCmd := CalFeederManualCmd OR IN_CmdCloseFeederMVCB[kk] OR IN_CmdOpenFeederMVCB[kk] ; 
+	END_FOR
+	
+(*	
+//CELLULES SKID
+	AX_PTR[1].A1_CB_IMPT_CB.IN_CmdOpen := A1_CB_FeederMVCB_1.MesOpened OR OpcUa.AllRtc.PT3OpenCB_DM1;
+	
+	TON_WaitFeederMVCB_1(IN := A1_CB_FeederMVCB_1.MesClosed, PT := T#30S);
+	Trig_TpWaitFeederMVCB_1(CLK := TON_WaitFeederMVCB_1.Q);
+	
+	AX_PTR[1].A1_CB_IMPT_CB.P_CmdClose := Trig_TpWaitFeederMVCB_1.Q OR (OpcUa.AllRtc.PT3CloseCB_DM1 AND A1_CB_FeederMVCB_1.MesClosed);
+*)
+
+SUPER^.M_ConnectDisconnect() ; 
+HVcellsMoving 	:= FALSE;
+
+
+
+IF IN_CmdOpenMainMVCB OR IN_CmdCloseMainMVCB OR CalFeederManualCmd  THEN 
+	IN_MesStopMVCC	:= TRUE ; 	// Stop Auto procedure if a manual action is done . 
+	
+END_IF
+
+M_NoFeeding();	// decouplage : arret des onduleurs . 
+M_Feeding();	// Couplage ]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_EquipmentCalls" Id="{67a1714a-c930-4f30-8b9e-f51b97f09599}">
+      <Declaration><![CDATA[METHOD M_EquipmentCalls
+//////////////////
+// Evaluate AMS characteristics
+//////////////////
+
+VAR
+	// Method local variables (reinitialized at each cycle) 
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//MVR
+FOR KK:= 1 TO CstNbFeederMVCB_G DO 
+	AX_FeederMVCB[KK].M_Execute() ; 			
+END_FOR 
+A1_MainMVCB.M_Execute();	
+A1_GridMVCB.M_Execute();
+A1_MeasureMVCB.M_Execute();
+A1_AuxMVCB.M_Execute();
+
+//CB BT			
+A1_CB_48V.M_Execute();
+A1_CB_230V.M_Execute();
+A1_CB_24V.M_Execute();
+A1_MainCB_LV.M_Execute();	
+		
+//Door Sensor
+A1_DS_MV.M_Execute();			
+A1_DS_LV.M_Execute();
+A1_MS.M_Execute();
+
+
+//SEPAM
+//A1_ProtectRelay.ConnectAuthorization := A1_GRID.OUT_GridConnAuthorConnWaitRec;
+A1_ProtectRelay.M_Execute();
+
+//Operation Meter	
+A1_PM.M_Execute();
+//A1_PM_Aux.M_Execute();
+
+//DEIE
+//A1_DEIE.IN_ConnectAuthorizationLost := A1_VDE_Sepam.C13100IO OR A1_VDE_Sepam.GteLong OR  A1_VDE_Sepam.GTE3Time OR UnknownFault;
+A1_GRID.M_Execute() ; 	    
+
+// UPS
+A1_UPS_48v.M_Execute();
+
+A1_UPS_24v.M_Execute();
+
+// Door Sensor
+A1_DS_LV.M_Execute();
+A1_DS_MV.M_Execute();
+
+// Smoke detector 
+A1_SD_MV.M_Execute();
+
+// ROUTEURS ADSL et 4G
+A1_Router_ADSL.M_Execute();	 
+A1_Router_4G.M_Execute();     
+A1_IPC.M_Execute();            
+
+// ES 
+A1_ES_MV.M_Execute() ; 			
+A1_ES_LV.M_Execute() ; ]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Evaluate" Id="{cfe2377e-7349-4a5f-99fd-2915c0c516ad}">
+      <Declaration><![CDATA[METHOD M_Evaluate
+//////////////////
+// Evaluate SUB.MV Data 
+//////////////////
+VAR 
+
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[ 
+MesDataExd.MesData.MesU								:= 	A1_PM.MesDataExd.MesData.MesU;		
+MesDataExd.MesData.MesFreq							:= 	A1_PM.MesDataExd.MesData.MesFreq;
+MesDataExd.MesData.MesPsol							:= 	A1_PM.MesDataExd.MesData.MesP;
+MesDataExd.MesData.MesQsol							:= 	A1_PM.MesDataExd.MesData.MesQ;
+MesDataExd.MesData.MesPaux							:= 	A1_PM_Aux.MesDataExd.MesData.MesP ; 
+MesDataExd.MesData.MesTanPhi						:= 	A1_PM.MesDataExd.MesData.MesTanPhi;
+         	                            	                     
+MesDataExd.MesData.MesOpened_AllFeederMVCB := TRUE;
+MesDataExd.MesData.MesClosed_AllFeederMVCB := TRUE;
+MesDataExd.MesData.MesClosed_ALOFeederMVCB := FALSE;
+MesDataExd.MesData.MesOpened_ALOFeederMVCB := FALSE;
+
+	FOR KK:= 1 TO CstNbFeederMVCB_G DO 
+	MesDataExd.MesData.MesOpened_AllFeederMVCB		:=  AX_FeederMVCB[KK].MesDataExd.MesData.MesOpened  AND MesDataExd.MesData.MesOpened_AllFeederMVCB; 	 		// All MV Deptarture are Opened
+	MesDataExd.MesData.MesClosed_AllFeederMVCB		:=  AX_FeederMVCB[KK].MesDataExd.MesData.MesClosed AND MesDataExd.MesData.MesClosed_AllFeederMVCB; 		// All MV Deptarture are Closed	                            	
+	MesDataExd.MesData.MesOpened_ALOFeederMVCB		:=  AX_FeederMVCB[KK].MesDataExd.MesData.MesOpened OR MesDataExd.MesData.MesOpened_ALOFeederMVCB;		  	// All Of MV Deptarture are Opened
+	MesDataExd.MesData.MesClosed_ALOFeederMVCB		:=  AX_FeederMVCB[KK].MesDataExd.MesData.MesClosed OR MesDataExd.MesData.MesClosed_ALOFeederMVCB; 			// All Of MV Deptarture are Closed	                       			
+	END_FOR
+
+MesDataExd.MesData.MesOpened_KnownEvent				:=  NOT TP_UnknownFault.Q  AND NOT A1_ProtectRelay.MesDataExd.MesData.MesAlarmUmin AND  NOT A1_ProtectRelay.MesDataExd.MesData.MesAlarmImax AND NOT A1_ProtectRelay.MesDataExd.MesData.MesAlarmUmin_Long AND NOT A1_GRID.MesDataExd.MesData.OUT_CmdEmergencyDisconnect  AND NOT A1_GRID.MesDataExd.MesData.OUT_CmdDisconnect  AND NOT  A1_ES_LV.MesDataExd.MesData.MesAlarmState AND NOT  A1_ES_MV.MesDataExd.MesData.MesAlarmState AND NOT A1_MainMVCB.MesDataExd.OUT_CmdOpen;
+	
+
+// Data Reaffection 
+	A1_MainMVCB.IN_MesTripped_IO		:= A1_ProtectRelay.IN_MesAlarmIMax_IO;
+
+MesDataExd.SD_LV				:= A1_SD_LV.MesDataExd		;
+MesDataExd.Transfo_Aux		:= A1_Transfo_Aux.MesDataExd; 
+//UnknowFault 
+	//Gestion du cas ou Sepam temporise la refermeture de la DM2 aprés GTE
+
+FB_UnknownFault(
+	IN_Event:= A1_MainMVCB.MesDataExd.MesData.MesOpened AND NOT A1_MainMVCB.MesDataExd.MesComutLocal, 
+	IN_ExternalEvent := MesDataExd.MesData.MesOpened_KnownEvent ,
+	IN_InternalCommand := A1_MainMVCB.MesDataExd.MesData.MesCP_Open, 
+	IN_TempoAfterCommand := T#4S, 
+	IN_TempoReadExternalEvent:= ParamTempoUnknowFault,
+	bReset :=  A1_GRID.IN_CmdAutCpl_IO  OR  A1_GRID.IN_CmdAutCpl_other OR IN_CmdReset_L, 
+	OUT_Unknown =>UnknownFault );
+
+// GRID
+	A1_ProtectRelay.IN_CmdReset_3GTEFault 		:= A1_GRID.IN_CmdAutCpl_IO OR A1_GRID.IN_CmdAutCpl_other;
+
+	A1_GRID.IN_PP_Connected						:= SEL(A1_PP.MesState.2 = 1, FALSE, TRUE); //A1_PP.MesState.2 = 1; // A1_PP.MesState= 0 ; //Modif LWN : CalState.1     //Centrale couplée si True, Sinon decouplée GO TO M_StateManager
+	A1_GRID.IN_ConnectAuthorizationLost 		:= A1_ProtectRelay.IN_MesAlarmIMax_IO OR A1_ProtectRelay.MesDataExd.MesData.MesAlarmUmin_Long OR  A1_ProtectRelay.MesDataExd.MesData.MesAlarm_GTE3Time OR UnknownFault OR A1_ES_LV.MesDataExd.MesData.MesAlarmState OR A1_ES_MV.MesDataExd.MesData.MesAlarmState;
+	A1_GRID.IN_Unavailable						:= A1_MainMVCB.MesDataExd.MesComutLocal OR A1_ES_LV.MesDataExd.MesData.MesAlarmState OR A1_ES_MV.MesDataExd.MesData.MesAlarmState;
+	A1_MainMVCB.IN_MesTripped_IO				:= A1_ProtectRelay.IN_MesAlarmIMax_IO;
+
+	TP_UnknownFault(PT:=ParamTempoUnknowFault);	
+	
+// SUBMV DataExd
+	//MesDataExd				:= MesDataExd.MesData.                                 	
+MesDataExd.CB_24V						:= A1_CB_24V.MesDataExd;
+MesDataExd.CB_48V						:= A1_CB_48V.MesDataExd ; 
+MesDataExd.CB_230V						:= A1_CB_230V.MesDataExd;
+MesDataExd.MainCB_LV					:= A1_MainCB_LV.MesDataExd ;
+    
+   MesDataExd.ES_LV				   		:= A1_ES_LV.MesDataExd ; 	 
+MesDataExd.ES_MV				   		:= A1_ES_MV.MesDataExd ;
+   MesDataExd.SD_MV						:= A1_SD_MV.MesDataExd	;	
+MesDataExd.MS							:= A1_MS.MesDataExd.MesData;
+	
+MesDataExd.DS_MV						:= A1_DS_MV.MesDataExd ; 		
+MesDataExd.DS_LV						:= A1_DS_LV.MesDataExd ;
+	
+MesDataExd.GridMVCB						:= A1_GridMVCB.MesDataExd  ;		
+MesDataExd.MeasureMVCB					:= A1_MeasureMVCB.MesDataExd ; 		
+MesDataExd.AuxMVCB						:= A1_AuxMVCB.MesDataExd ; 
+MesDataExd.MainMVCB						:= A1_MainMVCB.MesDataExd ; 
+                                    	
+FOR KK:= 1 TO CstNbFeederMVCB_G DO 
+	MesDataExd.AX_FeederMVCB[KK]			:=  AX_FeederMVCB[KK].MesDataExd	; 	
+END_FOR	
+	
+MesDataExd.ProtectRelay					:=  A1_ProtectRelay.MesDataExd		;	
+MesDataExd.PM							:=  A1_PM.MesDataExd			;
+MesDataExd.PM_Aux						:=  A1_PM_Aux.MesDataExd		;	
+MesDataExd.UPS_48v						:=  A1_UPS_48v.MesDataExd	;
+MesDataExd.UPS_24v						:=  A1_UPS_24v.MesDataExd	;
+MesDataExd.Router_ADSL					:=  A1_Router_ADSL.MesDataExd;
+MesDataExd.Router_4G					:=  A1_Router_4G.MesDataExd;
+MesDataExd.IPC 							:=  A1_IPC.MesData;		
+MesDataExd.GRID							:=  A1_GRID.MesDataExd;
+	]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Feeding" Id="{3b092e18-6c4c-49df-b01d-50ce328ecb4d}">
+      <Declaration><![CDATA[METHOD M_Feeding
+VAR
+	CP_Temp	: BOOL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//Sequence couplage
+(*TP_Feed(IN:= IN_CmdFeeding , PT:=ParamTempoFeed) ; *)
+//Tempo de sécurité: ouverture de tous les départ transfor avant fermeture MainMVCB
+TP_Feed_TR_Open(IN:=IN_CmdFeeding,PT:=T#2S);
+
+
+R_TRIG_Feeding(CLK:= IN_CmdFeeding) ; 
+IF R_TRIG_Feeding.Q OR IN_CmdReset_L OR MesDataExd.MesData.MesClosed_AllFeederMVCB  THEN
+	//On remet a Zero SSi il s'agit d'une nouvelle demande ou d'une demande de reset ou bien que toutes les cellules sonty fermée
+	CompletedFeed := 0;
+	CompletedFeedAlarm := 0 ;
+	HVcellsMoving	:= FALSE; // CC HV Cells
+END_IF
+
+F_TRIGFeed(CLK:= TP_Feed.Q) ; 
+RSFeed(SET :=IN_CmdFeeding , RESET1:=F_TRIGFeed.Q OR IN_MesStopMVCC OR CompletedFeed>0 OR MesDataExd.MesData.MesClosed_AllFeederMVCB ) ; 
+
+IF (RSFeed.Q1) THEN
+	//INIT && TEMPO
+		HVcellsMoving	:= TRUE; // CC HV Cells
+		CompletedFeed := 0;
+		//Condition pour lancement de la tempo de sécurité : Au moins un départ est resté ouvert
+		TON_FeedTR(IN:= A1_MainMVCB.MesDataExd.MesData.MesClosed AND MesDataExd.MesData.MesOpened_ALOFeederMVCB AND A1_GRID.MesDataExd.MesData.OUT_CmdAutCpl  , PT:=ParamTimeOutConnect - T#1S);
+		//Tempo de sécurité : MainMVCB restée ouverte
+		TON_FeedMainMVCB(IN:=  A1_MainMVCB.MesDataExd.MesData.MesOpened AND NOT SR_CloseMainMVCBManual.Q1, PT:= ParamTimeOutConnect - T#1S);
+		//Tempo de sécurité: ouverture de tous les départ transfor avant fermeture MainMVCB
+
+	
+	//Verification que toutes les cellues départs soient ouvertes avant fermeture MainMVCB .
+
+		IF TP_Feed_TR_Open.Q AND A1_MainMVCB.MesDataExd.MesData.MesOpened THEN
+			FOR KK:= 1 TO CstNbFeederMVCB_G DO 	
+				AX_FeederMVCB[KK].IN_CmdOpen := AX_FeederMVCB[KK].Mesclosed AND NOT AX_FeederMVCB[KK].MesDataExd.MesComutLocal;
+				
+			END_FOR 	
+			
+
+		END_IF
+	
+	
+	//Fermeture de la MainMVCB
+	
+		// Temporise le retour à la commande distante. 
+		TON_ComutDistant(IN:= NOT A1_MainMVCB.MesDataExd.MesComutLocal , PT:=T#5S) ; 
+	
+	
+		A1_MainMVCB.IN_CmdClose 	:= A1_MainMVCB.MesDataExd.MesData.MesOpened AND TON_ComutDistant.Q AND MesDataExd.MesData.MesOpened_AllFeederMVCB AND NOT TP_Feed_TR_Open.Q AND ( ParamAutoCloseMainMVCBEnabled OR A1_GRID.MesDataExd.MesData.OUT_CmdAutCpl) AND NOT SR_CloseMainMVCBManual.Q1; //Je laisse une tempo de 2sec avant couplage
+		(*Lancement tempo sur fermeture MainMVCB*)
+		TON_FeedStep[1](IN:= A1_MainMVCB.MesDataExd.MesData.MesClosed,PT:=ParamTempoPoste);
+			
+	
+		IF A1_GRID.MesDataExd.MesData.OUT_CmdAutCpl  THEN 
+			
+			FOR KK:= 1 TO CstNbFeederMVCB_G DO 
+				//Fermeture du Départ D : Sur fermeture de la MainMVCB
+				AX_FeederMVCB[KK].IN_CmdClose := AX_FeederMVCB[KK].MesDataExd.MesData.MesOpened   AND TON_FeedStep[KK].Q AND A1_MainMVCB.MesDataExd.MesData.MesClosed AND NOT AX_FeederMVCB[KK].MesDataExd.MesComutLocal AND NOT SR_CloseManual_FeederMVCB[KK].Q1;
+				(*Lancement tempo sur fermeture Depart D et etat du commutateur sur remote*)
+				TON_FeedStep[KK+1](IN:=TON_FeedStep[KK].Q   ,PT:=ParamTempoPoste);
+		
+			END_FOR
+
+
+		ELSE
+			FOR KK:= 2 TO CstNbFeederMVCB_G DO 
+				TON_FeedStep[KK](IN:=FALSE);
+			END_FOR 
+		END_IF
+		
+	//Action Terminé sans erreur : MainMVCB et tous depart sont fermés
+		CompletedFeed.0 := A1_MainMVCB.MesDataExd.MesData.MesClosed  AND MesDataExd.MesData.MesClosed_AllFeederMVCB;
+	//Action terminé avec warning : Au moins un depart est resté ouvert
+		CompletedFeed.2 := TON_FeedTR.Q  ; 
+	//Action terminé avec erreur : MainMVCB restée ouverte
+		CompletedFeed.1 := TON_FeedMainMVCB.Q; 
+	
+	//Sauvegarde de l'action pour alarmes
+		CompletedFeedAlarm.0 := CompletedFeed.0;
+		CompletedFeedAlarm.2 := CompletedFeed.2;
+		CompletedFeedAlarm.1 := CompletedFeed.1;
+ELSE (* TP_Feed.Q OR CompletedFeed > 0 OR IN_MesStopMVCC THEN //OPtimisation *)
+	//Reinitilisation pour Front montant
+	IN_CmdFeeding 		:= FALSE;
+	FOR KK:= 1 TO CstNbFeederMVCB_G DO 
+		TON_FeedStep[KK](IN:=FALSE);
+	END_FOR 
+
+	TON_FeedMainMVCB(IN:=FALSE);
+	TON_FeedTR(IN:=FALSE);
+	TP_Feed_TR_Open(IN:=FALSE);
+	HVcellsMoving 	:= FALSE;
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{52e96e14-71d8-4190-b7b6-7d52c45ce182}">
+      <Declaration><![CDATA[METHOD M_Init
+
+
+VAR
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+A1_GRID.ParamRseAvailable	:=TRUE	  ; 	
+A1_GRID.ParamTaAvailable	:=TRUE	  ;   
+A1_GRID.ParamP0Available	:=TRUE	  ;  
+A1_GRID.ParamQ0Available	:=TRUE	  ; 
+A1_GRID.ParamTONFiltering	:=T#200MS ;
+A1_GRID.ParamPmaxPark		:= 15000  ;    
+A1_GRID.ParamQMax			:= 3000   ;    
+A1_GRID.ParamQMin			:= -3000  ;    
+A1_GRID.ParamPMin			:= 0      ;    
+
+// Cells 
+A1_MainMVCB.ParamClosedInput_Connected := FALSE ; 
+A1_MainMVCB.ParamNC := FALSE ;
+A1_MainMVCB.ParamNbFdbck := 1 ; 
+A1_MainMVCB.ParamSectLigne := 1 ; 
+A1_MainMVCB.ParamTP_Impulsion := T#2S ; 
+A1_MainMVCB.ParamTimeOut_Alarm := T#500MS ; 
+A1_MainMVCB.ParamTimeOut_Close := T#1S ; 
+A1_MainMVCB.ParamTimeOut_Open := T#1S ;
+ 	
+// FeederMVCB_ 
+FOR KK:= 1 TO CstNbPTR_G DO 
+	
+	AX_FeederMVCB[KK].ParamClosedInput_Connected := FALSE ; 
+	AX_FeederMVCB[KK].ParamNC := FALSE ; 
+	AX_FeederMVCB[KK].ParamNbFdbck := 1 ; 
+	AX_FeederMVCB[KK].ParamSectLigne := 1 ; 
+	AX_FeederMVCB[KK].ParamTP_Impulsion := T#2S ; 
+	AX_FeederMVCB[KK].ParamTimeOut_Alarm := T#500MS ; 
+	AX_FeederMVCB[KK].ParamTimeOut_Close := T#1S ; 
+	AX_FeederMVCB[KK].ParamTimeOut_Open := T#1S ; 
+END_FOR
+
+	
+A1_GridMVCB.ParamClosedInput_Connected := FALSE ; 
+A1_GridMVCB.ParamNC := FALSE ; 
+A1_GridMVCB.ParamNbFdbck := 1 ; 
+A1_GridMVCB.ParamTimeOut_Alarm := T#500MS ; 
+A1_GridMVCB.ParamTimeOut_Close := T#1S ; 
+A1_GridMVCB.ParamTimeOut_Open := T#1S ; 				
+
+		
+A1_MeasureMVCB.ParamClosedInput_Connected := FALSE ; 
+A1_MeasureMVCB.ParamFuseNC := TRUE ; 
+A1_MeasureMVCB.ParamNC := FALSE ; 
+A1_MeasureMVCB.ParamNbFdbck := 1 ; 
+A1_MeasureMVCB.ParamTP_Impulsion := T#2S ; 
+A1_MeasureMVCB.ParamTimeOut_Alarm := T#500MS ; 
+A1_MeasureMVCB.ParamTimeOut_Close := T#1S ; 
+A1_MeasureMVCB.ParamTimeOut_Open := T#1S ;
+	
+A1_AuxMVCB.ParamClosedInput_Connected := FALSE ; 
+A1_AuxMVCB.ParamFuseNC := TRUE ; 
+A1_AuxMVCB.ParamNC := FALSE ; 
+A1_AuxMVCB.ParamNbFdbck := 1 ; 
+A1_AuxMVCB.ParamTP_Impulsion := T#2S ; 
+A1_AuxMVCB.ParamTimeOut_Alarm := T#500MS ; 
+A1_AuxMVCB.ParamTimeOut_Close := T#1S ; 
+A1_AuxMVCB.ParamTimeOut_Open := T#1S ;
+
+
+A1_CB_24V.ParamAtleastOne := TRUE ; 
+A1_CB_24V.ParamNbSensors := 1 ; 
+A1_CB_24V.ParamCableCutSecurity := TRUE ;
+
+A1_CB_48V.ParamAtleastOne := TRUE ; 
+A1_CB_48V.ParamNbSensors := 1 ; 
+A1_CB_48V.ParamCableCutSecurity := TRUE ;
+
+A1_CB_230V.ParamAtleastOne := TRUE ; 
+A1_CB_230V.ParamNbSensors := 1 ; 
+A1_CB_230V.ParamCableCutSecurity := TRUE ;
+
+A1_MainCB_LV.ParamAtleastOne := TRUE ; 
+A1_MainCB_LV.ParamNbSensors := 1 ; 
+A1_MainCB_LV.ParamCableCutSecurity := TRUE ;
+
+
+A1_DS_LV.ParamAtleastOne := TRUE ; 
+A1_DS_LV.ParamNbSensors := 1 ; 
+A1_DS_LV.ParamCableCutSecurity := TRUE ; 	
+A1_DS_LV.ParamTempoDoorAlarm := T#60S ; 
+
+A1_DS_MV.ParamAtleastOne := TRUE ; 
+A1_DS_MV.ParamNbSensors := 1 ; 
+A1_DS_MV.ParamCableCutSecurity := TRUE ; 	
+A1_DS_MV.ParamTempoDoorAlarm := T#60S ; 
+		
+A1_ES_LV.ParamAtleastOne := TRUE ;
+A1_ES_LV.ParamNbSensors := 1 ; 
+A1_ES_LV.ParamCableCutSecurity := FALSE ; 
+A1_ES_LV.ParamTempoEs := T#5S ; 
+		
+
+A1_ES_MV.ParamAtleastOne := TRUE ;
+A1_ES_MV.ParamNbSensors := 1 ; 
+A1_ES_MV.ParamCableCutSecurity := FALSE ; 
+A1_ES_MV.ParamTempoEs := T#5S ;
+
+
+				
+A1_Sd_LV.ParamAtleastOne := TRUE; 
+A1_Sd_LV.ParamNbSensors := 1; 				
+A1_Sd_LV.ParamCableCutSecurity	:= TRUE; 
+A1_Sd_LV.ParamTempoFire := T#5S ; 
+
+
+A1_Sd_MV.ParamAtleastOne := TRUE; 
+A1_Sd_MV.ParamNbSensors := 1; 				
+A1_Sd_MV.ParamCableCutSecurity	:= TRUE; 
+A1_Sd_MV.ParamTempoFire := T#5S ; 
+
+			
+A1_ProtectRelay.ParamClockReadTime := T#2S ; 
+A1_ProtectRelay.ParamTimeOut	:= T#5S ; 
+A1_ProtectRelay.ParamUnitID := 1 ; 
+A1_ProtectRelay.ParamInInterfaceSub := 0 ; 
+A1_ProtectRelay.ParamTimeoutRTU := T#5S ; 
+
+
+A1_PM.ParamClockReadTime := T#200MS ; 
+A1_PM.ParamIPAdress := '192.168.1.20' ; 
+A1_PM.ParamTempoComAlarm := T#10S ;
+A1_PM.ParamTimeout := T#2S ; 
+A1_PM.ParamUnitID := 1 ; 
+
+
+A1_PM_Aux.ParamClockReadTime := T#200MS ; 
+A1_PM_Aux.ParamTempoComAlarm := T#10S ;
+A1_PM_Aux.ParamTimeout := T#2S ; 
+A1_PM_Aux.ParamUnitID := 1 ; 					
+
+//A1_UPS_48v	
+
+A1_UPS_24v.ParamClockReadTime := T#5S ; 
+A1_UPS_24v.ParamTempoComAlarm := T#20S; 
+A1_UPS_24v.ParamTempoComWarning:= T#10S ; 
+A1_UPS_24v.ParamTimeOut	:= T#10S ; 
+A1_UPS_24v.ParamNC	:= TRUE ; 
+			
+	
+A1_UPS_48v.ParamClockReadTime := T#5S ; 
+A1_UPS_48v.ParamTempoComAlarm := T#20S; 
+A1_UPS_48v.ParamTempoComWarning:= T#10S ; 
+A1_UPS_48v.ParamTimeOut	:= T#10S ; 
+A1_UPS_48v.ParamNC	:= TRUE ; 
+
+				
+A1_Router_ADSL.ParamTempoRestart := T#30S ; 						
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_NoFeeding" Id="{777c1a99-9d92-4a02-a191-c84eebed12d7}">
+      <Declaration><![CDATA[METHOD M_NoFeeding
+VAR
+
+	
+	
+
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//Sequence decouplage
+
+R_TRIG_NoFeeding(CLK:= IN_CmdNoFeeding) ; 
+IF R_TRIG_NoFeeding.Q THEN
+	//On remet a Zero SSi il s'agit d'une nouvelle demande
+	CompletedNoFeed := 0;
+END_IF
+
+RSNoFeed(SET :=IN_CmdNoFeeding , RESET1:=F_TRIGNoFeed.Q OR IN_MesStopMVCC OR CompletedNoFeed >0 ) ; 
+
+	
+IF (RSNoFeed.Q1) THEN
+//INIT && Tempo
+	CompletedNoFeed := 0;
+	HVcellsMoving := TRUE;
+	//Tempo de sécurité : La centrale est toujours connectée
+	TON_NoFeedTR(IN:= A1_PP.MesState.2 , PT:=ParamTimeOutDisconnect- T#10S);
+	//Tempo de sécurité : MainMVCB ouverte
+	TON_NoFeedMainMVCB(IN:= A1_MainMVCB.MesDataExd.MesData.MesClosed , PT:=ParamTimeOutDisconnect- T#1S);
+	
+	// Ouverture des cellules 
+	A1_MainMVCB.IN_CmdOpen := TON_NoFeedTR.Q ; // Open MainMVCB if the power plant is still coupled after the alarm time  /
+
+		
+	//Action terminée sans erreur : La centrale est decouplée ou effacée ( ess a l arret ) 
+		CompletedNoFeed.0 	:=  A1_PP.MesState.0 ; 
+		
+		CompletedNoFeed.1 	:=  MesState.2 ; // La centrale est decouplée
+	//Action terminé avec erreur : MainMVCB restée fermée 
+		CompletedNoFeed.2 :=  TON_NoFeedMainMVCB.Q; // 	
+		CompletedNoFeed.3 	:=   MesState.0  ; // la centrale est effacée .  		
+		
+		
+	//KEEP LAST ALARMS
+	CompletedNoFeedAlarm.0 := MesState.2  ; ;	// La centrale est découplée ( stopped , but MainMVCB closed) 
+	CompletedNoFeedAlarm.2 := TON_NoFeedTR.Q;	// Echec de l'étape 1 , ouverture des Imbess
+	CompletedNoFeedAlarm.1 := TON_NoFeedMainMVCB.Q ;	// echec de l'étape 2 , ouverture de la MainMVCB . 
+	CompletedNoFeedAlarm.4 := MesState.0  ; ;	// La centrale est effacée	( MainMVCB is opened ) 
+ELSE (* TP_NoFeed.Q  OR CompletedNoFeed > 0 OR IN_MesStopMVCC THEN *)
+	IN_CmdNoFeeding 	:= FALSE;
+	ReCloseMainMVCB		:= FALSE;
+	TON_NoFeedTR (IN:=FALSE);
+	TON_NoFeedMainMVCB(IN:=FALSE);
+	TON_RecloseMainMVCB(IN:=FALSE);
+	
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_StateManager" Id="{c36bbc3d-802e-4173-8a18-3877d182ab7f}">
+      <Declaration><![CDATA[METHOD M_StateManager
+//////////////////
+// Manages SUB_MV state . 
+//////////////////
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// STATIC STATE //
+//  bit 0 : MainMVCB ouverte  , bit 1 , MainMVCB fermée , bit 2 , MainMVCB fermée , certaines cellules ouverters
+	MesState :=0 ;
+
+	IF A1_MainMVCB.MesDataExd.MesData.MesClosed  THEN
+		IF MesDataExd.MesData.MesClosed_ALOFeederMVCB THEN		// Faire la condition sur l'état des onduleurs . 
+		// Centrale couplée SSI les onduleurs Injectent
+			MesState.1 := 1 ;
+		ELSE 
+			//Centrale decouplée
+			MesState.2 := 1 ; 
+		END_IF
+	ELSE
+		//Centrale effacée
+		MesState.0 := 1; 
+	END_IF
+	
+MesDataExd.MesData.MesState :=  MesState;
+
+	SUPER^.M_StateManager() ; ]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_SUBMV_HTA">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SUBMV_HTA.M_AlarmManagement">
+      <LineId Id="1888" Count="139" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SUBMV_HTA.M_ConnectDisconnect">
+      <LineId Id="340" Count="68" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SUBMV_HTA.M_EquipmentCalls">
+      <LineId Id="376" Count="0" />
+      <LineId Id="439" Count="1" />
+      <LineId Id="378" Count="4" />
+      <LineId Id="384" Count="4" />
+      <LineId Id="391" Count="8" />
+      <LineId Id="441" Count="0" />
+      <LineId Id="401" Count="4" />
+      <LineId Id="464" Count="0" />
+      <LineId Id="406" Count="4" />
+      <LineId Id="412" Count="8" />
+      <LineId Id="424" Count="0" />
+      <LineId Id="426" Count="1" />
+      <LineId Id="170" Count="0" />
+      <LineId Id="454" Count="1" />
+      <LineId Id="443" Count="0" />
+      <LineId Id="442" Count="0" />
+      <LineId Id="445" Count="0" />
+      <LineId Id="444" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SUBMV_HTA.M_Evaluate">
+      <LineId Id="2282" Count="82" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SUBMV_HTA.M_Feeding">
+      <LineId Id="402" Count="90" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SUBMV_HTA.M_Init">
+      <LineId Id="319" Count="1" />
+      <LineId Id="104" Count="0" />
+      <LineId Id="131" Count="0" />
+      <LineId Id="115" Count="0" />
+      <LineId Id="130" Count="0" />
+      <LineId Id="120" Count="0" />
+      <LineId Id="129" Count="0" />
+      <LineId Id="122" Count="0" />
+      <LineId Id="128" Count="0" />
+      <LineId Id="124" Count="0" />
+      <LineId Id="113" Count="0" />
+      <LineId Id="149" Count="7" />
+      <LineId Id="70" Count="0" />
+      <LineId Id="167" Count="0" />
+      <LineId Id="159" Count="0" />
+      <LineId Id="328" Count="0" />
+      <LineId Id="350" Count="0" />
+      <LineId Id="160" Count="6" />
+      <LineId Id="133" Count="0" />
+      <LineId Id="157" Count="0" />
+      <LineId Id="169" Count="0" />
+      <LineId Id="72" Count="0" />
+      <LineId Id="186" Count="2" />
+      <LineId Id="191" Count="1" />
+      <LineId Id="73" Count="0" />
+      <LineId Id="180" Count="0" />
+      <LineId Id="74" Count="0" />
+      <LineId Id="212" Count="0" />
+      <LineId Id="219" Count="0" />
+      <LineId Id="213" Count="1" />
+      <LineId Id="216" Count="2" />
+      <LineId Id="75" Count="0" />
+      <LineId Id="200" Count="0" />
+      <LineId Id="220" Count="6" />
+      <LineId Id="208" Count="0" />
+      <LineId Id="227" Count="1" />
+      <LineId Id="232" Count="1" />
+      <LineId Id="229" Count="1" />
+      <LineId Id="239" Count="1" />
+      <LineId Id="234" Count="1" />
+      <LineId Id="241" Count="1" />
+      <LineId Id="236" Count="1" />
+      <LineId Id="243" Count="1" />
+      <LineId Id="238" Count="0" />
+      <LineId Id="245" Count="4" />
+      <LineId Id="231" Count="0" />
+      <LineId Id="76" Count="0" />
+      <LineId Id="251" Count="2" />
+      <LineId Id="250" Count="0" />
+      <LineId Id="79" Count="0" />
+      <LineId Id="257" Count="2" />
+      <LineId Id="254" Count="0" />
+      <LineId Id="85" Count="0" />
+      <LineId Id="330" Count="0" />
+      <LineId Id="334" Count="2" />
+      <LineId Id="331" Count="2" />
+      <LineId Id="329" Count="0" />
+      <LineId Id="89" Count="0" />
+      <LineId Id="262" Count="0" />
+      <LineId Id="260" Count="0" />
+      <LineId Id="263" Count="0" />
+      <LineId Id="337" Count="1" />
+      <LineId Id="340" Count="2" />
+      <LineId Id="339" Count="0" />
+      <LineId Id="264" Count="0" />
+      <LineId Id="90" Count="0" />
+      <LineId Id="284" Count="0" />
+      <LineId Id="289" Count="0" />
+      <LineId Id="278" Count="0" />
+      <LineId Id="290" Count="1" />
+      <LineId Id="296" Count="0" />
+      <LineId Id="277" Count="0" />
+      <LineId Id="272" Count="3" />
+      <LineId Id="97" Count="0" />
+      <LineId Id="269" Count="1" />
+      <LineId Id="297" Count="0" />
+      <LineId Id="299" Count="1" />
+      <LineId Id="271" Count="0" />
+      <LineId Id="293" Count="0" />
+      <LineId Id="313" Count="0" />
+      <LineId Id="301" Count="0" />
+      <LineId Id="305" Count="0" />
+      <LineId Id="308" Count="2" />
+      <LineId Id="312" Count="0" />
+      <LineId Id="292" Count="0" />
+      <LineId Id="102" Count="0" />
+      <LineId Id="346" Count="3" />
+      <LineId Id="344" Count="1" />
+      <LineId Id="343" Count="0" />
+      <LineId Id="2" Count="0" />
+      <LineId Id="321" Count="0" />
+      <LineId Id="105" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SUBMV_HTA.M_NoFeeding">
+      <LineId Id="190" Count="7" />
+      <LineId Id="199" Count="12" />
+      <LineId Id="218" Count="0" />
+      <LineId Id="221" Count="22" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SUBMV_HTA.M_StateManager">
+      <LineId Id="57" Count="18" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

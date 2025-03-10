@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.9">
+  <DUT Name="ProtectRelay_REFIO" Id="{27b1ce3b-7890-4b85-b761-17578da280b6}">
+    <Declaration><![CDATA[TYPE ProtectRelay_REFIO :
+STRUCT
+	
+	MesData				: ProtectRelay ; 	(* Object 								    *)
+	MesTransfoAlarm		: BOOL ; 	(* Transfo alarm                              *)
+	MesSWOpened			: BOOL ;	(* Sectionneur de ligne ouvert              *)
+	MesSWClosed			: BOOL ; 	(* Sectionneur de ligne fermé               *)
+	MesEarth			: BOOL ; 	(* Earthing                                 *)
+	MesSF6Low			: BOOL ; 	(* SF6 gaz is low                           *)
+	MesSF6Unsufficient	: BOOL ; 	(* Sf6  is unsufficient                     *)
+	MesTransfoWarning	: BOOL ; 	(* Transfo warning                            *)
+	MesOpened			: BOOL ; 	(* Disjoncteur opened                       *)
+	MesClosed			: BOOL ; 	(* Disjoncteur is closed                    *)
+	MesComutLocal		: BOOL ; 	(* Commutateur Local/Distant.               *)
+	
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

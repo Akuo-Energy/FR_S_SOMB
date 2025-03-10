@@ -1,0 +1,328 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_PM_PM3250" Id="{fbed458c-4b4d-4c42-bb3f-2a3b7801512c}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_PM_PM3250 EXTENDS FB_PM_Base
+//////////////////
+// Measurement Solution based on Digiware, but access through PMS Socomec
+//////////////////
+VAR CONSTANT
+	// Characteristics of the object (Same for all instances)
+			
+END_VAR
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance specific) 
+	{attribute 'OPC.UA.DA' := '1'} 
+	ParamUnitID					: BYTE 		:= 1 ;								(* (NA)unit ID*)
+//	ParamInInterfaceSub			: BOOL := TRUE; 								// (NA) Serial interface RS422/RS485 TYPE (0:EL6021,1:SUB9)			
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	
+END_VAR
+
+VAR_INPUT 
+				MesDataExd AT %Q*				: PM_Standard ;
+END_VAR
+
+VAR
+
+	//M_READ VARIABLES//
+		InputStructRead 			: ARRAY[1..5] OF  Struct_InputRTU;
+
+		AX_Quantity					: ARRAY[1..5] OF WORD;					// (NA) Quantity of blocks to read
+		AX_Address					: ARRAY[1..5] OF WORD;					// (NA) Start address of the read
+		MesBlock_Temp 				: ARRAY[1..5] OF ARRAY[1..125] OF WORD;	// (NA) Temporary Block with multiple modbus reading (U30 + I35)
+		Busy						: BOOL;
+		OutErrorMbRead				: ARRAY[1..5] OF BOOL;
+	
+
+	//M_INIT VARIABLES //
+		OutFBCompleteted			: BOOL;
+	// M_EXECUTE VARIABLES //
+		RTrigI						: R_TRIG;
+
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{503fa04c-4cba-44ba-9ffe-f124d2eceaa8}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Digiware measurement tool alarm and warning management
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	FB_AlarmCodeManager			: FB_AlarmCodeManager ; 
+	
+	KK							: BYTE ;		// For loop
+	
+	CMWarning					: BOOL;			// At least one Digiware device in Alarm
+	CMAlarm						: BOOL;			// At least one Digiware device in Alarm
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+	
+TON_ComAlarm(IN:= OutErrorMbRead[1] AND OutErrorMbRead[2] AND OutErrorMbRead[3] AND OutErrorMbRead[4] AND OutErrorMbRead[5] , PT:= ParamTempoComAlarm, Q=> MesDataExd.MesData.MesAlarmCom) ;	
+TON_ComWarning(IN:= OutErrorMbRead[1] OR OutErrorMbRead[2] OR OutErrorMbRead[3] OR OutErrorMbRead[4] OR OutErrorMbRead[5] , PT:= ParamTempoComAlarm, Q=>MesWarningCom) ;	
+
+// General com alarm : All the read FB fucked up
+// ALARM CODE //
+	FB_AlarmCodeManager( 
+		bAlarm1			:= MesDataExd.MesData.MesAlarmCom, 					// Communication Error  #COM
+		bAlarm2			:=FALSE, 									// 
+		bAlarm3			:=FALSE, 									// 
+		bAlarm4			:=FALSE, 									// 
+		bAlarm5			:=FALSE, 									//
+		bAlarm6			:=FALSE, 									//
+		bAlarm7			:=FALSE, 									//
+		bAlarm8			:=FALSE, 									//
+		bAlarm9			:=FALSE, 									//
+		bAlarm10		:=FALSE, 									//
+		bAlarm11		:=FALSE, 									//
+		bAlarm12		:=FALSE, 									//
+		bAlarm13		:=FALSE, 									//
+		bAlarm14		:=FALSE, 									//
+		bAlarm15		:= FALSE , 									//						 
+		wAlarmCode		=>MesDataExd.MesData.MesAlarmCode);
+
+// WARNING CODE //
+	FB_AlarmCodeManager(		
+		bAlarm1			:=	MesWarningCom,				 			// Communication Warning #COM	
+		bAlarm2			:=FALSE, 									// 
+		bAlarm3			:=FALSE, 									// 
+		bAlarm4			:=FALSE, 									// 
+		bAlarm5			:=FALSE, 									//
+		bAlarm6			:=FALSE, 									//
+		bAlarm7			:=FALSE, 									//
+		bAlarm8			:=FALSE, 									//
+		bAlarm9			:=FALSE, 									//
+		bAlarm10		:=FALSE, 									//
+		bAlarm11		:=FALSE, 									//
+		bAlarm12		:=FALSE, 									//
+		bAlarm13		:=FALSE, 									//
+		bAlarm14		:=FALSE, 									//
+		bAlarm15		:=FALSE, 									//
+		wAlarmCode		=>MesDataExd.MesData.MesWarningCode);		]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_CP" Id="{1cc7b6d9-b84d-4871-bfdf-f25568724760}">
+      <Declaration><![CDATA[METHOD M_CP
+//////////////////
+//  Emulator
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+SUPER^.M_CP() ; 
+
+
+
+
+Trig_Cmd_Read(CLK:=IN_CmdToggleRead);
+	
+IF Trig_Cmd_Read.Q THEN
+	IN_CmdToggleRead := FALSE;
+	MesDataExd.MesData.MesCP_Read := NOT MesDataExd.MesData.MesCP_Read;
+END_IF
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Evaluate" Id="{be0d918e-8071-4945-aa57-461c0a635a2a}">
+      <Declaration><![CDATA[METHOD M_Evaluate : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{d9b97e5d-1b04-4ded-8014-8486e85d3ec5}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	// EMULATOR
+		Psoltot		: REAL;		// Total Solar Power . 
+		KK			: BYTE;		// For Loop
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// READING AND WRITING CLOCK //
+	TP1(IN:=NOT TP1.Q , PT:= ParamClockReadTime);
+	ClockRead 		:= TP1.Q;
+
+// PERMANENT CONDITIONS //
+	MesCP_Read 					:= TRUE  ; 
+	
+// METHODS CALLS //
+	IF bInit THEN
+		M_Init() ; 
+		bInit							:= FALSE ; 
+	ELSIF CmdInit_G OR IN_CmdReset_L THEN 
+		bInit:= TRUE ;
+	END_IF
+
+	M_Read() ; 	
+	M_AlarmManagement(); 
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{06951915-f65f-4a06-b8cd-136134264c9c}">
+      <Declaration><![CDATA[METHOD M_Init
+VAR 
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[	
+AX_Quantity[1] := 12;
+AX_Quantity[2] := 18;
+AX_Quantity[3] := 32;
+AX_Quantity[4] := 4;
+AX_Quantity[5] := 32;
+
+AX_Address[1]  := 2999;
+AX_Address[2]  := 3020;
+AX_Address[3]  := 3053;
+AX_Address[4]  := 3107;
+AX_Address[5]  := 3203;
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Read" Id="{3a1ae34f-5b01-467f-aed5-d6b6ac1177b6}">
+      <Declaration><![CDATA[METHOD M_Read
+//////////////////
+//  Read Modbus Variable for PCS . 
+/////////////////
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	MW 					: FB_MergeWordsToFloat; 
+	KK					: BYTE;  						// FOR Loop 
+	MW2					: FB_MergeWordsToDint ; 
+
+	
+END_VAR
+
+
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// CP-Read / Write 
+
+ 
+
+IF MesDataExd.MesData.MesCP_Read  THEN	
+
+	RTrigI(CLK:= ClockRead AND MesDataExd.MesData.MesCP_Read);
+	//Metrology
+	FOR KK:=1 TO 5 DO  
+		InputStructRead[KK].InBuffer := ADR(MesBlock_Temp[KK]);
+		InputStructRead[KK].InFunction := 3;
+		InputStructRead[KK].InQuantity := AX_Quantity[KK];
+		InputStructRead[KK].InStartAddr := AX_Address[KK];
+		InputStructRead[KK].InUnitID := ParamUnitID;
+		
+		InputStructRead[KK].OutBusy := ADR(Busy);
+		InputStructRead[KK].OutError := ADR(OutErrorMbRead[KK]);
+		//InputStructRead[KK].OutCompleted := ADR(bReadCompleted);
+		
+		IF RTrigI.Q THEN 
+			A1_SUBMV.FB_ModbusReadRTU.M_AddAction_FIFO(InStruct:= InputStructRead[KK] , InPriority:=1 ) ; 
+		END_IF
+		
+	END_FOR 
+	// PROPERTIES UPDATE // 
+		// Block 1
+	//MW( WORD_STRONG:= MesBlock_Temp[1][1], 	WORD_WEAK := MesBlock_Temp[1][2],	SIGNED:=TRUE, FIX:=0 , SIZE:=2, VAR_OUT := MesDataExd.MesData.MesI2);
+		
+	
+	MW( WORD_STRONG:= MesBlock_Temp[1][1], 	WORD_WEAK := MesBlock_Temp[1][2], VAR_OUT := MesDataExd.MesData.MesI1);
+	MW( WORD_STRONG:= MesBlock_Temp[1][3], 	WORD_WEAK := MesBlock_Temp[1][4], VAR_OUT:= MesDataExd.MesData.MesI2);
+	MW( WORD_STRONG:= MesBlock_Temp[1][5], 	WORD_WEAK := MesBlock_Temp[1][6], VAR_OUT:= MesDataExd.MesData.MesI3);
+	MW( WORD_STRONG:= MesBlock_Temp[1][7], 	WORD_WEAK := MesBlock_Temp[1][8], VAR_OUT:= MesDataExd.MesData.MesIN);
+	MW( WORD_STRONG:= MesBlock_Temp[1][11], 	WORD_WEAK := MesBlock_Temp[1][12], VAR_OUT:= MesDataExd.MesData.MesI);
+	
+	MW(WORD_WEAK := MesBlock_Temp[2][1], 	WORD_STRONG:= MesBlock_Temp[2][2], VAR_OUT:= MesDataExd.MesData.MesU12);		
+	MW(WORD_WEAK := MesBlock_Temp[2][3], 	WORD_STRONG:= MesBlock_Temp[2][4], VAR_OUT:= MesDataExd.MesData.MesU23);
+	MW(WORD_WEAK := MesBlock_Temp[2][5], 	WORD_STRONG:= MesBlock_Temp[2][6], VAR_OUT:= MesDataExd.MesData.MesU31);
+	MW(WORD_WEAK := MesBlock_Temp[2][7], 	WORD_STRONG:= MesBlock_Temp[2][8], VAR_OUT:= MesDataExd.MesData.MesU);		// Seule donnée valide en monophasée. Il faut d'ailleur inverser les words strongs et word weak quand on passe le settings de triphasé à monophasé . 
+	MW(WORD_WEAK := MesBlock_Temp[2][9], 	WORD_STRONG:= MesBlock_Temp[2][10], VAR_OUT:= MesDataExd.MesData.MesV1);
+	MW(WORD_WEAK := MesBlock_Temp[2][11], WORD_STRONG := MesBlock_Temp[2][12], VAR_OUT:= MesDataExd.MesData.MesV2);
+	MW(WORD_WEAK := MesBlock_Temp[2][13], WORD_STRONG := MesBlock_Temp[2][14], VAR_OUT:= MesDataExd.MesData.MesV3);
+	MW(WORD_WEAK := MesBlock_Temp[2][17], WORD_STRONG := MesBlock_Temp[2][18], VAR_OUT:= MesDataExd.MesData.MesV);
+	
+	MW( WORD_STRONG:= MesBlock_Temp[3][1], 	WORD_WEAK := MesBlock_Temp[3][2], VAR_OUT:= MesDataExd.MesData.MesP1);
+	MW( WORD_STRONG:= MesBlock_Temp[3][3], 	WORD_WEAK := MesBlock_Temp[3][4], VAR_OUT:= MesDataExd.MesData.MesP2);
+	MW( WORD_STRONG:= MesBlock_Temp[3][5], 	WORD_WEAK := MesBlock_Temp[3][6], VAR_OUT:= MesDataExd.MesData.MesP3);
+	MW( WORD_STRONG:= MesBlock_Temp[3][7], 	WORD_WEAK := MesBlock_Temp[3][8], VAR_OUT:= MesDataExd.MesData.MesP);
+	
+	MW( WORD_STRONG:= MesBlock_Temp[3][9], 	WORD_WEAK := MesBlock_Temp[3][10], VAR_OUT:= MesDataExd.MesData.MesQ1);
+	MW( WORD_STRONG:= MesBlock_Temp[3][11], 	WORD_WEAK := MesBlock_Temp[3][12], VAR_OUT:= MesDataExd.MesData.MesQ2);
+	MW( WORD_STRONG:= MesBlock_Temp[3][13], 	WORD_WEAK := MesBlock_Temp[3][14], VAR_OUT:= MesDataExd.MesData.MesQ3);
+	MW( WORD_STRONG:= MesBlock_Temp[3][15], 	WORD_WEAK := MesBlock_Temp[3][16], VAR_OUT:= MesDataExd.MesData.MesQ);
+	MW( WORD_STRONG:= MesBlock_Temp[3][23], 	WORD_WEAK := MesBlock_Temp[3][24], VAR_OUT:= MesDataExd.MesData.MesS);
+	
+	MW( WORD_STRONG:= MesBlock_Temp[4][1], 	WORD_WEAK := MesBlock_Temp[4][2], VAR_OUT:= MesDataExd.MesData.MesTanPhi);
+	MW( WORD_STRONG:= MesBlock_Temp[4][3], 	WORD_WEAK := MesBlock_Temp[4][4], VAR_OUT:= MesDataExd.MesData.MesFreq);
+	
+	MW2( WORD_STRONG:= MesBlock_Temp[5][3], 	WORD_WEAK := MesBlock_Temp[5][4], VAR_OUT := MesDataExd.MesData.MesEActCons,SIZE:=2,FIX:=3);
+	MW2( WORD_STRONG:= MesBlock_Temp[5][7], 	WORD_WEAK := MesBlock_Temp[5][8], VAR_OUT := MesDataExd.MesData.MesEActProd,SIZE:=2,FIX:=3);
+	MW2( WORD_STRONG:= MesBlock_Temp[5][19], 	WORD_WEAK := MesBlock_Temp[5][20], VAR_OUT := MesDataExd.MesData.MesEReactProd,SIZE:=2,FIX:=3);
+	MW2( WORD_STRONG:= MesBlock_Temp[5][23], 	WORD_WEAK := MesBlock_Temp[5][24], VAR_OUT := MesDataExd.MesData.MesEReactCons,SIZE:=2,FIX:=3);
+	
+	
+	//MW( WORD_STRONG:= MesBlock_Temp[4][3], 	WORD_WEAK := MesBlock_Temp[4][4],	SIGNED:=TRUE, FIX:=0 , SIZE:=2, VAR_OUT := MesDataExd.MesData.MesFreq);
+	//MW( WORD_STRONG:= MesBlock_Temp[5][1], 	WORD_WEAK := MesBlock_Temp[5][2],	SIGNED:=TRUE, FIX:=0 , SIZE:=2, VAR_OUT := MesDataExd.MesData.MesEActProd);
+	//MW( WORD_STRONG:= MesBlock_Temp[5][3], 	WORD_WEAK := MesBlock_Temp[5][4],	SIGNED:=TRUE, FIX:=0 , SIZE:=2, VAR_OUT := MesDataExd.MesData.MesEActCons);
+	//MW( WORD_STRONG:= MesBlock_Temp[5][5], 	WORD_WEAK := MesBlock_Temp[5][6],	SIGNED:=TRUE, FIX:=0 , SIZE:=2, VAR_OUT := MesDataExd.MesData.MesEReactProd);
+	//MW( WORD_STRONG:= MesBlock_Temp[5][7], 	WORD_WEAK := MesBlock_Temp[5][8],	SIGNED:=TRUE, FIX:=0 , SIZE:=2, VAR_OUT := MesDataExd.MesData.MesEReactCons);
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_PM_PM3250">
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PM_PM3250.M_AlarmManagement">
+      <LineId Id="177" Count="2" />
+      <LineId Id="196" Count="0" />
+      <LineId Id="195" Count="0" />
+      <LineId Id="180" Count="0" />
+      <LineId Id="211" Count="35" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PM_PM3250.M_CP">
+      <LineId Id="112" Count="13" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PM_PM3250.M_Evaluate">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PM_PM3250.M_Execute">
+      <LineId Id="560" Count="16" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PM_PM3250.M_Init">
+      <LineId Id="42" Count="11" />
+      <LineId Id="23" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_PM_PM3250.M_Read">
+      <LineId Id="822" Count="1" />
+      <LineId Id="825" Count="1" />
+      <LineId Id="742" Count="64" />
+      <LineId Id="656" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

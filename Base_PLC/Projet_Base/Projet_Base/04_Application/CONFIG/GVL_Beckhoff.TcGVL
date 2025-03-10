@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <GVL Name="GVL_Beckhoff" Id="{bb96002d-c75b-47e4-8d17-12964506468d}">
+    <Declaration><![CDATA[VAR_GLOBAL
+	CalLocalTimeStruct			: TIMESTRUCT;		// Local Time Structure
+	CstTimeZone_G				: ST_TimeZoneInformation 	:= WEST_EUROPE_TZI ;	// Local TimeZone
+	ParamDirBaseStore		: STRING := 'C:\TwinCAT\Functions\Historisation\';	// Directroy for the historization
+	
+	
+	// Communication 
+	stPCComInData  	AT %I*	: EL6inData22B;//PcComInData; 	//DATA qui rentre  ELinData22B;
+	stPCComOutData	AT %Q*	: El6outdata22b;//PcComOutData; //DATA qui sort  EL6outData22B;
+	stTxBufferPC			: ComBuffer; 	//Connection serie
+	stRxBufferPC			: ComBuffer; 	//Connection serie
+	
+END_VAR]]></Declaration>
+  </GVL>
+</TcPlcObject>

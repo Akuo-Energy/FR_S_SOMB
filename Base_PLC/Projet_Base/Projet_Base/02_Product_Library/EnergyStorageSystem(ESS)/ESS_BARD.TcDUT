@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="ESS_BARD" Id="{71402308-dc83-4e8b-b576-67939d5f097e}">
+    <Declaration><![CDATA[{attribute 'pack_mode' := '1'}
+TYPE ESS_BARD :
+STRUCT
+	
+		MesData						: ESS ; (* MesData*)
+		
+		AX_PCS 						: ARRAY[1..CstNbPcs_ESS_G] OF PCS_Sma;			(* PCS Object *) 
+		AX_Bat						: ARRAY[1..CstNbBAT_Ess_G] OF BAT_KP;
+		AX_HVAC						: ARRAY[1..CstNbHvac_ESS_G] OF HVAC_MeAcMbs1 ; 
+		AX_TempSensor				: ARRAY[1..CstNbTempSensor_ESS_G] OF ANA_Standard;
+		AX_HygroSensor				: ARRAY[1..CstNbTempSensor_ESS_G] OF ANA_Standard;
+		DS_Bat1						: TOR_Standard;
+		DS_Bat2						: TOR_Standard;
+		Spd							: TOR_Standard;
+		FSS							: FSS_Standard ; 
+		MainLVCB					: TOR_CB;
+		ES							: TOR_Standard;										
+		EM							: EM_Standard;
+		SD_Bat1						: TOR_Standard ; 
+		SD_Bat2						: TOR_Standard ; 
+		UPS_24V						: UPS_Eneris ; 									
+		CB_ChainFanBank_16_22		: TOR_CB ; 										
+		CB_ChainFanBank1_1_15		: TOR_CB ; 										
+		CB_ChainFanBank2_1_15		: TOR_CB ; 										
+		CB_ChainFuseRack_Bat1		:  TOR_CB ;										
+		CB_ChainFuseRack_Bat2		:  TOR_CB ;										
+		CB_RackCtrl24V				: TOR_CB; 										
+		CB_PLC24V					: TOR_CB ;										
+		CB_BBMS1					: CB_Switch ;									
+		CB_BBMS2					: CB_Switch ;									
+
+
+		
+		
+		
+		
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

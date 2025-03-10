@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <DUT Name="ANA_DustIQ" Id="{b2463c63-b35a-4276-bba0-1b2da989afef}">
+    <Declaration><![CDATA[TYPE ANA_DustIQ :
+STRUCT
+	Value_Mean				: REAL ;	(* (-) Analogic mean value							*)
+	Value_Devstd			: REAL ;	(* (-) Standard deviation value						*)
+	Value_Soiling			: REAL ; 	(* (-) To be changed 								*)
+	
+	MesAlarmCode			: WORD ;	(* (NA) Internal Akuo AlarmCode     				*)
+	MesWarningCode			: WORD ;    (* (NA) Internal Akuo WarningCode   				*)
+	MesEventCode			: WORD ;    (* (NA) Internal Akuo EventCode						*)
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

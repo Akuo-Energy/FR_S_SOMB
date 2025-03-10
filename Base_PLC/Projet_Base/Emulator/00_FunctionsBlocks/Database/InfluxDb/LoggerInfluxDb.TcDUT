@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="LoggerInfluxDb" Id="{c427f752-5847-42c1-ac5d-d6127c2c90ab}">
+    <Declaration><![CDATA[TYPE LoggerInfluxDb :
+STRUCT
+	MesAlarmCode		: WORD;				// Alarm Code
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

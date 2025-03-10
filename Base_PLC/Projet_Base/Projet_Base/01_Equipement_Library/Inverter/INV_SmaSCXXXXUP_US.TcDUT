@@ -1,0 +1,155 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="INV_SmaSCXXXXUP_US" Id="{ab930503-1903-47d3-bbd8-aeafa8ae0c1c}">
+    <Declaration><![CDATA[TYPE INV_SmaSCXXXXUP_US :
+	//SMA CP, CP-US, CP-JP and HE-20
+STRUCT
+MesData					: INV;
+
+// Device Family
+MesIdc_Group1				:REAL; (* (A) DC current inverter bridge 1 [DcMs.Amp.Stk1] *)
+MesIdc_Group2				:REAL; (* (A) DC current inverter bridge 2 [DcMs.Amp.Stk2] *)
+MesIdc_Group3				:REAL; (* (A) DC current inverter bridge 3 [DcMs.Amp.Stk3] *)
+             				
+MesUdc_Group1				:REAL; (* (V) DC voltage of the inverter bridge 1 [InvMs.DclVol.Stk1] *)
+MesUdc_Group2				:REAL; (* (V) DC voltage of the inverter bridge 2 [InvMs.DclVol.Stk2] *)
+MesUdc_Group3				:REAL; (* (V) DC voltage of the inverter bridge 3 [InvMs.DclVol.Stk3] *)
+MesI1						:REAL; (* (A) AC current L1, total [InvMs.TotA.PhsA] *)
+MesI2						:REAL; (* (A) AC current L2, total [InvMs.TotA.PhsB] *)
+MesI3						:REAL; (* (A) AC current L3, total [InvMs.TotA.PhsC] *)
+
+MesU12						:REAL; (* (V) Line-to-line voltage L1-L2, utility grid [GriMs.V.PhsAB] *)
+MesU23						:REAL; (* (V) Line-to-line voltage L2-L3, utility grid [GriMs.V.PhsBC] *)
+MesU31						:REAL; (* (V) Line-to-line voltage L3-L1, utility grid [GriMs.V.PhsCA] *)
+
+MesTemp_CabAC				:REAL; (* (°C) Temperature in the AC range [TmpCab.Acc] *)
+MesTemp_CabDC				:REAL; (* (°C) Temperature in the DC range [TmpCab.Dcc] *)
+MesTemp_CabRio				:REAL; (* (°C) Temperature in the electronics area [TmpCab.Rio] *)
+
+MesTemp_Igbt				:REAL; (* (°C) Temperature of the inverter bridge (switch), maximum value [TmpStk.IgbtMax] *)
+MesTemp_Pcb					:REAL; (* (°C) Temperature of the inverter bridge (assembly), maximum value [TmpStk.PcbMax] *)
+MesTemp_Ext					:REAL; (* (°C) Outside temperature [TmpExl] *)
+MesTemp_Transfo				:REAL; (* (°C) Temperature of the MV transformer [TmpTrf] *)
+MesID_DC1State				:UINT; (* (-) Switching status of the DC load- break switch 1 [DcSw1Stt] *)
+MesID_DC2State				:UINT; (* (-) Switching status of the DC load- break switch 2 [DcSw2Stt] *)
+MesID_DC3State				:UINT; (* (-) Switching status of the DC load- break switch 3 [DcSw3Stt] *)
+MesID_ACState				:UINT; (* (-) Switching status of the AC circuit breaker [AcSwStt] *)
+MesID_CapaState				:UINT; (* (-) Switching state of the capacitor contactor [CapacSwStt] *)
+MesID_PreChargeState			:UINT; (* (-) Switching status of the pre-charging contactor [PrchrgSwStt] *)
+MesFeedTm					:REAL; (* (s) Feed-in time [Cnt.TotFeedTm] *)
+MesWorkingHr				:REAL; (* (s) Operating time [Cnt.TotOpTm] *)
+MesEdcDischarge_Tot			:REAL; (* (MWh) DC energy drawn, total [Cnt.TotWatthIn] *)
+MesEActProd_Tot				:REAL; (* (MWh) AC energy fed in, total [Cnt.TotWhOut] *)
+MesEdcDischarge_Day			:REAL; (* (MWh) DC energy drawn that day [Cnt.WatthIn] *)
+MesEActProd_Day				:REAL; (* (MWh) AC energy fed in that day [Cnt.WhOut] *)
+MesWorkingHr_Fan1			:REAL; (* (s) Operating time of the interior fan 1 [Cnt.FanCab1Tm] *)
+MesWorkingHr_Fan2			:REAL; (* (s) Operating time of the interior fan 2 [Cnt.FanCab2Tm] *)
+MesWorkingHr_BridgeFan		:REAL; (* (s) Operating time of the inverter bridge fan [Cnt.FanStkTm] *)
+MesWorkingHr_Heater			:REAL; (* (s) Operating time of the interior heater [Cnt.HtCabTm] *)
+MesWorkingHr_Heater2		:REAL; (* (s) Operating time of the  -40 C interior heater [Cnt.HtLoExlTmpTm] *)
+MesID_ErrorLocation			:UINT; (* (-) Error location of the present error [ErrLcn] *)
+MesID_ErrorState			:UINT; (* (-) Error status of the inverter [ErrStt] *)
+MesEventID					:REAL; (* (-) Error number of the present error [ErrNo] *)
+
+MesID_StartKeyState			:UINT; (* (-) Switch status of the start-stop key switch [Rio.KeySw] *)
+MesTime_GridConnWait		:REAL; (* (s) Waiting time for grid connection [WaitGriTm] *)
+
+MesID_GFDIState				:UINT; (* (-) Switching status of the GFDI [GfdiSwStt] *)
+MesSetptP					:REAL; (* (kW) Active power, setpoint [WSpt] *)
+MesSetptSmax				:REAL; (* (kVA) Maximum apparent power, setpoint [VAMaxSpt] *)
+MesSetptQ					:REAL; (* (kVAr) Reactive power, setpoint [VArSpt] *)
+MesSetptCosPhi				:REAL; (* (-) Power factor cos (phi), setpoint [PFSpt] *)
+MesID_AlarmGas_Transfo			:UINT; (* (-) Fast stop hermetic protection, pressure [TrfPro.Pres] *)
+MesID_AlarmTemp_Transfo		:UINT; (* (-) Fast stop hermetic protection, temperature [TrfPro.TmpTrp] *)
+MesID_AlarmOilLevel_Transfo	:UINT; (* (-) Hermetic protection, gas fill level [TrfPro.GasOilLev] *)
+MesIDWarningTemp_Transfo		:UINT; (* (-) Hermetic pressure, temperature warning [TrfPro.TmpWrn] *)
+MesTemp_Igbt1				:REAL; (* (°C) Temperature of inverter bridge 1 (switch) [TmpStk1.lgbt] *)
+MesTemp_Pcb1				:REAL; (* (°C) Maximum temperature of inverter bridge 1 (assembly) [TmpStk1.Pcb] *)
+MesTemp_Pcb2				:REAL; (* (°C) Maximum temperature of inverter bridge 2 (assembly) [TmpStk2.Pcb] *)
+MesTemp_Pcb3				:REAL; (* (°C) Maximum temperature of inverter bridge 3 (assembly) [TmpStk3.Pcb] *)
+MesEAct_PreviousDay			:REAL; (* (MWh) AC energy fed in the previous day [Cnt.YstdWhOut] *)
+MesWorkingHr_Cpu			:REAL; (* (s) CPU running time since system start [Cpu1UpTime] *)
+
+MesPressure_Transfo			:REAL; (* (-) MV transformer pressure [PresTrf] *)
+MesID_PresMonitorState_Transfo:UINT; (* (-) Error status of MV transformer pressure monitoring [PresTrf.ErrStt] *)
+MesState_BackFeedMode		:REAL; (* (-) Status of the function Backfeed Power [BfpBits] *)
+MesIdc_BackFeed				:REAL; (* (A) Backfeed Power: DC current used by customer loads [DcMs.BfpAmp] *)
+
+MesEdcCharge_Tot			:REAL; (* (MWh) DC energy fed in, total [Cnt.TotDcWhOut] *)
+MesEActCons_Tot				:REAL; (* (MWh) AC energy drawn, total [Cnt.TotAcWhIn] *)
+MesEdcCharge_Day			:REAL; (* (MWh) DC energy fed in that day [Cnt.DcWhOut] *)
+MesEActCons_Day				:REAL; (* (MWh) AC energy drawn that day [Cnt.AcWhIn] *)
+MesSetptUdc					:REAL; (* (V) DC voltage, setpoint [DclVolSpt] *)
+MesSetptU					:REAL; (* (pu) AC voltage-dependent reactive power control: setpoint AC voltage [VolNomSpt] *)
+
+MesSetptFreq					:REAL; (* (Hz) Nominal frequency for frequency- dependent control of active power [HzNomSpt] *)
+MesPconnected					:REAL; (* (pu) Currently available active power [WAval] *)
+MesQconnected					:REAL; (* (pu) Currently available reactive power [VArAval] *)
+MesID_Derating				:UINT; (* (-) Current derating status [DrtStt] *)
+MesID_Off					:UINT; (* (-) Current cause of inverter disconnection [PwrOffReas] *)
+MesTime_SelfTestWait		:REAL; (* (s) Time until the next inverter self test [DiagRmgTm] *)
+MesID_WarningFloatCtrl		:REAL; (* (-) The float controller indicates a warning. [Rio.Din.FloatCtl.Wa rn] *)
+MesID_ErrorFloatCtrl		:REAL; (* (-) The float controller indicates a warning. [Rio.Din.FloatCtl.Err] *)
+MesIGnd						:REAL; (* (A) Ground current measured at the GFDI [Gfdi.AmpPrc] *)
+MesIGnd_LastError			:REAL; (* (A) Last measured ground current in case of an error [Gfdi.AmpErr] *)
+MesEventID1					:REAL; (* (-) Error number of the current error [ActErrNo1] *)
+MesID_ErrorLocation1		:UINT; (* (-) Location where the current error was detected [ActErrLcn1] *)
+MesEventID2					:REAL; (* (-) Error number of the current error [ActErrNo2] *)
+MesID_ErrorLocation2		:UINT; (* (-) Location where the current error was detected [ActErrLcn2] *)
+MesEventID3					:REAL; (* (-) Error number of the current error [ActErrNo3] *)
+MesID_ErrorLocation3		:UINT; (* (-) Location where the current error was detected [ActErrLcn3] *)
+MesEventID4					:REAL; (* (-) Error number of the current error [ActErrNo4] *)
+MesID_ErrorLocation4		:UINT; (* (-) Location where the current error was detected [ActErrLcn4] *)
+MesEventID5					:REAL; (* (-) Error number of the current error [ActErrNo5] *)
+MesID_ErrorLocation5		:UINT; (* (-) Location where the current error was detected [ActErrLcn5] *)
+MesEventID6					:REAL; (* (-) Error number of the current error [ActErrNo6] *)
+MesID_ErrorLocation6		:UINT; (* (-) Location where the current error was detected [ActErrLcn6] *)
+MesEventID7					:REAL; (* (-) Error number of the current error [ActErrNo7] *)
+MesID_ErrorLocation7		:UINT; (* (-) Location where the current error was detected [ActErrLcn7] *)
+MesEventID8					:REAL; (* (-) Error number of the current error [ActErrNo8] *)
+MesID_ErrorLocation8		:UINT; (* (-) Location where the current error was detected [ActErrLcn8] *)
+MesEventID9					:REAL; (* (-) Error number of the current error [ActErrNo9] *)
+MesID_ErrorLocation9		:UINT; (* (-) Location where the current error was detected [ActErrLcn9] *)
+MesEventID10				:UINT; (* (-) Error number of the current error [ActErrNo10] *)
+MesID_ErrorLocation10		:UINT; (* (-) Location where the current error was detected [ActErrLcn10] *)
+
+	
+MesIdc_input1			:REAL; (* (A) DC current input X61 [DcMs.Amp.01] *)
+MesIdc_input2			:REAL; (* (A) DC current input X62[DcMs.Amp.02] *)
+MesIdc_input3			:REAL; (* (A) DC current input X63[DcMs.Amp.03] *)
+MesIdc_input4			:REAL; (* (A) DC current input X64[DcMs.Amp.04] *)
+MesIdc_input5			:REAL; (* (A) DC current input X65[DcMs.Amp.05] *)
+MesIdc_input6			:REAL; (* (A) DC current input X66[DcMs.Amp.06] *)
+MesIdc_input7			:REAL; (* (A) DC current input X67[DcMs.Amp.07] *)
+//MesIdc_input8			:REAL; (* (A) DC current input X68[DcMs.Amp.08] *)
+MesIdc_input9			:REAL; (* (A) DC current input X69[DcMs.Amp.09] *)
+MesIdc_input10			:REAL; (* (A) DC current input X70 [DcMs.Amp.10] *)
+MesIdc_input11			:REAL; (* (A) DC current input X71 [DcMs.Amp.11] *)
+MesIdc_input12			:REAL; (* (A) DC current input X72 [DcMs.Amp.12] *)
+MesIdc_input13			:REAL; (* (A) DC current input X73 [DcMs.Amp.13] *)
+MesIdc_input14			:REAL; (* (A) DC current input X74 [DcMs.Amp.14] *)
+MesIdc_input15			:REAL; (* (A) DC current input X75 [DcMs.Amp.15] *)
+//MesIdc_input16			:REAL; (* (A) DC current input X76 [DcMs.Amp.16] *)
+MesIdc_input17			:REAL; (* (A) DC current input X77[DcMs.Amp.01] *)
+MesIdc_input18			:REAL; (* (A) DC current input X78 [DcMs.Amp.02] *)
+MesIdc_input19			:REAL; (* (A) DC current input X79 [DcMs.Amp.03] *)
+MesIdc_input20			:REAL; (* (A) DC current input X80 [DcMs.Amp.04] *)
+MesIdc_input21			:REAL; (* (A) DC current input X81 [DcMs.Amp.05] *)
+MesIdc_input22			:REAL; (* (A) DC current input X82 [DcMs.Amp.06] *)
+MesIdc_input23			:REAL; (* (A) DC current input X83 [DcMs.Amp.07] *)
+//MesIdc_input24			:REAL; (* (A) DC current input 84 [DcMs.Amp.08] *)
+
+
+
+MesStatus_Derating				:WORD; (* (-) Internal Current derating status [DrtStt] *)
+MesStatus_Derating1				:WORD; (* (-) Internal Current derating status [DrtStt] *)
+MesStatus_Off					:WORD; (* (-) Internal Current cause of inverter disconnection [PwrOffReas] *)
+MesStatus_Off1					:WORD; (* (-) Internal Current cause of inverter disconnection [PwrOffReas] *)
+		
+	
+END_STRUCT
+END_TYPE
+
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

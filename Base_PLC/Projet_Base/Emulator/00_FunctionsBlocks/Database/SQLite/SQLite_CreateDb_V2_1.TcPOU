@@ -1,0 +1,207 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="SQLite_CreateDb_V2_1" Id="{a7f8542f-1857-4bc9-afc5-2263cb7aff3c}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM SQLite_CreateDb_V2_1
+VAR_INPUT
+	IN_ConfigDbActuelle		: ARRAY[0..MAX_CONFIGURATIONS] OF ST_ConfigDB; 
+	IN_DbType				: UINT:= 1; // 1:T_DBConfig_SQLite, 2:T_DBConfig_SQLCe
+	IN_Dir					: T_MAXSTRING;
+	IN_Name					: STRING;
+	IN_Start				: BOOL;
+	IN_TableName			: STRING;
+END_VAR
+VAR_IN_OUT
+	IN_hDBID         		: UDINT;	
+END_VAR
+VAR_OUTPUT
+	OUT_Error				: BOOL;
+	OUT_Busy				: BOOL;
+	OUT_Result				: INT;
+END_VAR
+VAR
+	Etape					: UINT;
+	
+	TrigStart				: R_TRIG;
+	RsStart					: RS;
+	bCreateTable			: BOOL;
+	TrigCreateTable			: R_TRIG;
+	RsCreateTable			: RS;
+	PLCDBCreateEvt 			: FB_PLCDBCreateEvt(sNetID := '', tTimeout := T#5S);
+	SqlLiteConf				: T_DBConfig_SQLite;
+	DbFullDirName			: T_MAXSTRING;	
+	sExtension				: STRING:= '.db';
+	tcMessage    	 		: I_TcMessage;
+	
+	AX_ColArray				: ARRAY[0..3] OF ST_ColumnInfo;
+	
+	dBID_Test				: UDINT := 1;
+	KK						: UDINT;
+	bExisteDeja				: BOOL;	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[OUT_Busy := TRUE;
+AX_ColArray[0].sName := 'TimeStamp';     	AX_ColArray[0].eType := E_ColumnType.DateTime;   	AX_ColArray[0].nLength := 4;    
+AX_ColArray[1].sName := 'TimeStamp_Ms';    	AX_ColArray[1].eType := E_ColumnType.Integer;    	AX_ColArray[1].nLength := 4;
+AX_ColArray[2].sName := 'ParentId';   		AX_ColArray[2].eType := E_ColumnType.Integer;   	AX_ColArray[2].nLength := 4;
+AX_ColArray[3].sName := 'Value';   			AX_ColArray[3].eType := E_ColumnType.Float;   		AX_ColArray[3].nLength := 8;
+
+
+IF IN_DbType = 1 THEN
+	sExtension := '.db';
+ELSIF IN_DbType = 2 THEN
+	sExtension := '.sdf';
+END_IF
+
+DbFullDirName := Concat(STR1:=Concat(STR1:= IN_Dir, STR2 := IN_Name), STR2 := sExtension);
+SqlLiteConf.bAuthentification := FALSE;
+SqlLiteConf.sServer := DbFullDirName;
+
+FOR KK := 0 TO MAX_CONFIGURATIONS DO
+	IF IN_ConfigDbActuelle[KK].sServer = DbFullDirName THEN
+		bExisteDeja := TRUE;
+		OUT_Result := -1;
+		OUT_Busy := FALSE;
+		OUT_Error := FALSE;
+		bCreateTable := FALSE;
+		IN_hDBID := IN_ConfigDbActuelle[KK].hDBID;
+		EXIT;
+	END_IF
+	IF KK = MAX_CONFIGURATIONS THEN
+		bExisteDeja := FALSE;
+	END_IF
+END_FOR
+
+TrigStart(CLK := IN_Start AND NOT bExisteDeja);
+RsStart(SET := TrigStart.Q);
+IF RsStart.Q1 THEN
+	IF PLCDBCreateEvt.Database(pDatabaseConfig := ADR(SqlLiteConf), cbDatabaseConfig := SIZEOF(SqlLiteConf), bCreateXMLConfig := TRUE, pDBID := ADR(dBID_Test)) THEN
+		IF PLCDBCreateEvt.ipTcResult.nEventId = 59 THEN
+			OUT_Error := FALSE;
+			OUT_Result := -1;
+			OUT_Busy := FALSE;	
+			TrigStart(CLK := FALSE);
+			bCreateTable := FALSE;
+			Etape := 0;
+			RsCreateTable(RESET1 := TRUE);
+			RsCreateTable(RESET1 := FALSE);
+		ELSIF PLCDBCreateEvt.bError THEN
+			tcMessage := PLCDBCreateEvt.ipTcResult;
+			OUT_Error := TRUE;
+		ELSE
+			Etape := 1;
+			IN_hDBID := dBID_Test;
+			bCreateTable := TRUE; 
+		END_IF
+		RsStart(RESET1 := TRUE);
+		RsStart(RESET1 := FALSE);
+	END_IF
+END_IF
+
+TrigCreateTable(CLK := bCreateTable);
+RsCreateTable(SET:= TrigCreateTable.Q);
+
+IF RsCreateTable.Q1 AND ETAPE = 1 THEN
+	IF PLCDBCreateEvt.Table(hDBID := IN_hDBID, sTableName := IN_TableName,  pTableCfg := ADR(AX_ColArray), cbTableCfg := SIZEOF(AX_ColArray)  ) THEN
+		IF PLCDBCreateEvt.bError THEN
+			Etape := 255;
+			OUT_Error := TRUE;
+			OUT_Result := -2;
+		ELSE
+			IN_Start := FALSE;
+			bCreateTable := FALSE;
+			Etape := 0;
+			OUT_Result := 1;
+			RsCreateTable(RESET1 := TRUE);
+			RsCreateTable(RESET1 := FALSE);
+			TrigStart(CLK := False);
+			OUT_Busy := FALSE;	
+			OUT_Error := FALSE;
+		END_IF
+	END_IF
+END_IF
+
+IF Etape = 255 THEN
+	Etape := 0;
+	bCreateTable := FALSE;
+	IN_Start := FALSE;
+	OUT_Busy := FALSE;	
+	RsCreateTable(RESET1 := TRUE);
+	RsCreateTable(RESET1 := FALSE);
+	
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="SQLite_CreateDb_V2_1">
+      <LineId Id="185" Count="0" />
+      <LineId Id="80" Count="3" />
+      <LineId Id="79" Count="0" />
+      <LineId Id="17" Count="1" />
+      <LineId Id="20" Count="0" />
+      <LineId Id="22" Count="1" />
+      <LineId Id="21" Count="0" />
+      <LineId Id="19" Count="0" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="25" Count="1" />
+      <LineId Id="280" Count="0" />
+      <LineId Id="152" Count="0" />
+      <LineId Id="281" Count="0" />
+      <LineId Id="284" Count="0" />
+      <LineId Id="288" Count="4" />
+      <LineId Id="286" Count="0" />
+      <LineId Id="285" Count="0" />
+      <LineId Id="293" Count="2" />
+      <LineId Id="282" Count="0" />
+      <LineId Id="44" Count="0" />
+      <LineId Id="52" Count="0" />
+      <LineId Id="28" Count="0" />
+      <LineId Id="53" Count="0" />
+      <LineId Id="27" Count="0" />
+      <LineId Id="30" Count="0" />
+      <LineId Id="232" Count="0" />
+      <LineId Id="234" Count="0" />
+      <LineId Id="238" Count="2" />
+      <LineId Id="236" Count="0" />
+      <LineId Id="241" Count="1" />
+      <LineId Id="233" Count="0" />
+      <LineId Id="34" Count="0" />
+      <LineId Id="60" Count="0" />
+      <LineId Id="38" Count="0" />
+      <LineId Id="149" Count="0" />
+      <LineId Id="230" Count="0" />
+      <LineId Id="148" Count="0" />
+      <LineId Id="32" Count="0" />
+      <LineId Id="55" Count="0" />
+      <LineId Id="58" Count="0" />
+      <LineId Id="31" Count="0" />
+      <LineId Id="50" Count="0" />
+      <LineId Id="69" Count="0" />
+      <LineId Id="68" Count="0" />
+      <LineId Id="70" Count="0" />
+      <LineId Id="72" Count="0" />
+      <LineId Id="129" Count="3" />
+      <LineId Id="192" Count="0" />
+      <LineId Id="243" Count="0" />
+      <LineId Id="133" Count="0" />
+      <LineId Id="147" Count="0" />
+      <LineId Id="151" Count="0" />
+      <LineId Id="134" Count="0" />
+      <LineId Id="244" Count="0" />
+      <LineId Id="141" Count="1" />
+      <LineId Id="194" Count="0" />
+      <LineId Id="183" Count="0" />
+      <LineId Id="193" Count="0" />
+      <LineId Id="135" Count="1" />
+      <LineId Id="51" Count="0" />
+      <LineId Id="138" Count="0" />
+      <LineId Id="137" Count="0" />
+      <LineId Id="143" Count="0" />
+      <LineId Id="150" Count="0" />
+      <LineId Id="146" Count="0" />
+      <LineId Id="189" Count="0" />
+      <LineId Id="144" Count="0" />
+      <LineId Id="139" Count="0" />
+      <LineId Id="186" Count="0" />
+      <LineId Id="140" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

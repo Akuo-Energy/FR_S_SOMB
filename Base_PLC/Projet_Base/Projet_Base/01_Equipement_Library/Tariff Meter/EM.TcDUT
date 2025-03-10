@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="EM" Id="{21bda69b-2b5e-4e27-9b08-f84acbd8f1fe}">
+    <Declaration><![CDATA[TYPE EM :
+STRUCT
+	
+	MesEActCons				: REAL ; 		(* Value of Active Energy consumed		*)
+	MesEActProd				: REAL ;		(* Value of Active Energy produced      *)
+	MesEReactCons			: REAL ;		(* Value of Reactive Energy consumed    *)
+	MesEReactProd			: REAL ;		(* Value of Reactive Energy produced    *)
+	                                                                             
+	MesAlarmCode			: WORD ;	 	(* (NA) Internal Akuo AlarmCode         *)
+	MesWarningCode			: WORD ; 		(* (NA) Internal Akuo WarningCode       *)
+	MesEventCode			: WORD ; 		(* (NA) Internal Akuo EventCode	        *)
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

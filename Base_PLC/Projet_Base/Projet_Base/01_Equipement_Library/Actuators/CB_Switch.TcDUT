@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="CB_Switch" Id="{292952e5-a96a-4b02-a42e-179610f0fe55}">
+    <Declaration><![CDATA[///////////
+// Structure For Bousquet . Main Operating Data to be saved (ex: OPC).  
+//////////
+
+TYPE CB_Switch :
+STRUCT
+	//DI
+	MesData					: CB   ;    (* Object*)
+	MesAlarmPwr		        : BOOL ; 	(* The cell motorization has a power supply fault*)
+
+	OUT_CmdOpen				: BOOL ; 	(* The SCADA sends an Open command to the cell*)
+	OUT_CmdClose			: BOOL ; 	(* The SCADA sends a Close command to the cell*)
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,70 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_FSS" Id="{53ad378f-25e4-4c5c-8840-2c7d39fa9466}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_FSS
+//////////////////
+//  Fire System
+//////////////////
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance/model specific) 
+	ParamCableCutSecurity			: BOOL:=FALSE ;			// FALSE = ALARM 
+	ParamTempoFire					: TIME := T#5S ;	    // Tempo before raising a fire alarm
+	ParamWatchdogEnable				: BOOL :=FALSE ; 	    // Is Watchdog Enabled ? 
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	
+END_VAR
+
+VAR_INPUT
+	// I/O Inputs 		                                     				
+		IN_MesAlarm_IO 				    : BOOL ;				// (NA)Fire Alarm
+		IN_MesWarning_IO				: BOOL ; 				// (NA) Fire system warning 
+		IN_MesFault_IO					: BOOL ; 
+		IN_MesExtinguisher_IO			: BOOL ;		 		// Extinguisher system triggereed
+		IN_MesWatchdog_IO				: BOOL ; 				// (NA) Fire System Watchdog
+		IN_MesCBFSS_IO					: BOOL ; 				// Cb FSS opened 
+		
+		IN_CmdReset_L					: BOOL ;	  			// LOCAL Reset Value For Alarms
+END_VAR
+
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//
+		FB_PermAlarm				: SR ;						// (NA) FB to maintain Fire Alarm even if sensor stop detection (burn) .
+		TON_Fire					: TON ; 
+ 
+	//STATE MANAGEMENT //
+	MesDataExd					: FSS_Standard ; 	
+	
+	// EMULATOR 
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_Execute" Id="{44393531-1660-4d2a-8f9a-f5ea7560074d}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_FSS">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_FSS.M_Execute">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

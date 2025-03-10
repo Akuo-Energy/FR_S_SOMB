@@ -1,0 +1,154 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="MAIN_Emul" Id="{406db67f-aa6c-4222-865f-b333f133d8b0}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM MAIN_Emul
+VAR
+	TP_1		: TP;
+	TP_2		: TP;
+	
+	ClockReadIO				: BOOL;
+	ClockReadCOM			: BOOL;
+	//M_INIT VARIABLE //
+		bInit					: BOOL := TRUE ;						// Initialization variable
+
+		
+		WriteAds		: ADSWRITE;
+		bTest			: BOOL;
+		
+		
+		// DATETIME //	
+		FB_LocalSystTime      	: FB_LOCALSYSTEMTIME;	// Get time function
+		FB_ToGMT : FB_TzSpecificLocalTimeToSystemTime;	// Local to UTC Time function
+		TON_Time				: TON;
+		CalLocalTimeStruct_Temp: TIMESTRUCT;
+		//init
+		FB_GetSystemTime        : GETSYSTEMTIME;						// GEt time function
+		
+		FB_ToLocal 				: FB_FileTimeToTzSpecificLocalTime;		// UTC to local Time function
+		fileTime        		: T_FILETIME;							// Filetime format for UTC Time 
+		FileTimeLocal			: T_FILETIME;							// Filetime format for local time		
+		
+		
+		
+		
+
+END_VAR
+
+VAR_OUTPUT
+			OUT_CalRunningPLC_IO 		: BOOL ; 
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[	TP_1(IN:=NOT TP_1.Q , PT:= T#100MS);		// Pour les IO
+	ClockReadIO 		:= TP_1.Q;
+	TP_2(IN:=NOT TP_1.Q , PT:= T#1S);		// Pour la com
+	ClockReadCOM 		:= TP_2.Q;
+
+// INITIALIZATION//
+	IF bInit OR CmdInit_G THEN
+
+		M_Init() ; 
+		bInit := FALSE; 
+	END_IF
+	
+
+	TON_Time(IN:= TRUE, PT:=T#1200MS ) ; 
+	FB_LocalSystTime(
+		bEnable := TRUE,
+		dwCycle := 1,
+		systemTime => CalLocalTimeStruct_Temp);
+
+	IF TON_Time.Q THEN 
+		CalLocalTimeStruct:= CalLocalTimeStruct_Temp ; 
+	END_IF
+		
+		FB_ToGMT(
+		in	:= CalLocalTimeStruct,
+		tzInfo := CstTimeZone_G,
+		out	=> CalGMTTimeStruct);
+	
+	sTimeGMT_G	:= SYSTEMTIME_TO_STRING(CalGMTTimeStruct);
+	sTimeLocal_G	:= SYSTEMTIME_TO_STRING(CalLocalTimeStruct);	
+
+	
+OUT_CalRunningPLC_IO := TRUE ; 
+
+// INPUTS //
+
+	PRG_IO() ; 	// Emul the IO
+	PRG_IO.M_Inputs() ;  // On mets à jour les variables emulées pour l'ecriture
+
+// PROGRAMMS CALLS //
+		ADS_Custom();	// On execute le read et le write . 
+	// Hybrid Power PLant 
+		A1_PP();
+	
+	// Historization //
+	PRG_IO.M_Outputs() ;  // On recupère les commandes IO. 
+	
+// OUTPUTS // 
+
+
+]]></ST>
+    </Implementation>
+    <Method Name="M_Init" Id="{0e44131e-55c9-4b08-a69d-3115b9a91b87}">
+      <Declaration><![CDATA[METHOD M_Init : BOOL
+VAR_INPUT
+END_VAR
+
+VAR 
+	Year : STRING ; 
+	Month: STRING ; 
+	Day : STRING ; 
+	Hour: STRING ; 
+	Str_Temp: STRING;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//CstCycleTime_G 		:= 50 ;							// Cycle Time
+CstTimeZone_G 		:= WEST_EUROPE_TZI ; 		// Local Time Zone 
+	
+
+
+
+// Get the Windows time ( not accurate ) at startup before updating the system time. 
+	// DateTime 
+	
+	
+	FB_GetSystemTime(
+		timeLoDW	=> fileTime.dwLowDateTime, 
+		timeHiDW	=> fileTime.dwHighDateTime);
+		
+	FB_ToLocal(
+		in			:=fileTime,
+		tzInfo 		:= CstTimeZone_G,
+		out		 	=> FileTimeLocal);
+		
+CalLocalTimeStruct := FILETIME_TO_SYSTEMTIME(FileTimelocal) ; 
+
+
+Year := CONCAT(STR1:= WORD_TO_STRING(CalLocalTimeStruct.wYear), STR2:= '_') ; 
+Month := CONCAT(STR1:= WORD_TO_STRING(CalLocalTimeStruct.wMonth), STR2:= '_') ;
+Day := CONCAT(STR1:=WORD_TO_STRING(CalLocalTimeStruct.wDay), STR2:= ' ') ;
+Hour := CONCAT(STR1:=WORD_TO_STRING(CalLocalTimeStruct.wHour), STR2:= 'h') ;
+
+Str_Temp := Year ; 
+Str_Temp := CONCAT(STR1:=Str_Temp , STR2:= Month )  ; 
+Str_Temp := CONCAT(STR1:=Str_Temp , STR2:= Day )  ; 	
+Str_Temp := CONCAT(STR1:=Str_Temp , STR2:= Hour )  ; 
+
+A1_PP.MesData.MesStartTime 		:= Str_Temp  ; 	// Jour du dernier update de code . 
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="MAIN_Emul">
+      <LineId Id="2815" Count="49" />
+      <LineId Id="2030" Count="0" />
+    </LineIds>
+    <LineIds Name="MAIN_Emul.M_Init">
+      <LineId Id="70" Count="33" />
+      <LineId Id="10" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

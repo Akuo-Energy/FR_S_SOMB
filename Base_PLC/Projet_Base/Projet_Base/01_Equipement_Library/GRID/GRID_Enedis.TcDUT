@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="GRID_Enedis" Id="{0bb700a4-8043-4871-9552-eee0484c6c28}">
+    <Declaration><![CDATA[///////////
+// Structure For DEIECommand. Main Operating Data to be saved (ex: OPC).
+//////////
+TYPE GRID_Enedis :
+STRUCT
+	
+	MesData								: GRID ; 		(* GRID MesData *)
+                                       	
+	OUT_CmdPReg                         : BOOL ;     	(* (NA) Passage à P0 reçu DI*)
+	OUT_CmdQReg	                   	    : BOOL ;     	(* (NA) Passage à Q0 reçu DI*)
+
+	OUT_Rse								: BOOL; 		(* (NA) Protection en Rse(1) / Protection Hors RSE (O) *)
+	OUT_TA								: BOOL; 		(* (NA) Telecaction en service (1) / Teleaction Hors service (0)*)
+	
+	MesEcart_HeureGrid					: DINT; 		(* (s) seconds of difference between EDF and SCADA times*)	
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,50 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="BAT_SAFT" Id="{fd071fa3-de99-42d6-9894-14e7087684f5}">
+    <Declaration><![CDATA[///////////
+// Structure For Battery Controller. Main Operating Data to be saved ( ex: OPC ) .  
+//////////
+
+TYPE BAT_SAFT :
+STRUCT
+	
+	MesData						: BAT ;   			(* MESA Data model *)
+
+	Rack						: ARRAY[1..CstNbRack_BAT_G] OF RackString_SAFT;	(* Object *)
+
+	SubBMS						: ARRAY[1..1] OF BMS_SAFT ; 
+
+	
+	
+	MesNbSubBMS				: WORD;		//(kWh) SubBank Count [NBSB]                   
+	MesEToFullCharge        : REAL;		//(kWh) ToFullChargeEnergy [ToFullChargeEnergy]
+	MesEconnected   		: REAL;		//(kWh) RemainingEnergy [RemainingEnergy]      
+	MesP_Aux                : REAL;		//(kW) AUX Active Power [AUX ActPow]           
+	MesS_Aux                : REAL;		//(kVA) AUX Apparent Power [AUX AppaPow]       
+	MesQ_Aux                : REAL;		//(kVAr) AUX Reactive Power [AUX ReactPow]     
+	MesEreact_Aux           : REAL;		//(kVArh) AUX   Cumulated   Reactive           
+	MesEact_Aux             : REAL;		//Energy [AUX CumulReactEne]                   
+	MesEapp_Aux             : REAL;		//"(kWh) AUX     Cumulated     Active          
+	MesSoC_Uncertainty      : REAL;		//Energy [AUX CumulActEne]                     
+	MesSoEMin               : REAL;		//(kVAh) AUX   Cumulated   Apparent            
+	MesSoEMax               : REAL;		//Energy [AUX CumulAppaEne]                    
+
+
+	MesUdcConnected				: REAL;			(* (V) Voltage connected ( average )*)	
+	MesSoCConnected				: REAL; 		(* (%) SoC average ( priority : 1 if one is 0 all are 0, 2 : one is 100 all are 100, 3 : average )*)
+	MesUdcMax					: REAL;			(* (V) Voltage of the rack, max*)
+	MesUdcMin					: REAL;			(* (V) Voltage of the rack, min*)	
+	MesNbRackConnected			: UINT;			(* (NA) Nb of Racks in service ( strings ) *)
+	MesNbRackTot				: UINT;			(* (NA) Total Nb of Racks (strings )*)	
+	
+	
+	
+	
+	
+	
+END_STRUCT
+END_TYPE
+
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,63 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_PM_SM103E" Id="{4c64eeb0-4847-4bde-9a8c-4e1ddd6644d0}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_PM_SM103E EXTENDS FB_PM_Base
+//////////////////
+// Measurement Solution based on Digiware, but access through PMS Socomec
+//////////////////
+VAR CONSTANT
+	// Characteristics of the object (Same for all instances)
+			
+END_VAR
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance specific) 
+	ParamUnitID					: BYTE 		:= 5 ;								// (NA)unit ID
+	
+
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	
+END_VAR
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//	                                                    							                                                								
+
+	//M_READ VARIABLES//
+
+	bReadError					: BOOL;
+	bReadCompleted 				: BOOL;
+	bReadBusy					: BOOL;
+	InputStructRead 			: Struct_InputRTU;
+
+
+
+	bReadError2					: BOOL;
+	bReadCompleted2 				: BOOL;
+	bReadBusy2					: BOOL;
+	InputStructRead2 			: Struct_InputRTU;
+	
+	MesBlock1_Temp 				: ARRAY[1..64]  OF WORD; 		// (NA) Temporary Block with multiple mod
+	MesBlock2_Temp 				: ARRAY[1..20]  OF WORD; 		// (NA) Temporary Block with multiple mod
+
+		
+		
+	//M_INIT VARIABLES //
+	
+	// M_EXECUTE VARIABLES //
+		RTrigI						: R_TRIG;
+
+	MesDataExd AT %Q*			: PM_Standard ;
+
+
+ 
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <LineIds Name="FB_PM_SM103E">
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

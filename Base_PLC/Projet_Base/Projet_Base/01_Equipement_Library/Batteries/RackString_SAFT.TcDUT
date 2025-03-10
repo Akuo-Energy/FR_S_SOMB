@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <DUT Name="RackString_SAFT" Id="{57ddaec1-5a1b-4e0f-be42-60d49c981777}">
+    <Declaration><![CDATA[///////////
+// Structure For Battery Racks. Main Operating Data to be saved ( ex: OPC ) .  
+//////////
+TYPE RackString_SAFT :
+STRUCT
+	
+		MesData		: RackString ;
+		Module		: ARRAY[1..CstNbModule_Rack_G] OF  Module ; 
+		
+     	
+	
+		
+
+		
+		
+		
+		
+		
+		
+		
+	
+END_STRUCT
+END_TYPE
+
+
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

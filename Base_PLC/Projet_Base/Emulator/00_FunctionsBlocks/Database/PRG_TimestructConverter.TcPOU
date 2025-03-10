@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="PRG_TimestructConverter" Id="{8a015ffa-d898-4c52-8cdc-a8d27a2472c2}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM PRG_TimestructConverter
+//Convert TimeStruct to Epoch 
+VAR
+	DT_Time			: DT;
+	FileTime		: T_FILETIME;
+END_VAR
+VAR_INPUT
+	IN_TimeStruct			: TIMESTRUCT;					// Input 
+END_VAR             		
+VAR_OUTPUT          		
+	OUT_Epoch		: LINT;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[DT_Time 		:= SYSTEMTIME_TO_DT( IN_TimeStruct );
+
+FileTime 		:= DT_TO_FILETIME(dtIn := DT_Time);
+
+OUT_Epoch := (SHL(DWORD_TO_ULINT(FileTime.dwHighDateTime), 32) + DWORD_TO_ULINT(FileTime.dwLowDateTime)) / 10000000 - 11644473600;
+]]></ST>
+    </Implementation>
+    <LineIds Name="PRG_TimestructConverter">
+      <LineId Id="35" Count="0" />
+      <LineId Id="39" Count="0" />
+      <LineId Id="32" Count="0" />
+      <LineId Id="41" Count="0" />
+      <LineId Id="37" Count="0" />
+      <LineId Id="29" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,318 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_ReadCSV" Id="{11153751-9395-4928-8c39-e241cc166bc6}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_ReadCSV
+//Permet de lire les Valeurs de max 1 semaine de points (1 pt/min pdt 7 jours)
+
+VAR_INPUT
+	InDirectory_Stockage 		: T_MaxString;		// Base file of the Historization 
+	InVariable					: T_MaxString;
+	InStartTimeStamp			: TIMESTRUCT;
+	InNbLecture					: UINT := 144;
+	InExecute					: BOOL;			//Rising Edge detection of read
+	ParamSeparateur				: STRING;
+	InStructValues				: ARRAY[1..500] OF ST_ValuesWrite;
+END_VAR                 		
+
+VAR_OUTPUT              		
+	OutValue					: ARRAY[1..10000] OF REAL;
+	OutTimeStamp				: ARRAY[1..10000] OF TIMESTRUCT;
+	OutCompleted				: BOOL;
+	OutbBusy					: BOOL;
+	OutError 					: BOOL;
+	OutErrorID 					: UINT; // 1 : File not found
+END_VAR                 		
+VAR     
+	// Initialisation 
+	CP_READ						: BOOL;
+	TypeFile					: STRING;
+	ParamTimeOut				: TIME := T#1S;
+	
+	//Read
+	TimeStructBeingRead			: TIMESTRUCT;
+	FullDirectory				: STRING;                		
+	ReadNewFile					: BOOL;
+	
+	
+	OpenFile					: FB_FileOpen;
+	ReadFile					: FB_FileGets;
+	CloseFile					: FB_FileClose;
+	LineStart					: UINT;			// Ligne de début de la lecture
+	LineEnd						: UINT;			// Ligne de fin de la lecture
+	LineLeft					: UINT;			// Nombre total de lignes restantes
+	Index_Array_OutValue		: UINT;			// Valeur de OutValue qui va être écrite
+	
+	Opening						: BOOL := TRUE;
+	Reading						: BOOL;
+	Closing						: BOOL;
+	LineRead					: ARRAY[1..20] OF T_Maxstring;
+	LineReadNull				: ARRAY[1..20] OF T_Maxstring;
+	ColumnNbRead				: UINT;
+	TimeStampRead				: STRING(255);
+	ValueRead					: STRING(255);
+	EOF_Reached					: BOOL;
+	PosCursor					: DINT;
+                    		
+	CompteurLigne				: CTU;
+	CompteurLigneRead			: CTU;
+	OutBusy						: RS;
+	Trig_Read					: R_TRIG;
+	Trig_Start 					: R_TRIG;
+	
+	FileHandle					: UINT;
+	FileHandle_Old				: UINT;
+	
+	NbJours						: UINT;
+	KK: UINT 					:= 1;
+	bInit 						: BOOL;
+	FinalElemStruct				: UINT := 20;
+	LL							: UINT := 1;
+	LenLineRead					: INT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF  Trig_Start.Q THEN
+	M_Init();
+END_IF
+
+CP_Read := SYSTEMTIME_TO_DT(InStartTimeStamp) + LINT_TO_TIME(InNbLecture*60000) < SYSTEMTIME_TO_DT(CalLocalTimeStruct);
+ Trig_Start(CLK := InExecute);
+CompteurLigneRead(PV := InNbLecture, RESET := Trig_Start.Q);
+
+OutBusy(Set := CP_Read AND InExecute, RESET1 := OutError OR OutCompleted);
+OutbBusy := OutBusy.Q1;
+
+OutCompleted := CompteurLigneRead.Q;
+
+IF OutBusy.Q1 THEN	
+	// J'initialise le tout : 
+		//Initialisation du type de fichier
+			TypeFile := 'RAWDATA'; 
+			
+		// Calcul du nb de fichiers à ouvrir
+			NbJours := DINT_TO_UINT( TRUNC(UINT_TO_INT(InNbLecture + InStartTimeStamp.wHour *60 + InStartTimeStamp.wMinute)/(24*60))+1);
+
+	IF KK <= NbJours THEN
+		// Nbre d'heures * 60 + Nbre de minutes + 2 lignes de presentation
+		IF KK = 1 THEN
+			LineStart := (InStartTimeStamp.wHour *60 + InStartTimeStamp.wMinute + 2); 
+			// Calcul des lignes de la lecture : 
+			LineLeft := InNbLecture;
+		ELSE
+			LineStart := 2;
+		END_IF
+		
+		LineEnd := MIN(1442, LineLeft);
+
+		CompteurLigne(PV := LineStart+LineEnd);
+		
+		TimeStructBeingRead := DT_TO_SYSTEMTIME(SYSTEMTIME_TO_DT(InStartTimeStamp) + LINT_TO_TIME(24*3600000*(KK-1)));
+		FullDirectory := Concat(Concat(Concat(Concat(Concat(Concat(Concat(Concat(Concat(Concat(Concat(Concat(InDirectory_Stockage , WORD_TO_STRING(TimeStructBeingRead.wyear)),'\'),WORD_TO_STRING(TimeStructBeingRead.wMonth)),'\'),'RAWDATA'),'_'),WORD_TO_STRING(TimeStructBeingRead.wyear)),'-'),WORD_TO_STRING(TimeStructBeingRead.wMonth)),'-'),WORD_TO_STRING(TimeStructBeingRead.wDay)),'.csv');
+
+		//Ouverture du Fichier, récupération du handle
+		OpenFile
+		(
+			sNetId := '',
+			sPathName := FullDirectory,
+			nMode := FOPEN_MODEREAD,
+			ePath := PATH_GENERIC,
+			bExecute := Opening AND NOT OutCompleted,
+			hFile => FileHandle
+		);
+		
+		IF OpenFile.nErrId = 1804 THEN // Le fichier n'existe pas 
+			OutErrorID := 1;
+			OutError := OpenFile.bError;
+		ELSIF OpenFile.bError THEN		// Il y a eu une autre erreur
+			OutError := OpenFile.bError;
+		ELSIF NOT OpenFile.bError AND NOT OpenFile.bBusy AND FileHandle <> 0 AND FileHandle <> FileHandle_Old THEN
+			Opening := FALSE;
+			FileHandle_Old := FileHandle;
+		END_IF
+		// On a obtenu le file handle, on va commencer la lecture
+		
+		
+		// Le bloc suivant va lire le document ligne à ligne en incrémentant le compteur ligne et en ressortant l'ensemble de la ligne dans LineRead
+		
+		IF NOT opening AND NOT CompteurLigneRead.Q AND NOT EOF_Reached THEN		
+			IF LL <= 20 THEN
+				ReadFile
+				(
+					sNetId := '',
+					hFile := FileHandle,
+					bExecute := TRUE,
+					tTimeout := ParamTimeOut,
+					sLine => LineRead[LL],
+					bEOF => EOF_Reached
+				);	
+				IF NOT ReadFile.bBusy AND NOT ReadFile.bError AND lineread[LL] <> '' THEN
+					ReadFile(bExecute := FALSE);
+					LenLineRead := LEN(STR := LineRead[LL]);
+					IF LenLineRead = 254 THEN
+						LL := LL + 1 ;
+					ELSE
+						FinalElemStruct := LL;
+						LL := 1;
+					END_IF
+				END_IF
+			END_IF
+			
+			IF NOT ReadFile.bBusy AND NOT ReadFile.bError AND (LineRead[FinalElemStruct] <> '' OR EOF_Reached) THEN
+				ReadFile(bExecute := FALSE);
+				CompteurLigne(CU := TRUE);	
+				CompteurLigne(CU := FALSE);
+				FinalElemStruct := 20;
+				
+				IF CompteurLigne.CV >= LineStart + 1 THEN
+					TimeStampRead := Substring_Cari
+					(
+						IN_Delimiter := ParamSeparateur, 
+						IN_TextToSearch := LineRead, 
+						IN_Position := 0
+					);
+					OutTimeStamp[Index_Array_OutValue+1]:= FUN_FormatDate(In_String := TimeStampRead);
+					
+					ValueRead := Substring_Cari
+					(
+						IN_Delimiter := ParamSeparateur, 
+						IN_TextToSearch := LineRead, 
+						IN_Position := ColumnNbRead + 1
+					);
+					OutValue[Index_Array_OutValue+1] := STRING_TO_REAL(ValueRead)*100;
+					CompteurLigneRead(CU := TRUE);
+					CompteurLigneRead(CU := FALSE);
+					Index_Array_OutValue := Index_Array_OutValue + 1;
+					
+					LL := 1;
+				END_IF
+				LineRead := LineReadNull;
+			ELSIF NOT ReadFile.bBusy AND  ReadFile.bError THEN
+				OutError := TRUE;			
+			END_IF
+		ELSIF EOF_Reached THEN
+			ReadFile(bExecute := FALSE);
+	
+			CloseFile
+			(
+				sNetId := '',
+				bExecute := TRUE,
+				hFile := FileHandle,
+				tTimeout := ParamTimeOut
+			);
+			IF NOT CloseFile.bBusy AND NOT CloseFile.bError  THEN
+				LineLeft := LineLeft - CompteurLigneRead.CV + 2;
+				Index_Array_OutValue := Index_Array_OutValue -1;
+				CloseFile(bExecute := FALSE);
+				CompteurLigne(RESET := TRUE);
+				CompteurLigne(RESET := FALSE);
+				Opening := TRUE;
+				EOF_Reached := FALSE;
+				KK := KK + 1;
+			END_IF	
+		END_IF
+	END_IF
+ELSIF EOF_Reached OR CompteurLigneRead.Q AND FileHandle <> 0 THEN
+	ReadFile(bExecute := FALSE);
+	
+	CloseFile
+	(
+		sNetId := '',
+		bExecute := TRUE,
+		hFile := FileHandle,
+		tTimeout := ParamTimeOut
+	);
+	IF NOT CloseFile.bBusy AND NOT CloseFile.bError THEN
+		CloseFile(bExecute := FALSE);
+		CompteurLigne(RESET := TRUE);
+		CompteurLigne(RESET := FALSE);
+		Opening := TRUE;
+		Index_Array_OutValue := 0;
+		FileHandle := 0;
+		KK := 1;
+	ELSIF NOT CloseFile.bBusy AND closefile.bError THEN
+		OutError := TRUE;
+	END_IF  
+END_IF	]]></ST>
+    </Implementation>
+    <Method Name="M_Init" Id="{536d2346-da7d-40b5-b6fc-9910924ba869}">
+      <Declaration><![CDATA[METHOD M_Init : BOOL
+VAR_INPUT
+END_VAR
+
+VAR
+	KK : UINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[ColumnNbRead := 1;
+FOR KK := 1 TO 500 DO
+	IF InVariable = InStructValues[KK].Description THEN
+		ColumnNbRead := KK;
+		EXIT;
+	END_IF
+END_FOR
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_ReadCSV">
+      <LineId Id="708" Count="0" />
+      <LineId Id="717" Count="1" />
+      <LineId Id="543" Count="1" />
+      <LineId Id="664" Count="0" />
+      <LineId Id="545" Count="0" />
+      <LineId Id="663" Count="0" />
+      <LineId Id="546" Count="11" />
+      <LineId Id="561" Count="4" />
+      <LineId Id="712" Count="1" />
+      <LineId Id="566" Count="28" />
+      <LineId Id="716" Count="0" />
+      <LineId Id="595" Count="6" />
+      <LineId Id="603" Count="0" />
+      <LineId Id="861" Count="0" />
+      <LineId Id="604" Count="7" />
+      <LineId Id="862" Count="1" />
+      <LineId Id="875" Count="0" />
+      <LineId Id="865" Count="3" />
+      <LineId Id="878" Count="0" />
+      <LineId Id="869" Count="0" />
+      <LineId Id="864" Count="0" />
+      <LineId Id="788" Count="0" />
+      <LineId Id="871" Count="0" />
+      <LineId Id="612" Count="3" />
+      <LineId Id="873" Count="0" />
+      <LineId Id="880" Count="0" />
+      <LineId Id="616" Count="5" />
+      <LineId Id="623" Count="7" />
+      <LineId Id="632" Count="4" />
+      <LineId Id="877" Count="0" />
+      <LineId Id="879" Count="0" />
+      <LineId Id="637" Count="0" />
+      <LineId Id="881" Count="0" />
+      <LineId Id="638" Count="2" />
+      <LineId Id="686" Count="0" />
+      <LineId Id="688" Count="10" />
+      <LineId Id="795" Count="0" />
+      <LineId Id="704" Count="0" />
+      <LineId Id="699" Count="0" />
+      <LineId Id="703" Count="0" />
+      <LineId Id="700" Count="0" />
+      <LineId Id="710" Count="0" />
+      <LineId Id="701" Count="0" />
+      <LineId Id="660" Count="2" />
+      <LineId Id="668" Count="12" />
+      <LineId Id="707" Count="0" />
+      <LineId Id="681" Count="0" />
+      <LineId Id="683" Count="0" />
+      <LineId Id="706" Count="0" />
+      <LineId Id="709" Count="0" />
+      <LineId Id="684" Count="1" />
+      <LineId Id="667" Count="0" />
+      <LineId Id="34" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ReadCSV.M_Init">
+      <LineId Id="6" Count="7" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

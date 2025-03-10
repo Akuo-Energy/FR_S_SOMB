@@ -1,0 +1,402 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="ParamBESS_HMI" Id="{080a3756-2067-42c6-a7c5-55ca56250030}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM ParamBESS_HMI
+VAR
+	
+BESS_Num								: UINT;
+
+// BESS
+	BESS_TmpLowAlm						: REAL;	bOneBESS_TmpLowAlm						: BOOL;	bAllBESS_TmpLowAlm						: BOOL;
+	BESS_TmpLowWarn						: REAL;	bOneBESS_TmpLowWarn						: BOOL;	bAllBESS_TmpLowWarn						: BOOL;
+	BESS_TempHighAlm					: REAL;	bOneBESS_TempHighAlm					: BOOL;	bAllBESS_TempHighAlm					: BOOL;
+	BESS_TempHighWarn					: REAL;	bOneBESS_TempHighWarn					: BOOL;	bAllBESS_TempHighWarn					: BOOL;
+	BESS_HygroHighAlarm					: REAL;	bOneBESS_HygroHighAlarm					: BOOL;	bAllBESS_HygroHighAlarm					: BOOL;
+	BESS_HygroHighWarn					: REAL;	bOneBESS_HygroHighWarn					: BOOL;	bAllBESS_HygroHighWarn					: BOOL;
+	BESS_HygroStartHVAC					: REAL;	bOneBESS_HygroStartHVAC					: BOOL;	bAllBESS_HygroStartHVAC					: BOOL;
+	BESS_HygroStopHvac					: REAL;	bOneBESS_HygroStopHvac					: BOOL;	bAllBESS_HygroStopHvac					: BOOL;
+	BESS_TempStartHvac					: REAL;	bOneBESS_TempStartHvac					: BOOL;	bAllBESS_TempStartHvac					: BOOL;
+	BESS_TempStopHvac					: REAL;	bOneBESS_TempStopHvac					: BOOL;	bAllBESS_TempStopHvac					: BOOL;
+	BESS_Hvac_Setpt						: REAL;	bOneBESS_Hvac_Setpt						: BOOL;	bAllBESS_Hvac_Setpt						: BOOL;
+	BESS_Hvac_TimeChangePrio			: TIME;	bOneBESS_Hvac_TimeChangePrio			: BOOL;	bAllBESS_Hvac_TimeChangePrio			: BOOL;
+	BESS_TimeBatDoorOpened				: TIME;	bOneBESS_TimeBatDoorOpened				: BOOL;	bAllBESS_TimeBatDoorOpened				: BOOL;
+	BESS_TimePcsDoorOpened				: TIME;	bOneBESS_TimePcsDoorOpened				: BOOL;	bAllBESS_TimePcsDoorOpened				: BOOL;
+
+	
+
+
+// SystemBMS
+	SBMS1_ParamIpAddress				: STRING;
+	SBMS1_ParamTcpPort					: UINT;
+	SBMS1_ParamClockWriteTime			: TIME;
+	SBMS2_ParamIpAddress				: STRING;
+	SBMS2_ParamTcpPort					: UINT;
+	SBMS2_ParamClockWriteTime			: TIME;
+
+// HVAC
+	HVAC1_ParamIpAddress				: STRING;
+	HVAC1_ParamUnitId					: UINT;
+	HVAC1_ParamTcpPort					: UINT;
+	HVAC1_ParamClockWriteTime			: TIME;
+	HVAC2_ParamIpAddress				: STRING;
+	HVAC2_ParamUnitId					: UINT;
+	HVAC2_ParamTcpPort					: UINT;
+	HVAC2_ParamClockWriteTime			: TIME;	
+	
+// PCS
+	PCS_RefreshValues						: BOOL;
+	
+	PCS1_ParamUnitID 						: BYTE  	;		PCS1_bParamUnitID 						: BOOL;	
+	PCS1_ParamIPAddress			   			: STRING 	;       PCS1_bParamIPAddress			   		: BOOL;
+	PCS1_ParamTcpPort						: UINT		;       PCS1_bParamTcpPort						: BOOL;
+	PCS1_ParamNbPcs		            		: BYTE	 	;       PCS1_bParamNbPcs		            	: BOOL;
+	PCS1_ParamTempoComAlarm					: TIME      ;       PCS1_bParamTempoComAlarm				: BOOL; 
+	PCS1_ParamTempoComWarning				: TIME 		;       PCS1_bParamTempoComWarning				: BOOL;
+	PCS1_ParamTimeOutBlckStrt          		: TIME 		;       PCS1_bParamTimeOutBlckStrt          	: BOOL;
+	PCS1_ParamClockReadTime 				: TIME 		;       PCS1_bParamClockReadTime 				: BOOL;
+	PCS1_ParamClockWriteTime 				: TIME      ;       PCS1_bParamClockWriteTime 				: BOOL;
+	PCS1_ParamTimeout		            	: TIME 		;       PCS1_bParamTimeout		            	: BOOL;
+	PCS1_ParamTimePulseTrig		    		: TIME 		;       PCS1_bParamTimePulseTrig		    	: BOOL;
+	PCS1_ParamEssNum						: UINT      ;       PCS1_bParamEssNum						: BOOL;
+	PCS1_ParamPcsNum						: UINT      ;		PCS1_bParamPcsNum						: BOOL;	
+	PCS1_ParamPnom							: REAL      ;       PCS1_bParamPnom							: BOOL;
+	PCS1_ParamQnom							: REAL 		;       PCS1_bParamQnom							: BOOL;
+	PCS1_ParamTimeoutCmdQ					: TIME 		;       PCS1_bParamTimeoutCmdQ					: BOOL;
+	PCS1_ParamTimeoutCmdCosPhi				: TIME		;       PCS1_bParamTimeoutCmdCosPhi				: BOOL;
+	PCS1_ParamTimeoutQvU					: TIME      ;       PCS1_bParamTimeoutQvU					: BOOL;
+	PCS1_ParamTimeoutPvF		        	: TIME      ;       PCS1_bParamTimeoutPvF		        	: BOOL;
+	PCS1_ParamSetPtModbusMode				: BOOL      ;       PCS1_bParamSetPtModbusMode				: BOOL;
+	PCS1_ParamPoverQ						: BOOL      ;       PCS1_bParamPoverQ						: BOOL;
+	PCS1_ParamTimeSoCRangeReachedRmp		: TIME      ;       PCS1_bParamTimeSoCRangeReachedRmp		: BOOL;
+	PCS1_ParamTimeFreqRegStbDuration		: TIME      ;       PCS1_bParamTimeFreqRegStbDuration		: BOOL;
+	PCS1_ParamTimeEnterStblPriorRmp			: TIME      ;       PCS1_bParamTimeEnterStblPriorRmp		: BOOL;
+	PCS1_ParamTimeoutGridFormerTransition	: TIME      ;       PCS1_bParamTimeoutGridFormerTransition	: BOOL;
+	PCS1_ParamTimeoutGridFeederTransition	: TIME      ;       PCS1_bParamTimeoutGridFeederTransition	: BOOL;
+	PCS1_ParamTimeoutOffTransition		    : TIME      ;       PCS1_bParamTimeoutOffTransition		    : BOOL;
+	PCS1_ParamFreqRegSoCmax 				: REAL      ;       PCS1_bParamFreqRegSoCmax 				: BOOL;
+	PCS1_ParamFreqRegSoCmin 			    : REAL      ;       PCS1_bParamFreqRegSoCmin 			    : BOOL;
+	PCS1_ParamLVRT_Enabled					: BOOL      ;       PCS1_bParamLVRT_Enabled					: BOOL;
+	PCS1_ParamAntiIslanding_Enabled			: BOOL      ;       PCS1_bParamAntiIslanding_Enabled		: BOOL;
+
+	PCS2_ParamUnitID 						: BYTE  	;		PCS2_bParamUnitID 						: BOOL;		
+	PCS2_ParamIPAddress			   			: STRING 	;       PCS2_bParamIPAddress			   		: BOOL;
+	PCS2_ParamTcpPort						: UINT		;       PCS2_bParamTcpPort						: BOOL;
+	PCS2_ParamNbPcs		            		: BYTE	 	;       PCS2_bParamNbPcs		            	: BOOL;
+	PCS2_ParamTempoComAlarm					: TIME      ;       PCS2_bParamTempoComAlarm				: BOOL;      
+	PCS2_ParamTempoComWarning				: TIME 		;       PCS2_bParamTempoComWarning				: BOOL;
+	PCS2_ParamTimeOutBlckStrt          		: TIME 		;       PCS2_bParamTimeOutBlckStrt          	: BOOL;
+	PCS2_ParamClockReadTime 				: TIME 		;       PCS2_bParamClockReadTime 				: BOOL;
+	PCS2_ParamClockWriteTime 				: TIME      ;       PCS2_bParamClockWriteTime 				: BOOL;
+	PCS2_ParamTimeout		            	: TIME 		;       PCS2_bParamTimeout		            	: BOOL;
+	PCS2_ParamTimePulseTrig		    		: TIME 		;       PCS2_bParamTimePulseTrig		    	: BOOL;
+	PCS2_ParamEssNum						: UINT      ;       PCS2_bParamEssNum						: BOOL;
+	PCS2_ParamPcsNum						: UINT      ;		PCS2_bParamPcsNum						: BOOL;		
+	PCS2_ParamPnom							: REAL      ;       PCS2_bParamPnom							: BOOL;
+	PCS2_ParamQnom							: REAL 		;       PCS2_bParamQnom							: BOOL;
+	PCS2_ParamTimeoutCmdQ					: TIME 		;       PCS2_bParamTimeoutCmdQ					: BOOL;
+	PCS2_ParamTimeoutCmdCosPhi				: TIME		;       PCS2_bParamTimeoutCmdCosPhi				: BOOL;
+	PCS2_ParamTimeoutQvU					: TIME      ;       PCS2_bParamTimeoutQvU					: BOOL;
+	PCS2_ParamTimeoutPvF		        	: TIME      ;       PCS2_bParamTimeoutPvF		        	: BOOL;
+	PCS2_ParamSetPtModbusMode				: BOOL      ;       PCS2_bParamSetPtModbusMode				: BOOL;
+	PCS2_ParamPoverQ						: BOOL      ;       PCS2_bParamPoverQ						: BOOL;
+	PCS2_ParamTimeSoCRangeReachedRmp		: TIME      ;       PCS2_bParamTimeSoCRangeReachedRmp		: BOOL;
+	PCS2_ParamTimeFreqRegStbDuration		: TIME      ;       PCS2_bParamTimeFreqRegStbDuration		: BOOL;
+	PCS2_ParamTimeEnterStblPriorRmp			: TIME      ;       PCS2_bParamTimeEnterStblPriorRmp		: BOOL;
+	PCS2_ParamTimeoutGridFormerTransition	: TIME      ;       PCS2_bParamTimeoutGridFormerTransition	: BOOL;
+	PCS2_ParamTimeoutGridFeederTransition	: TIME      ;       PCS2_bParamTimeoutGridFeederTransition	: BOOL;
+	PCS2_ParamTimeoutOffTransition		    : TIME      ;       PCS2_bParamTimeoutOffTransition		    : BOOL;
+	PCS2_ParamFreqRegSoCmax 				: REAL      ;       PCS2_bParamFreqRegSoCmax 				: BOOL;
+	PCS2_ParamFreqRegSoCmin 			    : REAL      ;       PCS2_bParamFreqRegSoCmin 			    : BOOL;
+	PCS2_ParamLVRT_Enabled					: BOOL      ;       PCS2_bParamLVRT_Enabled					: BOOL;
+	PCS2_ParamAntiIslanding_Enabled			: BOOL      ;       PCS2_bParamAntiIslanding_Enabled		: BOOL;	
+	
+                                        
+// QfU and PvF          
+	bResetParamQfU_PvF					: BOOL;				// Reset Parameters                
+	ParamQfU_UDbHigh    				: WORD;				// JEMA U1 : AKUO U_UDbHigh
+	ParamQfU_Umax		    			: WORD;				// JEMA U2 : AKUO U_Umax
+	ParamQfU_UDbLow	    				: WORD;				// JEMA U3 : AKUO U_UDbLow
+	ParamQfU_Umin		    			: WORD;				// JEMA U4 : AKUO U_Umin
+										
+	ParamQfU_QDbHigh					: WORD;				// JEMA Q1 : AKUO U_QDbHigh
+	ParamQfU_Qmax						: WORD;				// JEMA Q2 : AKUO U_Qmax
+	ParamQfU_QDbLow						: WORD;				// JEMA Q3 : AKUO U_QDbLow
+	ParamQfU_Qmin						: WORD;				// JEMA Q4 : AKUO U_Qmin
+										
+	ParamPfF_FDbHigh	    			: WORD;				// JEMA f1 : AKUO P_FDbHigh
+	ParamPfF_Fmax		    			: WORD;				// JEMA f2 : AKUO P_Fmax
+	ParamPfF_FDbLow	    				: WORD;				// JEMA f3 : AKUO P_FDbLow
+	ParamPfF_Fmin		    			: WORD;				// JEMA f4 : AKUO P_Fmin
+										
+	ParamPfF_PDbHigh					: WORD;				// JEMA P1 : AKUO P_PDbHigh
+	ParamPfF_Pmax						: WORD;				// JEMA P2 : AKUO P_Pmax
+	ParamPfF_PDbLow						: WORD;				// JEMA P3 : AKUO P_PDbLow
+	ParamPfF_Pmin						: WORD;				// JEMA P4 : AKUO P_Pmin
+
+	ParamPfF_FhystLow					: WORD;				// JEMA fst1
+	ParamPfF_FhystHigh					: WORD;				// JEMA fst2
+	                                    
+
+	ParamQfU_UDbHigh_HMI   				: REAL;				// JEMA U1 : AKUO U_UDbHigh
+	ParamQfU_Umax_HMI	    			: REAL;				// JEMA U2 : AKUO U_Umax
+	ParamQfU_UDbLow_HMI   				: REAL;				// JEMA U3 : AKUO U_UDbLow
+	ParamQfU_Umin_HMI	    			: REAL;				// JEMA U4 : AKUO U_Umin
+										
+	ParamQfU_QDbHigh_HMI				: REAL;				// JEMA Q1 : AKUO U_QDbHigh
+	ParamQfU_Qmax_HMI					: REAL;				// JEMA Q2 : AKUO U_Qmax
+	ParamQfU_QDbLow_HMI					: REAL;				// JEMA Q3 : AKUO U_QDbLow
+	ParamQfU_Qmin_HMI					: REAL;				// JEMA Q4 : AKUO U_Qmin
+										
+	ParamPfF_FDbHigh_HMI    			: REAL;				// JEMA f1 : AKUO P_FDbHigh
+	ParamPfF_Fmax_HMI	    			: REAL;				// JEMA f2 : AKUO P_Fmax
+	ParamPfF_FDbLow_HMI   				: REAL;				// JEMA f3 : AKUO P_FDbLow
+	ParamPfF_Fmin_HMI	    			: REAL;				// JEMA f4 : AKUO P_Fmin
+										
+	ParamPfF_PDbHigh_HMI				: REAL;				// JEMA P1 : AKUO P_PDbHigh
+	ParamPfF_Pmax_HMI					: REAL;				// JEMA P2 : AKUO P_Pmax
+	ParamPfF_PDbLow_HMI					: REAL;				// JEMA P3 : AKUO P_PDbLow
+	ParamPfF_Pmin_HMI					: REAL;				// JEMA P4 : AKUO P_Pmin
+
+	ParamPfF_FhystLow_HMI				: REAL;				// JEMA fst1
+	ParamPfF_FhystHigh_HMI				: REAL;				// JEMA fst2	
+	
+	
+	ParamFreqRegSoCmax                  : REAL;
+	ParamFreqRegSoCmin                  : REAL;
+	                                    
+	ParamTimeSoCRangeReachedRmp	       	: TIME;	 
+	ParamTimeFreqRegStbDuration	       	: TIME;	 
+	ParamTimeEnterStblPriorRmp	       	: TIME;  
+                                       	 
+                                       	 
+	ParamTimeoutGridFormerTransition   	: TIME;	   
+	ParamTimeoutGridFeederTransition	: TIME;  
+    
+
+	AX_BESS_Names						: ARRAY[1..CstNbESS_G] of string;                                    
+	KK: INT;
+	
+	bConfirmPfF							: BOOL;
+	bConfirmQfU							: BOOL;
+END_VAR                                 
+                                        
+                                        
+                                        			
+                                        			
+                                        			]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[FOR KK := 1 TO CstNbESS_G DO
+	AX_BESS_Names[KK] := concat(STR1 := 'BESS', STR2 := INT_TO_STRING(KK));
+END_FOR
+
+//IF bResetParamQfU_PvF THEN
+//	bResetParamQfU_PvF := FALSE;
+//	
+//	ParamPfF_FDbHigh_HMI 	:= A1_HPP.ParamPfF_FDbHigh;
+//	ParamPfF_FDbLow_HMI 	:= A1_hpp.ParamPfF_FDbLow;
+//	ParamPfF_FhystHigh_HMI 	:= A1_HPP.ParamPfF_FhystHigh;
+//	ParamPfF_FhystLow_HMI 	:= A1_HPP.ParamPfF_FhystLow;
+//	ParamPfF_Fmax_HMI		:= A1_HPP.ParamPfF_Fmax;
+//	ParamPfF_Fmin_HMI		:= A1_HPP.ParamPfF_Fmin;
+//	ParamPfF_PDbHigh_HMI 	:= A1_Hpp.ParamPfF_PDbHigh;
+//	ParamPfF_PDbLow_HMI 	:= A1_hpp.ParamPfF_PDbLow;
+//	ParamPfF_Pmax_HMI		:= A1_HPP.ParamPfF_Pmax;
+//	ParamPfF_Pmin_HMI		:= A1_HPP.ParamPfF_Pmin;	
+//	ParamQfU_QDbHigh_HMI	:= A1_HPP.ParamQfU_QDbHigh;
+//	ParamQfU_QDbLow_HMI		:= A1_HPP.ParamQfU_QDbLow;
+//	ParamQfU_Qmax_HMI		:= A1_HPP.ParamQfU_Qmax;
+//	ParamQfU_Qmin_HMI		:= A1_HPP.ParamQfU_Qmin;
+//	ParamQfU_UDbHigh_HMI	:= A1_HPP.ParamQfU_UDbHigh;
+//	ParamQfU_UDbLow_HMI		:= A1_HPP.ParamQfU_UDbLow;
+//	ParamQfU_Umax_HMI		:= A1_HPP.ParamQfU_Umax;
+//	ParamQfU_Umin_HMI		:= A1_HPP.ParamQfU_Umin;	
+//END_IF
+
+// Param P(f)
+	IF ParamPfF_FDbHigh_HMI >= ParamPfF_Fmax_HMI THEN
+		ParamPfF_FDbHigh_HMI := ParamPfF_Fmax_HMI;
+	END_IF
+	paramPfF_PDbHigh_HMI 	:= 0;
+	ParamPfF_PDbLow_HMI 	:= 0;
+	
+	IF ParamPfF_FDbLow_HMI <= ParamPfF_Fmin_HMI THEN
+		ParamPfF_FDbLow_HMI := ParamPfF_Fmin_HMI;
+	END_IF
+		
+	
+	IF ParamPfF_FhystLow_HMI <= ParamPfF_FDbLow_HMI THEN
+		ParamPfF_FhystLow_HMI := ParamPfF_FDbLow_HMI;
+	END_IF 
+
+	IF ParamPfF_FhystHigh_HMI >= ParamPfF_FDbHigh_HMI THEN
+		ParamPfF_FhystHigh_HMI := ParamPfF_FDbHigh_HMI;
+	END_IF 	
+	
+// Param Q(U)
+	ParamQfU_QDbHigh_HMI 	:= 0;
+	ParamQfU_QDbLow_HMI 	:= 0;
+	
+	IF ParamQfU_UDbHigh_HMI >= ParamQfU_Umax_HMI THEN
+		ParamQfU_UDbHigh_HMI := ParamQfU_Umax_HMI;
+	END_IF
+	
+	IF ParamQfU_UDbLow_HMI <= ParamQfU_Umin_HMI THEN
+		ParamQfU_UDbLow_HMI := ParamQfU_Umin_HMI;
+	END_IF
+	
+//IF bConfirmPfF THEN
+//	bConfirmPfF := FALSE;	
+//	A1_HPP.ParamPfF_PDbHigh		:= ParamPfF_PDbHigh_HMI;
+//    A1_HPP.ParamPfF_Pmax		:= ParamPfF_Pmax_HMI;
+//    A1_HPP.ParamPfF_PDbLow		:= ParamPfF_PDbLow_HMI;
+//    A1_HPP.ParamPfF_Pmin		:= ParamPfF_Pmin_HMI;
+//	
+//	A1_HPP.ParamPfF_FDbHigh		:= ParamPfF_FDbHigh_HMI;
+//    A1_HPP.ParamPfF_Fmax		:= ParamPfF_Fmax_HMI;
+//    A1_HPP.ParamPfF_FDbLow		:= ParamPfF_FDbLow_HMI;
+//    A1_HPP.ParamPfF_Fmin		:= ParamPfF_Fmin_HMI;
+//	
+//	A1_HPP.ParamPfF_FhystHigh	:= ParamPfF_FhystHigh_HMI;
+//	A1_HPP.ParamPfF_FhystLow	:= ParamPfF_FhystLow_HMI;
+//END_IF
+
+//IF bConfirmQfU THEN	
+//	bConfirmQfU := FALSE;
+//	A1_HPP.ParamQfU_QDbHigh		:= ParamQfU_QDbHigh_HMI;
+//    A1_HPP.ParamQfU_Qmax		:= ParamQfU_Qmax_HMI;
+//    A1_HPP.ParamQfU_QDbLow		:= ParamQfU_QDbLow_HMI;
+//    A1_HPP.ParamQfU_Qmin		:= ParamQfU_Qmin_HMI;
+//	
+//	A1_HPP.ParamQfU_UDbHigh		:= ParamQfU_UDbHigh_HMI;
+//    A1_HPP.ParamQfU_Umax		:= ParamQfU_Umax_HMI;
+//    A1_HPP.ParamQfU_UDbLow		:= ParamQfU_UDbLow_HMI;
+//    A1_HPP.ParamQfU_Umin		:= ParamQfU_Umin_HMI;
+//END_IF
+//
+
+IF PCS_RefreshValues THEN
+	PCS_RefreshValues := FALSE;
+
+	PCS1_ParamUnitID 						:= AX_ESS[bess_HMI.numEssDisplayed].AX_PCS[1].ParamUnitID 								;
+	PCS1_ParamIPAddress			   			:= AX_ESS[bess_HMI.numEssDisplayed].AX_PCS[1].ParamIPAddress			   			    ;
+	PCS1_ParamTcpPort						:= AX_ESS[bess_HMI.numEssDisplayed].AX_PCS[1].ParamTcpPort						        ;
+	PCS1_ParamTempoComAlarm					:= AX_ESS[bess_HMI.numEssDisplayed].AX_PCS[1].ParamTempoComAlarm					    ;
+	PCS1_ParamTempoComWarning				:= AX_ESS[bess_HMI.numEssDisplayed].AX_PCS[1].ParamTempoComWarning				        ;
+	PCS1_ParamTimeOutBlckStrt          		:= AX_ESS[bess_HMI.numEssDisplayed].AX_PCS[1].ParamTimeOutBlckStrt          		    ;
+	PCS1_ParamClockReadTime 				:= AX_ESS[bess_HMI.numEssDisplayed].AX_PCS[1].ParamClockReadTime 				        ;
+	PCS1_ParamClockWriteTime 				:= AX_ESS[bess_HMI.numEssDisplayed].AX_PCS[1].ParamClockWriteTime 				        ;
+	PCS1_ParamTimeout		            	:= AX_ESS[bess_HMI.numEssDisplayed].AX_PCS[1].ParamTimeout		            	        ;
+	PCS1_ParamTimePulseTrig		    		:= AX_ESS[bess_HMI.numEssDisplayed].AX_PCS[1].ParamTimePulseTrig		    		    ;
+	PCS1_ParamEssNum						:= AX_ESS[bess_HMI.numEssDisplayed].AX_PCS[1].ParamEssNum						        ;
+	PCS1_ParamPcsNum						:= AX_ESS[bess_HMI.numEssDisplayed].AX_PCS[1].ParamPcsNum						        ;
+	PCS1_ParamPoverQ						:= AX_ESS[bess_HMI.numEssDisplayed].AX_PCS[1].ParamPoverQ						        ;
+	PCS1_ParamTimeSoCRangeReachedRmp		:= AX_ESS[bess_HMI.numEssDisplayed].AX_PCS[1].ParamTimeSoCRangeReachedRmp		        ;
+	PCS1_ParamTimeFreqRegStbDuration		:= AX_ESS[bess_HMI.numEssDisplayed].AX_PCS[1].ParamTimeFreqRegStbDuration		        ;
+
+	
+	SBMS1_ParamClockWriteTime				:= AX_ESS[BESS_HMI.NumEssDisplayed].AX_BAT[1].ParamClockWriteTime;
+	SBMS1_ParamIpAddress					:= AX_ESS[BESS_HMI.NumEssDisplayed].AX_BAT[1].ParamIpAddress;
+	SBMS1_ParamTcpPort						:= AX_ESS[BESS_HMI.NumEssDisplayed].AX_BAT[1].ParamTcpPort;
+	
+	SBMS2_ParamClockWriteTime				:= AX_ESS[BESS_HMI.NumEssDisplayed].AX_BAT[2].ParamClockWriteTime;
+	SBMS2_ParamIpAddress					:= AX_ESS[BESS_HMI.NumEssDisplayed].AX_BAT[2].ParamIpAddress;
+	SBMS2_ParamTcpPort						:= AX_ESS[BESS_HMI.NumEssDisplayed].AX_BAT[2].ParamTcpPort;
+	
+END_IF
+
+
+IF PCS1_bParamUnitID 						THEN AX_ESS[Bess_hmi.NumEssDisplayed].AX_PCS[1].ParamUnitID := PCS1_ParamUnitID; PCS1_bParamUnitID := FALSE; END_IF 
+IF PCS1_bParamIPAddress 					THEN AX_ESS[Bess_hmi.NumEssDisplayed].AX_PCS[1].ParamIPAddress := PCS1_ParamIPAddress; PCS1_bParamIPAddress := FALSE; END_IF 
+IF PCS1_bParamTcpPort 						THEN AX_ESS[Bess_hmi.NumEssDisplayed].AX_PCS[1].ParamTcpPort := PCS1_ParamTcpPort; PCS1_bParamTcpPort := FALSE; END_IF 
+IF PCS1_bParamTempoComAlarm 				THEN AX_ESS[Bess_hmi.NumEssDisplayed].AX_PCS[1].ParamTempoComAlarm := PCS1_ParamTempoComAlarm; PCS1_bParamTempoComAlarm := FALSE; END_IF 
+IF PCS1_bParamTempoComWarning 				THEN AX_ESS[Bess_hmi.NumEssDisplayed].AX_PCS[1].ParamTempoComWarning := PCS1_ParamTempoComWarning; PCS1_bParamTempoComWarning := FALSE; END_IF 
+IF PCS1_bParamTimeOutBlckStrt   			THEN AX_ESS[Bess_hmi.NumEssDisplayed].AX_PCS[1].ParamTimeOutBlckStrt           := PCS1_ParamTimeOutBlckStrt          ; PCS1_bParamTimeOutBlckStrt           := FALSE; END_IF 
+IF PCS1_bParamClockReadTime  				THEN AX_ESS[Bess_hmi.NumEssDisplayed].AX_PCS[1].ParamClockReadTime  := PCS1_ParamClockReadTime ; PCS1_bParamClockReadTime  := FALSE; END_IF 
+IF PCS1_bParamClockWriteTime  				THEN AX_ESS[Bess_hmi.NumEssDisplayed].AX_PCS[1].ParamClockWriteTime  := PCS1_ParamClockWriteTime ; PCS1_bParamClockWriteTime  := FALSE; END_IF 
+IF PCS1_bParamTimeout 						THEN AX_ESS[Bess_hmi.NumEssDisplayed].AX_PCS[1].ParamTimeout := PCS1_ParamTimeout; PCS1_bParamTimeout := FALSE; END_IF 
+IF PCS1_bParamEssNum 						THEN AX_ESS[Bess_hmi.NumEssDisplayed].AX_PCS[1].ParamEssNum := PCS1_ParamEssNum; PCS1_bParamEssNum := FALSE; END_IF 
+IF PCS1_bParamPcsNum 						THEN AX_ESS[Bess_hmi.NumEssDisplayed].AX_PCS[1].ParamPcsNum := PCS1_ParamPcsNum; PCS1_bParamPcsNum := FALSE; END_IF 
+IF PCS1_bParamPoverQ 						THEN AX_ESS[Bess_hmi.NumEssDisplayed].AX_PCS[1].ParamPoverQ := PCS1_ParamPoverQ; PCS1_bParamPoverQ := FALSE; END_IF 
+IF PCS1_bParamTimeSoCRangeReachedRmp 		THEN AX_ESS[Bess_hmi.NumEssDisplayed].AX_PCS[1].ParamTimeSoCRangeReachedRmp := PCS1_ParamTimeSoCRangeReachedRmp; PCS1_bParamTimeSoCRangeReachedRmp := FALSE; END_IF 
+IF PCS1_bParamTimeFreqRegStbDuration 		THEN AX_ESS[Bess_hmi.NumEssDisplayed].AX_PCS[1].ParamTimeFreqRegStbDuration := PCS1_ParamTimeFreqRegStbDuration; PCS1_bParamTimeFreqRegStbDuration := FALSE; END_IF 
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="ParamBESS_HMI">
+      <LineId Id="5" Count="0" />
+      <LineId Id="89" Count="1" />
+      <LineId Id="1001" Count="2" />
+      <LineId Id="1431" Count="0" />
+      <LineId Id="1005" Count="0" />
+      <LineId Id="1013" Count="0" />
+      <LineId Id="1007" Count="0" />
+      <LineId Id="1009" Count="0" />
+      <LineId Id="1008" Count="0" />
+      <LineId Id="1010" Count="1" />
+      <LineId Id="1014" Count="1" />
+      <LineId Id="1012" Count="0" />
+      <LineId Id="1016" Count="3" />
+      <LineId Id="1021" Count="2" />
+      <LineId Id="1020" Count="0" />
+      <LineId Id="1004" Count="0" />
+      <LineId Id="165" Count="1" />
+      <LineId Id="164" Count="0" />
+      <LineId Id="212" Count="1" />
+      <LineId Id="216" Count="0" />
+      <LineId Id="223" Count="0" />
+      <LineId Id="1828" Count="0" />
+      <LineId Id="218" Count="2" />
+      <LineId Id="222" Count="0" />
+      <LineId Id="225" Count="0" />
+      <LineId Id="605" Count="0" />
+      <LineId Id="607" Count="0" />
+      <LineId Id="606" Count="0" />
+      <LineId Id="608" Count="2" />
+      <LineId Id="268" Count="0" />
+      <LineId Id="611" Count="0" />
+      <LineId Id="265" Count="0" />
+      <LineId Id="1829" Count="0" />
+      <LineId Id="1831" Count="0" />
+      <LineId Id="1830" Count="0" />
+      <LineId Id="239" Count="2" />
+      <LineId Id="245" Count="3" />
+      <LineId Id="382" Count="0" />
+      <LineId Id="252" Count="0" />
+      <LineId Id="407" Count="0" />
+      <LineId Id="383" Count="0" />
+      <LineId Id="385" Count="2" />
+      <LineId Id="406" Count="0" />
+      <LineId Id="396" Count="2" />
+      <LineId Id="395" Count="0" />
+      <LineId Id="1832" Count="2" />
+      <LineId Id="238" Count="0" />
+      <LineId Id="389" Count="1" />
+      <LineId Id="408" Count="0" />
+      <LineId Id="391" Count="3" />
+      <LineId Id="403" Count="0" />
+      <LineId Id="400" Count="2" />
+      <LineId Id="399" Count="0" />
+      <LineId Id="388" Count="0" />
+      <LineId Id="525" Count="2" />
+      <LineId Id="698" Count="0" />
+      <LineId Id="1827" Count="0" />
+      <LineId Id="700" Count="2" />
+      <LineId Id="704" Count="6" />
+      <LineId Id="712" Count="1" />
+      <LineId Id="721" Count="2" />
+      <LineId Id="758" Count="0" />
+      <LineId Id="1620" Count="0" />
+      <LineId Id="1819" Count="2" />
+      <LineId Id="1823" Count="3" />
+      <LineId Id="1625" Count="0" />
+      <LineId Id="699" Count="0" />
+      <LineId Id="528" Count="2" />
+      <LineId Id="768" Count="1" />
+      <LineId Id="771" Count="5" />
+      <LineId Id="779" Count="1" />
+      <LineId Id="788" Count="2" />
+      <LineId Id="532" Count="0" />
+      <LineId Id="524" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

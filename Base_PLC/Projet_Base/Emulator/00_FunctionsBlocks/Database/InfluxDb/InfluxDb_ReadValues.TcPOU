@@ -1,0 +1,118 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="InfluxDb_ReadValues" Id="{1152fa4b-8561-4404-bc4c-e26ee1e60f49}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM InfluxDb_ReadValues
+               					
+VAR_INPUT  
+	IN_TimeStart							: LINT;
+	IN_bRead								: BOOL;             					
+	IN_Dbid									: UINT := 1;
+	IN_NbRecordRead							: UINT := 100;
+	IN_bAck									: BOOL;	// Filter value for acknowledged filter
+	IN_bVal									: BOOL; // Filter value for value filter
+	IN_FilterAck							: BOOL; // Is the acknowledged filter active 
+	IN_FilterVal							: BOOL; // Is the value filter active 
+	IN_Database								: T_MaxString;
+END_VAR
+
+VAR_OUTPUT
+    OUT_bError								: BOOL;
+	OUT_bBusy								: BOOL;
+	OUT_pTableResults						: PVOID;
+	OUT_cbTableResults						: UINT;
+END_VAR
+
+VAR
+	Query									: T_MaxString;
+	QueryInit								: T_MaxString := 'SELECT time, Message, ID, Value, Ack  FROM %s.autogen.Alarms  ';
+	QueryOrder								: T_MaxString := ' order by time desc limit %d';
+	QueryFinal								: T_MaxString ;
+	
+    QueryOption_TSDB_Select 				: T_QueryOptionTimeSeriesDB_Query; 
+    fbNoSQLQueryBuilder_TimeSeriesDB 		: FB_NoSQLQueryBuilder_TimeSeriesDB; 
+    fbNoSqlQueryEvt 						: FB_NoSQLQueryEvt(sNetID := '', tTimeout := T#15S); 
+	fbNoSqlResultEvt						: FB_NoSQLResultEvt(sNetID := '', tTimeout := T#15S);
+	fbNoSqlValidationEvt					: FB_NoSQLValidationEvt(sNetID := '', tTimeout := T#15S);
+	nState 									: UINT;
+	ReaDS_Transfouct								: ARRAY[1..250]OF ST_InfluxAlarmsRetrieve;
+	Format									: FB_FormatString;          						
+
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[fbNoSQLQueryBuilder_TimeSeriesDB.pQueryOptions := ADR(QueryOption_TSDB_Select);
+fbNoSQLQueryBuilder_TimeSeriesDB.cbQueryOptions := SIZEOF(QueryOption_TSDB_Select);
+
+OUT_pTableResults 	:= ADR(ReaDS_Transfouct);
+OUT_cbTableResults 	:= SIZEOF(ReaDS_Transfouct);
+
+IF IN_bRead THEN
+	OUT_bBusy 	:= TRUE;
+	IN_bRead 	:= FALSE;
+	nState 		:= 1;
+	Query := QueryInit;
+	IF IN_FilterAck OR IN_FilterVal THEN
+		query := concat(STR1 := query, str2 := 'Where ');
+		
+		IF IN_FilterAck THEN
+			query := concat(STR1:= query, STR2 := concat(STR1 := ' Ack=', str2 := BOOL_TO_STRING(IN_bAck)));
+		END_IF
+		
+		IF IN_FilterAck AND IN_FilterVal THEN
+			query := concat(STR1:= query, STR2 := ' AND ');
+		END_IF
+		
+		IF IN_FilterVal THEN
+			query := concat(STR1:= query, STR2 := concat(STR1 := 'Value=', str2 := BOOL_TO_STRING(IN_bVal)));
+		END_IF
+		
+	END_IF
+	query := concat(str1 := query, STR2 := QueryOrder);
+	Format(sFormat := Query, arg1 := F_STRING(in:=IN_Database), arg2:= F_UINT(in:=IN_NbRecordRead), sOut => QueryFinal);
+	
+	QueryOption_TSDB_Select.cbQuery := SIZEOF(QueryFinal);
+	QueryOption_TSDB_Select.pQuery := ADR(QueryFinal);
+END_IF
+
+CASE nState OF 
+	1:
+		IF fbNoSqlQueryEvt.ExecuteDataReturn(hDBID := IN_Dbid, iNoSQLQueryBuilder := fbNoSQLQueryBuilder_TimeSeriesDB, pNoSQLResult := ADR(fbNoSqlResultEvt)) THEN
+			IF fbNoSqlQueryEvt.bError THEN
+				OUT_bError := TRUE;
+				nState := 0;
+			ELSE
+				nState := 2;
+			END_IF
+		END_IF
+	2:
+		IF fbNoSqlResultEvt.ReadAsStruct
+		(
+			nStartIndex := 0, 
+			nRecordCount:= IN_NbRecordRead,  
+			pData:= ADR(ReaDS_Transfouct),  
+			cbData:= SIZEOF(ReaDS_Transfouct),  
+			bValidate := TRUE,  
+			bDataRelease:= TRUE,  
+			pNoSQLValidation:= ADR(fbNoSqlValidationEvt) 
+		) THEN
+			IF fbNoSqlResultEvt.bError THEN
+				OUT_bError := TRUE;
+				OUT_bBusy := FALSE;
+				nState := 0;
+			ELSE
+				nState := 3;
+				OUT_bBusy := FALSE;
+			END_IF
+		END_IF
+	
+END_CASE
+
+	]]></ST>
+    </Implementation>
+    <LineIds Name="InfluxDb_ReadValues">
+      <LineId Id="862" Count="66" />
+      <LineId Id="648" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

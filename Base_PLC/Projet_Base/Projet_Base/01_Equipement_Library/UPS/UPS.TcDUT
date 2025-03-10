@@ -1,0 +1,26 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UPS" Id="{fe32e41b-efa1-41e2-93a2-f8bc356f62cf}">
+    <Declaration><![CDATA[///////////
+// Structure for UPS. Main Operating Data to be saved (ex: OPC)  
+//////////
+TYPE UPS :
+STRUCT
+		MesDischarging				: BOOL ; 			(* (NA) Battery is discharging		*)
+		MesAlarm_Ulow				: BOOL ; 			(* (NA) Battery is almost empty     *)
+		MesAlarmState				: BOOL ; 			(* (NA) Fault on the charger        *)
+		MesUdc  					: REAL ; 			(* (V) DC Load voltage              *)
+       		
+		
+		MesAlarmCode				: WORD ; 			(* Internal Akuo Alarm Code         *)
+		MesWarningCode				: WORD ; 			(* Internal Akuo Warning Code       *)
+		MesEventCode				: WORD ; 			(* Internal Akuo Warning Code 	    *)
+        
+		MesCP_Read					: BOOL := TRUE ;   (* Read function enable             *)
+		MesAlarmCom					: BOOL ; 			(* Communication alarm              *)
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

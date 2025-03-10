@@ -1,0 +1,335 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="Firebird_InsertBuffer_vEpoch" Id="{668f5abc-9030-4a42-b1c7-028fe10be93f}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK Firebird_InsertBuffer_vEpoch
+// Fonctionnement : Tableau de 2000 structures en input. Dès qu'on atteint 1000 structures remplies, décalage de l'espace mémoire
+// pour en 1 temps de cycle pour ne pas perdre de données sur le transfert.
+VAR CONSTANT
+	//CstNbLigneBuffer					: UINT:= 500;
+	CstNbLigneBufferMax	 				: DINT:= 1000;
+                            			
+END_VAR                     			
+                            			
+VAR_INPUT                   			
+	NomTable							: STRING(255) := 'Table100ms';
+	IN_Reset							: BOOL;
+	IN_Hdbid							: DINT;
+	ParamTimeOut						: TIME := T#10s;
+END_VAR                     			
+                            			
+VAR_OUTPUT                  			
+	OUT_Error							: BOOL;
+	OUT_Busy							: BOOL;
+	OUT_Result							: INT;
+	OUT_Connected						: BOOL;
+END_VAR                     			
+                            			
+VAR                         			
+	ETAPE								: UINT;
+	CstNbLigneBuffer					: UINT:= 250;
+	
+	FTrig_TP_Retry						: F_TRIG;                        			
+	TrigReset							: R_TRIG;
+	TON_Watchdog						: TON ;
+	TP_Retry							: TP;
+	Tmp_Nb_Buffer						: DINT;
+	StructNull							: St_DataHisto;
+                            			
+    SQLDatabase1						: FB_SQLDatabaseEvt('',T#10S);
+    SQLDatabase2						: FB_SQLDatabaseEvt('',T#10S);
+	SQLCommand1							: FB_SQLCommandEvt('',T#10S);
+	SQLCommand2							: FB_SQLCommandEvt('',T#10S);
+	
+	bConnected							: BOOL;              	        	
+                            			
+	TrameValues							: T_MaxString := ' ([Timestamp],[ParentId],[Value])';
+	pPosRequete							: DINT;                		
+	RequeteFinale						: ARRAY[1..1000] OF STRING(1000);	
+	RequeteFinaleNull					: ARRAY [1..1000] OF STRING(1000);
+	
+	sTimeStamp							: STRING(255);  
+	RequeteEntete						: STRING(1000);
+	sInsertValue						: STRING(1000);
+	Format								: FB_FormatString;
+	                			
+	NbElemBuffer						: DINT;
+	KK									: DINT;
+	                    				
+	CmdStart							: BOOL;
+	TrigRestartMaxReached				: R_TRIG;
+	TrigCmdExec							: R_TRIG;
+	TrigStart							: R_TRIG;
+	RsStart								: RS;
+	                        			
+	// AlarmManagement      			
+		bBufferMaxFull 					: BOOL;        		
+		bInStructNull					: BOOL;
+		
+	// CONNECT	
+		TrigStartConnect				: R_TRIG;	
+		RsStartConnect					: RS;
+	// DISCONNECT
+		TrigStartDisconnect				: R_TRIG;
+		RsStartDisconnect				: RS;
+
+		bReconnect						: BOOL;
+		FTrig_bReconnect				: F_TRIG;
+			
+	MesAlarm: BOOL;
+	TrigWatchdog : R_TRIG;
+	bTest: BOOL;
+	FIFO						: FB_DBDatasetFifo_1min;
+END_VAR    
+
+VAR_IN_OUT
+	
+END_VAR
+
+         		
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+//CmdStart := FIFO.nCount>= CstNbLigneBuffer AND NOT FTrig_TP_Retry.Q;
+CmdStart := FIFO.nCount > 0 ;//AND NOT FTrig_TP_Retry.Q;
+
+
+TP_Retry(IN := FIFO.nCount >= CstNbLigneBufferMax AND NOT TP_Retry.Q, PT := T#3S);
+FTrig_TP_Retry(CLK := TP_Retry.Q);
+
+TrigReset(CLK := IN_Reset OR TON_Watchdog.Q);
+IF TrigReset.Q THEN
+	FIFO.A_Reset();
+	cmdStart := FALSE;
+END_IF
+
+TrigStart(CLK := CmdStart);
+IF TrigStart.Q THEN
+	ETAPE := 1;
+END_IF
+
+
+RsStart(SET := TrigStart.Q);
+IF RsStart.Q1 THEN
+	RequeteEntete :=  concat(concat(' INSERT INTO "',NomTable),'" ');
+END_IF
+		
+CASE ETAPE OF
+		
+	1: // CONNECTED
+		OUT_Busy := TRUE;
+		IF SQLDatabase1.CreateCmd(pSQLCommand := ADR(SQLCommand1)) THEN 
+			IF NOT SQLDatabase1.bError THEN
+				MEMCPY(srcAddr:= ADR(RequeteEntete), destAddr := ADR(requeteFinale), n:= SIZEOF(RequeteEntete));
+				pPosRequete := LEN(STR := RequeteEntete);
+				Tmp_Nb_Buffer :=UDINT_TO_DINT(FIFO.nCount -1);
+				FOR KK:= 1 TO MIN(Tmp_Nb_Buffer,CstNbLigneBuffer-1) DO
+					fifo.A_Get();
+					sTimeStamp	:=  ULINT_TO_STRING(fifo.Out.Timestamp);
+					Format(sFormat := 'select $'%s$',%d,%5.2f FROM RDB$$DATABASE UNION ALL ', arg1 := F_STRING(sTimeStamp),arg2:= F_DINT(fifo.out.ParentId), arg3:= F_LREAL(fifo.out.Value), arg5:= F_STRING(NomTable), sOut=>sInsertValue);
+					MEMCPY(srcAddr:= ADR(sInsertValue), destAddr := ADR(requeteFinale)+DINT_TO_DWORD(pPosRequete), n:= SIZEOF(sInsertValue));
+					pPosRequete:= pPosRequete + LEN(STR := sInsertValue);
+					fifo.A_Remove();
+				END_FOR
+				fifo.A_Get();
+				sTimeStamp	:=  ULINT_TO_STRING(fifo.Out.Timestamp);
+				Format(sFormat := 'select $'%s$',%d,%5.2f FROM RDB$$DATABASE;', arg1 := F_STRING(sTimeStamp),arg2:= F_DINT(fifo.out.ParentId), arg3:= F_LREAL(fifo.out.Value), sOut=>sInsertValue);
+				MEMCPY(srcAddr:= ADR(sInsertValue), destAddr := ADR(requeteFinale)+DINT_TO_DWORD(pPosRequete), n:= SIZEOF(sInsertValue));
+				fifo.A_Remove();
+				IF Tmp_Nb_Buffer > 0 THEN
+					ETAPE := 2;
+				END_IF
+			ELSIF SQLDatabase1.bError THEN
+				ETAPE := 255;
+			END_IF
+		END_IF
+	2:
+
+		IF SQLCommand1.Execute(pSQLCmd := ADR(RequeteFinale), cbSQLCmd := SIZEOF(Requetefinale))THEN
+			
+			IF  NOT SQLCommand1.bError THEN
+				ETAPE := 4;
+			ELSIF SQLCommand1.bError THEN
+				ETAPE := 255;
+			END_IF
+		END_IF
+
+	4:
+		IF NOT SQLDatabase1.bError THEN
+			
+			RequeteFinale := RequeteFinaleNull;
+			
+			//RequeteFinale := '';
+			Tmp_Nb_Buffer := MIN(UDINT_TO_DINT(FIFO.nCount),CstNbLigneBuffer);
+			//FOR KK:= 1 TO Tmp_Nb_Buffer DO
+			//	fifo.A_Remove();
+			//END_FOR
+			TrigStart(CLK := FALSE);
+			RsStart(RESET1 := TRUE);
+			RsStart(RESET1 := FALSE);
+			TrigCmdExec(CLK := FALSE);
+			CmdStart := FALSE;
+			Etape := 0;
+			OUT_Error := FALSE;
+			OUT_Busy := FALSE;
+
+		ELSE 
+			ETAPE := 255;
+		END_IF
+	255: 
+		RequeteFinale := RequeteFinaleNull;
+
+		SQLCommand1 := SQLCommand2;
+		SQLDatabase1 := SQLDatabase2;
+		OUT_Error := TRUE;
+		RsStart(RESET1 := TRUE);
+		RsStart(RESET1 := FALSE);
+		TrigCmdExec(CLK := FALSE);
+		CmdStart := FALSE;
+		ETAPE := 0;
+		OUT_Busy := FALSE;
+END_CASE
+]]></ST>
+    </Implementation>
+    <Method Name="M_AddLine" Id="{a2a1a63e-990e-47df-b1e0-b6c2329462aa}">
+      <Declaration><![CDATA[METHOD M_AddLine : BOOL
+VAR_INPUT
+	InStruct			: St_DataHisto_Epoch;
+END_VAR
+
+VAR
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[fifo.in := InStruct;
+fifo.A_Add();]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_AlarmManager" Id="{c4022182-bf35-48b6-9078-6af7de61b3b6}">
+      <Declaration><![CDATA[METHOD M_AlarmManager : BOOL
+VAR_INPUT
+	AlarmCode : WORD;
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+AlarmCode.0 := bBufferMaxFull;
+AlarmCode.1 := bInStructNull;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Connect" Id="{10ac48ad-b791-4324-8010-7d04e9b58e50}">
+      <Declaration><![CDATA[METHOD M_Connect : BOOL
+
+VAR_OUTPUT
+END_VAR
+VAR_INPUT
+	IN_hDBID				: DINT;
+	IN_Start				: BOOL;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[TrigStartConnect(CLK := IN_Start);
+RsStartConnect(SET := TrigStartConnect.Q);
+IF RsStartConnect.Q1 THEN
+	IF SQLDatabase1.Connect(hDBID := IN_hDBID) THEN;
+		RsStartConnect(RESET1 := TRUE);
+		RsStartConnect(RESET1 := FALSE);
+		bReconnect := FALSE;
+	END_IF
+END_IF
+
+Out_Connected := SQLDatabase1.bConnected;
+IF NOT OUT_Connected THEN
+	btest := TRUE;
+	
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Disconnect" Id="{2d9bb433-11e9-4695-858e-910c979911a3}">
+      <Declaration><![CDATA[METHOD M_Disconnect : BOOL
+VAR_INPUT
+END_VAR
+VAR_INPUT
+	IN_Start				: BOOL;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[TrigStartDisconnect(CLK := IN_Start);
+RsStartDisconnect(SET := TrigStartDisconnect.Q);
+IF RsStartDisconnect.Q1 THEN
+	IF SQLDatabase1.Disconnect() THEN;
+		RsStartDisconnect(RESET1 := TRUE);
+		RsStartDisconnect(RESET1 := FALSE);
+	END_IF
+END_IF
+
+Out_Connected := SQLDatabase1.bConnected;
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{ba2192e5-7747-4f36-8de4-1d4b825421ca}">
+      <Declaration><![CDATA[METHOD M_Init
+
+VAR
+	LL	: SINT;
+	KK 	: SINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//Initialisation BUFFER
+	//Buffer pour la lecture des sms
+	FIFO.A_Reset();
+	FIFO.A_Add();
+	FIFO.A_Get();
+	FIFO.A_Remove();
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="Firebird_InsertBuffer_vEpoch">
+      <LineId Id="2066" Count="10" />
+      <LineId Id="2251" Count="0" />
+      <LineId Id="2077" Count="15" />
+      <LineId Id="2161" Count="0" />
+      <LineId Id="2093" Count="52" />
+      <LineId Id="2163" Count="0" />
+      <LineId Id="2162" Count="0" />
+      <LineId Id="2146" Count="13" />
+      <LineId Id="2164" Count="0" />
+      <LineId Id="2160" Count="0" />
+      <LineId Id="1457" Count="0" />
+    </LineIds>
+    <LineIds Name="Firebird_InsertBuffer_vEpoch.M_AddLine">
+      <LineId Id="18" Count="0" />
+      <LineId Id="53" Count="0" />
+    </LineIds>
+    <LineIds Name="Firebird_InsertBuffer_vEpoch.M_AlarmManager">
+      <LineId Id="6" Count="1" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="10" Count="0" />
+    </LineIds>
+    <LineIds Name="Firebird_InsertBuffer_vEpoch.M_Connect">
+      <LineId Id="6" Count="3" />
+      <LineId Id="11" Count="1" />
+      <LineId Id="31" Count="0" />
+      <LineId Id="13" Count="0" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="22" Count="1" />
+      <LineId Id="39" Count="1" />
+      <LineId Id="42" Count="0" />
+      <LineId Id="41" Count="0" />
+      <LineId Id="21" Count="0" />
+    </LineIds>
+    <LineIds Name="Firebird_InsertBuffer_vEpoch.M_Disconnect">
+      <LineId Id="6" Count="5" />
+      <LineId Id="13" Count="3" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="Firebird_InsertBuffer_vEpoch.M_Init">
+      <LineId Id="3451" Count="4" />
+      <LineId Id="3447" Count="0" />
+      <LineId Id="3435" Count="0" />
+      <LineId Id="49" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

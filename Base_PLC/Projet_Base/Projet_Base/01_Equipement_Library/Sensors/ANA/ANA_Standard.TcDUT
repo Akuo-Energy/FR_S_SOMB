@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.13">
+  <DUT Name="ANA_Standard" Id="{aa338462-e780-411b-9426-b27ce6a5bf67}">
+    <Declaration><![CDATA[TYPE ANA_Standard :
+STRUCT
+	
+	MesData		: ANA; (* (NA) Child struct *)
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

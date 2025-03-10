@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FUN_ConnectVPN" Id="{4ff0f7b4-9118-4bc6-8c61-19c74f5069a3}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM FUN_ConnectVPN
+
+VAR_INPUT
+	ParamNetID				: STRING :='' ; // Unit ID of the PC with internet connexion
+	IN_CmdStart 			: BOOL;
+	IN_DirExe				: STRING;
+	IN_OpenVpnFile			: STRING;
+END_VAR
+VAR_OUTPUT
+	OUT_Completed			: BOOL;
+END_VAR
+
+VAR
+	RS_Start				: RS;
+	TRIG_Completed			: R_TRIG;
+	TRIG_Start				: R_TRIG;
+	start_process			: NT_StartProcess;
+	TRIG_Available			: F_TRIG;
+	bTest: BOOL;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+TRIG_Start(CLK := IN_CmdStart);
+
+start_process
+(
+	NETID := ParamNetID,
+	PATHSTR := '"C:\Program Files\OpenVPN\bin\openvpn-gui.exe"',
+	DIRNAME := 'C:\Program Files\OpenVPN\bin',
+	COMNDLINE := Concat(str1 := '--command connect ', str2 := concat(STR1 := IN_OpenVpnFile, STR2 := '.ovpn')),
+	Start := TRIG_Start.Q
+);
+]]></ST>
+    </Implementation>
+    <LineIds Name="FUN_ConnectVPN">
+      <LineId Id="187" Count="0" />
+      <LineId Id="78" Count="0" />
+      <LineId Id="219" Count="0" />
+      <LineId Id="212" Count="6" />
+      <LineId Id="211" Count="0" />
+      <LineId Id="221" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

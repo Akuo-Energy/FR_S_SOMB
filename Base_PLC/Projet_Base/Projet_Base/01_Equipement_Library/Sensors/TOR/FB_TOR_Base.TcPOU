@@ -1,0 +1,162 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FB_TOR_Base" Id="{3113d0f6-f3a1-4202-8097-e30867d2af9e}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_TOR_Base
+//////////////////
+//  Digital SensOR  Base FB . 
+//////////////////
+
+VAR_INPUT PERSISTENT
+	// Parameters of the Object (instance/model specific) 
+	ParamNbSensors					: INT 		:=1		; 	(* (NA) Config : Number of sensors, If =9 Then sensor is bi-stable contactor*)
+	ParamAtleastOne					: BOOL 		:= TRUE ;  	(* (NA) If TRUE, the output is true if at leat one of the sensor is active. Otherwise, the output is true only if both are active*)
+	ParamCableCutSecurity			: BOOL		:=FALSE;	(* (NA) FALSE = ALARM *)
+	                        		
+	MesCountAlarm					: UDINT 	:=0 ; 		// (NA) Cal : Count number of times the alarm has been triggered
+	
+END_VAR
+
+VAR_OUTPUT
+	//Child objects
+	
+END_VAR
+
+VAR_INPUT
+	// I/O Inputs 		                                     				
+		IN_MesState1_IO 			: BOOL ;	 		// (NA) First  Smoke detector IO, IF bi-stable NC
+		IN_MesState2_IO				: BOOL ; 			// (NA) Second Smoke detector IO, IF Bi-stable NO
+		IN_CmdReset_L				: BOOL ;			// LOCAL Reset Value For Alarms
+		IN_ResetCounter 			: BOOL ; 			// Reset counter
+END_VAR
+
+VAR
+	//M_ALARMMANAGEMENT VARIABLES//
+
+	//STATE MANAGEMENT //
+//	MesDataExd				: TOR ; 	
+		R_TRIGAlarm					: R_TRIG ; 
+
+			MesCP_Read					: BOOL := TRUE;	(* Read function enable *)
+		MesCP_Write					: BOOL := TRUE;	(* Write function enable *)
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_AlarmManagement" Id="{7e871149-af64-40af-b382-511c6c209389}">
+      <Declaration><![CDATA[METHOD M_AlarmManagement
+//////////////////
+// Manages Door sensor alarms and warnings
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+		
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{ced15f4c-0c82-4ba1-ad09-a846c116e165}">
+      <Declaration><![CDATA[METHOD M_Execute
+//////////////////
+//  Method Calls 
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle) 
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// METHODS CALLS // 
+	M_StateManager() ; // order is important 
+	M_AlarmManagement() ; 
+
+	]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_StateManager" Id="{fc1151a8-eb5a-4576-8df4-ddf280915bfc}">
+      <Declaration><![CDATA[METHOD M_StateManager
+//////////////////
+// Detect when fire occurs
+/////////////////
+
+VAR 
+	// Method local variables (reinitialized at each cycle)
+ 	MesStateInterm1 : BOOL;
+	MesStateInterm2 : BOOL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_TOR_Base">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_TOR_Base.M_AlarmManagement">
+      <LineId Id="112" Count="1" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_TOR_Base.M_Execute">
+      <LineId Id="76" Count="3" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_TOR_Base.M_StateManager">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

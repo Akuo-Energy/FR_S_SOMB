@@ -1,0 +1,68 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="BAT" Id="{9321f4dc-d723-45c0-9b50-459311731405}">
+    <Declaration><![CDATA[///////////
+// Structure For Battery Controller. Main Operating Data to be saved ( ex: OPC ) .  
+//////////
+
+TYPE BAT :
+STRUCT
+
+	MesEnomConnected			: REAL ; 		(* (kWh) Nameplate Energy Capacity [WHRtg]          *)      	
+
+	MesIdc						: REAL;			(* (A) Summation of all racks*)
+	MesUdc						: REAL;			(* (V) Voltage of the rack, average*)
+
+	MesSoC						: REAL; 		(* (%) SoC Average (not including racks with protection).*)
+	MesSoH						: REAL; 		(* (%) SoH Average*)
+	MesDoD						: REAL;			(* (%) Depth of Discharge*)
+
+	MesCCL						: REAL;			(* (A) Charge Current Limit*)
+	MesDCL						: REAL;			(* (A) Discharge Current Limit*)
+	MesCPL						: REAL ; 		(* (kW) Charge Power Limit - To zero if Estop is set . *)
+	MesDPL						: REAL ; 		(* (kW) Discharge Power Limit - To zero if Estop is set .*)
+	MesECharge					: REAL ; 		(* (kWh) Total Energy charged over time *)
+	MesEDischarge				: REAL ; 		(* (kWh) Total Energy Discharge over time *)
+
+	ParamNbRacks				: UINT ; 		(* Number of racks set in BBMS*)
+	ParamNbModule				: UINT ; 		(* Number of modules per strings set in BBMS *)
+	ParamStringNbMin			: UINT ; 		(* Minimal number of strings Operable in order to works set at BBMS *)
+	ParamUdiff					: REAL ;		(* Maximum voltage difference between  string for connexion set in BBMS . *)
+	
+// Evaluate	
+	MesEconnected 				: REAL; 		(* Energy available for charge / discharge in the system BBMS. *)
+	MesNbRackNormal				: UINT; 		(* Number of racks without alarms. *)
+	MesPdc						: REAL; 		(*(kW) DC Power*)
+
+	MesIDState              	: WORD; 			(* (NA) State of the Battery Bank [State]          *)
+	MesEvt1						: DWORD;
+    MesEvtVnd1					: DWORD;                	                
+	MesAlarmCode				: WORD;			(* (NA) Internal Akuo AlarmCode*)
+	
+	MesEventCode				: WORD;			(* (NA) Internal Akuo EventCode	*)
+	MesAlarmCode_MesEvt1_1		: WORD;
+	MesAlarmCode_MesEvt1_2		: WORD;
+	
+	MesAlarmCode_MesEvtVnd1_1	: WORD;
+	MesAlarmCode_MesEvtVnd1_2	: WORD;
+	MesWarningCode				: WORD;			(* (NA) Internal Akuo WarningCode*)
+	
+	MesState					: WORD; 		(* (NA) State of the Bat*)
+	MesSoC_Min					: REAL;			(* (%) Minimal SoC of rack*)
+	MesSoC_Max					: REAL;			(* (%) Maximal SoC of rack*)
+	MesSoC_Max_memory			: REAL ;		(* (%) Maximal SoC reached memory*)
+	MesAlarmCom					: BOOL ;		(* Communication alarm*)
+	MesWarningCom				: BOOL ;		(* Communication warning*)
+	
+	
+	
+	MesCP_Read					: BOOL := TRUE;		(* Read function enable *)
+	MesCP_Write					: BOOL ;		(* Write function enable *)
+	
+	
+END_STRUCT
+END_TYPE
+
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

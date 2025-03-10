@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FUN_Transpose" Id="{5b2cb76f-54a9-41eb-8a7f-ca339247eecf}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM FUN_Transpose
+// Allows to transpose an array 
+VAR_INPUT
+	In_Array					: ARRAY[1..500] OF ARRAY[1..5] OF STRING;
+END_VAR
+VAR_OUTPUT
+	Out_Array					: ARRAY[1..5] OF ARRAY[1..500] OF STRING;
+END_VAR
+
+
+VAR
+	KK: INT;
+	LL: INT;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[FOR LL := 1 TO 5 DO 
+	FOR KK := 1 TO 500 DO
+	
+		Out_Array[LL][KK] := In_Array[KK][LL];
+		
+	END_FOR
+END_FOR]]></ST>
+    </Implementation>
+    <LineIds Name="FUN_Transpose">
+      <LineId Id="47" Count="5" />
+      <LineId Id="12" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

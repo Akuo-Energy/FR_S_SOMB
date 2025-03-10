@@ -1,0 +1,43 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="FUN_DisconnectVPN" Id="{9de33445-fd92-42b8-aac5-babc89325f8f}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM FUN_DisconnectVPN
+
+VAR_INPUT
+	ParamNetID				: STRING :='' ; // Unit ID of the PC with internet connexion
+	IN_CmdStart 			: BOOL;
+	IN_DirExe				: STRING;
+END_VAR
+VAR_OUTPUT
+	OUT_Completed			: BOOL;
+END_VAR
+
+VAR
+	TRIG_Start				: R_TRIG;
+	start_process			: NT_StartProcess;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[TRIG_Start(ClK := IN_CmdStart);
+
+start_process
+(
+	NETID := ParamNetID,
+	PATHSTR := '"c:\Program Files\OpenVPN\bin\openvpn-gui.exe" ',
+	DIRNAME := 'C:\Program Files\OpenVPN\bin',
+	COMNDLINE := '--command disconnect_all',
+	Start := TRIG_Start.Q
+);
+
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="FUN_DisconnectVPN">
+      <LineId Id="115" Count="0" />
+      <LineId Id="118" Count="0" />
+      <LineId Id="150" Count="6" />
+      <LineId Id="78" Count="0" />
+      <LineId Id="158" Count="1" />
+      <LineId Id="157" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

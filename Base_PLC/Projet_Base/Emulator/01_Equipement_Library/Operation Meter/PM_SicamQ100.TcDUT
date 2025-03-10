@@ -1,0 +1,78 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="PM_SicamQ100" Id="{e0aa5e91-b4aa-44f6-a626-5f7b45bc6c80}">
+    <Declaration><![CDATA[///////////
+// Structure For I35. Main Operating Data to be saved ( ex: OPC ) .  
+//////////
+TYPE PM_SicamQ100 :
+STRUCT
+	
+	MesData					: PM ; 
+
+	MesState1			: WORD ; 	(* Power meter state 1 *)
+	MesState2			: WORD ; (* Power meter state 2 *)
+	MesEac1_dmd			: REAL ; (* (kWh)Eac  *)
+	MesEac2_dmd         : REAL ; (* (kWh)Eac  *)
+	MesEac3_dmd         : REAL ; (* (kWh)Eac  *)
+	MesEac_dmd          : REAL ; (* (kWh)Eac  *)
+	MesEac1_sup         : REAL ; (* (kWh)Eac  *)
+	MesEac2_sup         : REAL ; (* (kWh)Eac  *)
+	MesEac3_sup         : REAL ; (* (kWh)Eac  *)
+	MesEac_sup          : REAL ; (* (kWh)Eac  *)
+	MesEreac1_ind       : REAL ; (* (kVArh)Power meter state 1 *)
+	MesEreac2_ind       : REAL ; (* (kVArh)Power meter state 1 *)
+	MesEreac3_ind       : REAL ; (* (kVArh)Power meter state 1 *)
+	MesEreac_ind        : REAL ; (* (kVArh)Power meter state 1 *)
+	MesEreac1_cap       : REAL ; (* (kVArh)Power meter state 1 *)
+	MesEreac2_cap       : REAL ; (* (kVArh)Power meter state 1 *)
+	MesEreac3_cap       : REAL ; (* (kVArh)Power meter state 1 *)
+	MesEreac_cap        : REAL ; (* (kVArh)Power meter state 1 *)
+	
+	
+	MesEPerPulse 			: REAL ; (* (kWh)Energy per pulse *)
+	
+	
+	
+	
+	
+	
+
+END_STRUCT
+END_TYPE
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="CheckPointer" Id="{af48163a-e07c-45b5-8344-7855daee39b4}" SpecialFunc="CheckPointer">
+    <Declaration><![CDATA[// Code généré automatiquement : NE PAS MODIFIER
+FUNCTION CheckPointer : POINTER TO BYTE
+VAR_INPUT 
+	ptToTest : POINTER TO BYTE; // Adresse de destination du pointeur
+	iSize : DINT;		        // Taille du type indiqué par le pointeur.  (par exemple : 20 pour POINTER TO ARRAY [0..9] OF INT)
+	iGran : DINT;		        // Granularité de l’accès au pointeur. Il s’agit de la taille du plus grand type de données non structuré dans le type indiqué par le pointeur.  (par exemple : 2 pour POINTER TO ARRAY [0..9] OF INT)
+	bWrite: BOOL;		        // Indique l’accès en lecture ou en écriture. TRUE = accès en écriture.
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// Code généré automatiquement : Il s’agit d’une proposition d’implémentation.
+{noflow}
+IF ptToTest=0 THEN
+    ADSLOGSTR(ADSLOG_MSGTYPE_ERROR OR ADSLOG_MSGTYPE_STRING,'CheckPointer failed due to invalid address.','');
+ELSIF iSize<=0 THEN
+    ADSLOGSTR(ADSLOG_MSGTYPE_ERROR OR ADSLOG_MSGTYPE_STRING,'CheckPointer failed due to invalid size.','');
+ELSIF iGran<=0 THEN
+    ADSLOGSTR(ADSLOG_MSGTYPE_ERROR OR ADSLOG_MSGTYPE_STRING,'CheckPointer failed due to invalid granularity.','');
+// -> Please note that the following memory area check is time consuming:
+//ELSIF F_CheckMemoryArea(pData:=ptToTest,nSize:=DINT_TO_UDINT(iSize)) = E_TcMemoryArea.Unknown THEN
+//    ADSLOGSTR(ADSLOG_MSGTYPE_ERROR OR ADSLOG_MSGTYPE_STRING,'CheckPointer failed due to unknown memory area.','');
+END_IF
+CheckPointer := ptToTest;
+{flow}]]></ST>
+    </Implementation>
+    <LineIds Name="CheckPointer">
+      <LineId Id="11" Count="12" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

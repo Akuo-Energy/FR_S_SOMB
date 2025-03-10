@@ -1,0 +1,46 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="INV_Huawei" Id="{7499c325-b1eb-44c6-80d3-4ab78ffed098}">
+    <Declaration><![CDATA[///////////
+// Structure For Inverter. Main Operating Data to be saved ( ex: OPC ) .  
+//////////
+TYPE INV_Huawei :
+STRUCT
+	
+	// INV Measures
+		MesData			: INV ; (* INV *) 
+
+		STR				: ARRAY[1..12 ] OF STR ;  	(* STR *) 
+		
+		MesEDay			: REAL ;	    			(* (kWh)Daily Energy	*)
+	    MesETot			: REAL ;					(* (kWh)Total Energy	*)
+		MesI1			: REAL ;					(*	(A) MesI1			*)
+		MesI2			: REAL ;					(*	(A) MesI2			*)
+	    MesI3			: REAL ;					(*	(A) MesI3			*)
+		MesU12			: REAL ;					(*	(V) MesU12			*)
+        MesU23			: REAL ;					(*	(V) MesU23			*)
+        MesU31			: REAL ;					(*	(V) MesU31			*)
+		MesV1			: REAL ;					(*	(V) MesV1			*)
+		MesV2			: REAL ;					(*	(V) MesV2			*)
+		MesV3			: REAL ;					(*	(V) MesV3			*)
+                                        			
+		MesStateIndic 	: WORD ;					(*	MesStateIndic 		*)
+		MesOpeStatus 	: WORD ;					(*	MesOpeStatus 		*)
+		MesAlm1			: WORD ;					(*	MesAlm1				*)
+		MesAlm2			: WORD ;					(*	MesAlm2				*)
+		MesAlm3			: WORD ;					(*	MesAlm3				*)
+	                                                        	
+		
+		
+	
+		
+		
+		
+
+
+END_STRUCT
+END_TYPE
+
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

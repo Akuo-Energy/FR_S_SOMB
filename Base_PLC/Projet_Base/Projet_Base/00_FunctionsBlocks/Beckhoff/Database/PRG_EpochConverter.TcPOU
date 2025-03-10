@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <POU Name="PRG_EpochConverter" Id="{d27e31aa-5afd-40fc-97e7-0a79a1e7440b}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM PRG_EpochConverter
+//Convert Epoch to TimeStruct
+VAR
+	FileTime				: T_FILETIME;
+	ConvertTime				: FB_SystemTimeToTzSpecificLocalTime;
+END_VAR
+VAR_INPUT
+	IN_bIsWeird 			: BOOL; 				// Cas pour l'Epoch venant de Influx : offset de   82 011 087 
+	IN_OffSet				: DINT :=  -82011087 ; 	// Cas pour l'Epoch venant de Influx : valeur de l'offset
+	IN_Epoch				: LINT;					// Input 
+END_VAR             		
+VAR_OUTPUT          		
+	OUT_TimeStruct_UTC		: TIMESTRUCT;
+	OUT_TimeStruct_Local	: TIMESTRUCT;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF IN_bIsWeird THEN
+	IN_Epoch := IN_Epoch + IN_OffSet;
+END_IF
+
+FileTime.dwHighDateTime := LINT_TO_DWORD(SHR(IN_Epoch, 32));
+FileTime.dwLowDateTime 	:= LINT_TO_DWORD(IN_Epoch);
+OUT_TimeStruct_UTC 		:= FILETIME_TO_SYSTEMTIME( FileTime );
+ConvertTime(in := OUT_TimeStruct_UTC, tzInfo := CstTimeZone_G, out => OUT_TimeStruct_Local);]]></ST>
+    </Implementation>
+    <LineIds Name="PRG_EpochConverter">
+      <LineId Id="5" Count="0" />
+      <LineId Id="16" Count="1" />
+      <LineId Id="19" Count="0" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="24" Count="0" />
+      <LineId Id="23" Count="0" />
+      <LineId Id="29" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>
